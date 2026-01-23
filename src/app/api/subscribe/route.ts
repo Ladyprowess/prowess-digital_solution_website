@@ -18,64 +18,47 @@ export async function POST(req: Request) {
 
     if (!email || !email.includes("@")) {
       return NextResponse.json(
-        { ok: false, error: "Enter a valid email" },
+        { ok: false, error: "Enter a valid email address." },
         { status: 400 }
       );
     }
 
-    // 1️⃣ Insert subscriber
+    // 1️⃣ Try inserting directly
     const { error: insertError } = await supabase
       .from("event_subscribers")
       .insert([{ email }]);
 
-    // Detect duplicate email
-    const isDuplicate = (insertError as any)?.code === "23505";
+    // 2️⃣ Handle duplicate email
+    if (insertError) {
+      if ((insertError as any).code === "23505") {
+        return NextResponse.json(
+          { ok: false, error: "This email is already subscribed." },
+          { status: 409 }
+        );
+      }
 
-    // Any DB error that is NOT duplicate → fail
-    if (insertError && !isDuplicate) {
       return NextResponse.json(
-        { ok: false, error: insertError.message },
+        { ok: false, error: "Could not save subscription." },
         { status: 500 }
       );
     }
 
-    // 2️⃣ Send Resend TEMPLATE (only for new subscribers)
-    if (!isDuplicate) {
-      const from = process.env.RESEND_FROM_EMAIL!;
-      if (!from) {
-        return NextResponse.json(
-          { ok: false, error: "Missing RESEND_FROM_EMAIL" },
-          { status: 500 }
-        );
-      }
-
-      const { error: emailError } = await resend.emails.send({
-        from,
-        to: email,
-        subject: "You’re subscribed to Prowess Digital Solutions events",
-        template: {
-          id: "event-sub", // ✅ YOUR TEMPLATE ID
-          variables: {},   // add later if needed
-        },
-      });
-
-      if (emailError) {
-        return NextResponse.json(
-          { ok: false, error: emailError.message },
-          { status: 500 }
-        );
-      }
-    }
-
-    // 3️⃣ Always return success
-    return NextResponse.json({
-      ok: true,
-      already_subscribed: isDuplicate,
+    // 3️⃣ Send Resend TEMPLATE (only once)
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL!,
+      to: email,
+      subject: "You’re subscribed to Prowess Digital Solutions events",
+      template: {
+        id: "event-sub", // ✅ your template ID
+        variables: {},
+      },
     });
+
+    return NextResponse.json({ ok: true });
 
   } catch (err: any) {
     return NextResponse.json(
-      { ok: false, error: err?.message || "Subscription failed" },
+      { ok: false, error: "Subscription failed. Try again." },
       { status: 500 }
     );
   }
