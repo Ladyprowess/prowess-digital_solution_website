@@ -13,29 +13,49 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const email = String(body?.email || "").trim().toLowerCase();
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ ok: false, error: "Enter a valid email" }, { status: 400 });
     }
 
-    // Create table if you want:
-    // public.event_subscribers (id uuid, email text unique, created_at timestamptz)
-    await supabase.from("event_subscribers").insert([{ email }]);
+    // 1) Save to Supabase (ignore duplicate emails)
+    const { error: insertError } = await supabase
+      .from("event_subscribers")
+      .insert([{ email }]);
 
-    await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL!, // e.g. "Prowess <hello@yourdomain.com>"
+    // If it's a duplicate email, don't fail the whole request
+    // Supabase/Postgres duplicate error code is usually 23505
+    if (insertError && (insertError as any).code !== "23505") {
+      return NextResponse.json(
+        { ok: false, error: insertError.message || "Could not save subscriber" },
+        { status: 500 }
+      );
+    }
+
+    // 2) Send your Resend TEMPLATE (the one in your screenshot)
+    const from = process.env.RESEND_FROM_EMAIL!;
+    if (!from) {
+      return NextResponse.json(
+        { ok: false, error: "Missing RESEND_FROM_EMAIL in env." },
+        { status: 500 }
+      );
+    }
+
+    const { error: emailError } = await resend.emails.send({
+      from,
       to: email,
-      subject: "You’re subscribed to Prowess Events",
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <h2>Welcome!</h2>
-          <p>You’ll now get updates about new events, early-bird offers, and useful business guidance.</p>
-          <p>— Prowess Digital Solutions</p>
-        </div>
-      `,
+      subject: "You’re subscribed to Prowess Digital Solutions events",
+      template: {
+        id: "event-sub", // ✅ template alias from your Resend screenshot
+        variables: {},   // add variables later if you create them in Resend
+      },
     });
+
+    if (emailError) {
+      return NextResponse.json({ ok: false, error: emailError.message }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
