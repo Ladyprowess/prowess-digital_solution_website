@@ -10,48 +10,30 @@ export default function ServicesPage() {
     {
       step: "Step 1",
       title: "Business Clarity Session",
-      desc:
-        "We start with a focused conversation to understand your business, challenges, and goals. No sales pressure—just honest assessment and clear recommendations.",
+      desc: "We start with a focused conversation. We listen, ask the right questions, and help you understand what is really happening in your business. No selling. Just honest guidance.",
       icon: (
         <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
-      ),
+      )
     },
     {
       step: "Step 2",
-      title: "Structured Foundation Building",
-      desc:
-        "We help you build proper business systems and processes. Everything is clear, documented, and designed to support your business long term.",
+      title: "Building Proper Structure",
+      desc: "Once things are clear, we help you put simple systems in place. Clear roles, clear processes, and clear priorities. Everything is written down and easy to follow.",
       icon: (
         <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
-      ),
+      )
     },
     {
       step: "Step 3",
-      title: "Ongoing Strategic Support",
-      desc:
-        "As your business grows, we guide you through each stage, so you always have clarity when you need to make decisions.",
+      title: "Ongoing Guidance",
+      desc: "As your business grows, new questions will come up. We stay with you, helping you think clearly and make better decisions at each stage.",
       icon: (
         <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
     },
@@ -91,8 +73,7 @@ export default function ServicesPage() {
             <h2 className="h2">Our Service Offerings</h2>
 
             <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              Click on any service to explore detailed information about our method, what’s included, pricing ranges,
-              and typical timelines. Every service is designed to give real value and lasting impact.
+            We believe in clarity before action, strong foundations before growth, and simple systems that last.
             </p>
           </div>
 
@@ -150,7 +131,7 @@ export default function ServicesPage() {
             </p>
 
             <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/contact">
+              <Link href="https://calendar.app.google/QS8oHmyyCtSiRTen9">
                 <button className="w-full rounded-xl bg-white px-10 py-4 text-lg font-semibold text-[#2e5659] shadow-lg transition hover:scale-[1.02] sm:w-auto">
                   Book Clarity Session
                 </button>

@@ -6,17 +6,15 @@ export const revalidate = 0;
 
 export async function POST(req: Request) {
   try {
-    const { file_path } = await req.json();
+    const { cover_path } = await req.json();
 
-    if (!file_path) {
-      return NextResponse.json({ ok: false, error: "Missing file_path" }, { status: 400 });
+    if (!cover_path) {
+      return NextResponse.json({ ok: false, error: "Missing cover_path" }, { status: 400 });
     }
 
-    const { data, error } = await supabaseAdmin
-      .storage
-      .from("resources")
-      // ✅ inline reading (NOT forced download)
-      .createSignedUrl(file_path, 60 * 10, { download: false });
+    const { data, error } = await supabaseAdmin.storage
+      .from("resource-covers")
+      .createSignedUrl(cover_path, 60 * 20); // 20 mins
 
     if (error || !data?.signedUrl) {
       return NextResponse.json({ ok: false, error: error?.message || "Could not create link" }, { status: 500 });

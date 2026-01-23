@@ -7,16 +7,19 @@ import {
   Users,
   Globe,
   ShieldCheck,
+  Twitter,
+  Instagram,
+  Facebook,
+  Linkedin,
 } from "lucide-react";
 
 
 const values = [
-  "Clarity first",
-  "Proper foundations",
-  "Long-term thinking",
-  "Education over sales",
-  "Honest guidance",
-  "Structured decisions",
+"Clarity",
+"Integrity",
+"Structure",
+"Simplicity",
+"Long-term thinking",
 ];
 
 export default function AboutPage() {
@@ -38,7 +41,7 @@ export default function AboutPage() {
 
             <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg">
               Before marketing strategies, before scaling plans, before anything
-              else—there’s clarity. We exist in the space between confusion and
+              else, there’s clarity. We exist in the space between confusion and
               confidence, serving as your lighthouse through the complexities of
               business building.
             </p>
@@ -77,7 +80,7 @@ export default function AboutPage() {
             />
             <ValueCard
               icon="people"
-              title="Education Over Sales"
+              title="Education Over Profits"
               desc="We teach you how business actually works. Our goal is to make you a better business owner, not just a paying client."
             />
             <ValueCard
@@ -88,7 +91,7 @@ export default function AboutPage() {
             <ValueCard
               icon="settings"
               title="Structured Approaches"
-              desc="Business isn&apos;t chaos—it&apos;s a series of systems. We bring order to complexity through proven frameworks and methodologies."
+              desc="Business isn&apos;t chaos, it&apos;s a series of systems. We bring order to complexity through proven frameworks and methodologies."
             />
           </div>
         </Container>
@@ -99,7 +102,7 @@ export default function AboutPage() {
         <Container>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>
-              <h2 className="h2">The Story Behind Prowess</h2>
+              <h2 className="h2">The Story Behind Prowess Digital Solutions</h2>
 
               <div className="mt-5 space-y-5 leading-relaxed text-slate-600">
                 <p>
@@ -112,7 +115,7 @@ export default function AboutPage() {
 
                 <p>
                   Prowess Digital Solutions was born from a simple observation:
-                  most business failures aren&apos;t execution problems—they&apos;re
+                  most business failures aren&apos;t execution problems, they&apos;re
                   clarity problems. Entrepreneurs jump into tactics before
                   understanding strategy, invest in marketing before validating
                   their model, and scale before building proper systems.
@@ -130,14 +133,14 @@ export default function AboutPage() {
 
               <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <p className="italic leading-relaxed text-slate-700">
-                  “Before I do anything in business, I speak to Prowess.
-                  They&apos;ve saved me from countless expensive mistakes and
-                  helped me build something sustainable.”
+                  “Before I do anything in business, I speak to Prowess Digital Solutions.
+                  We&apos;ll save you from countless expensive mistakes and
+                  help you build something sustainable.”
                 </p>
 
                 <div className="mt-5">
                   <p className="font-semibold text-slate-900">
-                    Adebayo Ogunleye
+                    Ngozi Peace Okafor
                   </p>
                   <p className="text-sm text-slate-600">
                     Founder &amp; Chief Clarity Officer
@@ -148,10 +151,10 @@ export default function AboutPage() {
 
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <Image
-                src="/images/adebayo-ogunleye.jpg"
-                alt="Adebayo Ogunleye"
-                width={900}
-                height={900}
+                src="/images/ngozi-peace-okafor-1.jpg"
+                alt="Ngozi Peace Okafor"
+                width={700}
+                height={700}
                 className="h-auto w-full object-cover"
                 priority
               />
@@ -167,7 +170,7 @@ export default function AboutPage() {
             <h2 className="h2">Our Mission</h2>
 
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-              To be the first conversation every business owner has—providing
+              To be the first conversation every business owner has; providing
               clarity, structure, and honest guidance that helps entrepreneurs
               build sustainable businesses on proper foundations.
             </p>
@@ -226,24 +229,42 @@ export default function AboutPage() {
           </div>
 
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <TeamCard
-              name="Adebayo Ogunleye"
-              role="Founder & Chief Clarity Officer"
-              desc="15+ years helping entrepreneurs build sustainable businesses through structured thinking and proper foundations."
-              image="/images/adebayo-ogunleye.jpg"
-            />
-            <TeamCard
-              name="Chioma Nwosu"
-              role="Senior Business Strategist"
-              desc="Specialises in helping first-time founders navigate the complexities of business setup and early-stage growth."
-              image="/images/chioma-nwosu.jpg"
-            />
-            <TeamCard
-              name="Oluwaseun Adeyemi"
-              role="Systems & Operations Lead"
-              desc="Transforms chaotic operations into efficient systems that support sustainable business growth."
-              image="/images/oluwaseun-adeyemi.jpg"
-            />
+          <TeamCard
+  name="Ngozi Peace Okafor"
+  role="Founder & Chief Clarity Officer"
+  desc="5+ years helping entrepreneurs build sustainable businesses through structured thinking and proper foundations."
+  image="/images/ngozi-peace-okafor.jpg"
+  socials={{
+    x: "https://x.com/ladyprowess",
+    linkedin: "https://www.linkedin.com/in/peace-ngozi-okafor",
+    instagram: "https://instagram.com/ladyprowess_",
+  }}
+/>
+
+<TeamCard
+  name="Tosanmi Gbenebitse Daniel"
+  role="Senior Business Strategist"
+  desc="Specialises in helping first-time founders navigate the complexities of business setup and early-stage growth."
+  image="/images/Tosanmi Gbenebitse-Daniel.jpg"
+  socials={{
+    facebook: "https://facebook.com/username",
+    linkedin: "https://linkedin.com/in/username",
+  }}
+/>
+
+<TeamCard
+  name="Ifunanya Nnadi​"
+  role="Systems & Operations Lead"
+  desc="Transforms chaotic operations into efficient systems that support sustainable business growth."
+  image="/images/ifunanya Nnadi.jpg"
+  socials={{
+    instagram: "https://instagram.com/username",
+    linkedin: "https://linkedin.com/in/username",
+  }}
+/>
+
+
+
           </div>
         </Container>
       </section>
@@ -270,7 +291,7 @@ export default function AboutPage() {
 
       <TrustCard
         icon={<Globe size={28} />}
-        title="Nigerian Context"
+        title="Local Context"
         desc="Deep understanding of the local business environment with global best practices"
       />
 
@@ -317,11 +338,18 @@ function TeamCard({
   role,
   desc,
   image,
+  socials,
 }: {
   name: string;
   role: string;
   desc: string;
   image: string;
+  socials: {
+    x?: string;
+    instagram?: string;
+    facebook?: string;
+    linkedin?: string;
+  };
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -336,11 +364,64 @@ function TeamCard({
       <div className="p-5">
         <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
         <p className="text-sm text-slate-600">{role}</p>
+
         <p className="mt-3 leading-relaxed text-slate-600">{desc}</p>
+
+        {/* SOCIAL LINKS */}
+        <div className="mt-4 flex gap-4 text-[#507c80]">
+          {socials.x && (
+            <a
+              href={socials.x}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:opacity-70"
+              aria-label="X (Twitter)"
+            >
+              <Twitter size={18} />
+            </a>
+          )}
+
+          {socials.instagram && (
+            <a
+              href={socials.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:opacity-70"
+              aria-label="Instagram"
+            >
+              <Instagram size={18} />
+            </a>
+          )}
+
+          {socials.facebook && (
+            <a
+              href={socials.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:opacity-70"
+              aria-label="Facebook"
+            >
+              <Facebook size={18} />
+            </a>
+          )}
+
+          {socials.linkedin && (
+            <a
+              href={socials.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:opacity-70"
+              aria-label="LinkedIn"
+            >
+              <Linkedin size={18} />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
 
 function TrustCard({
   icon,

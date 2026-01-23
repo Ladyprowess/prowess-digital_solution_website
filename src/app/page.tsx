@@ -10,18 +10,18 @@ export default function ModernHomePage() {
   const services = [
     {
       title: "Business Clarity Sessions",
-      description: "The essential first conversation. We help you understand what your business really needs before you invest in anything else.",
-      features: ["60-90 minute focused session", "Clear action plan", "Honest recommendations"]
+      description: "The essential first conversation. We help you understand what your business really need.",
+      features: ["60–90 minute focused session", "Clear understanding of your problems", "Simple next steps", "Honest advice no pressure"]
     },
     {
       title: "Business Audit & Review",
       description: "A structured review of what is working, what is not, and what to fix first.",
-      features: ["Custom system design", "Process documentation", "Team training"]
+      features: ["Review of your current setup", "Clear gaps and weak points", "Simple recommendations", "Guidance for better decisions"]
     },
     {
       title: "Business Setup & Structure",
       description: "Direction, operations, tools, and structure for a business that can run properly.",
-      features: ["3-12 month roadmaps", "Resource planning", "Milestone tracking"]
+      features: ["3-12 month roadmaps", "Resource planning", "Simple systems and processes", "Milestone tracking"]
     }
   ];
 

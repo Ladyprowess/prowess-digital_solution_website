@@ -24,6 +24,8 @@ function formatMB(bytes: number) {
 
 export default function ResourceCard({ item }: { item: ResourceItem }) {
   const [loading, setLoading] = useState<null | "preview" | "download">(null);
+  const [readerUrl, setReaderUrl] = useState<string | null>(null);
+
 
   async function getSignedUrl() {
     const res = await fetch("/api/resources/download", {
@@ -40,11 +42,12 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
     try {
       setLoading("preview");
       const url = await getSignedUrl();
-      window.open(url, "_blank", "noopener,noreferrer");
+      setReaderUrl(url); // ✅ open in-app reader
     } finally {
       setLoading(null);
     }
   }
+  
 
   async function onDownload() {
     try {
@@ -67,9 +70,14 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="h-full w-full flex items-center justify-center text-slate-400">
-            No cover
-          </div>
+          <div className="h-full w-full flex flex-col items-center justify-center text-slate-500">
+  <div className="mb-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+    {item.type}
+  </div>
+  <p className="text-sm font-semibold text-slate-700">Resource</p>
+  <p className="mt-1 text-xs text-slate-500">{item.category} • {item.stage}</p>
+</div>
+
         )}
 
         <div className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700">
@@ -121,6 +129,30 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
           </button>
         </div>
       </div>
+      {readerUrl ? (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl">
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <p className="text-sm font-semibold text-slate-800">Preview: {item.title}</p>
+        <button
+          onClick={() => setReaderUrl(null)}
+          className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="h-[75vh]">
+        <iframe
+          src={readerUrl}
+          className="h-full w-full"
+          title={`Preview ${item.title}`}
+        />
+      </div>
+    </div>
+  </div>
+) : null}
+
     </div>
   );
 }
