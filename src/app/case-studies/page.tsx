@@ -93,7 +93,6 @@ export default function CaseStudiesPage() {
       if (p && typeof p.page === "number") {
         setPagination(p);
       } else {
-        // fallback if pagination object is missing
         setPagination({ page, pageSize: PAGE_SIZE, total: 0, totalPages: 1 });
       }
     } catch (e) {
@@ -110,7 +109,6 @@ export default function CaseStudiesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // NOTE: because we're paginating from API, these dropdown values come from current page only.
   const categories = useMemo(() => {
     const set = new Set(items.map((c) => c.category).filter(Boolean));
     return ["All", ...Array.from(set)];
@@ -153,10 +151,31 @@ export default function CaseStudiesPage() {
       {/* HERO */}
       <section className="px-4 py-20">
         <div className="mx-auto max-w-5xl text-center">
-          <div className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M7 17V7h10v10H7z" stroke="#223433" strokeWidth="2" />
-            </svg>
+          <div className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white border border-[#dbe9e8] shadow-sm">
+            {/* ✅ FIXED ICON: uses currentColor so it always shows */}
+            <svg
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  className="text-[#223433]"
+>
+  <path
+    d="M3 17l6-6 4 4 7-7"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  />
+  <path
+    d="M14 4h7v7"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  />
+</svg>
+
           </div>
 
           <h1 className="text-4xl font-semibold text-[#223433] md:text-6xl">
