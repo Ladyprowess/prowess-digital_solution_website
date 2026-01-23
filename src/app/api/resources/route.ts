@@ -8,39 +8,70 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const sort = (searchParams.get("sort") || "newest").toLowerCase();
     const q = (searchParams.get("q") || "").trim();
+    const sort = (searchParams.get("sort") || "popular").toLowerCase();
+    const category = (searchParams.get("category") || "").trim();
+    const stage = (searchParams.get("stage") || "").trim();
+    const type = (searchParams.get("type") || "").trim();
 
-    // Base query
     let query = supabaseAdmin.from("resources").select("*");
 
-    // Optional search (only if your table has title/description)
+    // filters
+    if (category) query = query.eq("category", category);
+    if (stage) query = query.eq("stage", stage);
+    if (type) query = query.eq("type", type);
+
+    // search
     if (q) {
-      // If your column names differ, change title/description here.
       query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
     }
 
-    // Safe sorting (only use columns that exist in your DB)
-    // Based on your ResourceCard + types: downloads, rating, created_at
+    // sorting
     if (sort === "popular") {
-      query = query.order("downloads", { ascending: false }).order("created_at", { ascending: false });
-    } else if (sort === "top") {
-      query = query.order("rating", { ascending: false }).order("created_at", { ascending: false });
+      query = query
+        .order("downloads", { ascending: false })
+        .order("created_at", { ascending: false });
+    } else if (sort === "rating") {
+      query = query
+        .order("rating", { ascending: false })
+        .order("created_at", { ascending: false });
     } else {
-      // newest/default
       query = query.order("created_at", { ascending: false });
     }
 
     const { data, error } = await query;
 
     if (error) {
-      console.error("GET /api/resources error:", error);
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, items: data || [] }, { status: 200 });
+    const items = data || [];
+
+    // ✅ Always return a usable cover_url (fresh signed url from cover_path)
+    const itemsWithCover = await Promise.all(
+      items.map(async (r: any) => {
+        // ✅ If we have cover_path, ALWAYS return a signed url (works even if bucket is private)
+        if (r.cover_path) {
+          const { data: signed, error: signErr } = await supabaseAdmin.storage
+            .from("resource-covers")
+            .createSignedUrl(r.cover_path, 60 * 60); // 1 hour
+    
+          if (!signErr && signed?.signedUrl) {
+            return { ...r, cover_url: signed.signedUrl };
+          }
+        }
+  
+
+        // Otherwise no cover
+        return r;
+      })
+    );
+
+    return NextResponse.json({ ok: true, items: itemsWithCover }, { status: 200 });
   } catch (e: any) {
-    console.error("GET /api/resources crash:", e);
-    return NextResponse.json({ ok: false, error: e?.message || "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: e?.message || "Server error" },
+      { status: 500 }
+    );
   }
 }

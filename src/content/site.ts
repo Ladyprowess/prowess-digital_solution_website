@@ -254,8 +254,8 @@ export type Service = {
   
   export const packages = [
     {
-      title: "Business Foundation & Clarity",
-      purpose: "Get clear on your business direction and make better decisions.",
+      title: "Business Foundation",
+      purpose: "Get clear on your business and make better decisions.",
       deliverables: [
         "Clarity session + structured review",
         "Offer and customer clarity",
@@ -269,7 +269,7 @@ export type Service = {
       investment: "₦150,000 – ₦300,000",
     },
     {
-      title: "Business Setup & Systems",
+      title: "Business Setup",
       purpose: "Set up structure, tools, and operations that can run properly.",
       deliverables: [
         "Operations structure",
@@ -284,7 +284,7 @@ export type Service = {
       investment: "₦300,000 – ₦800,000",
     },
     {
-      title: "Launch, Execution & Visibility",
+      title: "Execution & Visibility",
       purpose: "Support execution with clear steps and stable messaging.",
       deliverables: [
         "Launch plan and execution support",

@@ -38,6 +38,10 @@ export default function ResourcesBrowser() {
   // ✅ Mobile filters collapse
   const [showFilters, setShowFilters] = useState(false);
 
+  // ✅ View more logic (start with 6)
+  const STEP = 6;
+  const [visibleCount, setVisibleCount] = useState(STEP);
+
   async function load() {
     setLoading(true);
 
@@ -48,7 +52,10 @@ export default function ResourcesBrowser() {
     if (stage) params.set("stage", stage);
     if (type) params.set("type", type);
 
-    const res = await fetch(`/api/resources?${params.toString()}`);
+    const res = await fetch(`/api/resources?${params.toString()}`, {
+      cache: "no-store",
+    });
+
     const data = await res.json().catch(() => ({}));
 
     setItems(data?.items || []);
@@ -57,12 +64,18 @@ export default function ResourcesBrowser() {
 
   // Load on first render + when filters change (small debounce for search)
   useEffect(() => {
+    setVisibleCount(STEP); // ✅ reset to first 6 whenever filters/search changes
+
     const t = setTimeout(() => load(), 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, sort, category, stage, type]);
 
   const total = items.length;
+
+  // ✅ Only show first N items
+  const visibleItems = items.slice(0, visibleCount);
+  const canViewMore = visibleCount < total;
 
   const clearFilters = () => {
     setCategory("");
@@ -193,7 +206,9 @@ export default function ResourcesBrowser() {
             <p className="text-slate-700">
               {loading
                 ? "Loading resources..."
-                : `Showing ${total} resource${total === 1 ? "" : "s"}`}
+                : `Showing ${Math.min(visibleCount, total)} of ${total} resource${
+                    total === 1 ? "" : "s"
+                  }`}
             </p>
 
             {/* ✅ Sort: full width on mobile */}
@@ -225,11 +240,27 @@ export default function ResourcesBrowser() {
               No resources found. Try a different search or clear filters.
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              {items.map((item) => (
-                <ResourceCard key={item.id} item={item} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-6 md:grid-cols-2">
+                {visibleItems.map((item) => (
+                  <ResourceCard key={item.id} item={item} />
+                ))}
+              </div>
+
+              {canViewMore && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleCount((v) => Math.min(v + STEP, total))
+                    }
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+                  >
+                    View more
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>
