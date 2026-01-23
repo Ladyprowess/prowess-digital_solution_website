@@ -94,7 +94,7 @@ export default function PricingPage() {
         <Container>
           <div className="mx-auto max-w-4xl text-center">
             <p className="text-xs font-semibold tracking-[0.18em] text-slate-500">
-              CLEAR PRICING
+              PRICING
             </p>
 
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-6xl">
