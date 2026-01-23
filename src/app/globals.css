@@ -1,26 +1,119 @@
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/ProximaNova-Regular.woff2") format("woff2"),
+    url("/fonts/ProximaNova-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/ProximaNova-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/ProximaNova-Semibold.woff2") format("woff2"),
+    url("/fonts/ProximaNova-Semibold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/ProximaNova-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ✅ Tailwind v4 uses this (NOT @tailwind base/components/utilities) */
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --steel-teal: #507c80;
+  --ink: #0b1b1d;
+  --muted: #496167;
+  --bg: #ffffff;
+  --soft: #f5faf9;
+  --soft-2: #eef6f5;
+  --border: rgba(15, 23, 42, 0.10);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Proxima Nova", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ===== Reusable UI styles ===== */
+@layer components {
+  .page-wrap {
+    background:
+      radial-gradient(900px 350px at 50% -50px, var(--soft), transparent 60%),
+      radial-gradient(700px 250px at 10% 0px, rgba(80,124,128,0.10), transparent 60%),
+      radial-gradient(700px 250px at 90% 40px, rgba(80,124,128,0.08), transparent 55%);
+  }
+
+  .section {
+    @apply py-14 sm:py-20;
+  }
+
+  .section-tight {
+    @apply py-12 sm:py-16;
+  }
+
+  .card {
+    @apply rounded-2xl border bg-white;
+    border-color: var(--border);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+  }
+
+  .card-soft {
+    @apply rounded-2xl border;
+    border-color: rgba(80, 124, 128, 0.14);
+    background: linear-gradient(180deg, var(--soft), #ffffff);
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm;
+    background: rgba(80, 124, 128, 0.08);
+    border-color: rgba(80, 124, 128, 0.18);
+    color: #33565a;
+  }
+
+  .h1 {
+    @apply font-semibold tracking-tight;
+    font-size: clamp(2.15rem, 3.8vw, 3.9rem);
+    line-height: 1.05;
+  }
+
+  .h2 {
+    @apply text-2xl sm:text-4xl font-semibold tracking-tight;
+  }
+
+  .lead {
+    @apply text-base sm:text-lg;
+    color: var(--muted);
+  }
+
+  .divider {
+    @apply border-t;
+    border-color: rgba(15, 23, 42, 0.06);
+  }
 }
