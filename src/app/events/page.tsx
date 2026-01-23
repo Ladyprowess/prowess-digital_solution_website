@@ -31,7 +31,7 @@ function formatDate(isoLike: string) {
 
 function toISODateOnly(input: string) {
   if (!input) return "";
-  return input.slice(0, 10); // works for YYYY-MM-DD and ISO
+  return input.slice(0, 10);
 }
 
 function isPastEvent(dateISO: string) {
@@ -40,6 +40,8 @@ function isPastEvent(dateISO: string) {
 }
 
 export default function EventsPage() {
+  const PAGE_SIZE = 6;
+
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
   const [loadingPast, setLoadingPast] = useState(false);
 
@@ -54,6 +56,9 @@ export default function EventsPage() {
   const [q, setQ] = useState("");
 
   const [showPast, setShowPast] = useState(false);
+
+  const [upcomingPage, setUpcomingPage] = useState(1);
+  const [pastPage, setPastPage] = useState(1);
 
   // modal state
   const [open, setOpen] = useState(false);
@@ -95,12 +100,12 @@ export default function EventsPage() {
     document.body.style.overflow = "";
   }
 
-  function buildParams(scope: "upcoming" | "past", limit: string, searchText?: string) {
+  function buildParams(scope: "upcoming" | "past", page: number, searchText?: string) {
     const params = new URLSearchParams();
     params.set("scope", scope);
-    params.set("limit", limit);
+    params.set("limit", String(PAGE_SIZE));
+    params.set("page", String(page));
 
-    // only send filters when not All
     if (type !== "All") params.set("type", type);
     if (month !== "All") params.set("month", month);
 
@@ -110,12 +115,12 @@ export default function EventsPage() {
     return params;
   }
 
-  async function loadUpcoming(searchText?: string) {
+  async function loadUpcoming(page: number, searchText?: string) {
     setLoadingUpcoming(true);
     setUpcomingError(null);
 
     try {
-      const params = buildParams("upcoming", "6", searchText);
+      const params = buildParams("upcoming", page, searchText);
       const res = await fetch(`/api/events?${params.toString()}`, { cache: "no-store" });
       const json = await res.json().catch(() => null);
 
@@ -135,12 +140,12 @@ export default function EventsPage() {
     }
   }
 
-  async function loadPast(searchText?: string) {
+  async function loadPast(page: number, searchText?: string) {
     setLoadingPast(true);
     setPastError(null);
 
     try {
-      const params = buildParams("past", "50", searchText);
+      const params = buildParams("past", page, searchText);
       const res = await fetch(`/api/events?${params.toString()}`, { cache: "no-store" });
       const json = await res.json().catch(() => null);
 
@@ -195,27 +200,33 @@ export default function EventsPage() {
     }
   }
 
-  // load upcoming on filter change
+  // ✅ Reset pages when filters change
   useEffect(() => {
-    loadUpcoming();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setUpcomingPage(1);
+    setPastPage(1);
   }, [type, month]);
 
-  // load past only when open + filters change
-  useEffect(() => {
-    if (showPast) loadPast();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showPast, type, month]);
-
-  // debounced search
+  // ✅ Debounced search resets pages
   useEffect(() => {
     const t = setTimeout(() => {
-      loadUpcoming(q);
-      if (showPast) loadPast(q);
+      setUpcomingPage(1);
+      setPastPage(1);
     }, 350);
     return () => clearTimeout(t);
+  }, [q]);
+
+  // ✅ Fetch upcoming whenever page / filters / search change
+  useEffect(() => {
+    loadUpcoming(upcomingPage, q);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, showPast]);
+  }, [upcomingPage, type, month, q]);
+
+  // ✅ Fetch past whenever open + page / filters / search change
+  useEffect(() => {
+    if (!showPast) return;
+    loadPast(pastPage, q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPast, pastPage, type, month, q]);
 
   // scroll to past section when opened
   useEffect(() => {
@@ -235,6 +246,9 @@ export default function EventsPage() {
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const isUpcomingLastPage = upcoming.length < PAGE_SIZE;
+  const isPastLastPage = past.length < PAGE_SIZE;
 
   return (
     <div className="pb-16">
@@ -334,14 +348,10 @@ export default function EventsPage() {
 
             <button
               type="button"
-              onClick={() => {
-                const next = !showPast;
-                setShowPast(next);
-                if (next) setLoadingPast(true);
-              }}
+              onClick={() => setShowPast((v) => !v)}
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
             >
-              {showPast && loadingPast ? "Loading past events…" : showPast ? "Hide past events" : "View past events"}
+              {showPast ? "Hide past events" : "View past events"}
             </button>
           </div>
 
@@ -398,6 +408,29 @@ export default function EventsPage() {
               ))
             )}
           </div>
+
+          {/* ✅ UPCOMING PAGINATION */}
+          <div className="mt-8 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setUpcomingPage((p) => Math.max(1, p - 1))}
+              disabled={upcomingPage === 1 || loadingUpcoming}
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Prev
+            </button>
+
+            <div className="text-sm font-medium text-slate-700">Page {upcomingPage}</div>
+
+            <button
+              type="button"
+              onClick={() => setUpcomingPage((p) => p + 1)}
+              disabled={loadingUpcoming || isUpcomingLastPage}
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Next
+            </button>
+          </div>
         </Container>
       </section>
 
@@ -445,6 +478,29 @@ export default function EventsPage() {
                   </button>
                 ))
               )}
+            </div>
+
+            {/* ✅ PAST PAGINATION */}
+            <div className="mt-8 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setPastPage((p) => Math.max(1, p - 1))}
+                disabled={pastPage === 1 || loadingPast}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Prev
+              </button>
+
+              <div className="text-sm font-medium text-slate-700">Page {pastPage}</div>
+
+              <button
+                type="button"
+                onClick={() => setPastPage((p) => p + 1)}
+                disabled={loadingPast || isPastLastPage}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Next
+              </button>
             </div>
           </Container>
         </section>

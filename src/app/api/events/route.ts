@@ -12,49 +12,58 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const q = (searchParams.get("q") || "").trim();
-    const type = (searchParams.get("type") || "All").trim();
-    const month = (searchParams.get("month") || "All").trim();
-    const scope = (searchParams.get("scope") || "upcoming").trim(); // upcoming | past | all
-    const limit = Math.min(Number(searchParams.get("limit") || 50), 200);
+    const scope = searchParams.get("scope") || "upcoming";
+    const limit = Number(searchParams.get("limit") || 6);
+    const page = Math.max(1, Number(searchParams.get("page") || 1));
+    const type = searchParams.get("type");
+    const month = searchParams.get("month");
+    const q = searchParams.get("q");
 
-    const today = new Date();
-    const todayISO = today.toISOString().slice(0, 10); // YYYY-MM-DD
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
     let query = supabase
       .from("events")
       .select("*")
-      .eq("is_published", true);
+      .order("date", { ascending: scope === "upcoming" })
+      .range(from, to);
 
-    // Scope filter
-    if (scope === "upcoming") query = query.gte("date", todayISO);
-    if (scope === "past") query = query.lt("date", todayISO);
+    // Upcoming vs Past
+    const today = new Date().toISOString().slice(0, 10);
 
-    // Ordering
-    query = scope === "past"
-      ? query.order("date", { ascending: false })
-      : query.order("date", { ascending: true });
-
-    if (type !== "All") query = query.eq("type", type);
-    if (q) query = query.ilike("title", `%${q}%`);
-
-    const { data, error } = await query.limit(limit);
-    if (error) throw error;
-
-    // Month filter (optional)
-    let items = data || [];
-    if (month !== "All") {
-      const m = Number(month);
-      items = items.filter((e: any) => {
-        const d = new Date(e.date);
-        return d.getUTCMonth() + 1 === m;
-      });
+    if (scope === "upcoming") {
+      query = query.gte("date", today);
+    } else {
+      query = query.lt("date", today);
     }
 
-    return NextResponse.json({ ok: true, items });
+    if (type) {
+      query = query.eq("type", type);
+    }
+
+    if (month && month !== "All") {
+      query = query.eq("month", month);
+    }
+
+    if (q) {
+      query = query.ilike("title", `%${q}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("EVENTS API ERROR:", error);
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, items: data ?? [] });
   } catch (err: any) {
+    console.error("EVENTS API CRASH:", err);
     return NextResponse.json(
-      { ok: false, error: err?.message || "Failed to load events" },
+      { ok: false, error: "Internal server error" },
       { status: 500 }
     );
   }
