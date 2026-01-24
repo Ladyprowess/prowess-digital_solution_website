@@ -183,7 +183,7 @@ export default function CaseStudiesPage() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-[#4d5f5e] md:text-xl">
-            Real transformations from Nigerian businesses who started with a
+            Real transformations from businesses who started with a
             single Business Clarity Session. See how clear thinking and simple
             systems lead to steady, measurable growth.
           </p>
