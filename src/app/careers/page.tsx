@@ -323,7 +323,7 @@ export default function CareersPage() {
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div className="max-w-xl">
               <h2 className="text-4xl font-semibold leading-tight text-[#223433] md:text-5xl">
-                The Prowess Work Experience
+                The Prowess Digital Solutions Work Experience
               </h2>
 
               <p className="mt-5 text-base leading-relaxed text-[#4d5f5e] md:text-lg">
