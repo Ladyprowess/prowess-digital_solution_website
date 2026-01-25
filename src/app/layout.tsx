@@ -10,13 +10,32 @@ export const metadata: Metadata = {
     template: `%s | ${brand.name}`,
   },
   description:
-    "Prowess Digital Solutions helps people start, organise, and run businesses properly through clarity, structure, and long-term guidance.",
+    "Prowess Digital Solutions helps people start, organise, and run businesses properly.",
   metadataBase: new URL("https://prowessdigitalsolutions.com"),
+
   openGraph: {
     title: `${brand.name}`,
     description:
       "Clarity, structure, and guidance for people building businesses that last.",
     type: "website",
+    url: "https://prowessdigitalsolutions.com",
+    siteName: brand.name,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Prowess Digital Solutions",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: brand.name,
+    description:
+      "Clarity, structure, and guidance for people building businesses that last.",
+    images: ["/og-image.png"],
   },
 };
 
