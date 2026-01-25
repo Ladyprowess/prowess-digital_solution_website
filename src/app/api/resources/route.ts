@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     const stage = (searchParams.get("stage") || "").trim();
     const type = (searchParams.get("type") || "").trim();
 
-    let query = supabaseAdmin.from("resources").select("*");
+    let query = supabaseAdmin().from("resources").select("*");
 
     // filters
     if (category) query = query.eq("category", category);
