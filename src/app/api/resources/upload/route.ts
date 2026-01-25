@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
+);
 
 export async function POST(req: Request) {
   try {
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
     const filePath = `${Date.now()}-${safeName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const { error: uploadError } = await supabaseAdmin().storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from("resources")
       .upload(filePath, buffer, { contentType: file.type, upsert: false });
 
@@ -45,7 +47,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: uploadError.message }, { status: 500 });
     }
 
-    // 2) Upload cover (optional) -> store ONLY cover_path (stable)
+    // 2) Upload cover (optional)
     let cover_path: string | null = null;
 
     if (cover) {
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
       cover_path = `${Date.now()}-${coverSafeName}`;
       const coverBuffer = Buffer.from(await cover.arrayBuffer());
 
-      const { error: coverUploadError } = await supabaseAdmin().storage
+      const { error: coverUploadError } = await supabaseAdmin.storage
         .from("resource-covers")
         .upload(cover_path, coverBuffer, { contentType: cover.type, upsert: false });
 
@@ -62,7 +64,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3) Insert into DB (cover_url stays null; we generate signed url later)
+    // 3) Insert into DB
     const { data: inserted, error: dbError } = await supabaseAdmin
       .from("resources")
       .insert([
@@ -92,6 +94,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, inserted }, { status: 200 });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: e?.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
