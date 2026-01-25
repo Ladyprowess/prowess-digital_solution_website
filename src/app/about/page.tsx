@@ -118,7 +118,7 @@ export default function AboutPage() {
                   most business failures aren&apos;t execution problems, they&apos;re
                   clarity problems. Entrepreneurs jump into tactics before
                   understanding strategy, invest in marketing before validating
-                  their model, and scale before building proper systems.
+                  their model, and scale before building a proper systems.
                 </p>
 
                 <p>
