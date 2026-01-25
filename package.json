@@ -10,6 +10,7 @@
     "type": "module"
   },
   "dependencies": {
+    "@netlify/plugin-nextjs": "^5.15.5",
     "@supabase/supabase-js": "^2.91.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
