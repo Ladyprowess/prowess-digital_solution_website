@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const filePath = `${Date.now()}-${safeName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const { error: uploadError } = await supabaseAdmin.storage
+    const { error: uploadError } = await supabaseAdmin().storage
       .from("resources")
       .upload(filePath, buffer, { contentType: file.type, upsert: false });
 
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       cover_path = `${Date.now()}-${coverSafeName}`;
       const coverBuffer = Buffer.from(await cover.arrayBuffer());
 
-      const { error: coverUploadError } = await supabaseAdmin.storage
+      const { error: coverUploadError } = await supabaseAdmin().storage
         .from("resource-covers")
         .upload(cover_path, coverBuffer, { contentType: cover.type, upsert: false });
 

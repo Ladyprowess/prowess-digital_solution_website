@@ -52,7 +52,7 @@ export async function GET(req: Request) {
       items.map(async (r: any) => {
         // ✅ If we have cover_path, ALWAYS return a signed url (works even if bucket is private)
         if (r.cover_path) {
-          const { data: signed, error: signErr } = await supabaseAdmin.storage
+          const { data: signed, error: signErr } = await supabaseAdmin().storage
             .from("resource-covers")
             .createSignedUrl(r.cover_path, 60 * 60); // 1 hour
     
