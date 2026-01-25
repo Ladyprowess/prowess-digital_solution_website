@@ -352,12 +352,12 @@ export default function ModernHomePage() {
               <div className="text-base text-white/80 sm:text-lg">Investment</div>
             </div>
             <div className="text-center">
-              <div className="mb-3 text-3xl font-semibold text-white sm:text-4xl">60-90 mins</div>
-              <div className="text-base text-white/80 sm:text-lg">Focused Session</div>
+              <div className="mb-3 text-3xl font-semibold text-white sm:text-4xl">30-60 mins</div>
+              <div className="text-base text-white/80 sm:text-lg">Session</div>
             </div>
             <div className="text-center">
               <div className="mb-3 text-3xl font-semibold text-white sm:text-4xl">100%</div>
-              <div className="text-base text-white/80 sm:text-lg">Honest, Pratical Guidance</div>
+              <div className="text-base text-white/80 sm:text-lg">Result</div>
             </div>
           </div>
         </div>
