@@ -365,7 +365,7 @@ export default function PricingPage() {
               <Button href={CLARITY_LINK} className="justify-center">
                 Book Clarity Session
               </Button>
-              <Button href={CLARITY_LINK} variant="primary" className="justify-center">
+              <Button href={CLARITY_LINK} variant="outline" className="justify-center">
                 Discuss Custom Package
               </Button>
             </div>

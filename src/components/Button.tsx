@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import clsx from "clsx";
 
-type ButtonVariants = "primary" | "secondary" | "white";
+type ButtonVariants = "primary" | "secondary" | "white" | "outline";
 
 type CommonProps = {
   variant?: ButtonVariants;
