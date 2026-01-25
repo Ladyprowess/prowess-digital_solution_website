@@ -8,18 +8,18 @@ export const brand = {
 
 export const navPrimary = [
   { href: "/", label: "Home" },
-  { href: "/services", label: "Services" },
   { href: "/about", label: "About Us" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/services", label: "Services" },
   { href: "/resources", label: "Resources" },
+  { href: "/case-studies", label: "Case Studies" },
   // Blog is external
   { href: blogUrl, label: "Blog", external: true },
 ] as const;
 
 export const navMore = [
   { href: "/events", label: "Events" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/careers", label: "Career" },
-  { href: "/case-studies", label: "Case Studies" },
   { href: "/contact", label: "Contact Us" },
 ] as const;
 
