@@ -2,21 +2,16 @@ import React from "react";
 import Link from "next/link";
 import clsx from "clsx";
 
-type Props = {
+type ButtonVariants = "primary" | "secondary" | "white";
+
+type CommonProps = {
+  variant?: ButtonVariants;
   href?: string;
-  children: React.ReactNode;
-  variant?: "primary" | "secondary" | "white";
-  className?: string;
-  type?: "button" | "submit" | "reset";
-  onClick?: () => void;
-
-  // ✅ add disabled support
-  disabled?: boolean;
-
-  // ✅ optional: allow title/aria props if you use them later
-  title?: string;
-  ariaLabel?: string;
 };
+
+type Props = CommonProps &
+  React.ButtonHTMLAttributes<HTMLButtonElement> &
+  React.AnchorHTMLAttributes<HTMLAnchorElement>;
 
 function isExternal(href?: string) {
   if (!href) return false;
@@ -28,11 +23,8 @@ export default function Button({
   children,
   variant = "primary",
   className,
-  type = "button",
-  onClick,
-  disabled = false,
-  title,
-  ariaLabel,
+  disabled,
+  ...rest
 }: Props) {
   const base =
     "inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm sm:text-base font-semibold transition " +
@@ -45,55 +37,45 @@ export default function Button({
     white: "bg-white text-slate-900 shadow-sm hover:bg-slate-50",
   }[variant];
 
-  // ✅ make disabled look disabled
   const disabledStyles = disabled ? "opacity-60 cursor-not-allowed" : "";
 
   const classes = clsx(base, styles, disabledStyles, className);
 
-  // Normal button (no href)
+  // ✅ If it's a normal button (no href)
   if (!href) {
+    const buttonProps = rest as React.ButtonHTMLAttributes<HTMLButtonElement>;
     return (
-      <button
-        type={type}
-        onClick={onClick}
-        className={classes}
-        disabled={disabled}
-        title={title}
-        aria-label={ariaLabel}
-      >
+      <button className={classes} disabled={disabled} {...buttonProps}>
         {children}
       </button>
     );
   }
 
-  // ✅ if disabled and it's a link, do nothing (no navigation)
+  // ✅ If disabled and it's a link, render as <span> (no navigation)
   if (disabled) {
-    return (
-      <span className={classes} title={title} aria-label={ariaLabel}>
-        {children}
-      </span>
-    );
+    return <span className={classes}>{children}</span>;
   }
 
-  // External link
+  // ✅ External link
   if (isExternal(href)) {
+    const aProps = rest as React.AnchorHTMLAttributes<HTMLAnchorElement>;
     return (
       <a
         href={href}
         target="_blank"
         rel="noreferrer"
         className={classes}
-        title={title}
-        aria-label={ariaLabel}
+        {...aProps}
       >
         {children}
       </a>
     );
   }
 
-  // Internal link
+  // ✅ Internal link (Next Link)
+  // Note: style/className are allowed here via the wrapper anchor behaviour in modern Next.
   return (
-    <Link href={href} className={classes} title={title} aria-label={ariaLabel}>
+    <Link href={href} className={classes}>
       {children}
     </Link>
   );
