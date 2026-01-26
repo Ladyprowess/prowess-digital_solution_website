@@ -3,8 +3,7 @@ export const brand = {
     colour: "#507c80",
     tone: "Calm, clear, professional, honest, supportive",
   };
-  
-  export const blogUrl = "https://your-blog-site.com"; // <-- change to your real blog link
+
 
 export const navPrimary = [
   { href: "/", label: "Home" },
@@ -12,8 +11,7 @@ export const navPrimary = [
   { href: "/services", label: "Services" },
   { href: "/resources", label: "Resources" },
   { href: "/case-studies", label: "Case Studies" },
-  // Blog is external
-  { href: blogUrl, label: "Blog", external: true },
+  { href: "/blog", label: "Blog" },
 ] as const;
 
 export const navMore = [
