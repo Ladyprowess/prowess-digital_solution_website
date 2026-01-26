@@ -343,8 +343,8 @@ export type Service = {
   ];
   
   export const contact = {
-    email: "hello@prowessdigitalsolutions.com",
-    whatsapp: "+234XXXXXXXXXX",
+    email: "info@prowessdigitalsolutions.com",
+    whatsapp: "+2348162174443",
     location: "Nigeria (Remote-friendly)",
   };
   

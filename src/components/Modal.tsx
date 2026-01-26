@@ -30,7 +30,7 @@ export default function Modal({ open, title, onClose, children }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-4"
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
@@ -40,12 +40,19 @@ export default function Modal({ open, title, onClose, children }: Props) {
         className="absolute inset-0 bg-black/40"
         onClick={onClose}
       />
+
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="relative z-10 w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl outline-none"
+        className="
+          relative z-10 w-full max-w-2xl rounded-xl bg-white shadow-xl outline-none
+          flex flex-col
+          max-h-[85vh]
+          overflow-hidden
+        "
       >
-        <div className="flex items-start justify-between gap-4">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-4 sm:p-6">
           <h3 id="modal-title" className="text-lg font-semibold">
             {title}
           </h3>
@@ -56,7 +63,9 @@ export default function Modal({ open, title, onClose, children }: Props) {
             Close
           </button>
         </div>
-        <div className="mt-4">{children}</div>
+
+        {/* Body (scrolls on mobile) */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );
