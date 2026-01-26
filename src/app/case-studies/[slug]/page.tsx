@@ -11,12 +11,14 @@ type ResultItem = { label?: string; value?: string };
 export default async function CaseStudyPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
+
   const { data, error } = await supabase
     .from("case_studies")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
 
@@ -30,11 +32,7 @@ export default async function CaseStudyPage({
 
       {data.image_url ? (
         <div className="mt-8 overflow-hidden rounded-xl">
-          <img
-            src={data.image_url}
-            alt={data.title}
-            className="w-full object-cover"
-          />
+          <img src={data.image_url} alt={data.title} className="w-full object-cover" />
         </div>
       ) : null}
 
