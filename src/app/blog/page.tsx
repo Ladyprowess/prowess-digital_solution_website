@@ -1,8 +1,10 @@
 import Link from "next/link";
 import BlogSearchBar from "./BlogSearchBar";
 
-
 export const revalidate = 600; // refresh every 10 minutes
+
+// ✅ ADD THIS HERE (TOP LEVEL)
+const BRAND = "#507c80";
 
 type WPPost = {
   ID: number;
@@ -28,11 +30,18 @@ function formatDate(dateStr?: string) {
 function makeExcerpt(p: WPPost) {
   const raw = p.excerpt || p.content || "";
   const clean = stripHtml(raw);
-  return clean.length > 170 ? clean.slice(0, 170) + "…" : clean;
+
+  const words = clean.split(" ").filter(Boolean);
+
+  return words.length > 20
+    ? words.slice(0, 20).join(" ") + "…"
+    : clean;
 }
+
 
 async function fetchWpPosts(page: number, perPage: number, q?: string) {
   const site = "prowessdigitalsolutions.wordpress.com";
+  
 
   const params = new URLSearchParams({
     number: String(perPage),
@@ -77,11 +86,14 @@ function PageLink({
       style={{
         padding: "8px 10px",
         borderRadius: 10,
-        border: "1px solid #e5e5e5",
+        border: `1px solid ${isActive ? BRAND : "#e5e5e5"}`,
         textDecoration: "none",
-        fontWeight: 600,
-        opacity: isActive ? 1 : 0.85,
+        fontWeight: 700,
+        opacity: 1,
+        color: isActive ? BRAND : "inherit",
+        background: isActive ? "rgba(80,124,128,0.08)" : "white",
       }}
+      
     >
       {label}
     </Link>
@@ -100,6 +112,9 @@ export default async function BlogPage({
   const currentPage = Math.max(1, Number.parseInt(currentPageRaw, 10) || 1);
 
   const q = sp.q?.trim() || "";
+
+
+
 
   // ✅ Fetch ONCE (and include q)
   const { posts, found } = await fetchWpPosts(currentPage, perPage, q);
@@ -184,9 +199,11 @@ export default async function BlogPage({
                 style={{
                   display: "inline-block",
                   marginTop: 10,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   textDecoration: "none",
+                  color: BRAND,
                 }}
+                
               >
                 Read Blog →
               </a>

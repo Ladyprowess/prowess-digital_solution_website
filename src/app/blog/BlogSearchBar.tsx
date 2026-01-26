@@ -7,6 +7,8 @@ export default function BlogSearchBar() {
   const router = useRouter();
   const sp = useSearchParams();
 
+  const BRAND = "#507c80";
+
   const initialQ = sp.get("q") ?? "";
   const [value, setValue] = useState(initialQ);
 
@@ -17,8 +19,7 @@ export default function BlogSearchBar() {
     const params = new URLSearchParams();
 
     if (q) params.set("q", q);
-    // reset to page 1 whenever searching
-    params.set("page", "1");
+    params.set("page", "1"); // reset to page 1 whenever searching
 
     router.push(`/blog?${params.toString()}`);
   }
@@ -42,20 +43,31 @@ export default function BlogSearchBar() {
           border: "1px solid #e5e5e5",
           outline: "none",
         }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = BRAND;
+          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(80,124,128,0.15)";
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = "#e5e5e5";
+          e.currentTarget.style.boxShadow = "none";
+        }}
       />
+
       <button
         type="submit"
         style={{
           padding: "10px 14px",
           borderRadius: 12,
-          border: "1px solid #e5e5e5",
-          background: "white",
-          fontWeight: 700,
+          border: `1px solid ${BRAND}`,
+          background: BRAND,
+          color: "white",
+          fontWeight: 800,
           cursor: "pointer",
         }}
       >
         Search
       </button>
+
       {initialQ ? (
         <button
           type="button"
@@ -63,9 +75,10 @@ export default function BlogSearchBar() {
           style={{
             padding: "10px 14px",
             borderRadius: 12,
-            border: "1px solid #e5e5e5",
+            border: `1px solid ${BRAND}`,
             background: "white",
-            fontWeight: 700,
+            color: BRAND,
+            fontWeight: 800,
             cursor: "pointer",
           }}
         >
