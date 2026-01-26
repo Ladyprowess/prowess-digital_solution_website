@@ -1,31 +1,28 @@
 import { createClient } from "@supabase/supabase-js";
+import { notFound } from "next/navigation";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-interface PageProps {
-  params: { slug: string };
-}
+type ResultItem = { label?: string; value?: string };
 
-export default async function CaseStudyPage({ params }: PageProps) {
+export default async function CaseStudyPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const { data, error } = await supabase
     .from("case_studies")
     .select("*")
     .eq("slug", params.slug)
     .eq("is_published", true)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
-    return (
-      <div className="mx-auto max-w-3xl py-24 text-center">
-        <h1 className="text-2xl font-semibold">Case study not found</h1>
-      </div>
-    );
-  }
+  if (error || !data) return notFound();
 
-  const results = Array.isArray(data.results) ? data.results : [];
+  const results: ResultItem[] = Array.isArray(data.results) ? data.results : [];
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-24">
@@ -64,7 +61,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
           </h2>
 
           <div className="mt-4 grid gap-3">
-            {results.map((r: any, idx: number) => (
+            {results.map((r, idx) => (
               <div
                 key={`${r?.label || "result"}-${idx}`}
                 className="flex items-center justify-between rounded-xl bg-[#eaf6f6] px-4 py-4"
