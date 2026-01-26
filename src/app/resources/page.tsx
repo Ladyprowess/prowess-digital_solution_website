@@ -1,7 +1,6 @@
 import Container from "@/components/Container";
 import SectionTitle from "@/components/SectionTitle";
 import ResourcesBrowser from "@/components/resources/ResourcesBrowser";
-import { blogUrl } from "@/content/site";
 import Link from "next/link";
 
 const youtubeUrl = "https://www.youtube.com/@ProwessDigitalSolutions";
@@ -23,14 +22,12 @@ export default function ResourcesPage() { return ( <section className="py-12 sm:
               Articles that help you build structure, make better decisions, and think long-term.
             </p>
             <div className="mt-4">
-              <a
-                href={blogUrl}
-                target="_blank"
-                rel="noreferrer"
+            <Link
+                href="/blog"
                 className="inline-flex items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
               >
-                Visit the Blog
-              </a>
+                View Blog
+              </Link>
             </div>
           </div>
 
