@@ -1,7 +1,9 @@
 import Link from "next/link";
 import BlogSearchBar from "./BlogSearchBar";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 0; // always fetch fresh
+
 
 
 // ✅ ADD THIS HERE (TOP LEVEL)
@@ -57,6 +59,8 @@ async function fetchWpPosts(page: number, perPage: number, q?: string) {
     next: { revalidate },
     headers: { "user-agent": "Mozilla/5.0" },
   });
+  
+  
 
   if (!res.ok) throw new Error(`WP API error: ${res.status}`);
 
@@ -104,9 +108,9 @@ function PageLink({
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams?: { page?: string; q?: string };
-
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
+
   const perPage = 6;
 
   const sp = (await searchParams) ?? {};
