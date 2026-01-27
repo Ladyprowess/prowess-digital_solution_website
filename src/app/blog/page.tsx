@@ -1,7 +1,8 @@
 import Link from "next/link";
 import BlogSearchBar from "./BlogSearchBar";
 
-export const revalidate = 600; // refresh every 10 minutes
+export const revalidate = 0; // always fetch fresh
+
 
 // ✅ ADD THIS HERE (TOP LEVEL)
 const BRAND = "#507c80";
@@ -103,7 +104,8 @@ function PageLink({
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ page?: string; q?: string }>;
+  searchParams?: { page?: string; q?: string };
+
 }) {
   const perPage = 6;
 
