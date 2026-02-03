@@ -47,14 +47,13 @@ export default function ModernHomePage() {
 
             {/* Main Heading */}
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-              Build Your Business on{' '}
-              <span className="text-[#507c80]">Solid Foundations</span>
+            BUILD A BUSINESS{' '}
+              <span className="text-[#507c80]">THAT ACTUALLY WORKS.</span>
             </h1>
 
             {/* Subheading */}
             <p className="mb-10 text-lg leading-relaxed text-slate-600 sm:text-xl">
-            Finally, a place that understands business properly.
-            We help business owners get clear before they take action, so they stop wasting time, money, and energy.
+            We help businesses simplify strategy, implement systems, and equip teams that guarantee results!
             </p>
 
             {/* CTA Buttons */}
@@ -104,7 +103,7 @@ export default function ModernHomePage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Does This Sound Familiar?
+              Tired of Running In Circles?
             </h2>
             <p className="text-lg text-slate-600">
             You are not alone. Many business owners struggle because they are building without clear foundations.
@@ -318,9 +317,9 @@ export default function ModernHomePage() {
 
           <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-[#507c80]/20 bg-gradient-to-br from-[#507c80]/5 to-white p-10 text-center shadow-xl">
             <p className="text-lg leading-relaxed text-slate-700 sm:text-xl">
-              <span className="font-bold text-slate-900">The feeling we aim for:</span>
+              <span className="font-bold text-slate-900">Our Promise:</span>
               <br />
-              <em>This place understands business properly.</em>
+              <em>A partner that understands business properly, not just in theory, but in practice.</em>
             </p>
           </div>
         </div>

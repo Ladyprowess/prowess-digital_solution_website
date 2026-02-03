@@ -170,9 +170,7 @@ export default function AboutPage() {
             <h2 className="h2">Our Mission</h2>
 
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-              To be the first conversation every business owner has; providing
-              clarity, structure, and honest guidance that helps entrepreneurs
-              build sustainable businesses on proper foundations.
+            To be the starting point for business owners seeking clarity, helping them build with structure, confidence, and sustainable foundations that support long-term growth.
             </p>
           </div>
         </Container>
@@ -187,7 +185,7 @@ export default function AboutPage() {
             </h2>
             <p className="text-lg text-slate-600">
               We prefer simple thinking, clear steps, and long-term business
-              decisions.
+              growth.
             </p>
           </div>
 
