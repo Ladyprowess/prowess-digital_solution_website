@@ -215,57 +215,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* MEET OUR TEAM */}
-      <section className="section">
-        <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="h2">Meet Our Team</h2>
-            <p className="mt-3 text-slate-600">
-              Structured thinkers who understand business properly and care about
-              your long-term success.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <TeamCard
-  name="Ngozi Peace Okafor"
-  role="Founder & Chief Clarity Officer"
-  desc="5+ years helping entrepreneurs build sustainable businesses through structured thinking and proper foundations."
-  image="/images/ngozi-peace-okafor.jpg"
-  socials={{
-    x: "https://x.com/ladyprowess",
-    linkedin: "https://www.linkedin.com/in/peace-ngozi-okafor",
-    instagram: "https://instagram.com/ladyprowess_",
-  }}
-/>
-
-<TeamCard
-  name="Tosanmi Gbenebitse Daniel"
-  role="Senior Business Strategist"
-  desc="Specialises in helping first-time founders navigate the complexities of business setup and early-stage growth."
-  image="/images/Tosanmi Gbenebitse-Daniel.jpg"
-  socials={{
-    facebook: "https://facebook.com/username",
-    linkedin: "https://linkedin.com/in/username",
-  }}
-/>
-
-<TeamCard
-  name="Ifunanya Nnadi​"
-  role="Systems & Operations Lead"
-  desc="Transforms chaotic operations into efficient systems that support sustainable business growth."
-  image="/images/ifunanya Nnadi.jpg"
-  socials={{
-    instagram: "https://instagram.com/username",
-    linkedin: "https://linkedin.com/in/username",
-  }}
-/>
-
-
-
-          </div>
-        </Container>
-      </section>
+      
 
       {/* WHY BUSINESS OWNERS TRUST US */}
       <section className="section">
