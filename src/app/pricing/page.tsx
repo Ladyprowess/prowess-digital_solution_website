@@ -3,7 +3,7 @@ import Button from "@/components/Button";
 import SectionTitle from "@/components/SectionTitle";
 import { packages } from "@/content/site";
 
-const CLARITY_LINK = "https://calendar.app.google/QS8oHmyyCtSiRTen9";
+const CLARITY_LINK = "https://calendly.com/lady-prowess/30min";
 
 const comparisonFeatures = [
   { label: "Clarity call", values: [true, true, true, true] },

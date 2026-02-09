@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "@/components/Container";
 import { navPrimary, navMore } from "@/content/site";
 
-const BOOKING_URL = "https://calendar.app.google/QS8oHmyyCtSiRTen9";
+const BOOKING_URL = "https://calendly.com/lady-prowess/30min";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -59,7 +59,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50">
       <div className="border-b border-slate-200 bg-white/95 backdrop-blur">
         <Container>
-          <div className="grid h-20 grid-cols-[220px_1fr_auto] items-center gap-3 lg:grid-cols-[220px_1fr_260px] lg:gap-6">
+          <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(160px,220px)_minmax(0,1fr)_260px] lg:gap-6">
             {/* Logo */}
             <Link href="/" aria-label="Go to homepage" className="flex items-center">
               <Image
@@ -73,7 +73,7 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex items-center justify-center gap-8 whitespace-nowrap">
+            <nav className="hidden lg:flex min-w-0 items-center justify-center gap-6 xl:gap-8 overflow-hidden">
               {primaryLinks.map((item) => {
                 const active = !("external" in item) && isActive(item.href);
                 const base =
