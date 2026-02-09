@@ -59,21 +59,22 @@ export default function Navbar() {
     <header className="sticky top-0 z-50">
       <div className="border-b border-slate-200 bg-white/95 backdrop-blur">
         <Container>
-          <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(160px,220px)_minmax(0,1fr)_260px] lg:gap-6">
+          <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(160px,200px)_1fr_220px] lg:gap-6">
             {/* Logo */}
             <Link href="/" aria-label="Go to homepage" className="flex items-center">
               <Image
                 src="/brand/logo.png"
                 alt="Prowess Digital Solutions"
-                width={220}
-                height={52}
+                width={1900}
+                height={11}
                 priority
                 className="h-12 w-auto object-contain"
               />
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex min-w-0 items-center justify-center gap-6 xl:gap-8 overflow-hidden">
+            <nav className="hidden lg:flex min-w-0 items-center justify-center gap-5 xl:gap-6">
+
               {primaryLinks.map((item) => {
                 const active = !("external" in item) && isActive(item.href);
                 const base =
@@ -148,8 +149,8 @@ export default function Navbar() {
                 href={BOOKING_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex w-[260px] items-center justify-center rounded-xl bg-[#507c80] px-6 py-4 text-base font-semibold text-white shadow-md shadow-slate-200 hover:bg-[#466e71] transition whitespace-nowrap"
-              >
+                className="inline-flex w-[220px] items-center justify-center rounded-xl bg-[#507c80] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-slate-200 hover:bg-[#466e71] transition whitespace-nowrap"
+>
                 Book a Clarity Session
               </a>
             </div>
