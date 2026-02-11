@@ -97,6 +97,7 @@ export default function AboutPage() {
         </Container>
       </section>
 
+     
       {/* THE STORY */}
       <section className="section">
         <Container>
@@ -149,16 +150,17 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <Image
-                src="/images/ngozi-peace-okafor-1.jpg"
-                alt="Ngozi Peace Okafor"
-                width={700}
-                height={700}
-                className="h-auto w-full object-cover"
-                priority
-              />
-            </div>
+            <div className="relative h-[650px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <Image
+    src="/images/ngozi-peace-okafor-2.png"
+    alt="Ngozi Peace Okafor"
+    fill
+    className="object-cover object-center"
+    priority
+  />
+</div>
+
+
           </div>
         </Container>
       </section>
@@ -215,7 +217,29 @@ export default function AboutPage() {
         </div>
       </section>
 
-      
+       {/* FRAMEWORK IMAGE */}
+<section className="section">
+  <Container>
+    <div className="mx-auto max-w-6xl">
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <Image
+          src="/images/prowess-clarity-framework.png"
+          alt="Prowess Digital Solutions framework: Business Clarity & Strategy, Systems & Operations, Training & Mentorship, Structured Business Packages"
+          width={1600}
+          height={900}
+          className="h-auto w-full object-contain"
+          priority
+        />
+      </div>
+
+      <p className="mt-4 text-center text-sm text-slate-500">
+        A simple view of how we guide business owners from confusion to clarity.
+      </p>
+    </div>
+  </Container>
+</section>
+ 
+
 
       {/* WHY BUSINESS OWNERS TRUST US */}
       <section className="section">

@@ -59,8 +59,7 @@ export default function ServicesPage() {
             <h1 className="h1">Business Guidance Services</h1>
 
             <p className="mx-auto mt-5 max-w-3xl text-lg leading-relaxed text-slate-600 sm:text-xl">
-              Comprehensive, structured support for every stage of your business journey. From initial clarity to
-              sustainable growth, we provide the guidance and systems you need to build a business that works.
+            We believe in clarity before action, strong foundations before growth, and simple systems that last.
             </p>
           </div>
         </Container>
@@ -73,7 +72,7 @@ export default function ServicesPage() {
             <h2 className="h2">Our Service Offerings</h2>
 
             <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            We believe in clarity before action, strong foundations before growth, and simple systems that last.
+            Our services are designed to help you organise your business, make confident decisions, and follow a clear plan.
             </p>
           </div>
 
