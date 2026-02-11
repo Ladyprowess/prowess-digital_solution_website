@@ -150,7 +150,8 @@ export type Service = {
     
     {
       id: "systems-workflow",
-      icon: "workflow",
+      icon: "systems",
+
       title: "Systems & Workflow Mapping",
       short: "Clear workflow design to improve efficiency and reduce mistakes.",
       price: "₦300,000 – ₦550,000",
