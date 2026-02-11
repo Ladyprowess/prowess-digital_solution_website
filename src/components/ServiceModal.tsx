@@ -160,7 +160,14 @@ export default function ServiceModalGrid({ services }: { services: Service[] }) 
       >
         {active ? (
           <div className="space-y-5">
-            <p className="text-slate-700">{active.details.description}</p>
+            <div className="text-slate-700">
+  {active.details.description.split("\n\n").map((paragraph, index) => (
+    <p key={index} className="mb-4 last:mb-0">
+      {paragraph}
+    </p>
+  ))}
+</div>
+
 
             <div>
               <h4 className="font-semibold">Who it’s for</h4>

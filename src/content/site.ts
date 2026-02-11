@@ -43,210 +43,245 @@ export type Service = {
       id: "clarity-session",
       icon: "clarity",
       title: "Business Clarity Session",
-      short: "A calm, structured session to help you get clear on what to do next.",
-      price: "₦25,000 – ₦50,000",
+      short: "A structured deep-dive session to organise your ideas and define your next clear steps.",
+      price: "₦60,000 – ₦90,000",
       cta: "Book Session",
       details: {
         description:
-          "This is the first step. We listen, ask the right questions, and help you organise your ideas into a clear direction.",
+          "This session is designed to bring clarity and structure to your business direction.\n\nWe assess your current position, challenges, and decision patterns. Many business owners struggle because they are making reactive decisions without a structured framework.\n\nIn this session, we organise your thinking, identify your core issue, and define what requires immediate attention. You leave with clarity, structured direction, and confident next steps.",
         whoFor: [
-          "First-time founders who do not know where to start",
-          "Business owners who feel stuck or overwhelmed",
-          "People who want clarity before spending more money",
+          "Founders unsure where to begin",
+          "Business owners feeling overwhelmed",
+          "Entrepreneurs needing structured direction before investing further",
         ],
         whatYouGet: [
-          "A clear summary of your current situation",
-          "Key priorities for the next 2–4 weeks",
-          "Practical guidance on what to stop, start, and fix",
-          "A simple action plan you can follow",
+          "90-minute private strategy session",
+          "Clear problem identification",
+          "Structured next-step framework",
+          "Written clarity summary",
         ],
         notes: [
-          "If you need deeper review or implementation, we will recommend the right service after the session.",
+          "This session provides strategic clarity only.",
         ],
       },
     },
+    
     {
       id: "audit-review",
       icon: "audit",
       title: "Business Audit & Review",
-      short: "A structured review of what is working, what is not, and what to fix first.",
-      price: "₦150,000 – ₦300,000",
-      cta: "Make an Enquiry",
+      short: "A detailed structural review of your systems, decisions, and operations.",
+      price: "₦200,000 – ₦350,000",
+      cta: "Book Audit",
       details: {
         description:
-          "We review your business properly—your offer, pricing, operations, customer flow, and current structure.",
+          "This is a comprehensive structural assessment of your business.\n\nWe examine your organisational structure, internal systems, workflow, leadership decisions, and operational efficiency.\n\nThe goal is to uncover hidden weaknesses and structural gaps that may be slowing growth.\n\nYou receive a professional review with clear restructuring recommendations.",
         whoFor: [
-          "Businesses that are active but not seeing results",
-          "Owners who feel their business is disorganised",
-          "Teams struggling with direction and priorities",
+          "Businesses with inconsistent performance",
+          "Founders unsure why growth feels unstable",
+          "Businesses preparing for scale",
         ],
         whatYouGet: [
-          "Audit report with clear findings",
-          "Priority fixes (what matters most)",
-          "Recommendations for structure, tools, and processes",
-          "Next-step plan for stability and growth",
+          "Full structural evaluation",
+          "Gap analysis",
+          "Operational assessment",
+          "Written audit report",
+          "Clear restructuring priorities",
+        ],
+        notes: [
+          "This is advisory and analytical in nature.",
         ],
       },
     },
+    
     {
-      id: "setup-structure",
-      icon: "setup",
-      title: "Business Setup & Structure",
-      short: "Direction, operations, tools, and structure for a business that can run properly.",
-      price: "₦300,000 – ₦800,000",
-      cta: "Discuss This Service",
-      details: {
-        description:
-          "We help you set up the right foundation so you are not guessing your way through business.",
-        whoFor: [
-          "New businesses starting from scratch",
-          "Businesses that need proper structure and processes",
-        ],
-        whatYouGet: [
-          "Clear business direction and focus",
-          "Basic operations structure",
-          "Tools and simple systems to run day-to-day work",
-          "Clear roles and responsibilities (where needed)",
-        ],
-      },
-    },
-    {
-      id: "brand-foundation",
-      icon: "brand",
-      title: "Brand Foundation",
-      short: "Positioning, messaging, and brand clarity that builds trust over time.",
-      price: "₦200,000 – ₦500,000",
-      cta: "Discuss This Service",
-      details: {
-        description:
-          "Marketing is a tool, not the foundation. We build the foundation first: what you do, who you help, and how you communicate clearly.",
-        whoFor: [
-          "Businesses that confuse people with their message",
-          "Founders who want a clear and honest brand",
-        ],
-        whatYouGet: [
-          "Clear positioning statement",
-          "Messaging guide (simple words, clear meaning)",
-          "Offer clarity and customer understanding",
-        ],
-      },
-    },
-    {
-      id: "systems-ops",
-      icon: "systems",
-      title: "Systems & Operations Setup",
-      short: "Workflows, documentation, and tools that make your work easier and more stable.",
-      price: "₦250,000 – ₦600,000",
-      cta: "Discuss This Service",
-      details: {
-        description:
-          "We set up practical systems that reduce confusion and help you work with more control.",
-        whoFor: [
-          "Business owners doing too much by themselves",
-          "Teams struggling with handovers and consistency",
-        ],
-        whatYouGet: [
-          "Simple workflow structure",
-          "Basic documentation (SOPs where needed)",
-          "Tools setup guidance (what to use and how)",
-        ],
-      },
-    },
-    {
-      id: "training-mentorship",
-      icon: "training",
-      title: "Training & Mentorship",
-      short: "Structured support for individuals and teams (group or one-on-one).",
-      price: "Prices vary (based on scope)",
-      cta: "Request Details",
-      details: {
-        description:
-          "We train and mentor people who want to learn structure, systems, and strong business thinking.",
-        whoFor: [
-          "Individuals transitioning into business",
-          "Teams that need structured guidance",
-        ],
-        whatYouGet: [
-          "Group training or one-on-one mentorship",
-          "Practical exercises and templates",
-          "Clear feedback and direction",
-        ],
-      },
-    },
-    {
-      id: "retainer",
-      icon: "support",
-      title: "Ongoing Business Support (Retainer)",
-      short: "Monthly guidance to keep you focused, organised, and improving over time.",
-      price: "₦200,000 – ₦500,000 / month",
-      cta: "Discuss Retainer",
-      details: {
-        description:
-          "For businesses that want long-term support and structured thinking, not random advice.",
-        whoFor: [
-          "Growing businesses that want steady guidance",
-          "Founders who want accountability and clarity",
-        ],
-        whatYouGet: [
-          "Monthly check-ins and guidance",
-          "Priority reviews and decision support",
-          "Support with structure, systems, and execution",
-        ],
-      },
-    },
-    {
-      id: "business-strategy-growth",
+      id: "strategy-action-plan",
       icon: "strategy",
-      title: "Business Strategy & Growth Planning",
-      short: "Clear planning and direction to help your business grow in a steady and realistic way.",
-      price: "₦200,000 – ₦500,000",
-      cta: "Discuss This Service",
+      title: "Strategy & Action Plan",
+      short: "A structured roadmap outlining what to do, when to do it, and why.",
+      price: "₦250,000 – ₦450,000",
+      cta: "Get Strategy Plan",
       details: {
         description:
-          "This service helps you step back and look at your business from a strategy point of view. We work with you to define clear goals, identify growth opportunities, and create a simple plan you can actually follow.",
+          "This service translates clarity into action.\n\nWe create a structured roadmap aligned with your business goals. Each step is prioritised and timed appropriately.\n\nThis prevents scattered effort and ensures focused growth.",
         whoFor: [
-          "Business owners feeling stuck or confused about next steps",
-          "Founders who want to grow but don’t have a clear plan",
-          "Businesses preparing for expansion or new markets",
+          "Businesses ready for structured growth",
+          "Founders preparing for expansion",
+          "Entrepreneurs wanting deliberate progress",
         ],
         whatYouGet: [
-          "Clear business goals and priorities",
-          "Simple growth strategy document",
-          "Market and positioning guidance",
-          "Actionable next steps for growth",
+          "4–8 week structured roadmap",
+          "Clear milestone definition",
+          "Priority framework",
+          "Strategic direction document",
         ],
         notes: [
-          "This is not a marketing service",
-          "Best after a Business Clarity Session",
+          "Implementation support is separate.",
         ],
       },
     },
+    
     {
-      id: "team-structure-operations",
-      icon: "team",
-      title: "Team Structure & Operations Support",
-      short: "Help setting up clear roles, responsibilities, and workflows for your team.",
-      price: "₦250,000 – ₦600,000",
-      cta: "Discuss This Service",
+      id: "business-structure-setup",
+      icon: "structure",
+      title: "Business Structure Setup",
+      short: "Clear organisational structure to support stability and growth.",
+      price: "₦350,000 – ₦600,000",
+      cta: "Set Up Structure",
       details: {
         description:
-          "This service focuses on how work gets done inside your business. We help you organise roles, responsibilities, and processes so your team can work without confusion or constant supervision.",
+          "We design your internal business framework.\n\nThis includes role clarity, reporting structure, responsibility allocation, and decision hierarchy.\n\nA structured business reduces confusion and improves accountability.",
         whoFor: [
-          "Business owners managing small or growing teams",
-          "Founders overwhelmed by daily operations",
-          "Businesses with unclear roles and repeated mistakes",
+          "Growing SMEs",
+          "Founders overwhelmed by responsibility",
+          "Businesses preparing to hire",
         ],
         whatYouGet: [
-          "Clear role and responsibility structure",
-          "Basic workflow and process documentation",
-          "Guidance on delegation and team coordination",
-          "Operational clarity to reduce stress",
+          "Defined organisational framework",
+          "Role clarity mapping",
+          "Responsibility structure",
+          "Operational hierarchy guidance",
         ],
         notes: [
-          "This service does not include recruitment",
-          "Can be adapted for solo founders with freelancers",
+          "Scope determines final pricing.",
         ],
       },
+    },
+    
+    {
+      id: "systems-workflow",
+      icon: "workflow",
+      title: "Systems & Workflow Mapping",
+      short: "Clear workflow design to improve efficiency and reduce mistakes.",
+      price: "₦300,000 – ₦550,000",
+      cta: "Organise Workflow",
+      details: {
+        description:
+          "We examine how tasks move from start to completion inside your business.\n\nUnclear workflows lead to delays and repeated mistakes. We map your processes, simplify the flow, and remove unnecessary bottlenecks.\n\nThis improves efficiency and reduces pressure on leadership.",
+        whoFor: [
+          "Businesses missing deadlines",
+          "Teams repeating operational errors",
+          "Owners overwhelmed by day-to-day processes",
+        ],
+        whatYouGet: [
+          "Workflow diagrams",
+          "Process simplification plan",
+          "Efficiency recommendations",
+          "Clear task movement structure",
+        ],
+        notes: [
+          "Complexity affects final pricing.",
+        ],
+      },
+    },
+    
+    {
+      id: "sop-guidance",
+      icon: "sop",
+      title: "SOP & Process Documentation",
+      short: "Clear written processes that improve consistency and delegation.",
+      price: "₦250,000 – ₦500,000",
+      cta: "Create Processes",
+      details: {
+        description:
+          "Clear processes create stable businesses.\n\nWe help you outline how tasks should be done step by step. This makes delegation easier and reduces dependency on one individual.\n\nWhen processes are written and organised, growth becomes manageable.",
+        whoFor: [
+          "Businesses preparing to delegate",
+          "Founders building teams",
+          "Companies lacking operational consistency",
+        ],
+        whatYouGet: [
+          "Structured process documentation",
+          "Delegation guidelines",
+          "Operational clarity framework",
+          "Written SOP templates",
+        ],
+        notes: [
+          "Scope and number of processes affect pricing.",
+        ],
+      },
+    },
+    
+    {
+      id: "training-sessions",
+      icon: "training",
+      title: "Business Training Sessions",
+      short: "Structured learning to strengthen business understanding and leadership.",
+      price: "₦150,000 – ₦350,000",
+      cta: "Book Training",
+      details: {
+        description:
+          "We deliver structured training focused on clarity, systems, leadership, and decision-making.\n\nThese sessions are practical and tailored to your business stage.\n\nThe goal is improved understanding and stronger internal alignment.",
+        whoFor: [
+          "Small teams",
+          "Founders developing leadership capacity",
+          "Organisations seeking internal improvement",
+        ],
+        whatYouGet: [
+          "Structured training session",
+          "Practical case examples",
+          "Learning materials",
+          "Interactive discussion time",
+        ],
+        notes: [
+          "Custom training topics available.",
+        ],
+      },
+    },
+    
+    {
+      id: "mentorship-accountability",
+      icon: "mentorship",
+      title: "Mentorship & Accountability Programme",
+      short: "Ongoing structured support to maintain stability and growth.",
+      price: "₦300,000 – ₦600,000 (3 months)",
+      cta: "Start Mentorship",
+      details: {
+        description:
+          "This programme provides consistent strategic guidance and accountability.\n\nThrough regular sessions, we review progress, refine decisions, and maintain structured growth.\n\nThe aim is stability, not rushed expansion.",
+        whoFor: [
+          "Founders needing ongoing guidance",
+          "Business owners managing major transitions",
+          "Entrepreneurs building sustainable growth",
+        ],
+        whatYouGet: [
+          "Bi-weekly mentorship sessions",
+          "Progress tracking",
+          "Strategic review discussions",
+          "Decision-making support",
+        ],
+        notes: [
+          "Programme duration can be extended.",
+        ],
+      },
+    },
+    
+    {
+      id: "structured-packages",
+      icon: "package",
+      title: "Structured Support Packages",
+      short: "Comprehensive bundled support designed around your business needs.",
+      price: "₦500,000 – ₦1,200,000",
+      cta: "Explore Packages",
+      details: {
+        description:
+          "For businesses requiring multiple layers of support, our structured packages combine clarity, systems, strategy, and ongoing guidance.\n\nThese packages are built after assessment and aligned with your business goals.\n\nThis ensures deep, organised improvement rather than surface-level fixes.",
+        whoFor: [
+          "Businesses ready for transformation",
+          "Founders seeking guided structural overhaul",
+          "Entrepreneurs planning long-term stability",
+        ],
+        whatYouGet: [
+          "Integrated service bundle",
+          "Defined milestones",
+          "Structured timeline",
+          "Ongoing advisory support",
+        ],
+        notes: [
+          "Final pricing depends on business size and complexity.",
+        ],
+      },
+  
     },        
   ];
   

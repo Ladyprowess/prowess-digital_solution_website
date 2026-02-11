@@ -134,9 +134,9 @@ export default function AboutPage() {
 
               <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <p className="italic leading-relaxed text-slate-700">
-                  “Before I do anything in business, I speak to Prowess Digital Solutions.
+                  “Before I do anything in business, I speak to Prowess Digital Solutions".
                   We&apos;ll save you from countless expensive mistakes and
-                  help you build something sustainable.”
+                  help you build something sustainable.
                 </p>
 
                 <div className="mt-5">
