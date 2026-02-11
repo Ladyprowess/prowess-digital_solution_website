@@ -150,7 +150,7 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="relative h-[650px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
   <Image
     src="/images/ngozi-peace-okafor-2.png"
     alt="Ngozi Peace Okafor"
@@ -159,6 +159,7 @@ export default function AboutPage() {
     priority
   />
 </div>
+
 
 
           </div>
