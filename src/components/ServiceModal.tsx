@@ -12,7 +12,12 @@ function ServiceIcon({ name }: { name?: string }) {
     case "clarity":
       return (
         <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2a7 7 0 00-4 12c.2.1.3.3.3.5V18a2 2 0 002 2h3a2 2 0 002-2v-3.5c0-.2.1-.4.3-.5A7 7 0 0012 2z" />
+          <path
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 2a7 7 0 00-4 12c.2.1.3.3.3.5V18a2 2 0 002 2h3a2 2 0 002-2v-3.5c0-.2.1-.4.3-.5A7 7 0 0012 2z"
+          />
           <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 21h6" />
         </svg>
       );
@@ -21,7 +26,12 @@ function ServiceIcon({ name }: { name?: string }) {
       return (
         <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 17h6M9 13h6M9 9h6" />
-          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V7l-4-4H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          <path
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M7 21h10a2 2 0 002-2V7l-4-4H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+          />
         </svg>
       );
 
@@ -92,16 +102,61 @@ function ServiceIcon({ name }: { name?: string }) {
         </svg>
       );
 
+    // ✅ NEW: workflow
+    case "workflow":
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="3" y="4" width="7" height="6" rx="1" strokeWidth="2" />
+          <rect x="14" y="4" width="7" height="6" rx="1" strokeWidth="2" />
+          <rect x="8.5" y="14" width="7" height="6" rx="1" strokeWidth="2" />
+          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M10 7h4M12 10v4" />
+        </svg>
+      );
+
+    // ✅ NEW: sop
+    case "sop":
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="4" y="3" width="16" height="18" rx="2" strokeWidth="2" />
+          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 11h8M8 15h5" />
+        </svg>
+      );
+
+    // ✅ NEW: mentorship
+    case "mentorship":
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="9" cy="8" r="3" strokeWidth="2" />
+          <circle cx="17" cy="10" r="2.5" strokeWidth="2" />
+          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 20a6 6 0 0112 0" />
+          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M13 20a5 5 0 018 0" />
+        </svg>
+      );
+
+    // ✅ NEW: package
+    case "package":
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 7l9-4 9 4-9 4-9-4z" />
+          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 7v10l9 4 9-4V7" />
+          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 11v10" />
+        </svg>
+      );
+
     default:
       return (
         <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2a7 7 0 00-4 12c.2.1.3.3.3.5V18a2 2 0 002 2h3a2 2 0 002-2v-3.5c0-.2.1-.4.3-.5A7 7 0 0012 2z" />
+          <path
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 2a7 7 0 00-4 12c.2.1.3.3.3.5V18a2 2 0 002 2h3a2 2 0 002-2v-3.5c0-.2.1-.4.3-.5A7 7 0 0012 2z"
+          />
           <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 21h6" />
         </svg>
       );
   }
 }
-
 
 export default function ServiceModalGrid({ services }: { services: Service[] }) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -113,61 +168,50 @@ export default function ServiceModalGrid({ services }: { services: Service[] }) 
 
   return (
     <>
-      {/* CARD GRID (matches screenshot layout) */}
+      {/* CARD GRID */}
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {services.map((s, idx) => {
-          // highlight middle card like the screenshot
-
-          return (
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-
-              {/* icon box */}
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eef6f6]">
-                <div className="text-[var(--steel-teal)]">
+        {services.map((s) => (
+          <div
+            key={s.id}
+            className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          >
+            {/* icon box */}
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eef6f6]">
+              <div className="text-[var(--steel-teal)]">
                 <ServiceIcon name={s.icon} />
-
-                </div>
               </div>
-
-              {/* title */}
-              <h3 className="mt-6 text-2xl font-semibold text-slate-900">
-                {s.title}
-              </h3>
-
-              {/* description */}
-              <p className="mt-3 text-base leading-relaxed text-slate-600">
-                {s.short}
-              </p>
-
-              {/* Learn more */}
-              <button
-                type="button"
-                onClick={() => setActiveId(s.id)}
-                className="mt-6 inline-flex items-center gap-2 font-semibold text-[var(--steel-teal)] hover:opacity-80"
-              >
-                Learn more <span aria-hidden>→</span>
-              </button>
             </div>
-          );
-        })}
+
+            {/* title */}
+            <h3 className="mt-6 text-2xl font-semibold text-slate-900">{s.title}</h3>
+
+            {/* description */}
+            <p className="mt-3 text-base leading-relaxed text-slate-600">{s.short}</p>
+
+            {/* Learn more */}
+            <button
+              type="button"
+              onClick={() => setActiveId(s.id)}
+              className="mt-6 inline-flex items-center gap-2 font-semibold text-[var(--steel-teal)] hover:opacity-80"
+            >
+              Learn more <span aria-hidden>→</span>
+            </button>
+          </div>
+        ))}
       </div>
 
-      {/* MODAL (keep your existing modal content) */}
-      <Modal
-        open={!!active}
-        title={active?.title || ""}
-        onClose={() => setActiveId(null)}
-      >
+      {/* MODAL */}
+      <Modal open={!!active} title={active?.title || ""} onClose={() => setActiveId(null)}>
         {active ? (
           <div className="space-y-5">
+            {/* ✅ Paragraph breaks */}
             <div className="text-slate-700">
-  {active.details.description.split("\n\n").map((paragraph, index) => (
-    <p key={index} className="mb-4 last:mb-0">
-      {paragraph}
-    </p>
-  ))}
-</div>
-
+              {active.details.description.split("\n\n").map((paragraph, index) => (
+                <p key={index} className="mb-4 last:mb-0">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
 
             <div>
               <h4 className="font-semibold">Who it’s for</h4>
@@ -198,7 +242,7 @@ export default function ServiceModalGrid({ services }: { services: Service[] }) 
               </div>
             ) : null}
 
-            {/* Actions inside modal */}
+            {/* Actions */}
             <div className="rounded-lg bg-slate-50 p-4">
               <p className="text-sm text-slate-700">
                 <span className="text-slate-500">Price range: </span>
