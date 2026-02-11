@@ -123,12 +123,12 @@ export type Service = {
     
     {
       id: "business-structure-setup",
-      icon: "structure",
+      icon: "setup",
       title: "Business Structure Setup",
       short: "Clear organisational structure to support stability and growth.",
       price: "₦350,000 – ₦600,000",
       cta: "Set Up Structure",
-      details: {
+      details: { 
         description:
           "We design your internal business framework.\n\nThis includes role clarity, reporting structure, responsibility allocation, and decision hierarchy.\n\nA structured business reduces confusion and improves accountability.",
         whoFor: [
