@@ -342,9 +342,11 @@ export default function CaseStudiesPage() {
                         <h3 className="text-sm font-semibold tracking-widest text-[#6b7d7b]">
                           CHALLENGE
                         </h3>
-                        <p className="mt-3 text-[15px] leading-relaxed text-[#4d5f5e]">
-                          {cs.challenge}
-                        </p>
+                        <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-[#4d5f5e]">
+  {cs.challenge}
+</p>
+
+
                       </div>
 
                       <details className="group mt-6">
@@ -377,9 +379,10 @@ export default function CaseStudiesPage() {
                               <h3 className="text-sm font-semibold tracking-widest text-[#6b7d7b]">
                                 SOLUTION
                               </h3>
-                              <p className="mt-3 text-[15px] leading-relaxed text-[#4d5f5e]">
-                                {cs.solution}
-                              </p>
+                              <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-[#4d5f5e]">
+  {cs.solution}
+</p>
+
                             </div>
                           ) : null}
 
