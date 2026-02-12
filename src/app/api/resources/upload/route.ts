@@ -5,6 +5,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+
+
 export async function POST(req: Request) {
   try {
     // ✅ 1) Read env vars INSIDE the handler (prevents silent prod crashes)
@@ -19,10 +21,9 @@ export async function POST(req: Request) {
         hasServiceKey: !!serviceKey,
       });
 
-      return NextResponse.json(
-        { ok: false, error: "Server misconfigured: missing Supabase env vars." },
-        { status: 500 }
-      );
+      
+
+      return NextResponse.json({ ok: false, where: "upload-route-reached" }, { status: 418 });
     }
 
     // ✅ 2) Create admin client safely
