@@ -5,14 +5,32 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-);
-
 export async function POST(req: Request) {
   try {
+    // ✅ 1) Read env vars INSIDE the handler (prevents silent prod crashes)
+    const supabaseUrl =
+      process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      console.error("Missing Supabase env vars:", {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!serviceKey,
+      });
+
+      return NextResponse.json(
+        { ok: false, error: "Server misconfigured: missing Supabase env vars." },
+        { status: 500 }
+      );
+    }
+
+    // ✅ 2) Create admin client safely
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    // ✅ 3) Parse form data
     const form = await req.formData();
 
     const file = form.get("file") as File | null;
@@ -25,16 +43,29 @@ export async function POST(req: Request) {
     const stage = String(form.get("stage") || "").trim();
 
     const reading_minutes_raw = String(form.get("reading_minutes") || "").trim();
-    const reading_minutes = reading_minutes_raw ? Number(reading_minutes_raw) : null;
+    const reading_minutes = reading_minutes_raw
+      ? Number(reading_minutes_raw)
+      : null;
 
     if (!file || !title || !type || !category || !stage) {
       return NextResponse.json(
-        { ok: false, error: "Missing required fields (file, title, type, category, stage)." },
+        {
+          ok: false,
+          error:
+            "Missing required fields (file, title, type, category, stage).",
+        },
         { status: 400 }
       );
     }
 
-    // 1) Upload resource file
+    if (reading_minutes_raw && Number.isNaN(reading_minutes)) {
+      return NextResponse.json(
+        { ok: false, error: "reading_minutes must be a number." },
+        { status: 400 }
+      );
+    }
+
+    // ✅ 4) Upload resource file to Storage bucket: "resources"
     const safeName = file.name.replace(/\s+/g, "-").toLowerCase();
     const filePath = `${Date.now()}-${safeName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -44,10 +75,14 @@ export async function POST(req: Request) {
       .upload(filePath, buffer, { contentType: file.type, upsert: false });
 
     if (uploadError) {
-      return NextResponse.json({ ok: false, error: uploadError.message }, { status: 500 });
+      console.error("Resource upload error:", uploadError);
+      return NextResponse.json(
+        { ok: false, error: uploadError.message },
+        { status: 500 }
+      );
     }
 
-    // 2) Upload cover (optional)
+    // ✅ 5) Upload cover (optional) to bucket: "resource-covers"
     let cover_path: string | null = null;
 
     if (cover) {
@@ -57,14 +92,21 @@ export async function POST(req: Request) {
 
       const { error: coverUploadError } = await supabaseAdmin.storage
         .from("resource-covers")
-        .upload(cover_path, coverBuffer, { contentType: cover.type, upsert: false });
+        .upload(cover_path, coverBuffer, {
+          contentType: cover.type,
+          upsert: false,
+        });
 
       if (coverUploadError) {
-        return NextResponse.json({ ok: false, error: coverUploadError.message }, { status: 500 });
+        console.error("Cover upload error:", coverUploadError);
+        return NextResponse.json(
+          { ok: false, error: coverUploadError.message },
+          { status: 500 }
+        );
       }
     }
 
-    // 3) Insert into DB
+    // ✅ 6) Insert record into DB table: "resources"
     const { data: inserted, error: dbError } = await supabaseAdmin
       .from("resources")
       .insert([
@@ -89,11 +131,16 @@ export async function POST(req: Request) {
       .single();
 
     if (dbError) {
-      return NextResponse.json({ ok: false, error: dbError.message }, { status: 500 });
+      console.error("DB insert error:", dbError);
+      return NextResponse.json(
+        { ok: false, error: dbError.message },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ ok: true, inserted }, { status: 200 });
   } catch (e: any) {
+    console.error("Upload route crashed:", e);
     return NextResponse.json(
       { ok: false, error: e?.message || "Server error" },
       { status: 500 }
