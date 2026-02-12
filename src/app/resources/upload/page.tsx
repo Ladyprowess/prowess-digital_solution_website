@@ -1,6 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const categories = [
   "Getting Started",
@@ -56,41 +62,73 @@ export default function ResourceUploadPage() {
   async function onUpload() {
     if (!file) return alert("Please choose the resource file.");
     if (!title.trim()) return alert("Title is required.");
-
+  
     setLoading(true);
-
+  
     try {
+      // 1) Upload main file directly to Supabase
+      const safeName = file.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9.\-_]/g, "");
+  
+      const filePath = `${Date.now()}-${safeName}`;
+  
+      const { error: fileError } = await supabase.storage
+        .from("resources")
+        .upload(filePath, file, { contentType: file.type, upsert: false });
+  
+      if (fileError) throw new Error(fileError.message);
+  
+      // 2) Upload cover directly to Supabase (optional)
+      let coverPath = "";
+  
+      if (cover) {
+        const coverSafe = cover.name
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9.\-_]/g, "");
+  
+        coverPath = `${Date.now()}-${coverSafe}`;
+  
+        const { error: coverError } = await supabase.storage
+          .from("resource-covers")
+          .upload(coverPath, cover, { contentType: cover.type, upsert: false });
+  
+        if (coverError) throw new Error(coverError.message);
+      }
+  
+      // 3) Send ONLY metadata to your existing API route (small request)
       const form = new FormData();
-
-      // resource file
-      form.append("file", file);
-
-      // cover image (optional)
-      if (cover) form.append("cover", cover);
-
-      // fields
+  
       form.append("title", title.trim());
       form.append("description", description.trim());
       form.append("type", type);
       form.append("category", category);
       form.append("stage", stage);
-
-      if (readingMinutes.trim()) form.append("reading_minutes", readingMinutes.trim());
-
+  
+      if (readingMinutes.trim()) {
+        form.append("reading_minutes", readingMinutes.trim());
+      }
+  
+      form.append("file_path", filePath);
+      form.append("file_name", file.name);
+      form.append("file_size", String(file.size));
+      form.append("file_type", file.type || "application/octet-stream");
+      form.append("cover_path", coverPath);
+  
       const res = await fetch("/api/resources/upload", {
         method: "POST",
         body: form,
       });
-
+  
       const data = await res.json().catch(() => ({}));
-
-      if (!data?.ok) {
-        throw new Error(data?.error || "Upload failed");
-      }
-
+  
+      if (!data?.ok) throw new Error(data?.error || "Upload failed");
+  
       alert("Uploaded successfully ✅");
-
-      // reset
+  
+      // reset (same as your current reset)
       setTitle("");
       setDescription("");
       setType(types[0]);
