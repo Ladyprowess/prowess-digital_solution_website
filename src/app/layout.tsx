@@ -5,21 +5,59 @@ import Footer from "@/components/Footer";
 import { brand } from "@/content/site";
 import Script from "next/script";
 
+const SITE_URL = "https://prowessdigitalsolutions.com";
+
+// ✅ SEO + Social metadata (site-wide)
 export const metadata: Metadata = {
   title: {
     default: `${brand.name} | Business clarity, structure, and guidance`,
     template: `%s | ${brand.name}`,
   },
+
   description:
-    "Prowess Digital Solutions helps people start, organise, and run businesses properly.",
-  metadataBase: new URL("https://prowessdigitalsolutions.com"),
+    "Prowess Digital Solutions provides structured guidance to help business owners gain clarity, build strong business systems, and run organised, sustainable businesses.",
+
+  metadataBase: new URL(SITE_URL),
+
+  // ✅ Canonical (helps Google pick the correct URL)
+  alternates: {
+    canonical: `${SITE_URL}/`,
+  },
+
+  // ✅ Indexing rules
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+
+  // ✅ Small extra signals (safe + aligned)
+  applicationName: brand.name,
+  category: "Business consulting",
+  keywords: [
+    "business clarity",
+    "business structure",
+    "business guidance",
+    "business audit",
+    "business systems",
+    "business mentorship",
+    "small business support",
+    "business consulting Nigeria",
+    "business operations guidance",
+  ],
 
   openGraph: {
     title: `${brand.name}`,
     description:
       "Prowess Digital Solutions helps business owners gain clarity, build structure, and implement systems so they can run organised, sustainable businesses with confidence.",
     type: "website",
-    url: "https://prowessdigitalsolutions.com",
+    url: SITE_URL,
     siteName: brand.name,
     images: [
       {
@@ -41,16 +79,22 @@ export const metadata: Metadata = {
 };
 
 // ✅ 1) SITE-WIDE SCHEMA (Organisation + Website)
+// Using ProfessionalService fits your positioning better than generic Organization.
 const orgSchema = {
   "@context": "https://schema.org",
-  "@type": "Organization",
+  "@type": "ProfessionalService",
   name: brand.name,
-  url: "https://prowessdigitalsolutions.com",
-  logo: "https://prowessdigitalsolutions.com/og-image.png",
+  url: SITE_URL,
+  logo: `${SITE_URL}/og-image.png`,
+  image: `${SITE_URL}/og-image.png`,
   description:
-    "Prowess Digital Solutions helps business owners gain clarity, build structure, and implement systems so they can run organised, sustainable businesses with confidence.",
+    "Prowess Digital Solutions provides clear strategies, structured processes, and practical guidance to help business owners stay organised, improve operations, and achieve long-term success.",
+  areaServed: {
+    "@type": "Country",
+    name: "Nigeria",
+  },
   sameAs: [
-    // ✅ Replace with your real links OR remove this array entirely
+    // ✅ Keep only links that are real and active
     "https://www.instagram.com/prowessdigitalsolutions",
     "https://twitter.com/prowessDS",
     "https://www.linkedin.com/company/prowess-digital-solutions",
@@ -61,14 +105,14 @@ const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: brand.name,
-  url: "https://prowessdigitalsolutions.com",
+  url: SITE_URL,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-GB">
       <body>
-        {/* ✅ 2) Inject JSON-LD */}
+        {/* ✅ Inject JSON-LD */}
         <Script
           id="schema-org"
           type="application/ld+json"
