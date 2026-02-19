@@ -1,6 +1,22 @@
 import puppeteer from "puppeteer";
 import { NextResponse } from "next/server";
 
+type ReportSection = {
+  heading: string;
+  paragraphs: string[];
+};
+
+type Result = {
+  reportId?: string;
+  generatedAt?: string;
+  healthScore: number;
+  healthLabel: "Strong" | "Fair" | "Needs attention" | "Critical";
+  scoreNote: string;
+  reportTitle: string;
+  sections: ReportSection[];
+  disclaimer: string;
+};
+
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
@@ -103,12 +119,12 @@ export async function POST(req: Request) {
     
     <p>${result.scoreNote}</p>
     
-    ${result.sections
+    ${(result.sections as ReportSection[])
       .map(
-        (sec) => `
-      <h2>${sec.heading}</h2>
-      ${sec.paragraphs.map((p) => `<p>${p}</p>`).join("")}
-    `
+        (sec: ReportSection) => `
+          <h2>${sec.heading}</h2>
+          ${sec.paragraphs.map((p: string) => `<p>${p}</p>`).join("")}
+        `
       )
       .join("")}
     
