@@ -1,6 +1,7 @@
 import Container from "@/components/Container";
 import SectionTitle from "@/components/SectionTitle";
 import ResourcesBrowser from "@/components/resources/ResourcesBrowser";
+import BusinessHelperTool from "@/components/resources/BusinessHelperTool";
 import Link from "next/link";
 
 const youtubeUrl = "https://www.youtube.com/@ProwessDigitalSolutions";
@@ -65,6 +66,12 @@ export default function ResourcesPage() { return ( <section className="py-12 sm:
             </div>
           </div>
         </div>
+
+        {/* ✅ NEW: BUSINESS HELPER TOOL */}
+        <div className="mt-10">
+          <BusinessHelperTool />
+        </div>
+
 
         {/* RESOURCE BROWSER */}
         <div className="mt-10">
