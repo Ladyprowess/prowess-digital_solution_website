@@ -301,7 +301,7 @@ export default function BusinessHelperTool() {
         <button
           onClick={onGenerate}
           disabled={!canGenerate || loading}
-          className="inline-flex items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Generating..." : "Generate report"}
         </button>
@@ -310,10 +310,10 @@ export default function BusinessHelperTool() {
       {/* REPORT */}
       {result && (
         <div className="mt-10 rounded-2xl bg-slate-50 p-6">
-          <div className="mx-auto max-w-4xl rounded-xl bg-white px-10 py-12 shadow-sm ring-1 ring-slate-200">
+        <div className="mx-auto w-full max-w-4xl rounded-xl bg-white px-4 py-6 sm:px-8 sm:py-10 shadow-sm ring-1 ring-slate-200">
             {/* LETTERHEAD + SCORE CIRCLE */}
-            <div className="flex items-start justify-between gap-6 border-b border-slate-200 pb-6">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between border-b border-slate-200 pb-6">
+            <div className="flex items-start gap-4">
                 <img
                   src="/brand/prowess-logo.png"
                   alt="Prowess Digital Solutions"
@@ -321,7 +321,7 @@ export default function BusinessHelperTool() {
                 />
 
                 <div>
-                  <h1 className="text-xl font-extrabold text-slate-900">
+                <h1 className="text-lg sm:text-xl font-extrabold text-slate-900">
                     Prowess Digital Solutions
                   </h1>
                   <p className="text-sm font-medium text-slate-600">
@@ -334,7 +334,11 @@ export default function BusinessHelperTool() {
               </div>
 
               {/* ✅ progress score circle */}
-              <ScoreCircle score={result.healthScore} />
+              <div className="self-start sm:self-auto">
+  <div className="scale-90 sm:scale-100 origin-top-right">
+    <ScoreCircle score={result.healthScore} />
+  </div>
+</div>
             </div>
 
             {/* TITLE */}
@@ -353,7 +357,7 @@ export default function BusinessHelperTool() {
               <button
                 onClick={onDownloadPdf}
                 disabled={downloading}
-                className="inline-flex items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {downloading ? "Preparing PDF..." : "Download PDF report"}
               </button>
