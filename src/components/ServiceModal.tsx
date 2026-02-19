@@ -191,20 +191,23 @@ export default function ServiceModalGrid({ services }: { services: Service[] }) 
             <p className="mt-3 text-base leading-relaxed text-slate-600">{s.short}</p>
 
             {/* Learn more */}
-            <Link
-  href={`/services/${s.slug}`}
-  className="mt-6 inline-flex items-center gap-2 font-semibold text-[var(--steel-teal)] hover:opacity-80"
->
-  Learn more <span aria-hidden>→</span>
-</Link>
+            <div className="mt-6 flex items-center gap-4">
+  <Link
+    href={`/services/${s.slug}`}
+    className="inline-flex items-center gap-2 font-semibold text-[var(--steel-teal)] hover:opacity-80"
+  >
+    Learn more <span aria-hidden>→</span>
+  </Link>
 
-<button
-  type="button"
-  onClick={() => setActiveId(s.id)}
-  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:opacity-80"
->
-  Quick view
-</button>
+  <button
+    type="button"
+    onClick={() => setActiveId(s.id)}
+    className="text-sm font-semibold text-slate-500 underline-offset-4 hover:text-slate-700 hover:underline"
+  >
+    Quick view
+  </button>
+</div>
+
 
           </div>
         ))}
