@@ -22,6 +22,7 @@ export const navMore = [
 
 export type Service = {
   id: string;
+  slug: string;
   title: string;
   short: string;
   price: string;
@@ -51,6 +52,7 @@ export type Service = {
 export const services: Service[] = [
   {
     id: "clarity-session",
+    slug: "business-clarity-session",
     icon: "clarity",
     title: "Business Clarity Session",
     short: "A structured deep-dive session to organise your ideas and define your next clear steps.",
@@ -76,6 +78,7 @@ export const services: Service[] = [
 
   {
     id: "audit-review",
+    slug: "business-audit-review",
     icon: "audit",
     title: "Business Audit & Review",
     short: "A detailed structural review of your systems, decisions, and operations.",
@@ -102,6 +105,7 @@ export const services: Service[] = [
 
   {
     id: "strategy-action-plan",
+    slug: "strategy-action-plan",
     icon: "strategy",
     title: "Strategy & Action Plan",
     short: "A structured roadmap outlining what to do, when to do it, and why.",
@@ -127,6 +131,7 @@ export const services: Service[] = [
 
   {
     id: "business-structure-setup",
+    slug: "business-structure-setup",
     icon: "setup",
     title: "Business Structure Setup",
     short: "Clear organisational structure to support stability and growth.",
@@ -152,6 +157,7 @@ export const services: Service[] = [
 
   {
     id: "systems-workflow",
+    slug: "systems-workflow-mapping",
     icon: "workflow",
     title: "Systems & Workflow Mapping",
     short: "Clear workflow design to improve efficiency and reduce mistakes.",
@@ -177,6 +183,7 @@ export const services: Service[] = [
 
   {
     id: "sop-guidance",
+    slug: "sop-process-documentation",
     icon: "sop",
     title: "SOP & Process Documentation",
     short: "Clear written processes that improve consistency and delegation.",
@@ -202,6 +209,7 @@ export const services: Service[] = [
 
   {
     id: "training-sessions",
+    slug: "business-training-sessions",
     icon: "training",
     title: "Business Training Sessions",
     short: "Structured learning to strengthen business understanding and leadership.",
@@ -227,6 +235,7 @@ export const services: Service[] = [
 
   {
     id: "mentorship-accountability",
+    slug: "mentorship-accountability-programme",
     icon: "mentorship",
     title: "Mentorship & Accountability Programme",
     short: "Ongoing structured support to maintain stability and growth.",
@@ -252,6 +261,7 @@ export const services: Service[] = [
 
   {
     id: "structured-packages",
+    slug: "structured-support-packages",
     icon: "package",
     title: "Structured Support Packages",
     short: "Comprehensive bundled support designed around your business needs.",

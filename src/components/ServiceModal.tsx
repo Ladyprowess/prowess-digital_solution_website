@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import Modal from "@/components/Modal";
 import Button from "@/components/Button";
 import type { Service } from "@/content/site";
+import Link from "next/link";
+
 
 function ServiceIcon({ name }: { name?: string }) {
   const cls = "h-6 w-6 text-[var(--steel-teal)]";
@@ -189,13 +191,21 @@ export default function ServiceModalGrid({ services }: { services: Service[] }) 
             <p className="mt-3 text-base leading-relaxed text-slate-600">{s.short}</p>
 
             {/* Learn more */}
-            <button
-              type="button"
-              onClick={() => setActiveId(s.id)}
-              className="mt-6 inline-flex items-center gap-2 font-semibold text-[var(--steel-teal)] hover:opacity-80"
-            >
-              Learn more <span aria-hidden>→</span>
-            </button>
+            <Link
+  href={`/services/${s.slug}`}
+  className="mt-6 inline-flex items-center gap-2 font-semibold text-[var(--steel-teal)] hover:opacity-80"
+>
+  Learn more <span aria-hidden>→</span>
+</Link>
+
+<button
+  type="button"
+  onClick={() => setActiveId(s.id)}
+  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:opacity-80"
+>
+  Quick view
+</button>
+
           </div>
         ))}
       </div>

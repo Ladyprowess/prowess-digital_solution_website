@@ -1,9 +1,10 @@
 import { MetadataRoute } from "next";
+import { services } from "@/content/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://prowessdigitalsolutions.com";
 
-  return [
+  const staticPages: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
       lastModified: new Date("2026-02-19"),
@@ -65,4 +66,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.4,
     },
   ];
+
+  // ✅ Dynamic service pages
+  const servicePages: MetadataRoute.Sitemap = services.map((service) => ({
+    url: `${baseUrl}/services/${service.slug}`,
+    lastModified: new Date("2026-02-19"),
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }));
+
+  return [...staticPages, ...servicePages];
 }
