@@ -14,6 +14,8 @@ const PROBLEMS = [
   "Team/staff problems",
   "Other",
 ];
+const FIELD_CLASS =
+  "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[16px] leading-6 outline-none focus:outline-none focus:ring-2 focus:ring-[var(--steel-teal)] focus:ring-offset-0";
 
 type ReportSection = {
   heading: string;
@@ -249,20 +251,20 @@ export default function BusinessHelperTool() {
         <div>
           <label className="text-sm font-medium text-slate-700">Business type</label>
           <input
-            value={businessType}
-            onChange={(e) => setBusinessType(e.target.value)}
-            placeholder="e.g., Food business, Fashion brand, Salon, Coaching"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[var(--steel-teal)]"
-          />
+  value={businessType}
+  onChange={(e) => setBusinessType(e.target.value)}
+  placeholder="e.g., Food business, Fashion brand, Salon, Coaching"
+  className={FIELD_CLASS}
+/>
         </div>
 
         <div>
           <label className="text-sm font-medium text-slate-700">Main problem</label>
           <select
-            value={problem}
-            onChange={(e) => setProblem(e.target.value)}
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[var(--steel-teal)]"
-          >
+  value={problem}
+  onChange={(e) => setProblem(e.target.value)}
+  className={FIELD_CLASS}
+>
             {PROBLEMS.map((p) => (
               <option key={p} value={p}>
                 {p}
@@ -274,12 +276,12 @@ export default function BusinessHelperTool() {
         <div className="md:col-span-2">
           <label className="text-sm font-medium text-slate-700">Tell us what’s happening</label>
           <textarea
-            value={details}
-            onChange={(e) => setDetails(e.target.value)}
-            placeholder="Explain the situation clearly: what you tried, what happened, and what you want to change."
-            rows={5}
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[var(--steel-teal)]"
-          />
+  value={details}
+  onChange={(e) => setDetails(e.target.value)}
+  placeholder="Explain the situation clearly: what you tried, what happened, and what you want to change."
+  rows={5}
+  className={FIELD_CLASS}
+/>
         </div>
       </div>
 
