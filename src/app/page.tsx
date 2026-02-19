@@ -325,44 +325,57 @@ export default function ModernHomePage() {
         </div>
       </section>
 
-      {/* CTA SECTION */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#507c80] to-[#3d5f62] py-24 sm:py-32">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-        </div>
 
-        <div className="relative mx-auto max-w-5xl px-6 text-center lg:px-8">
-          <h2 className="mb-6 text-3xl font-bold text-white sm:text-5xl lg:text-6xl">
-            Ready to Build Your Business Properly?
-          </h2>
-          <p className="mx-auto mb-12 max-w-3xl text-lg text-white/90 sm:text-xl">
-          Start with a Business Clarity Session. No pressure, no long commitment. Just an honest conversation about what your business truly needs.
-          </p>
-          
-          <button className="group mb-16 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-10 py-5 text-lg font-semibold text-[#507c80] shadow-2xl transition hover:scale-105 hover:shadow-white/25">
-            Book Your Clarity Session
-            <svg className="h-6 w-6 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#507c80] to-[#3d5f62] py-24 sm:py-32">
+  <div className="pointer-events-none absolute inset-0">
+    <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+    <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+  </div>
+
+  <div className="relative mx-auto max-w-6xl px-6 lg:px-8">
+    <div className="mx-auto max-w-3xl text-center">
+
+      {/* Small badge */}
+      <div className="mx-auto inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 ring-1 ring-white/15">
+        Free Tool
+      </div>
+
+      {/* Title */}
+      <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-5xl">
+        Try the Business Helper
+      </h2>
+
+      {/* Description */}
+      <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/90 sm:text-lg">
+        Share what is happening in your business and get a structured diagnostic report with a Business Health Score and next steps.
+      </p>
+
+      {/* CTA button */}
+      <div className="mt-10 flex justify-center">
+        <Link href="/resources#business-helper">
+          <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#507c80] shadow-2xl transition hover:scale-[1.02] hover:bg-white/95">
+            Open Business Helper
+            <svg
+              className="h-5 w-5 transition group-hover:translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
           </button>
+        </Link>
+      </div>
 
-          <div className="grid gap-12 sm:grid-cols-3">
-            <div className="text-center">
-              <div className="mb-3 text-3xl font-semibold text-white sm:text-4xl">₦25,000</div>
-              <div className="text-base text-white/80 sm:text-lg">Investment</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-3 text-3xl font-semibold text-white sm:text-4xl">30-60 mins</div>
-              <div className="text-base text-white/80 sm:text-lg">Session</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-3 text-3xl font-semibold text-white sm:text-4xl">100%</div>
-              <div className="text-base text-white/80 sm:text-lg">Result</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Small helper text */}
+      <p className="mt-4 text-xs text-white/75">
+        No pressure. Just clarity.
+      </p>
+
+    </div>
+  </div>
+</section>
+
     </div>
   );
 }

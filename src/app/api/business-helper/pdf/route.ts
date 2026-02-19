@@ -8,8 +8,11 @@ import {
   StyleSheet,
   Svg,
   Circle,
+  Path,
   pdf,
 } from "@react-pdf/renderer";
+
+
 
 type ReportSection = {
   heading: string;
@@ -159,11 +162,32 @@ const styles = StyleSheet.create({
   },
 });
 
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180.0;
+  return {
+    x: cx + r * Math.cos(rad),
+    y: cy + r * Math.sin(rad),
+  };
+}
+
+function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
+  const start = polarToCartesian(cx, cy, r, endAngle);
+  const end = polarToCartesian(cx, cy, r, startAngle);
+
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
+}
+
 function ScoreRing(score: number) {
   const normalized = clamp(score, 0, 100);
+
+  const cx = 40;
+  const cy = 40;
   const r = 28;
-  const c = 2 * Math.PI * r;
-  const dashOffset = c - (normalized / 100) * c;
+
+  const startAngle = 0; // we already rotate via polar conversion (-90 inside polarToCartesian)
+  const endAngle = (normalized / 100) * 360;
 
   return el(
     View,
@@ -171,27 +195,40 @@ function ScoreRing(score: number) {
     el(
       Svg,
       { width: 80, height: 80, viewBox: "0 0 80 80" },
+
+      // Background track circle
       el(Circle, {
-        cx: "40",
-        cy: "40",
-        r,
+        cx: String(cx),
+        cy: String(cy),
+        r: String(r),
         stroke: "#e5e7eb",
         strokeWidth: 8,
         fill: "none",
       }),
-      el(Circle, {
-        cx: "40",
-        cy: "40",
-        r,
-        stroke: BRAND,
-        strokeWidth: 8,
-        fill: "none",
-        strokeDasharray: `${c} ${c}`,
-        strokeDashoffset: dashOffset,
-        strokeLinecap: "round",
-        transform: "rotate(-90 40 40)",
-      })
+
+      // Progress ring:
+      // If 100%, draw full circle in BRAND (because a single arc can't draw a perfect 360°)
+      normalized >= 100
+        ? el(Circle, {
+            cx: String(cx),
+            cy: String(cy),
+            r: String(r),
+            stroke: BRAND,
+            strokeWidth: 8,
+            fill: "none",
+          })
+        : normalized <= 0
+        ? null
+        : el(Path, {
+            d: describeArc(cx, cy, r, startAngle, endAngle),
+            stroke: BRAND,
+            strokeWidth: 8,
+            fill: "none",
+            strokeLinecap: "round",
+          })
     ),
+
+    // Centre text
     el(
       View,
       { style: styles.scoreCenter },
@@ -200,6 +237,8 @@ function ScoreRing(score: number) {
     )
   );
 }
+
+
 
 function ReportPDF(result: Result) {
   const generatedAt = result.generatedAt

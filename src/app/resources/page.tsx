@@ -67,10 +67,36 @@ export default function ResourcesPage() { return ( <section className="py-12 sm:
           </div>
         </div>
 
-         {/* ✅ NEW: BUSINESS HELPER TOOL */}
-         <div className="mt-10">
-          <BusinessHelperTool />
-        </div>
+       {/* BUSINESS HELPER SECTION */}
+<section
+  id="business-helper"
+  className="mt-24 rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 sm:p-12"
+>
+  {/* Header */}
+  <div className="max-w-2xl">
+    <div className="inline-flex items-center gap-2 rounded-full bg-[#507c80]/10 px-3 py-1 text-xs font-semibold text-[#507c80]">
+      Free Resource
+    </div>
+
+    <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+      Business Helper
+    </h2>
+
+    <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">
+      Share what is happening in your business and get a simple diagnostic report.
+    </p>
+  </div>
+
+  {/* Tool */}
+  <div className="mt-10">
+    <BusinessHelperTool />
+  </div>
+
+  {/* Small note */}
+  <p className="mt-6 text-sm text-slate-500">
+    This tool provides guidance only. For personalised support, book a clarity session.
+  </p>
+</section>
 
 
         {/* RESOURCE BROWSER */}
