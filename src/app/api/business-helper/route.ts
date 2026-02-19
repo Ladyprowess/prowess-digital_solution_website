@@ -12,17 +12,19 @@ type ReportSection = {
 };
 
 type Result = {
-    reportId: string;
-    generatedAt: string;
-  
-    healthScore: number;
-    healthLabel: "Strong" | "Fair" | "Needs attention" | "Critical";
-    scoreNote: string;
-  
-    reportTitle: string;
-    sections: ReportSection[];
-    disclaimer: string;
-  };
+  reportId: string;
+  generatedAt: string;
+
+  healthScore: number;
+  healthLabel: "Strong" | "Fair" | "Needs attention" | "Critical";
+  scoreNote: string;
+
+  detectedAreas: string[]; // ✅ add this
+
+  reportTitle: string;
+  sections: ReportSection[];
+  disclaimer: string;
+};
 
 function normalise(s: string) {
   return (s || "").toLowerCase();
@@ -315,12 +317,18 @@ const generatedAt = new Date().toISOString();
   });
 
   return {
+    reportId, // ✅ add
+    generatedAt, // ✅ add
+
     healthScore: score,
     healthLabel: label,
     scoreNote,
-    detectedAreas: topAreas,
+
+    detectedAreas: topAreas, // ✅ add
+
     reportTitle,
     sections,
+
     disclaimer:
       "This report provides general guidance and does not replace professional legal, tax, or financial advice. For tailored support, book a consultation with Prowess Digital Solutions.",
   };
