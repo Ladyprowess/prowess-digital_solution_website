@@ -198,21 +198,19 @@ export default async function BlogPage({
                 {excerpt}
               </p>
 
-              <a
-                href={p.URL}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: "inline-block",
-                  marginTop: 10,
-                  fontWeight: 700,
-                  textDecoration: "none",
-                  color: BRAND,
-                }}
-                
-              >
-                Read Blog →
-              </a>
+              <Link
+  href={`/blog/${new URL(p.URL).pathname.split("/").filter(Boolean).pop()}`}
+  style={{
+    display: "inline-block",
+    marginTop: 10,
+    fontWeight: 700,
+    textDecoration: "none",
+    color: BRAND,
+  }}
+>
+  Read Blog →
+</Link>
+
             </article>
           );
         })}
