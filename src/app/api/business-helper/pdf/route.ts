@@ -6,9 +6,9 @@ import {
   Text,
   View,
   StyleSheet,
-  pdf,
   Svg,
   Circle,
+  pdf,
 } from "@react-pdf/renderer";
 
 type ReportSection = {
@@ -30,6 +30,7 @@ type Result = {
 export const runtime = "nodejs";
 
 const BRAND = "#507c80";
+const el = React.createElement;
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -37,52 +38,6 @@ function clamp(n: number, min: number, max: number) {
 
 function safeText(s: any) {
   return String(s ?? "").replace(/\s+/g, " ").trim();
-}
-
-/**
- * Progress ring in PDF using SVG circles:
- * - background circle (grey)
- * - progress arc circle (brand) with strokeDasharray/strokeDashoffset
- */
-function ScoreRing({ score }: { score: number }) {
-  const normalized = clamp(score, 0, 100);
-
-  const r = 28;
-  const c = 2 * Math.PI * r;
-  const dashOffset = c - (normalized / 100) * c;
-
-  return (
-    <View style={styles.scoreWrap}>
-      <Svg width={80} height={80} viewBox="0 0 80 80">
-        <Circle
-          cx="40"
-          cy="40"
-          r={r}
-          stroke="#e5e7eb"
-          strokeWidth={8}
-          fill="none"
-        />
-        <Circle
-          cx="40"
-          cy="40"
-          r={r}
-          stroke={BRAND}
-          strokeWidth={8}
-          fill="none"
-          strokeDasharray={`${c} ${c}`}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
-          // rotate -90deg around centre so it starts at top
-          transform="rotate(-90 40 40)"
-        />
-      </Svg>
-
-      <View style={styles.scoreCenter}>
-        <Text style={styles.scoreValue}>{Math.round(normalized)}%</Text>
-        <Text style={styles.scoreLabel}>Health Score</Text>
-      </View>
-    </View>
-  );
 }
 
 const styles = StyleSheet.create({
@@ -155,21 +110,6 @@ const styles = StyleSheet.create({
     textAlign: "justify",
   },
 
-  // bullet style (only if you ever pass bullet lines)
-  bulletRow: {
-    flexDirection: "row",
-    gap: 6,
-    marginBottom: 6,
-  },
-  bulletDot: {
-    width: 10,
-    textAlign: "center",
-  },
-  bulletText: {
-    flex: 1,
-    textAlign: "justify",
-  },
-
   footerDivider: {
     marginTop: 18,
     paddingTop: 12,
@@ -219,67 +159,118 @@ const styles = StyleSheet.create({
   },
 });
 
-function ReportPDF({ result }: { result: Result }) {
+function ScoreRing(score: number) {
+  const normalized = clamp(score, 0, 100);
+  const r = 28;
+  const c = 2 * Math.PI * r;
+  const dashOffset = c - (normalized / 100) * c;
+
+  return el(
+    View,
+    { style: styles.scoreWrap },
+    el(
+      Svg,
+      { width: 80, height: 80, viewBox: "0 0 80 80" },
+      el(Circle, {
+        cx: "40",
+        cy: "40",
+        r,
+        stroke: "#e5e7eb",
+        strokeWidth: 8,
+        fill: "none",
+      }),
+      el(Circle, {
+        cx: "40",
+        cy: "40",
+        r,
+        stroke: BRAND,
+        strokeWidth: 8,
+        fill: "none",
+        strokeDasharray: `${c} ${c}`,
+        strokeDashoffset: dashOffset,
+        strokeLinecap: "round",
+        transform: "rotate(-90 40 40)",
+      })
+    ),
+    el(
+      View,
+      { style: styles.scoreCenter },
+      el(Text, { style: styles.scoreValue }, `${Math.round(normalized)}%`),
+      el(Text, { style: styles.scoreLabel }, "Health Score")
+    )
+  );
+}
+
+function ReportPDF(result: Result) {
   const generatedAt = result.generatedAt
     ? new Date(result.generatedAt).toLocaleString()
     : new Date().toLocaleString();
 
-  return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <View style={styles.brandBlock}>
-            <Text style={styles.brandName}>Prowess Digital Solutions</Text>
-            <Text style={styles.brandSub}>Business Diagnostic Report</Text>
-            <Text style={styles.meta}>Generated on {generatedAt}</Text>
-          </View>
+  const sectionNodes = (result.sections || []).map((sec, idx) => {
+    const paras = (sec.paragraphs || []).map((p, pIdx) =>
+      el(Text, { key: `${idx}-${pIdx}`, style: styles.paragraph }, safeText(p))
+    );
 
-          <ScoreRing score={result.healthScore} />
-        </View>
+    return el(
+      View,
+      { key: `${sec.heading}-${idx}`, style: styles.section },
+      el(Text, { style: styles.h2 }, safeText(sec.heading)),
+      ...paras
+    );
+  });
 
-        {/* Title + Score note */}
-        <Text style={styles.title}>{safeText(result.reportTitle)}</Text>
-        <Text style={styles.scoreNote}>{safeText(result.scoreNote)}</Text>
+  return el(
+    Document,
+    null,
+    el(
+      Page,
+      { size: "A4", style: styles.page },
+      // Header
+      el(
+        View,
+        { style: styles.headerRow },
+        el(
+          View,
+          { style: styles.brandBlock },
+          el(Text, { style: styles.brandName }, "Prowess Digital Solutions"),
+          el(Text, { style: styles.brandSub }, "Business Diagnostic Report"),
+          el(Text, { style: styles.meta }, `Generated on ${generatedAt}`)
+        ),
+        ScoreRing(result.healthScore)
+      ),
 
-        {/* Sections */}
-        {result.sections.map((sec, idx) => (
-          <View key={`${sec.heading}-${idx}`} style={styles.section}>
-            <Text style={styles.h2}>{safeText(sec.heading)}</Text>
+      // Title + note
+      el(Text, { style: styles.title }, safeText(result.reportTitle)),
+      el(Text, { style: styles.scoreNote }, safeText(result.scoreNote)),
 
-            {sec.paragraphs.map((p, pIdx) => (
-              <Text key={`${idx}-${pIdx}`} style={styles.paragraph}>
-                {safeText(p)}
-              </Text>
-            ))}
-          </View>
-        ))}
+      // Sections
+      ...sectionNodes,
 
-        {/* Disclaimer */}
-        <View style={styles.footerDivider}>
-          <Text style={styles.disclaimerTitle}>Disclaimer</Text>
-          <Text style={styles.disclaimerText}>{safeText(result.disclaimer)}</Text>
-        </View>
-      </Page>
-    </Document>
+      // Disclaimer
+      el(
+        View,
+        { style: styles.footerDivider },
+        el(Text, { style: styles.disclaimerTitle }, "Disclaimer"),
+        el(Text, { style: styles.disclaimerText }, safeText(result.disclaimer))
+      )
+    )
   );
 }
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { result: Result };
+    const body = (await req.json()) as { result?: Result };
 
-    if (!body?.result?.reportTitle || !Array.isArray(body?.result?.sections)) {
+    const result = body?.result;
+    if (!result || !result.reportTitle || !Array.isArray(result.sections)) {
       return NextResponse.json(
         { error: "Invalid payload. Missing result.reportTitle or result.sections." },
         { status: 400 }
       );
     }
 
-    const doc = <ReportPDF result={body.result} />;
-
-    const instance = pdf(doc);
-    const buffer = await instance.toBuffer();
+    const doc = ReportPDF(result);
+    const buffer = await pdf(doc).toBuffer();
 
     return new NextResponse(buffer, {
       headers: {
