@@ -4,19 +4,22 @@ import Link from "next/link";
 import Container from "@/components/Container";
 import { services } from "@/content/site";
 
-type Props = {
-  params: { slug: string };
-};
-
 const SITE_URL = "https://prowessdigitalsolutions.com";
+
+// ✅ Works in both Next versions:
+// - Some versions: params is { slug: string }
+// - Some versions: params is Promise<{ slug: string }>
+type PageProps = {
+  params: { slug: string } | Promise<{ slug: string }>;
+};
 
 function getService(slug: string) {
   return services.find((s) => s.slug === slug) || null;
 }
 
-// ✅ SEO metadata per service page
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const service = getService(params.slug);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await Promise.resolve(params);
+  const service = getService(slug);
   if (!service) return {};
 
   const url = `${SITE_URL}/services/${service.slug}`;
@@ -40,8 +43,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function ServicePage({ params }: Props) {
-  const service = getService(params.slug);
+export default async function ServicePage({ params }: PageProps) {
+  const { slug } = await Promise.resolve(params);
+  const service = getService(slug);
+
   if (!service) return notFound();
 
   return (
@@ -88,7 +93,6 @@ export default function ServicePage({ params }: Props) {
       <section className="section bg-white">
         <Container>
           <div className="mx-auto max-w-3xl space-y-12">
-            {/* What this is */}
             <div className="text-slate-700">
               <h2 className="text-2xl font-bold text-slate-900">What this service is</h2>
               <div className="mt-4">
@@ -100,7 +104,6 @@ export default function ServicePage({ params }: Props) {
               </div>
             </div>
 
-            {/* Who it’s for */}
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Who it’s for</h2>
               <ul className="mt-4 list-disc pl-5 text-slate-700">
@@ -110,7 +113,6 @@ export default function ServicePage({ params }: Props) {
               </ul>
             </div>
 
-            {/* What you get */}
             <div>
               <h2 className="text-2xl font-bold text-slate-900">What you get</h2>
               <ul className="mt-4 list-disc pl-5 text-slate-700">
@@ -120,7 +122,6 @@ export default function ServicePage({ params }: Props) {
               </ul>
             </div>
 
-            {/* Notes */}
             {service.details.notes?.length ? (
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">Notes</h2>
@@ -132,11 +133,11 @@ export default function ServicePage({ params }: Props) {
               </div>
             ) : null}
 
-            {/* CTA block */}
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
               <h3 className="text-xl font-bold text-slate-900">Ready to move forward?</h3>
               <p className="mt-2 text-slate-700">
-                If you are not sure which service is right, start with a Business Clarity Session. We’ll help you choose the best next step.
+                If you are not sure which service is right, start with a Business Clarity Session.
+                We’ll help you choose the best next step.
               </p>
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
