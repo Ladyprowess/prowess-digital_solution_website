@@ -67,7 +67,10 @@ export default function ResourcesPage() { return ( <section className="py-12 sm:
           </div>
         </div>
 
-       
+         {/* ✅ NEW: BUSINESS HELPER TOOL */}
+         <div className="mt-10">
+          <BusinessHelperTool />
+        </div>
 
 
         {/* RESOURCE BROWSER */}
@@ -75,10 +78,7 @@ export default function ResourcesPage() { return ( <section className="py-12 sm:
           <ResourcesBrowser />
         </div>
 
-         {/* ✅ NEW: BUSINESS HELPER TOOL */}
-         <div className="mt-10">
-          <BusinessHelperTool />
-        </div>
+       
         
       </Container>
     </section>
