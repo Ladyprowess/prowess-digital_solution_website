@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { brand } from "@/content/site";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: {
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${brand.name}`,
     description:
-      "Clarity, structure, and guidance for people building businesses that last.",
+      "Prowess Digital Solutions helps business owners gain clarity, build structure, and implement systems so they can run organised, sustainable businesses with confidence.",
     type: "website",
     url: "https://prowessdigitalsolutions.com",
     siteName: brand.name,
@@ -34,15 +35,53 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: brand.name,
     description:
-      "Clarity, structure, and guidance for people building businesses that last.",
+      "Prowess Digital Solutions helps business owners gain clarity, build structure, and implement systems so they can run organised, sustainable businesses with confidence.",
     images: ["/og-image.png"],
   },
+};
+
+// ✅ 1) SITE-WIDE SCHEMA (Organisation + Website)
+const orgSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: brand.name,
+  url: "https://prowessdigitalsolutions.com",
+  logo: "https://prowessdigitalsolutions.com/og-image.png",
+  description:
+    "Prowess Digital Solutions helps business owners gain clarity, build structure, and implement systems so they can run organised, sustainable businesses with confidence.",
+  sameAs: [
+    // ✅ Replace with your real links OR remove this array entirely
+    "https://www.instagram.com/prowessdigitalsolutions",
+    "https://twitter.com/prowessDS",
+    "https://www.linkedin.com/company/prowess-digital-solutions",
+  ],
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: brand.name,
+  url: "https://prowessdigitalsolutions.com",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-GB">
       <body>
+        {/* ✅ 2) Inject JSON-LD */}
+        <Script
+          id="schema-org"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        />
+        <Script
+          id="schema-website"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+
         <Navbar />
         <main className="min-h-[70vh]">{children}</main>
         <Footer />

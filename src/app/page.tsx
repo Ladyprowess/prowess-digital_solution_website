@@ -47,8 +47,8 @@ export default function ModernHomePage() {
 
             {/* Main Heading */}
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-            BUILD A BUSINESS{' '}
-              <span className="text-[#507c80]">THAT ACTUALLY WORKS.</span>
+            Bringing Structure to{' '}
+              <span className="text-[#507c80]">Messy Businesses.</span>
             </h1>
 
             {/* Subheading */}
