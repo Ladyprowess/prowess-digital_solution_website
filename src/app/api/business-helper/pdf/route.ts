@@ -311,13 +311,14 @@ export async function POST(req: Request) {
     const doc = ReportPDF(result);
     const buffer = await pdf(doc).toBuffer();
 
-    return new NextResponse(buffer, {
+    return new NextResponse(buffer as any, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition":
-          "attachment; filename=Prowess_Business_Diagnostic_Report.pdf",
+        "Content-Disposition": 'attachment; filename="Prowess_Business_Diagnostic_Report.pdf"',
       },
     });
+
+    
   } catch (e: any) {
     console.error("PDF ROUTE ERROR:", e?.message || e);
     return NextResponse.json(
