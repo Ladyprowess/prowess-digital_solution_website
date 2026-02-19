@@ -38,6 +38,14 @@ type Result = {
   disclaimer: string;
 };
 
+function sentenceLimit(text: string, maxSentences = 2) {
+  const t = (text || "").trim();
+  if (!t) return "";
+  const parts = t.split(/(?<=[.!?])\s+/).filter(Boolean);
+  return parts.slice(0, maxSentences).join(" ");
+}
+
+
 // ===== Score progress circle (100% full, 50% half, etc.) =====
 function ScoreCircle({ score }: { score: number }) {
   const radius = 44;
@@ -309,120 +317,116 @@ export default function BusinessHelperTool() {
 
       {/* REPORT */}
       {result && (
-        <div className="mt-10 rounded-2xl bg-slate-50 p-6">
-        <div className="mx-auto w-full max-w-4xl rounded-xl bg-white px-4 py-6 sm:px-8 sm:py-10 shadow-sm ring-1 ring-slate-200">
-            {/* LETTERHEAD + SCORE CIRCLE */}
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between border-b border-slate-200 pb-6">
-            <div className="flex items-start gap-4">
-                <img
-                  src="/brand/prowess-logo.png"
-                  alt="Prowess Digital Solutions"
-                  className="h-12 w-12 object-contain"
-                />
+  <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-6">
+    <div className="rounded-2xl bg-white p-5 sm:p-7 shadow-sm ring-1 ring-slate-200">
+      {/* Header */}
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <img
+            src="/brand/prowess-logo.png"
+            alt="Prowess Digital Solutions"
+            className="h-10 w-10 object-contain"
+          />
 
-                <div>
-                <h1 className="text-lg sm:text-xl font-extrabold text-slate-900">
-                    Prowess Digital Solutions
-                  </h1>
-                  <p className="text-sm font-medium text-slate-600">
-                    Business Diagnostic Report
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Generated on {safeDateTime(result.generatedAt)}
-                  </p>
-                </div>
-              </div>
+          <div>
+            <h3 className="text-lg font-extrabold text-slate-900">
+              Business Summary
+            </h3>
+            <p className="text-sm text-slate-600">
+              {result.reportTitle}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Generated on {safeDateTime(result.generatedAt)}
+            </p>
+          </div>
+        </div>
 
-              {/* ✅ progress score circle */}
-              <div className="self-start sm:self-auto">
-  <div className="scale-90 sm:scale-100 origin-top-right">
-    <ScoreCircle score={result.healthScore} />
-  </div>
-</div>
-            </div>
+        <div className="self-start sm:self-auto">
+          <div className="scale-95 sm:scale-100 origin-top-right">
+            <ScoreCircle score={result.healthScore} />
+          </div>
+        </div>
+      </div>
 
-            {/* TITLE */}
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold text-slate-900 leading-tight">
-                {result.reportTitle}
-              </h2>
+      {/* Summary */}
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+        <div className="text-sm font-semibold text-slate-900">
+          What this means
+        </div>
+        <p className="mt-2 text-sm leading-7 text-slate-700">
+          {sentenceLimit(result.scoreNote, 2)}
+        </p>
+      </div>
 
-              <p className="mt-4 text-sm text-slate-700 leading-7 text-justify" style={{ textIndent: "1.2rem" }}>
-                {result.scoreNote}
-              </p>
-            </div>
-
-            {/* DOWNLOAD PDF BUTTON (kept, not deleted) */}
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={onDownloadPdf}
-                disabled={downloading}
-                className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+      {/* Quick Focus Areas (optional: show only if you have detectedAreas) */}
+      {Array.isArray((result as any).detectedAreas) && (result as any).detectedAreas.length > 0 && (
+        <div className="mt-5">
+          <div className="text-sm font-semibold text-slate-900">
+            Key areas to focus on
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(result as any).detectedAreas.slice(0, 3).map((a: string) => (
+              <span
+                key={a}
+                className="rounded-full bg-[#507c80]/10 px-3 py-1 text-xs font-semibold text-[#507c80]"
               >
-                {downloading ? "Preparing PDF..." : "Download PDF report"}
-              </button>
-            </div>
-
-            {/* SECTIONS */}
-            <div className="mt-10 space-y-10">
-              {result.sections.map((sec) => (
-                <section key={sec.heading}>
-                  <h3 className="text-lg font-bold text-slate-900">
-                    {sec.heading}
-                  </h3>
-
-                  <div className="mt-3 space-y-4">
-                    {sec.paragraphs.map((text, i) => {
-                      const bullets = extractBullets(text);
-
-                      if (bullets) {
-                        return (
-                          <ul
-                            key={i}
-                            className="ml-6 list-disc space-y-2 text-sm leading-7 text-slate-700"
-                          >
-                            {bullets.map((b, idx) => (
-                              <li key={idx}>{b}</li>
-                            ))}
-                          </ul>
-                        );
-                      }
-
-                      return (
-                        <p
-                          key={i}
-                          className="text-sm leading-7 text-slate-700 text-justify"
-                          style={{ textIndent: "1.2rem" }}
-                        >
-                          {text}
-                        </p>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </div>
-
-            {/* DISCLAIMER */}
-            <div className="mt-12 border-t border-slate-200 pt-6">
-              <h4 className="text-sm font-bold text-slate-900">Disclaimer</h4>
-              <p className="mt-2 text-xs leading-6 text-slate-600">
-                {result.disclaimer}
-              </p>
-            </div>
-
-            {/* CTA */}
-            <div className="mt-6">
-              <a
-                href="/contact"
-                className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-800 ring-1 ring-slate-300 hover:opacity-90"
-              >
-                Book a free consultation
-              </a>
-            </div>
+                {a}
+              </span>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Next steps: take the first Recommendations section if it exists */}
+      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div className="text-sm font-semibold text-slate-900">
+          Next steps (quick)
+        </div>
+
+        <ul className="mt-3 ml-5 list-disc space-y-2 text-sm leading-7 text-slate-700">
+          {(() => {
+            const rec = result.sections?.find((s) =>
+              (s.heading || "").toLowerCase().includes("recommend")
+            );
+            const text = rec?.paragraphs?.[0] || "";
+            // pull 3 short points from the first recommendation paragraph
+            const parts = text
+              .split(".")
+              .map((x) => x.trim())
+              .filter(Boolean)
+              .slice(0, 3);
+
+            return parts.length
+              ? parts.map((p, i) => <li key={i}>{p}.</li>)
+              : [
+                  <li key="a">Write one clear offer for the next 7 days.</li>,
+                  <li key="b">Track sales, expenses, and profit daily.</li>,
+                  <li key="c">Improve your customer journey (reply, payment, delivery).</li>,
+                ];
+          })()}
+        </ul>
+      </div>
+
+      {/* Download full report */}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <button
+          onClick={onDownloadPdf}
+          disabled={downloading}
+          className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {downloading ? "Preparing..." : "Download full report (PDF)"}
+        </button>
+
+        <a
+          href="/contact"
+          className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-800 ring-1 ring-slate-300 hover:opacity-90"
+        >
+          Book a free consultation
+        </a>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
