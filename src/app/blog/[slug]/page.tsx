@@ -30,6 +30,31 @@ function formatDate(dateStr?: string) {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function readingTimeFromHtml(html: string) {
+    const text = stripHtml(html);
+    const words = text.split(" ").filter(Boolean).length;
+    const minutes = Math.max(1, Math.ceil(words / 200)); // 200 wpm
+    return `${minutes} min read`;
+  }
+  
+  // If WP content comes without <p> tags (common), convert line breaks into paragraphs
+  function normaliseWpHtml(html: string) {
+    const raw = html || "";
+  
+    // if it already has <p> tags, just return
+    if (/<p[\s>]/i.test(raw)) return raw;
+  
+    // Otherwise convert double newlines into paragraphs
+    const blocks = raw
+      .replace(/\r/g, "")
+      .split(/\n\s*\n/)
+      .map((b) => b.trim())
+      .filter(Boolean);
+  
+    return blocks.map((b) => `<p>${b.replace(/\n/g, "<br/>")}</p>`).join("");
+  }
+  
+
 async function fetchWpPostBySlug(slug: string) {
   const url = `https://public-api.wordpress.com/rest/v1.1/sites/${WP_SITE}/posts/slug:${encodeURIComponent(
     slug
@@ -110,107 +135,93 @@ export default async function BlogPostPage({ params }: PageProps) {
   }
 
   const title = stripHtml(post.title);
-  const date = formatDate(post.date);
+const date = formatDate(post.date);
 
-  return (
-    <div className="page-wrap">
-      <section className="section bg-[#eef6f6]">
-        <Container>
-          <div className="mx-auto max-w-3xl">
-            <p style={{ opacity: 0.75, marginBottom: 8 }}>{date}</p>
-            <h1 className="h1">{title}</h1>
+// WordPress.com often returns an author object; we’ll gracefully fallback
+const authorName =
+  // @ts-expect-error - WP API shape varies
+  post.author?.name ||
+  // @ts-expect-error
+  post.author?.display_name ||
+  "Prowess Digital Solutions";
 
-            <div style={{ marginTop: 16 }}>
-              <Link href="/blog" style={{ color: BRAND, fontWeight: 700, textDecoration: "none" }}>
-                ← Back to Blog
+const readTime = readingTimeFromHtml(post.content || "");
+const contentHtml = normaliseWpHtml(post.content || "");
+
+return (
+  <div className="page-wrap">
+    {/* HERO */}
+    <section className="section bg-[#eef6f6]">
+      <Container>
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold tracking-wide text-slate-500">
+            {date} • {readTime} • By {authorName}
+          </p>
+
+          <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            {title}
+          </h1>
+
+          <div className="mt-6">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 font-semibold text-[#507c80] hover:opacity-80"
+            >
+              <span aria-hidden>←</span> Back to Blog
+            </Link>
+          </div>
+        </div>
+      </Container>
+    </section>
+
+    {/* BODY */}
+    <section className="section bg-white">
+      <Container>
+        <div className="mx-auto max-w-3xl">
+          {post.featured_image ? (
+            <img
+              src={post.featured_image}
+              alt=""
+              className="mb-8 w-full rounded-2xl border border-slate-200 object-cover"
+              loading="lazy"
+            />
+          ) : null}
+
+          {/* ✅ Clean typography wrapper */}
+          <article className="blog-content">
+            <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
+          </article>
+
+          {/* ✅ CTA block (matches your services positioning) */}
+          <div className="mt-10 rounded-2xl border border-slate-200 bg-[#eef6f6] p-6 sm:p-8">
+            <h3 className="text-xl font-bold text-slate-900">
+              Need clarity and structure in your business?
+            </h3>
+            <p className="mt-2 text-slate-700 leading-relaxed">
+              If you are overwhelmed or unsure of your next step, start with a Business Clarity Session.
+              We’ll help you organise your thinking, identify priorities, and decide what to do next.
+            </p>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/services/business-clarity-session"
+                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-6 py-3 font-semibold text-white hover:opacity-95"
+              >
+                Start with a Clarity Session
+              </Link>
+
+              <Link
+                href="/services"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-900 hover:bg-slate-50"
+              >
+                View All Services
               </Link>
             </div>
           </div>
-        </Container>
-      </section>
+        </div>
+      </Container>
+    </section>
+  </div>
+);
 
-      <section className="section bg-white">
-        <Container>
-          <div className="mx-auto max-w-3xl">
-            {post.featured_image ? (
-              <img
-                src={post.featured_image}
-                alt=""
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  borderRadius: 16,
-                  marginBottom: 18,
-                }}
-              />
-            ) : null}
-
-            {/* ✅ Render HTML from WordPress */}
-            <article
-              className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: post.content || "" }}
-            />
-
-            {/* ✅ Simple CTA (keeps brand positioning) */}
-            <div
-              style={{
-                marginTop: 28,
-                padding: 18,
-                borderRadius: 16,
-                border: "1px solid #e5e5e5",
-                background: "white",
-              }}
-            >
-              <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>
-                Need clarity and structure in your business?
-              </h3>
-              <p style={{ opacity: 0.85, lineHeight: 1.6 }}>
-                If you are overwhelmed or unsure of your next step, start with a Business Clarity Session. We’ll help you
-                organise your thinking, identify priorities, and decide what to do next.
-              </p>
-
-              <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <Link
-                  href="/services/business-clarity-session"
-                  style={{
-                    background: BRAND,
-                    color: "white",
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    textDecoration: "none",
-                    fontWeight: 800,
-                  }}
-                >
-                  Start with a Clarity Session
-                </Link>
-
-                <Link
-                  href="/services"
-                  style={{
-                    background: "white",
-                    border: "1px solid #e5e5e5",
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    textDecoration: "none",
-                    fontWeight: 800,
-                    color: "#0f172a",
-                  }}
-                >
-                  View All Services
-                </Link>
-              </div>
-            </div>
-
-            {/* Optional: source link */}
-            <p style={{ marginTop: 16, opacity: 0.7 }}>
-              Original post:{" "}
-              <a href={post.URL} target="_blank" rel="noreferrer" style={{ color: BRAND, fontWeight: 700 }}>
-                View on WordPress
-              </a>
-            </p>
-          </div>
-        </Container>
-      </section>
-    </div>
-  );
 }
