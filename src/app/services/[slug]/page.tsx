@@ -6,11 +6,8 @@ import { services } from "@/content/site";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
-// ✅ Works in both Next versions:
-// - Some versions: params is { slug: string }
-// - Some versions: params is Promise<{ slug: string }>
 type PageProps = {
-  params: { slug: string } | Promise<{ slug: string }>;
+  params?: Promise<{ slug: string }>;
 };
 
 function getService(slug: string) {
@@ -18,7 +15,11 @@ function getService(slug: string) {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await Promise.resolve(params);
+  const resolved = await params; // ✅ params is Promise in your Next build
+  const slug = resolved?.slug;
+
+  if (!slug) return {};
+
   const service = getService(slug);
   if (!service) return {};
 
@@ -44,9 +45,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ServicePage({ params }: PageProps) {
-  const { slug } = await Promise.resolve(params);
-  const service = getService(slug);
+  const resolved = await params; // ✅ params is Promise in your Next build
+  const slug = resolved?.slug;
 
+  if (!slug) return notFound();
+
+  const service = getService(slug);
   if (!service) return notFound();
 
   return (
