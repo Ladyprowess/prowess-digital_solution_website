@@ -190,19 +190,21 @@ body {
 
   .blog-content ul {
     list-style-type: disc;
-    padding-left: 1.5rem;
-    margin-bottom: 18px;
+    padding-left: 1.6rem;
+    margin: 18px 0;
   }
   
   .blog-content ol {
     list-style-type: decimal;
-    padding-left: 1.5rem;
-    margin-bottom: 18px;
+    padding-left: 1.6rem;
+    margin: 18px 0;
   }
   
-  .blog-content li {
-    margin-bottom: 6px;
+  .blog-content li::marker {
+    color: var(--steel-teal);
+    font-weight: 600;
   }
+  
   
 
   .blog-content a {
