@@ -111,14 +111,6 @@ const websiteSchema = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-GB">
-      <head>
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7888248635786937"
-          crossOrigin="anonymous"
-          strategy="beforeInteractive"
-        />
-      </head>
       <body>
         {/* ✅ Inject JSON-LD */}
         <Script
