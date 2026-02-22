@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Container from "@/components/Container";
 import Link from "next/link";
+import Script from "next/script";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -150,6 +151,12 @@ const contentHtml = normaliseWpHtml(post.content || "");
 
 return (
   <div className="page-wrap">
+<Script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7888248635786937"
+      crossOrigin="anonymous"
+      strategy="afterInteractive"
+    />
     {/* HERO */}
     <section className="section bg-[#eef6f6]">
       <Container>

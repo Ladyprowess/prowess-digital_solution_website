@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BlogSearchBar from "./BlogSearchBar";
+import Script from "next/script";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0; // always fetch fresh
@@ -132,7 +133,15 @@ export default async function BlogPage({
   const pageNumbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
 
   return (
-    <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+    <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}> 
+    <Script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7888248635786937"
+      crossOrigin="anonymous"
+      strategy="afterInteractive"
+    />
+
+
       <header style={{ marginBottom: 18 }}>
         <h1 style={{ fontSize: 32, fontWeight: 700 }}>Blog</h1>
         <p style={{ marginTop: 8, opacity: 0.8 }}>
