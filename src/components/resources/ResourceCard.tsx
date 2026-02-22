@@ -104,12 +104,22 @@ useEffect(() => {
     try {
       setLoading("preview");
       const url = await getSignedUrl();
-      const finalUrl = `${url}#view=FitH`;
+      const finalUrl = url;
   
       if (isMobileOrTablet) {
         // ✅ If Safari blocked it, popup will be null
-        if (popup) popup.location.href = finalUrl;
-        else alert("Safari blocked the PDF tab. Please allow pop-ups for this site.");
+        if (popup) {
+          popup.location.href = finalUrl;
+        } else {
+          // fallback: use a real link click (Safari-safe)
+          const a = document.createElement("a");
+          a.href = finalUrl;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
         return;
       }
   
