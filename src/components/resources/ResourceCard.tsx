@@ -96,18 +96,24 @@ useEffect(() => {
   }
 
   async function onPreview() {
+    // ✅ Open immediately (counts as user gesture in Safari)
+    const popup = isMobileOrTablet
+      ? window.open("about:blank", "_blank", "noopener,noreferrer")
+      : null;
+  
     try {
       setLoading("preview");
       const url = await getSignedUrl();
+      const finalUrl = `${url}#view=FitH`;
   
-      // ✅ Mobile/tablet: open in new tab (best PDF view)
       if (isMobileOrTablet) {
-        window.open(`${url}#view=FitH`, "_blank", "noopener,noreferrer");
+        // ✅ If Safari blocked it, popup will be null
+        if (popup) popup.location.href = finalUrl;
+        else alert("Safari blocked the PDF tab. Please allow pop-ups for this site.");
         return;
       }
   
-      // ✅ Desktop: open modal iframe preview
-      setReaderUrl(`${url}#view=FitH`);
+      setReaderUrl(finalUrl);
     } finally {
       setLoading(null);
     }
