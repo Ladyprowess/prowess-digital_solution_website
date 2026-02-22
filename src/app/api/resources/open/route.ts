@@ -6,23 +6,22 @@ export async function GET(req: Request) {
   const file_path = searchParams.get("file_path");
 
   if (!file_path) {
-    return NextResponse.json(
-      { ok: false, error: "Missing file_path" },
-      { status: 400 }
-    );
+    return NextResponse.json({ ok: false, error: "Missing file_path" }, { status: 400 });
   }
 
-  const { data, error } = await supabaseAdmin.storage
+  // ✅ IMPORTANT: call the function to get the client
+  const supabase = supabaseAdmin();
+
+  const { data, error } = await supabase.storage
     .from("resources-files")
-    .createSignedUrl(file_path, 60 * 10); // 10 minutes
+    .createSignedUrl(file_path, 60 * 10);
 
   if (error || !data?.signedUrl) {
     return NextResponse.json(
-      { ok: false, error: error?.message || "Could not create link" },
+      { ok: false, error: error?.message || "Could not create signed URL" },
       { status: 500 }
     );
   }
 
-  // ✅ Redirect the browser to the signed PDF URL
   return NextResponse.redirect(data.signedUrl, { status: 302 });
 }
