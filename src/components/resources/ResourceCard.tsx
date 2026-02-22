@@ -96,34 +96,10 @@ useEffect(() => {
   }
 
   async function onPreview() {
-    // ✅ Open immediately (counts as user gesture in Safari)
-    const popup = isMobileOrTablet
-      ? window.open("about:blank", "_blank", "noopener,noreferrer")
-      : null;
-  
     try {
       setLoading("preview");
       const url = await getSignedUrl();
-      const finalUrl = url;
-  
-      if (isMobileOrTablet) {
-        // ✅ If Safari blocked it, popup will be null
-        if (popup) {
-          popup.location.href = finalUrl;
-        } else {
-          // fallback: use a real link click (Safari-safe)
-          const a = document.createElement("a");
-          a.href = finalUrl;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        }
-        return;
-      }
-  
-      setReaderUrl(finalUrl);
+      setReaderUrl(url);
     } finally {
       setLoading(null);
     }
@@ -193,14 +169,25 @@ useEffect(() => {
 
         {/* ✅ Single button only */}
         <div className="mt-5">
-          <button
-            onClick={onPreview}
-            disabled={!!loading}
-            className="w-full rounded-xl bg-[var(--steel-teal)] px-4 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-          >
-            {loading === "preview" ? "Opening..." : "Read Online"}
-          </button>
-        </div>
+  {isMobileOrTablet ? (
+    <a
+      href={`/api/resources/open?file_path=${encodeURIComponent(item.file_path)}`}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--steel-teal)] px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
+    >
+      Read Online
+    </a>
+  ) : (
+    <button
+      onClick={onPreview}
+      disabled={!!loading}
+      className="w-full rounded-xl bg-[var(--steel-teal)] px-4 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+    >
+      {loading === "preview" ? "Opening..." : "Read Online"}
+    </button>
+  )}
+</div>
       </div>
 
       {/* ✅ Reader modal */}
