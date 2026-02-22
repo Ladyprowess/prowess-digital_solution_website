@@ -4,37 +4,58 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function normaliseStoragePath(input: string) {
+  let p = String(input || "").trim();
+
+  // full public URL -> extract path after "/resources/"
+  if (p.startsWith("http")) {
+    const marker = "/resources/";
+    try {
+      const u = new URL(p);
+      const idx = u.pathname.indexOf(marker);
+      if (idx !== -1) p = u.pathname.slice(idx + marker.length);
+    } catch {}
+  }
+
+  p = p.replace(/^\/+/, ""); // remove leading slash
+  if (p.startsWith("resources/")) p = p.slice("resources/".length); // remove bucket prefix
+
+  try {
+    p = decodeURIComponent(p);
+  } catch {}
+
+  return p;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null);
-    const file_path = String(body?.file_path || "").trim();
 
-    if (!file_path) {
-      return NextResponse.json(
-        { ok: false, error: "Missing file_path" },
-        { status: 400 }
-      );
-    }
+const rawPath = String(body?.file_path || "").trim();
+const file_path = rawPath.replace(/^pdfs\//, "");
 
-    // ✅ FIX: call the function to get the client
-    const supabase = await supabaseAdmin();
+if (!file_path) {
+  return NextResponse.json({ ok: false, error: "Missing file_path" }, { status: 400 });
+}
 
-    const { data, error } = await supabase.storage
-      .from("resources")
-      // inline viewing (not forced download)
-      .createSignedUrl(file_path, 60 * 10, { download: false });
+const supabase = supabaseAdmin();
 
-    if (error || !data?.signedUrl) {
-      return NextResponse.json(
-        { ok: false, error: error?.message || "Could not create link" },
-        { status: 500 }
-      );
-    }
+const { data, error } = await supabase.storage
+  .from("resources")
+  .createSignedUrl(file_path, 60 * 10, { download: false });
 
-    return NextResponse.json({ ok: true, url: data.signedUrl });
+if (error || !data?.signedUrl) {
+  return NextResponse.json(
+    { ok: false, error: error?.message || "Object not found", debug_path: file_path },
+    { status: 500 }
+  );
+}
+
+return NextResponse.json({ ok: true, url: data.signedUrl });
   } catch (e: any) {
+    // ✅ THIS is what will expose the real crash reason in your browser response
     return NextResponse.json(
-      { ok: false, error: e?.message || "Server error" },
+      { ok: false, error: e?.message || "Route crashed" },
       { status: 500 }
     );
   }

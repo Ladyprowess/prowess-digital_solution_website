@@ -29,21 +29,6 @@ function formatMB(bytes: number) {
 export default function ResourceCard({ item }: { item: ResourceItem }) {
   const [loading, setLoading] = useState<null | "preview">(null);
   const [readerUrl, setReaderUrl] = useState<string | null>(null);
-  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
-
-useEffect(() => {
-  const mq = window.matchMedia("(max-width: 1023px)");
-  const update = () => setIsMobileOrTablet(mq.matches);
-  update();
-  mq.addEventListener?.("change", update);
-  return () => mq.removeEventListener?.("change", update);
-}, []);
-
-useEffect(() => {
-  if (isMobileOrTablet && readerUrl) {
-    setReaderUrl(null);
-  }
-}, [isMobileOrTablet, readerUrl]);
 
   // ✅ Cover display (supports fallback if image fails)
   const [coverSrc, setCoverSrc] = useState<string | null>(item.cover_url);
@@ -99,7 +84,7 @@ useEffect(() => {
     try {
       setLoading("preview");
       const url = await getSignedUrl();
-      setReaderUrl(url);
+      setReaderUrl(url); // ✅ open in-app reader
     } finally {
       setLoading(null);
     }
@@ -169,29 +154,18 @@ useEffect(() => {
 
         {/* ✅ Single button only */}
         <div className="mt-5">
-  {isMobileOrTablet ? (
-    <a
-      href={`/api/resources/open?file_path=${encodeURIComponent(item.file_path)}`}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--steel-teal)] px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
-    >
-      Read Online
-    </a>
-  ) : (
-    <button
-      onClick={onPreview}
-      disabled={!!loading}
-      className="w-full rounded-xl bg-[var(--steel-teal)] px-4 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-    >
-      {loading === "preview" ? "Opening..." : "Read Online"}
-    </button>
-  )}
-</div>
+          <button
+            onClick={onPreview}
+            disabled={!!loading}
+            className="w-full rounded-xl bg-[var(--steel-teal)] px-4 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+          >
+            {loading === "preview" ? "Opening..." : "Read Online"}
+          </button>
+        </div>
       </div>
 
       {/* ✅ Reader modal */}
-      {readerUrl && !isMobileOrTablet ? (
+      {readerUrl ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b px-4 py-3">
