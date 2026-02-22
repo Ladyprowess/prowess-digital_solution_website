@@ -114,9 +114,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Google Analytics (GA4) */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-N9N42PJ7YT"
-          strategy="afterInteractive"
-        />
+  src="https://www.googletagmanager.com/gtag/js?id=G-N9N42PJ7YT"
+  strategy="afterInteractive"
+  async
+  crossOrigin="anonymous"
+/>
         <Script id="ga4" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
@@ -125,21 +127,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             gtag('config', 'G-N9N42PJ7YT');
           `}
         </Script>
+
+        {/* Google AdSense */}
+<Script
+  id="adsense"
+  async
+  strategy="afterInteractive"
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7888248635786937"
+  crossOrigin="anonymous"
+/>
       </head>
       <body>
         {/* ✅ Inject JSON-LD */}
         <Script
-          id="schema-org"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
-        />
-        <Script
-          id="schema-website"
-          type="application/ld+json"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-        />
+  id="schema-org"
+  type="application/ld+json"
+  strategy="beforeInteractive"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+/>
+<Script
+  id="schema-website"
+  type="application/ld+json"
+  strategy="beforeInteractive"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+/>
 
         <Navbar />
         <main className="min-h-[70vh]">{children}</main>
