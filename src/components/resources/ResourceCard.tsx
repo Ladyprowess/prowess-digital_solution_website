@@ -10,15 +10,12 @@ export type ResourceItem = {
   category: string;
   stage: string;
   cover_url: string | null;
-
-  // Optional (only if you later add it)
   cover_path?: string | null;
-
   downloads: number;
   rating: number;
   file_size: number;
   reading_minutes: number | null;
-  file_path: string;
+  file_path: string; // IMPORTANT: must match storage key in bucket
 };
 
 function formatMB(bytes: number) {
@@ -26,65 +23,49 @@ function formatMB(bytes: number) {
   return `${mb.toFixed(1)} MB`;
 }
 
+// ✅ Public URL builder (supports folders and special characters)
+function getPublicPdfUrl(filePath: string) {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const cleanBase = base.replace(/\/$/, "");
+  const safePath = filePath
+    .split("/")
+    .map((p) => encodeURIComponent(p))
+    .join("/");
+  return `${cleanBase}/storage/v1/object/public/resources/${safePath}`;
+}
+
 export default function ResourceCard({ item }: { item: ResourceItem }) {
   const [loading, setLoading] = useState<null | "preview">(null);
   const [readerUrl, setReaderUrl] = useState<string | null>(null);
 
-  // ✅ Cover display (supports fallback if image fails)
+  // ✅ Cover display
   const [coverSrc, setCoverSrc] = useState<string | null>(item.cover_url);
   const [coverFailed, setCoverFailed] = useState(false);
 
-  // OPTIONAL: if you later implement signed cover endpoint + cover_path
-  // this will load signed cover URL automatically.
   useEffect(() => {
-    let ignore = false;
+    setCoverSrc(item.cover_url);
+    setCoverFailed(false);
+  }, [item.cover_url]);
 
-    async function loadSignedCoverIfNeeded() {
-      if (!item.cover_path) {
-        setCoverSrc(item.cover_url);
+  async function onPreview() {
+    setLoading("preview");
+    try {
+      const url = getPublicPdfUrl(item.file_path);
+
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+      }
+
+      const isMobile = window.matchMedia("(max-width: 1023px)").matches;
+
+      // ✅ Mobile: open new tab
+      if (isMobile) {
+        window.open(url, "_blank", "noopener,noreferrer");
         return;
       }
 
-      try {
-        const res = await fetch("/api/resources/cover", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cover_path: item.cover_path }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!ignore) {
-          setCoverSrc(data?.ok ? data.url : item.cover_url);
-        }
-      } catch {
-        if (!ignore) setCoverSrc(item.cover_url);
-      }
-    }
-
-    loadSignedCoverIfNeeded();
-
-    return () => {
-      ignore = true;
-    };
-  }, [item.cover_path, item.cover_url]);
-
-  async function getSignedUrl() {
-    const res = await fetch("/api/resources/download", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ file_path: item.file_path }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!data?.ok) throw new Error(data?.error || "Could not fetch link.");
-    return data.url as string;
-  }
-
-  async function onPreview() {
-    try {
-      setLoading("preview");
-      const url = await getSignedUrl();
-      setReaderUrl(url); // ✅ open in-app reader
+      // ✅ Desktop: open modal
+      setReaderUrl(url);
     } finally {
       setLoading(null);
     }
@@ -114,7 +95,6 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
           </div>
         )}
 
-        {/* Badge */}
         <div className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700">
           {item.type}
         </div>
@@ -152,7 +132,6 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
           </div>
         </div>
 
-        {/* ✅ Single button only */}
         <div className="mt-5">
           <button
             onClick={onPreview}
@@ -164,7 +143,7 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
         </div>
       </div>
 
-      {/* ✅ Reader modal */}
+      {/* ✅ Desktop modal (iframe) */}
       {readerUrl ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl">
