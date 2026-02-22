@@ -29,6 +29,15 @@ function formatMB(bytes: number) {
 export default function ResourceCard({ item }: { item: ResourceItem }) {
   const [loading, setLoading] = useState<null | "preview">(null);
   const [readerUrl, setReaderUrl] = useState<string | null>(null);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+
+useEffect(() => {
+  const mq = window.matchMedia("(max-width: 1023px)");
+  const update = () => setIsMobileOrTablet(mq.matches);
+  update();
+  mq.addEventListener?.("change", update);
+  return () => mq.removeEventListener?.("change", update);
+}, []);
 
   // ✅ Cover display (supports fallback if image fails)
   const [coverSrc, setCoverSrc] = useState<string | null>(item.cover_url);
@@ -84,7 +93,15 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
     try {
       setLoading("preview");
       const url = await getSignedUrl();
-      setReaderUrl(url); // ✅ open in-app reader
+  
+      // ✅ Mobile/tablet: open in new tab (best PDF view)
+      if (isMobileOrTablet) {
+        window.open(`${url}#view=FitH`, "_blank", "noopener,noreferrer");
+        return;
+      }
+  
+      // ✅ Desktop: open modal iframe preview
+      setReaderUrl(`${url}#view=FitH`);
     } finally {
       setLoading(null);
     }
