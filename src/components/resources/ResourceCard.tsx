@@ -39,6 +39,12 @@ useEffect(() => {
   return () => mq.removeEventListener?.("change", update);
 }, []);
 
+useEffect(() => {
+  if (isMobileOrTablet && readerUrl) {
+    setReaderUrl(null);
+  }
+}, [isMobileOrTablet, readerUrl]);
+
   // ✅ Cover display (supports fallback if image fails)
   const [coverSrc, setCoverSrc] = useState<string | null>(item.cover_url);
   const [coverFailed, setCoverFailed] = useState(false);
