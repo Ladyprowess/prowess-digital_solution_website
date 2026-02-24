@@ -1,21 +1,40 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
 
 type EventItem = {
   id: string;
+
+  // NEW (for internal registration page)
+  slug?: string | null;
+
   title: string;
+
+  // Your current field
   type: string;
+
   description?: string | null;
-  date: string; // could be YYYY-MM-DD or ISO string
+
+  // Your current fields
+  date: string; // YYYY-MM-DD or ISO-like string
   time?: string | null;
   duration?: string | null;
   location?: string | null;
+
+  // Your current fields
   price?: number | null;
   spots_left?: number | null;
   cover_url?: string | null;
+
+  // Old external link (still supported as fallback)
   registration_url?: string | null;
+
+  // Optional: if your API starts returning these later, we’ll use them
+  start_datetime?: string | null; // ISO datetime
+  registration_type?: "free" | "paid" | null;
+  price_ngn?: number | null;
 };
 
 const EVENT_TYPES = ["All", "Webinar", "Workshop", "Business Clinic"];
@@ -39,7 +58,57 @@ function isPastEvent(dateISO: string) {
   return toISODateOnly(dateISO) < todayISO;
 }
 
+/**
+ * Normalise events coming from API.
+ * This makes the UI work whether you return:
+ * - date/time fields (old)
+ * OR
+ * - start_datetime / price_ngn / slug (new)
+ */
+function normaliseEvent(e: any): EventItem {
+  const start = e.start_datetime || e.startDatetime || e.start_date || null;
+
+  // date: prefer explicit e.date, else derive from start_datetime
+  const date = e.date
+    ? String(e.date)
+    : start
+      ? String(start).slice(0, 10)
+      : "";
+
+  // price: prefer e.price, else use price_ngn
+  const price =
+    typeof e.price === "number"
+      ? e.price
+      : typeof e.price_ngn === "number"
+        ? e.price_ngn
+        : null;
+
+  // slug: prefer e.slug
+  const slug = e.slug ? String(e.slug) : null;
+
+  return {
+    id: String(e.id),
+    slug,
+    title: String(e.title || ""),
+    type: String(e.type || e.event_type || "Event"),
+    description: e.description ?? null,
+    date,
+    time: e.time ?? null,
+    duration: e.duration ?? null,
+    location: e.location ?? null,
+    price,
+    spots_left: typeof e.spots_left === "number" ? e.spots_left : null,
+    cover_url: e.cover_url ?? null,
+    registration_url: e.registration_url ?? null,
+
+    start_datetime: start ? String(start) : null,
+    registration_type: e.registration_type ?? null,
+    price_ngn: typeof e.price_ngn === "number" ? e.price_ngn : null,
+  };
+}
+
 export default function EventsPage() {
+  const router = useRouter();
   const PAGE_SIZE = 6;
 
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
@@ -130,8 +199,10 @@ export default function EventsPage() {
         return;
       }
 
-      const raw = ((json?.items || json?.data || json?.events || []) as EventItem[]) || [];
-      setUpcoming(raw.filter((e) => !isPastEvent(e.date)));
+      const raw = (json?.items || json?.data || json?.events || []) as any[];
+      const normalised = raw.map(normaliseEvent);
+
+      setUpcoming(normalised.filter((e) => !isPastEvent(e.date)));
     } catch (err: any) {
       setUpcoming([]);
       setUpcomingError(err?.message || "Network error loading upcoming events.");
@@ -155,8 +226,10 @@ export default function EventsPage() {
         return;
       }
 
-      const raw = ((json?.items || json?.data || json?.events || []) as EventItem[]) || [];
-      setPast(raw.filter((e) => isPastEvent(e.date)));
+      const raw = (json?.items || json?.data || json?.events || []) as any[];
+      const normalised = raw.map(normaliseEvent);
+
+      setPast(normalised.filter((e) => isPastEvent(e.date)));
     } catch (err: any) {
       setPast([]);
       setPastError(err?.message || "Network error loading past events.");
@@ -249,6 +322,24 @@ export default function EventsPage() {
 
   const isUpcomingLastPage = upcoming.length < PAGE_SIZE;
   const isPastLastPage = past.length < PAGE_SIZE;
+
+  function goToInternalEventPage(item: EventItem) {
+    // If we have slug, use internal page
+    if (item.slug) {
+      closeModal();
+      router.push(`/events/${item.slug}`);
+      return;
+    }
+
+    // Fallback to old external link (for old events)
+    if (item.registration_url) {
+      window.open(item.registration_url, "_blank", "noreferrer");
+      return;
+    }
+
+    // Nothing available
+    setSubMsg("This event does not have a registration page yet.");
+  }
 
   return (
     <div className="pb-16">
@@ -401,7 +492,7 @@ export default function EventsPage() {
                       <div className="text-lg font-semibold text-slate-900">
                         {e.price && e.price > 0 ? `₦${e.price.toLocaleString()}` : "Free"}
                       </div>
-                      <span className="text-sm font-medium text-[var(--steel-teal)]">View details ↳</span>
+                      <span className="text-sm font-medium text-[var(--steel-teal)]">View details →</span>
                     </div>
                   </div>
                 </button>
@@ -409,7 +500,7 @@ export default function EventsPage() {
             )}
           </div>
 
-          {/* ✅ UPCOMING PAGINATION */}
+          {/* UPCOMING PAGINATION */}
           <div className="mt-8 flex items-center justify-between">
             <button
               type="button"
@@ -472,7 +563,7 @@ export default function EventsPage() {
                       <h3 className="text-xl font-semibold text-slate-900">{e.title}</h3>
                       <div className="mt-3 text-sm text-slate-700">📅 {formatDate(e.date)}</div>
                       <div className="mt-6 border-t border-slate-200 pt-5 text-sm font-medium text-[var(--steel-teal)]">
-                        View details ↳
+                        View details →
                       </div>
                     </div>
                   </button>
@@ -480,7 +571,7 @@ export default function EventsPage() {
               )}
             </div>
 
-            {/* ✅ PAST PAGINATION */}
+            {/* PAST PAGINATION */}
             <div className="mt-8 flex items-center justify-between">
               <button
                 type="button"
@@ -506,7 +597,7 @@ export default function EventsPage() {
         </section>
       )}
 
-      {/* NEVER MISS AN EVENT (Resend subscribe) */}
+      {/* NEVER MISS AN EVENT */}
       <section className="py-14 sm:py-20">
         <Container>
           <div className="rounded-3xl border border-slate-200 bg-white p-8 sm:p-10">
@@ -601,28 +692,19 @@ export default function EventsPage() {
 
               <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-lg font-semibold text-slate-900">
-                  {selected.price && selected.price > 0 ? `₦${selected.price.toLocaleString()}` : "Free"}
+                  {selected.price && selected.price > 0
+                    ? `₦${selected.price.toLocaleString()}`
+                    : "Free"}
                 </div>
 
                 <div className="flex gap-3">
-                  {selected.registration_url ? (
-                    <a
-                      href={selected.registration_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-2xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
-                    >
-                      {isPastEvent(selected.date) ? "View event" : "Register for event"}
-                    </a>
-                  ) : (
-                    <button
-                      type="button"
-                      className="cursor-not-allowed rounded-2xl bg-slate-200 px-5 py-3 text-sm font-semibold text-slate-600"
-                      disabled
-                    >
-                      No registration link
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => goToInternalEventPage(selected)}
+                    className="rounded-2xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
+                  >
+                    {isPastEvent(selected.date) ? "View event" : "Register for event"}
+                  </button>
 
                   <button
                     type="button"
