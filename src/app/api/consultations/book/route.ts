@@ -1,5 +1,3 @@
-// src/app/api/consultations/book/route.ts
-
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -7,29 +5,32 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 
 function makeRef() {
-  return `CONS-${Date.now()}-${crypto
-    .randomBytes(4)
-    .toString("hex")
-    .toUpperCase()}`;
+  return `CONS-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
-// Africa/Lagos is UTC+1 (no DST) => use +01:00 safely
-function buildStartISO(scheduled_date: string, scheduled_time: string) {
-  // scheduled_date: "YYYY-MM-DD", scheduled_time: "HH:mm"
-  return new Date(`${scheduled_date}T${scheduled_time}:00+01:00`).toISOString();
-}
+// Build ISO timestamps from date + time + timezone (simple Lagos default)
+function toISOStartEnd(params: {
+  scheduled_date: string; // YYYY-MM-DD
+  scheduled_time: string; // HH:mm
+  duration_minutes: number;
+}) {
+  const { scheduled_date, scheduled_time, duration_minutes } = params;
 
-function addMinutes(iso: string, mins: number) {
-  const d = new Date(iso);
-  d.setMinutes(d.getMinutes() + mins);
-  return d.toISOString();
+  // Treat as Africa/Lagos local time (UTC+1, no DST)
+  // Convert to UTC ISO by subtracting 1 hour.
+  const [y, m, d] = scheduled_date.split("-").map(Number);
+  const [hh, mm] = scheduled_time.split(":").map(Number);
+
+  const startLocal = new Date(Date.UTC(y, m - 1, d, hh - 1, mm, 0)); // Lagos -> UTC
+  const endLocal = new Date(startLocal.getTime() + duration_minutes * 60 * 1000);
+
+  return { start_at: startLocal.toISOString(), end_at: endLocal.toISOString() };
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null);
 
-    // ✅ These match what your Consultation page is sending
     const service_id = String(body?.service_id || "").trim();
     const full_name = String(body?.full_name || "").trim();
     const email = String(body?.email || "").trim();
@@ -42,17 +43,14 @@ export async function POST(req: Request) {
 
     if (!service_id || !full_name || !email || !scheduled_date || !scheduled_time) {
       return NextResponse.json(
-        {
-          ok: false,
-          error: "service_id, full_name, email, scheduled_date, scheduled_time are required.",
-        },
+        { ok: false, error: "service_id, full_name, email, scheduled_date, scheduled_time are required." },
         { status: 400 }
       );
     }
 
     const supabase = supabaseAdmin();
 
-    // ✅ Get service price + duration from Supabase (so you don't pass amount from frontend)
+    // 1) Get service (price + duration)
     const { data: service, error: serviceErr } = await supabase
       .from("consultation_services")
       .select("id,name,duration_minutes,price_ngn,is_active")
@@ -60,86 +58,40 @@ export async function POST(req: Request) {
       .limit(1)
       .single();
 
-    if (serviceErr || !service || service.is_active === false) {
-      return NextResponse.json(
-        { ok: false, error: "Consultation type not found or inactive." },
-        { status: 400 }
-      );
+    if (serviceErr || !service || !service.is_active) {
+      return NextResponse.json({ ok: false, error: "Invalid consultation type." }, { status: 400 });
     }
 
-    const start_at = buildStartISO(scheduled_date, scheduled_time);
-    const end_at = addMinutes(start_at, Number(service.duration_minutes || 30));
+    const duration = Number(service.duration_minutes || 30);
+    const amount_ngn = Number(service.price_ngn || 0);
 
-    // ✅ Prevent double booking (pending or paid)
-    const { data: existing, error: existErr } = await supabase
-      .from("consultation_bookings")
-      .select("id")
-      .eq("start_at", start_at)
-      .in("payment_status", ["pending", "paid"])
-      .limit(1);
+    // 2) Convert chosen date/time -> start_at/end_at ISO
+    const { start_at, end_at } = toISOStartEnd({
+      scheduled_date,
+      scheduled_time,
+      duration_minutes: duration,
+    });
 
-    if (existErr) {
-      return NextResponse.json({ ok: false, error: existErr.message }, { status: 400 });
-    }
-
-    if (existing && existing.length > 0) {
-      return NextResponse.json(
-        { ok: false, error: "That time slot is already taken. Please pick another." },
-        { status: 400 }
-      );
-    }
-
-    const price_ngn = Number(service.price_ngn || 0);
-
-    // ✅ FREE booking
-    if (!price_ngn || price_ngn < 1) {
-      const { data: booking, error: insErr } = await supabase
-        .from("consultation_bookings")
-        .insert([
-          {
-            full_name,
-            email,
-            phone,
-            start_at,
-            end_at,
-            notes,
-            payment_status: "paid",
-            paystack_reference: null,
-            amount_ngn: 0,
-          },
-        ])
-        .select("id")
-        .single();
-
-      if (insErr || !booking) {
-        return NextResponse.json(
-          { ok: false, error: insErr?.message || "Failed to create booking." },
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json({ ok: true, mode: "free", booking_id: booking.id });
-    }
-
-    // ✅ PAID booking
+    // 3) Create booking row (pending for paid, paid/free later)
     const reference = makeRef();
 
     const { data: booking, error: insErr } = await supabase
       .from("consultation_bookings")
       .insert([
         {
+          service_id,
           full_name,
           email,
           phone,
           start_at,
           end_at,
           notes,
-          payment_status: "pending",
-          paystack_reference: reference,
-          amount_ngn: Math.floor(price_ngn),
+          payment_status: amount_ngn > 0 ? "pending" : "paid",
+          paystack_reference: amount_ngn > 0 ? reference : null,
+          amount_ngn: Math.floor(amount_ngn),
         },
       ])
-      .select("id")
+      .select("*")
       .single();
 
     if (insErr || !booking) {
@@ -149,9 +101,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/consultation/success?ref=${encodeURIComponent(
-      reference
-    )}`;
+    // FREE => return free mode
+    if (amount_ngn <= 0) {
+      return NextResponse.json({ ok: true, mode: "free", booking_id: booking.id });
+    }
+
+    // PAID => init Paystack
+    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/consultation/success?ref=${reference}`;
 
     const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
@@ -161,17 +117,17 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         email,
-        amount: Math.floor(price_ngn) * 100,
+        amount: Math.floor(amount_ngn) * 100,
         reference,
         callback_url: callbackUrl,
         metadata: {
           type: "consultation",
           booking_id: booking.id,
+          service_id,
           full_name,
           phone: phone || "",
           start_at,
           end_at,
-          service_id,
         },
       }),
     });
