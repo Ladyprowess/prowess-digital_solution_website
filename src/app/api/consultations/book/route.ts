@@ -75,24 +75,33 @@ export async function POST(req: Request) {
     // 3) Create booking row (pending for paid, paid/free later)
     const reference = makeRef();
 
-    const { data: booking, error: insErr } = await supabase
-      .from("consultation_bookings")
-      .insert([
-        {
-          service_id,
-          full_name,
-          email,
-          phone,
-          start_at,
-          end_at,
-          notes,
-          payment_status: amount_ngn > 0 ? "pending" : "paid",
-          paystack_reference: amount_ngn > 0 ? reference : null,
-          amount_ngn: Math.floor(amount_ngn),
-        },
-      ])
-      .select("*")
-      .single();
+    const timezone = String(body?.timezone || "Africa/Lagos").trim();
+
+const { data: booking, error: insErr } = await supabase
+  .from("consultation_bookings")
+  .insert([
+    {
+      service_id,
+      full_name,
+      email,
+      phone,
+
+      // ✅ add these (because your table requires scheduled_date)
+      scheduled_date,
+      scheduled_time,
+      timezone,
+
+      start_at,
+      end_at,
+      notes,
+
+      payment_status: amount_ngn > 0 ? "pending" : "paid",
+      paystack_reference: amount_ngn > 0 ? reference : null,
+      amount_ngn: Math.floor(amount_ngn),
+    },
+  ])
+  .select("*")
+  .single();
 
     if (insErr || !booking) {
       return NextResponse.json(
