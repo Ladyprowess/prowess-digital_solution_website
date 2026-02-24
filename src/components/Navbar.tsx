@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "@/components/Container";
 import { navPrimary, navMore } from "@/content/site";
 
-const BOOKING_URL = "https://calendly.com/lady-prowess/30min";
+const BOOKING_URL = "https://prowessdigitalsolutions.com/consultation";
 
 export default function Navbar() {
   const pathname = usePathname();

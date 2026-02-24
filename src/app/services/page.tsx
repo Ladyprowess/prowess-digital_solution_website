@@ -130,7 +130,7 @@ export default function ServicesPage() {
             </p>
 
             <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="https://calendly.com/lady-prowess/30min">
+              <Link href="https://prowessdigitalsolutions.com/consultation">
                 <button className="w-full rounded-xl bg-white px-10 py-4 text-lg font-semibold text-[#2e5659] shadow-lg transition hover:scale-[1.02] sm:w-auto">
                   Book Clarity Session
                 </button>

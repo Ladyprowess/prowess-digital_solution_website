@@ -58,7 +58,7 @@ export default function ModernHomePage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="https://calendly.com/lady-prowess/30min">
+            <Link href="https://prowessdigitalsolutions.com/consultation">
             <button className="group inline-flex items-center justify-center gap-2 rounded-lg bg-[#507c80] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#507c80]/25 transition hover:bg-[#3d5f62] hover:shadow-xl hover:shadow-[#507c80]/30">
                 Book Clarity Session
                 <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
