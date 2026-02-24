@@ -1,10 +1,10 @@
+// src/app/events/payment-success/payment-success-client.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Container from "@/components/Container";
 
-export default function PaymentSuccessPage() {
+export default function PaymentSuccessClient() {
   const params = useSearchParams();
   const reference = params.get("reference");
 
@@ -37,11 +37,11 @@ export default function PaymentSuccessPage() {
   }, [reference]);
 
   return (
-    <Container>
-      <div className="py-14 max-w-2xl">
-        <h1 className="text-2xl font-semibold text-slate-900">Registration status</h1>
-        <p className="mt-4 text-sm text-slate-700">{message}</p>
-      </div>
-    </Container>
+    <div className="py-14 max-w-2xl">
+      <h1 className="text-2xl font-semibold text-slate-900">
+        Registration status
+      </h1>
+      <p className="mt-4 text-sm text-slate-700">{message}</p>
+    </div>
   );
 }
