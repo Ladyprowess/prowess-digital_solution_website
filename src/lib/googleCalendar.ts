@@ -1,45 +1,50 @@
 import { google } from "googleapis";
 
-export function getCalendarClient() {
-  const json = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!json) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON");
-
-  const creds = JSON.parse(json);
-
-  const auth = new google.auth.JWT({
-    email: creds.client_email,
-    key: creds.private_key,
-    scopes: ["https://www.googleapis.com/auth/calendar"],
-  });
-
-  return google.calendar({ version: "v3", auth });
-}
-
-export async function createCalendarEvent(args: {
+type Params = {
   summary: string;
   description?: string;
   startISO: string;
   endISO: string;
-}) {
-  const calendarId = process.env.GOOGLE_CALENDAR_ID;
-  const timeZone = process.env.CONSULTATION_TIMEZONE || "Africa/Lagos";
+  timezone: string;
+};
 
+function getServiceAccount() {
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON");
+
+  const json = JSON.parse(raw);
+
+  // Must be a real service account json with private_key + client_email
+  if (!json.client_email || !json.private_key) {
+    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not a service account key.");
+  }
+
+  return json;
+}
+
+export async function createGoogleEvent(p: Params) {
+  const calendarId = process.env.GOOGLE_CALENDAR_ID;
   if (!calendarId) throw new Error("Missing GOOGLE_CALENDAR_ID");
 
-  const calendar = getCalendarClient();
+  const sa = getServiceAccount();
+
+  const auth = new google.auth.JWT({
+    email: sa.client_email,
+    key: sa.private_key,
+    scopes: ["https://www.googleapis.com/auth/calendar"],
+  });
+
+  const calendar = google.calendar({ version: "v3", auth });
 
   const res = await calendar.events.insert({
     calendarId,
     requestBody: {
-      summary: args.summary,
-      description: args.description || "",
-      start: { dateTime: args.startISO, timeZone },
-      end: { dateTime: args.endISO, timeZone },
+      summary: p.summary,
+      description: p.description || "",
+      start: { dateTime: p.startISO, timeZone: p.timezone },
+      end: { dateTime: p.endISO, timeZone: p.timezone },
     },
   });
 
-  return {
-    id: res.data.id || null,
-    htmlLink: res.data.htmlLink || null,
-  };
+  return res.data.id || null;
 }
