@@ -6,8 +6,8 @@ type EmailParams = {
   timezone: string;
 };
 
-function fmt(iso: string) {
-  return new Date(iso).toLocaleString("en-GB", { timeZone: "Africa/Lagos" });
+function fmt(iso: string, tz: string) {
+  return new Date(iso).toLocaleString("en-GB", { timeZone: tz });
 }
 
 export async function sendConsultationEmail(p: EmailParams) {
@@ -23,8 +23,10 @@ export async function sendConsultationEmail(p: EmailParams) {
       <h2>Booking confirmed ✅</h2>
       <p>Hi ${p.name},</p>
       <p>Your consultation has been confirmed.</p>
-      <p><b>Start:</b> ${fmt(p.startISO)}<br/>
-      <b>End:</b> ${fmt(p.endISO)}</p>
+      <p>
+        <b>Start:</b> ${fmt(p.startISO, p.timezone)}<br/>
+        <b>End:</b> ${fmt(p.endISO, p.timezone)}
+      </p>
       <p>If you have any questions, reply to this email.</p>
     </div>
   `;
@@ -37,7 +39,7 @@ export async function sendConsultationEmail(p: EmailParams) {
     },
     body: JSON.stringify({
       from,
-      to: [p.to],
+      to: p.to, // ✅ single recipient
       subject,
       html,
     }),
@@ -47,4 +49,6 @@ export async function sendConsultationEmail(p: EmailParams) {
     const j = await res.json().catch(() => null);
     throw new Error(j?.message || "Failed to send email.");
   }
-}}
+
+  return true;
+}
