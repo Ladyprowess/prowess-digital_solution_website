@@ -1,6 +1,7 @@
 type EmailParams = {
   to: string;
   name: string;
+  service_name: string;   // ✅ add this
   startISO: string;
   endISO: string;
   timezone: string;
@@ -23,10 +24,14 @@ export async function sendConsultationEmail(p: EmailParams) {
       <h2>Booking confirmed ✅</h2>
       <p>Hi ${p.name},</p>
       <p>Your consultation has been confirmed.</p>
+
+      <p><b>Service:</b> ${p.service_name}</p>
+
       <p>
         <b>Start:</b> ${fmt(p.startISO, p.timezone)}<br/>
         <b>End:</b> ${fmt(p.endISO, p.timezone)}
       </p>
+
       <p>If you have any questions, reply to this email.</p>
     </div>
   `;
@@ -39,7 +44,7 @@ export async function sendConsultationEmail(p: EmailParams) {
     },
     body: JSON.stringify({
       from,
-      to: p.to, // ✅ single recipient
+      to: p.to,
       subject,
       html,
     }),

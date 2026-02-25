@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createGoogleEvent } from "@/lib/googleCalendar";
-import { sendConsultationEmail } from "@/lib/emails/consultation";
+import { sendConsultationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
