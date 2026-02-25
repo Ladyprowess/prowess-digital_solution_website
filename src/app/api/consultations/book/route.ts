@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { createGoogleEvent } from "@/lib/googleCalendar";
+import { sendConsultationEmail } from "@/lib/emails/consultation";
 
 export const runtime = "nodejs";
 
@@ -8,9 +10,8 @@ function makeRef() {
   return `CONS-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
-// Nigeria is +01:00 (no DST). We use a fixed offset to avoid timezone libraries.
+// Nigeria is +01:00 (no DST). Fixed offset.
 function buildStartISO(scheduled_date: string, scheduled_time: string) {
-  // scheduled_time must look like "10:30"
   return `${scheduled_date}T${scheduled_time}:00+01:00`;
 }
 
@@ -23,8 +24,8 @@ export async function POST(req: Request) {
     const email = String(body?.email || "").trim();
     const phone = body?.phone ? String(body.phone).trim() : null;
 
-    const scheduled_date = String(body?.scheduled_date || "").trim(); // "YYYY-MM-DD"
-    const scheduled_time = String(body?.scheduled_time || "").trim(); // "HH:mm"
+    const scheduled_date = String(body?.scheduled_date || "").trim();
+    const scheduled_time = String(body?.scheduled_time || "").trim();
     const timezone = String(body?.timezone || "Africa/Lagos").trim();
     const notes = body?.notes ? String(body.notes).trim() : null;
 
@@ -61,11 +62,10 @@ export async function POST(req: Request) {
 
     const end = new Date(start.getTime() + duration_minutes * 60 * 1000);
 
+    const isPaid = amount_ngn > 0;
     const reference = makeRef();
 
-    // 3) Insert booking (FREE or PAID)
-    const isPaid = amount_ngn > 0;
-
+    // 3) Insert booking
     const { data: booking, error: insErr } = await supabase
       .from("consultation_bookings")
       .insert([
@@ -79,6 +79,7 @@ export async function POST(req: Request) {
           scheduled_time,
           timezone,
 
+          // store in UTC, keep timezone separately
           start_at: start.toISOString(),
           end_at: end.toISOString(),
 
@@ -89,7 +90,8 @@ export async function POST(req: Request) {
           amount_ngn: Math.floor(amount_ngn),
         },
       ])
-      .select("id,payment_status,paystack_reference")
+      // ✅ IMPORTANT: select the fields you will actually use below
+      .select("id,full_name,email,phone,start_at,end_at,timezone,payment_status,paystack_reference,amount_ngn,service_id")
       .single();
 
     if (insErr || !booking) {
@@ -99,12 +101,39 @@ export async function POST(req: Request) {
       );
     }
 
-    // FREE
+    // ✅ FREE => confirm immediately (calendar + email)
     if (!isPaid) {
+      // Create calendar event
+      const gEventId = await createGoogleEvent({
+        summary: `Consultation: ${service.name}`,
+        description: `Booked by: ${booking.full_name}\nEmail: ${booking.email}\nPhone: ${booking.phone || ""}\nNotes: ${
+          notes || ""
+        }`,
+        startISO: booking.start_at,
+        endISO: booking.end_at,
+        timezone: booking.timezone || "Africa/Lagos",
+      });
+
+      // Save google event id
+      await supabase
+        .from("consultation_bookings")
+        .update({ google_event_id: gEventId })
+        .eq("id", booking.id);
+
+      // Send confirmation email
+      await sendConsultationEmail({
+        to: booking.email,
+        name: booking.full_name,
+        service_name: service.name,
+        startISO: booking.start_at,
+        endISO: booking.end_at,
+        timezone: booking.timezone || "Africa/Lagos",
+      });
+
       return NextResponse.json({ ok: true, mode: "free", booking_id: booking.id }, { status: 200 });
     }
 
-    // PAID => Paystack initialise
+    // ✅ PAID => Paystack initialise
     const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/consultation/success?reference=${encodeURIComponent(
       reference
     )}`;
@@ -129,6 +158,9 @@ export async function POST(req: Request) {
           scheduled_date,
           scheduled_time,
           timezone,
+          // helpful for verification route
+          start_at: booking.start_at,
+          end_at: booking.end_at,
         },
       }),
     });

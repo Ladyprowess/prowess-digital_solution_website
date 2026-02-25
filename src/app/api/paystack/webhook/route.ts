@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { createCalendarEvent } from "@/lib/googleCalendar";
+import { createGoogleEvent } from "@/lib/googleCalendar";
 import { resend } from "@/lib/resendClient";
 
 export const runtime = "nodejs";
 
 function verifyPaystackSignature(rawBody: string, signature: string | null) {
   if (!signature) return false;
+
   const secret = process.env.PAYSTACK_SECRET_KEY!;
+  if (!secret) return false;
+
   const hash = crypto.createHmac("sha512", secret).update(rawBody).digest("hex");
   return hash === signature;
 }
@@ -24,13 +27,19 @@ export async function POST(req: Request) {
 
     const payload = JSON.parse(rawBody);
 
-    // We only care about successful charge
+    // only handle successful payments
     if (payload?.event !== "charge.success") {
       return NextResponse.json({ ok: true });
     }
 
     const reference = payload?.data?.reference as string | undefined;
     if (!reference) return NextResponse.json({ ok: true });
+
+    const metadata = payload?.data?.metadata || {};
+    // ✅ make sure it is a consultation payment
+    if (metadata?.type !== "consultation") {
+      return NextResponse.json({ ok: true });
+    }
 
     const supabase = supabaseAdmin();
 
@@ -44,7 +53,7 @@ export async function POST(req: Request) {
 
     if (bookErr || !booking) return NextResponse.json({ ok: true });
 
-    // If already paid, stop (avoid double webhook)
+    // Already processed
     if (booking.payment_status === "paid") {
       return NextResponse.json({ ok: true });
     }
@@ -53,32 +62,34 @@ export async function POST(req: Request) {
     const summary = `Consultation: ${booking.full_name}`;
     const description = `Email: ${booking.email}\nPhone: ${booking.phone || "-"}\nNotes: ${booking.notes || "-"}`;
 
-    const gEvent = await createCalendarEvent({
+    const gEventId = await createGoogleEvent({
       summary,
       description,
       startISO: booking.start_at,
       endISO: booking.end_at,
+      timezone: booking.timezone || "Africa/Lagos",
     });
 
-    // Update booking
+    // ✅ Update booking (guard against double webhook)
     const { error: updErr } = await supabase
       .from("consultation_bookings")
       .update({
         payment_status: "paid",
-        google_event_id: gEvent.id,
+        google_event_id: gEventId,
       })
-      .eq("id", booking.id);
+      .eq("id", booking.id)
+      .neq("payment_status", "paid");
 
-    if (updErr) {
-      // still return ok to Paystack
-      return NextResponse.json({ ok: true });
-    }
+    // Always return 200 to Paystack
+    if (updErr) return NextResponse.json({ ok: true });
 
     // Email user + admin
     const fromEmail = process.env.RESEND_FROM_EMAIL!;
     const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
 
-    const when = new Date(booking.start_at).toLocaleString("en-GB");
+    const when = new Date(booking.start_at).toLocaleString("en-GB", {
+      timeZone: "Africa/Lagos",
+    });
 
     await resend.emails.send({
       from: fromEmail,
@@ -88,7 +99,7 @@ export async function POST(req: Request) {
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>Your consultation is confirmed ✅</h2>
           <p><b>Name:</b> ${booking.full_name}</p>
-          <p><b>Date/Time:</b> ${when}</p>
+          <p><b>Date/Time:</b> ${when} (Lagos)</p>
           <p><b>Payment Ref:</b> ${booking.paystack_reference}</p>
           <p>We look forward to speaking with you.</p>
         </div>
@@ -105,16 +116,16 @@ export async function POST(req: Request) {
           <p><b>Name:</b> ${booking.full_name}</p>
           <p><b>Email:</b> ${booking.email}</p>
           <p><b>Phone:</b> ${booking.phone || "-"}</p>
-          <p><b>Date/Time:</b> ${when}</p>
+          <p><b>Date/Time:</b> ${when} (Lagos)</p>
           <p><b>Ref:</b> ${booking.paystack_reference}</p>
-          <p><b>Google Event:</b> ${gEvent.htmlLink || "Created"}</p>
+          <p><b>Google Event ID:</b> ${gEventId}</p>
         </div>
       `,
     });
 
     return NextResponse.json({ ok: true });
   } catch {
-    // Paystack expects 200 OK even if we fail, but it's fine
+    // Paystack expects 200 OK even if we fail
     return NextResponse.json({ ok: true });
   }
 }
