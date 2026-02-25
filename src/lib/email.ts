@@ -1,97 +1,50 @@
-import { Resend } from "resend";
-import { buildICS } from "@/lib/ics";
+type EmailParams = {
+  to: string;
+  name: string;
+  startISO: string;
+  endISO: string;
+  timezone: string;
+};
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
-
-export async function sendBookingEmails(opts: {
-  adminEmail: string;
-  userEmail: string;
-  userName: string;
-  serviceName: string;
-  date: string;
-  time: string;
-  durationMinutes: number;
-  bookingId: string;
-  paid: boolean;
-}) {
-  const {
-    adminEmail,
-    userEmail,
-    userName,
-    serviceName,
-    date,
-    time,
-    durationMinutes,
-    bookingId,
-    paid,
-  } = opts;
-
-  const title = `${serviceName} – Consultation`;
-  const pretty = `${date} at ${time}`;
-  const ics = buildICS({
-    title,
-    description: `Consultation booking for ${userName}. Booking ID: ${bookingId}.`,
-    location: "Online",
-    date,
-    time,
-    durationMinutes,
-    uid: bookingId,
-  });
-
-  const from = "Prowess Digital Solutions <bookings@prowessdigitalsolutions.com>";
-
-  // User email
-  await resend.emails.send({
-    from,
-    to: userEmail,
-    subject: "Your consultation is confirmed",
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.5">
-        <h2 style="margin:0 0 8px">Booking confirmed ✅</h2>
-        <p style="margin:0 0 10px">Hi ${userName},</p>
-        <p style="margin:0 0 10px">
-          Your consultation has been confirmed.
-        </p>
-        <p style="margin:0 0 10px">
-          <b>Service:</b> ${serviceName}<br/>
-          <b>Date & time:</b> ${pretty}<br/>
-          <b>Payment:</b> ${paid ? "Paid" : "Free"}<br/>
-          <b>Booking ID:</b> ${bookingId}
-        </p>
-        <p style="margin:0">We have attached a calendar invite (.ics) so you can add it to your calendar.</p>
-      </div>
-    `,
-    attachments: [
-      {
-        filename: "consultation-invite.ics",
-        content: Buffer.from(ics).toString("base64"),
-      },
-    ],
-  });
-
-  // Admin email
-  await resend.emails.send({
-    from,
-    to: adminEmail,
-    subject: "New consultation booking",
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.5">
-        <h2 style="margin:0 0 8px">New booking</h2>
-        <p style="margin:0 0 10px">
-          <b>Name:</b> ${userName}<br/>
-          <b>Email:</b> ${userEmail}<br/>
-          <b>Service:</b> ${serviceName}<br/>
-          <b>Date & time:</b> ${pretty}<br/>
-          <b>Payment:</b> ${paid ? "Paid" : "Free"}<br/>
-          <b>Booking ID:</b> ${bookingId}
-        </p>
-      </div>
-    `,
-    attachments: [
-      {
-        filename: "consultation-invite.ics",
-        content: Buffer.from(ics).toString("base64"),
-      },
-    ],
-  });
+function fmt(iso: string) {
+  return new Date(iso).toLocaleString("en-GB", { timeZone: "Africa/Lagos" });
 }
+
+export async function sendConsultationEmail(p: EmailParams) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+
+  if (!apiKey || !from) throw new Error("Missing RESEND_API_KEY or RESEND_FROM_EMAIL");
+
+  const subject = "Your consultation booking is confirmed";
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.5">
+      <h2>Booking confirmed ✅</h2>
+      <p>Hi ${p.name},</p>
+      <p>Your consultation has been confirmed.</p>
+      <p><b>Start:</b> ${fmt(p.startISO)}<br/>
+      <b>End:</b> ${fmt(p.endISO)}</p>
+      <p>If you have any questions, reply to this email.</p>
+    </div>
+  `;
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [p.to],
+      subject,
+      html,
+    }),
+  });
+
+  if (!res.ok) {
+    const j = await res.json().catch(() => null);
+    throw new Error(j?.message || "Failed to send email.");
+  }
+}}
