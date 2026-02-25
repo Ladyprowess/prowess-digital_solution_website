@@ -95,14 +95,17 @@ export async function POST(req: Request) {
     // Handle insert errors properly (including duplicate slot)
     if (insErr || !booking) {
       const pgErr = insErr as any;
-
-      if (pgErr?.code === "23505" && pgErr?.constraint === "uniq_consult_booking_slot_active") {
+    
+      if (pgErr?.code === "23505") {
         return NextResponse.json(
-          { ok: false, error: "This time slot has already been booked. Please choose another time." },
+          {
+            ok: false,
+            error: "This booking slot has already been taken. Please choose another time.",
+          },
           { status: 409 }
         );
       }
-
+    
       return NextResponse.json(
         { ok: false, error: insErr?.message || "Failed to create booking." },
         { status: 400 }
