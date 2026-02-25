@@ -24,8 +24,8 @@ export async function POST(req: Request) {
     const email = String(body?.email || "").trim();
     const phone = body?.phone ? String(body.phone).trim() : null;
 
-    const scheduled_date = String(body?.scheduled_date || "").trim();
-    const scheduled_time = String(body?.scheduled_time || "").trim();
+    const scheduled_date = String(body?.scheduled_date || "").trim(); // YYYY-MM-DD
+    const scheduled_time = String(body?.scheduled_time || "").trim(); // HH:mm
     const timezone = String(body?.timezone || "Africa/Lagos").trim();
     const notes = body?.notes ? String(body.notes).trim() : null;
 
@@ -43,7 +43,6 @@ export async function POST(req: Request) {
       .from("consultation_services")
       .select("id,name,duration_minutes,price_ngn,is_active")
       .eq("id", service_id)
-      .limit(1)
       .single();
 
     if (svcErr || !service || !service.is_active) {
@@ -52,6 +51,7 @@ export async function POST(req: Request) {
 
     const amount_ngn = Number(service.price_ngn || 0);
     const duration_minutes = Number(service.duration_minutes || 30);
+    const isPaid = amount_ngn > 0;
 
     // 2) Compute start_at / end_at
     const startISO = buildStartISO(scheduled_date, scheduled_time);
@@ -62,8 +62,8 @@ export async function POST(req: Request) {
 
     const end = new Date(start.getTime() + duration_minutes * 60 * 1000);
 
-    const isPaid = amount_ngn > 0;
-    const reference = makeRef();
+    // Only create Paystack reference if PAID
+    const reference = isPaid ? makeRef() : null;
 
     // 3) Insert booking
     const { data: booking, error: insErr } = await supabase
@@ -79,22 +79,30 @@ export async function POST(req: Request) {
           scheduled_time,
           timezone,
 
-          // store in UTC, keep timezone separately
           start_at: start.toISOString(),
           end_at: end.toISOString(),
 
           notes,
 
-          payment_status: isPaid ? "pending" : "paid",
-          paystack_reference: isPaid ? reference : null,
+          payment_status: isPaid ? "pending" : "free",
+          paystack_reference: reference,
           amount_ngn: Math.floor(amount_ngn),
         },
       ])
-      // ✅ IMPORTANT: select the fields you will actually use below
       .select("id,full_name,email,phone,start_at,end_at,timezone,payment_status,paystack_reference,amount_ngn,service_id")
       .single();
 
+    // Handle insert errors properly (including duplicate slot)
     if (insErr || !booking) {
+      const pgErr = insErr as any;
+
+      if (pgErr?.code === "23505" && pgErr?.constraint === "uniq_consult_booking_slot_active") {
+        return NextResponse.json(
+          { ok: false, error: "This time slot has already been booked. Please choose another time." },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
         { ok: false, error: insErr?.message || "Failed to create booking." },
         { status: 400 }
@@ -103,24 +111,21 @@ export async function POST(req: Request) {
 
     // ✅ FREE => confirm immediately (calendar + email)
     if (!isPaid) {
-      // Create calendar event
       const gEventId = await createGoogleEvent({
         summary: `Consultation: ${service.name}`,
-        description: `Booked by: ${booking.full_name}\nEmail: ${booking.email}\nPhone: ${booking.phone || ""}\nNotes: ${
-          notes || ""
-        }`,
+        description: `Booked by: ${booking.full_name}\nEmail: ${booking.email}\nPhone: ${
+          booking.phone || "-"
+        }\nNotes: ${notes || "-"}`,
         startISO: booking.start_at,
         endISO: booking.end_at,
         timezone: booking.timezone || "Africa/Lagos",
       });
 
-      // Save google event id
       await supabase
         .from("consultation_bookings")
         .update({ google_event_id: gEventId })
         .eq("id", booking.id);
 
-      // Send confirmation email
       await sendConsultationEmail({
         to: booking.email,
         name: booking.full_name,
@@ -134,8 +139,9 @@ export async function POST(req: Request) {
     }
 
     // ✅ PAID => Paystack initialise
+    const safeRef = String(booking.paystack_reference); // guaranteed for paid
     const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/consultation/success?reference=${encodeURIComponent(
-      reference
+      safeRef
     )}`;
 
     const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -147,7 +153,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         email,
         amount: Math.floor(amount_ngn) * 100,
-        reference,
+        reference: safeRef,
         callback_url: callbackUrl,
         metadata: {
           type: "consultation",
@@ -158,7 +164,6 @@ export async function POST(req: Request) {
           scheduled_date,
           scheduled_time,
           timezone,
-          // helpful for verification route
           start_at: booking.start_at,
           end_at: booking.end_at,
         },
@@ -180,7 +185,7 @@ export async function POST(req: Request) {
         mode: "paid",
         booking_id: booking.id,
         authorization_url: paystackData.data.authorization_url,
-        reference,
+        reference: safeRef,
       },
       { status: 200 }
     );
