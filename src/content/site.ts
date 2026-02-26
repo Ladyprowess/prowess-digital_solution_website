@@ -70,7 +70,7 @@ export const services: Service[] = [
       whatYouGet: [
         "60-minute private strategy session",
         "Clearer understanding of what is really holding the business back",
-        "Better structure around your services, offers, roles or processes",
+        "Better structure around your services or processes",
         "A simple, prioritised view of where to focus your time and energy",
         "Increased confidence in your decisions, backed by a realistic plan",
         "A calm, supportive space to talk through ideas without pressure",
@@ -97,12 +97,12 @@ export const services: Service[] = [
       ],
       whatYouGet: [
         "A structured summary of what is really happening in your business",
-        "Clear identification of gaps, risks and weak point",
-        "Step-by-step recommendations for improving your structure, operations and decision-making",
+        "Clear identification of gaps and weak point",
+        "Step-by-step recommendations for improving your structure and decision-making",
         "A roadmap that shows what to address first and what can wait",
-        "Suggestions for simple, sustainable systems that support long-term growth".
+        "Suggestions for simple sustainable systems that support long-term growth",
       ],
-      notes: ["Our aim is that you leave with clarity, confidence and a plan that feels achievable."],
+      notes: ["Our aim is that you leave with clarity and a plan that feels achievable."],
     },
   },
 
