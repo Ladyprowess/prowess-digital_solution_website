@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Container from "@/components/Container";
 import Link from "next/link";
 import Script from "next/script";
+import WrapBlogTables from "@/components/WrapBlogTables";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -195,9 +196,11 @@ return (
           ) : null}
 
           {/* ✅ Clean typography wrapper */}
-          <article className="blog-content">
-            <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
-          </article>
+          <WrapBlogTables />
+
+<article className="blog-content">
+  <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
+</article>
 
           {/* ✅ CTA block (matches your services positioning) */}
           <div className="mt-10 rounded-2xl border border-slate-200 bg-[#eef6f6] p-6 sm:p-8">
