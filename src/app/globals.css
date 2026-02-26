@@ -230,4 +230,42 @@ body {
     height: auto;
     border: 1px solid rgba(15, 23, 42, 0.10);
   }
+
+    /* ===== Blog Tables: visible grid lines + clean layout ===== */
+  .blog-content table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid rgba(15, 23, 42, 0.16); /* outer border */
+    background: #fff;
+    margin: 18px 0;
+  }
+
+  .blog-content th,
+  .blog-content td {
+    border: 1px solid rgba(15, 23, 42, 0.14); /* grid lines */
+    padding: 12px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .blog-content th {
+    font-weight: 700;
+    background: rgba(80, 124, 128, 0.08);
+  }
+
+  /* Prevent ugly squishing on small screens */
+  .blog-content table {
+    min-width: 720px; /* forces scroll instead of compressing */
+  }
+
+  /* Table container (we'll auto-wrap tables with JS/React below) */
+  .blog-content .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: #fff;
+    margin: 18px 0;
+  }
 }
