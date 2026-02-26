@@ -55,24 +55,27 @@ export const services: Service[] = [
     slug: "business-clarity-session",
     icon: "clarity",
     title: "Business Clarity Session",
-    short: "A structured deep-dive session to organise your ideas and define your next clear steps.",
+    short: "Book a business clarity session to pinpoint what’s holding your business back, get a clear plan, and build simple systems that support steady growth",
     price: "₦60,000 – ₦90,000",
     cta: "Book Session",
     details: {
       description:
-        "This session is designed to bring clarity and structure to your business direction.\n\nWe assess your current position, challenges, and decision patterns. Many business owners struggle because they are making reactive decisions without a structured framework.\n\nIn this session, we organise your thinking, identify your core issue, and define what requires immediate attention. You leave with clarity, structured direction, and confident next steps.",
+        "A business clarity session is a focused consultation where we map out where your business is now, what is not working and what needs to change. It is not about quick fixes or big promises. Instead, it is about building a clear picture so you can make better decisions and set strong foundations.\n\nWe assess your current position, challenges, and decision patterns. Many business owners struggle because they are making reactive decisions without a structured framework.\n\nYou leave the session with a more structured view of your business and practical options for what to do next. This is especially helpful if you feel too close to everything and need an outside perspective that is honest, steady and grounded in day-to-day operations.",
       whoFor: [
+        "New Business owners",
         "Founders unsure where to begin",
         "Business owners feeling overwhelmed",
         "Entrepreneurs needing structured direction before investing further",
       ],
       whatYouGet: [
-        "90-minute private strategy session",
-        "Clear problem identification",
-        "Structured next-step framework",
-        "Written clarity summary",
+        "60-minute private strategy session",
+        "Clearer understanding of what is really holding the business back",
+        "Better structure around your services, offers, roles or processes",
+        "A simple, prioritised view of where to focus your time and energy",
+        "Increased confidence in your decisions, backed by a realistic plan",
+        "A calm, supportive space to talk through ideas without pressure",
       ],
-      notes: ["This session provides strategic clarity only."],
+      notes: ["This session provides Business Clarity Session for Focused Growth Strategy."],
     },
   },
 
@@ -81,25 +84,25 @@ export const services: Service[] = [
     slug: "business-audit-review",
     icon: "audit",
     title: "Business Audit & Review",
-    short: "A detailed structural review of your systems, decisions, and operations.",
+    short: "Need a business audit? Get a clear review of operations, strategy and systems, with practical fixes and a roadmap for stable growth.",
     price: "₦200,000 – ₦350,000",
     cta: "Book Audit",
     details: {
       description:
-        "This is a comprehensive structural assessment of your business.\n\nWe examine your organisational structure, internal systems, workflow, leadership decisions, and operational efficiency.\n\nThe goal is to uncover hidden weaknesses and structural gaps that may be slowing growth.\n\nYou receive a professional review with clear restructuring recommendations.",
+        "When your business feels messy, scattered or stuck, it can be difficult to see what is really going wrong. A Business Audit & Review from Prowess Digital Solutions gives you a clear, honest picture of how your business is working today, and what needs to change so it can work better tomorrow.\n\nWe take a calm, detailed look at how your business actually operates, not just how it appears on paper. The aim is to identify gaps, weak points and confusion, then turn them into clear next steps.\n\nThe goal is to uncover hidden weaknesses and structural gaps that may be slowing growth.\n\nYou receive a professional review with clear restructuring recommendations.",
       whoFor: [
         "Businesses with inconsistent performance",
         "Founders unsure why growth feels unstable",
         "Businesses preparing for scale",
       ],
       whatYouGet: [
-        "Full structural evaluation",
-        "Gap analysis",
-        "Operational assessment",
-        "Written audit report",
-        "Clear restructuring priorities",
+        "A structured summary of what is really happening in your business",
+        "Clear identification of gaps, risks and weak point",
+        "Step-by-step recommendations for improving your structure, operations and decision-making",
+        "A roadmap that shows what to address first and what can wait",
+        "Suggestions for simple, sustainable systems that support long-term growth".
       ],
-      notes: ["This is advisory and analytical in nature."],
+      notes: ["Our aim is that you leave with clarity, confidence and a plan that feels achievable."],
     },
   },
 
