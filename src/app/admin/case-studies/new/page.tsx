@@ -14,7 +14,7 @@ export default function NewCaseStudyPage() {
   const [resultsJson, setResultsJson] = useState(
     `[
   { "label": "Revenue Growth", "value": "45%" },
-  { "label": "Cash Flow Improvement", "value": "₦850,000/month" }
+  { "label": "Cash Flow Improvement", "value": "$850/month" }
 ]`
   );
 

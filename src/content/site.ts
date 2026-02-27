@@ -56,7 +56,7 @@ export const services: Service[] = [
     icon: "clarity",
     title: "Business Clarity Session",
     short: "Book a business clarity session to pinpoint what’s holding your business back, get a clear plan, and build simple systems that support steady growth",
-    price: "₦60,000 – ₦90,000",
+    price: "$60 – $90",
     cta: "Book Session",
     details: {
       description:
@@ -85,7 +85,7 @@ export const services: Service[] = [
     icon: "audit",
     title: "Business Audit & Review",
     short: "Need a business audit? Get a clear review of operations, strategy and systems, with practical fixes and a roadmap for stable growth.",
-    price: "₦200,000 – ₦350,000",
+    price: "$200 – $350",
     cta: "Book Audit",
     details: {
       description:
@@ -112,7 +112,7 @@ export const services: Service[] = [
     icon: "strategy",
     title: "Strategy & Action Plan",
     short: "A structured roadmap outlining what to do, when to do it, and why.",
-    price: "₦250,000 – ₦450,000",
+    price: "$250 – $450",
     cta: "Get Strategy Plan",
     details: {
       description:
@@ -138,7 +138,7 @@ export const services: Service[] = [
     icon: "setup",
     title: "Business Structure Setup",
     short: "Clear organisational structure to support stability and growth.",
-    price: "₦350,000 – ₦600,000",
+    price: "$350 – $600",
     cta: "Set Up Structure",
     details: {
       description:
@@ -164,7 +164,7 @@ export const services: Service[] = [
     icon: "workflow",
     title: "Systems & Workflow Mapping",
     short: "Clear workflow design to improve efficiency and reduce mistakes.",
-    price: "₦300,000 – ₦550,000",
+    price: "$300 – $550",
     cta: "Organise Workflow",
     details: {
       description:
@@ -190,7 +190,7 @@ export const services: Service[] = [
     icon: "sop",
     title: "SOP & Process Documentation",
     short: "Clear written processes that improve consistency and delegation.",
-    price: "₦250,000 – ₦500,000",
+    price: "$250 – $500",
     cta: "Create Processes",
     details: {
       description:
@@ -216,7 +216,7 @@ export const services: Service[] = [
     icon: "training",
     title: "Business Training Sessions",
     short: "Structured learning to strengthen business understanding and leadership.",
-    price: "₦150,000 – ₦350,000",
+    price: "$150 – $350",
     cta: "Book Training",
     details: {
       description:
@@ -242,7 +242,7 @@ export const services: Service[] = [
     icon: "mentorship",
     title: "Mentorship & Accountability Programme",
     short: "Ongoing structured support to maintain stability and growth.",
-    price: "₦300,000 – ₦600,000 (3 months)",
+    price: "$300 – $600 (3 months)",
     cta: "Start Mentorship",
     details: {
       description:
@@ -268,7 +268,7 @@ export const services: Service[] = [
     icon: "package",
     title: "Structured Support Packages",
     short: "Comprehensive bundled support designed around your business needs.",
-    price: "₦500,000 – ₦1,200,000",
+    price: "$500 – $1,500+",
     cta: "Explore Packages",
     details: {
       description:
@@ -303,7 +303,7 @@ export const services: Service[] = [
         "Clear priorities",
         "A stable foundation to build on",
       ],
-      investment: "₦150,000 – ₦300,000",
+      investment: "$150 – $300",
     },
     {
       title: "Business Setup",
@@ -318,7 +318,7 @@ export const services: Service[] = [
         "More control over daily work",
         "Less chaos and repeated mistakes",
       ],
-      investment: "₦300,000 – ₦800,000",
+      investment: "$300 – $800",
     },
     {
       title: "Execution & Visibility",
@@ -333,7 +333,7 @@ export const services: Service[] = [
         "Better communication",
         "Steady visibility (no noise)",
       ],
-      investment: "₦200,000 – ₦600,000",
+      investment: "$200 – $600",
     },
     {
       title: "Team, Training & Scale",
@@ -348,7 +348,7 @@ export const services: Service[] = [
         "Clear roles and handovers",
         "More consistent delivery",
       ],
-      investment: "₦250,000 – ₦800,000",
+      investment: "$250 – $800",
     },
   ];
   
