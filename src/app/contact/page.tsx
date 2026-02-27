@@ -354,7 +354,7 @@ export default function ContactPage() {
                     <h3 className="font-serif text-xl font-semibold text-black/85">Location</h3>
                     <p className="mt-1 text-base font-medium text-black/70">{BUSINESS_LOCATION}</p>
                     <p className="mt-1 text-sm text-black/55">
-                      Nigeria-based with remote collaboration worldwide.
+                      Africa based with remote collaboration worldwide.
                     </p>
                   </div>
                 </div>
@@ -390,7 +390,7 @@ export default function ContactPage() {
                     </h4>
                     <p className="mt-2 text-sm leading-relaxed text-black/60">
                       All our services are available remotely via video calls, with in-person options
-                      available for Lagos-based clients. We work with businesses across Nigeria and
+                      available for Lagos-based clients. We work with businesses across Africa and
                       internationally.
                     </p>
                   </div>

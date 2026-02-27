@@ -48,6 +48,7 @@ export const metadata: Metadata = {
     "business systems",
     "business mentorship",
     "small business support",
+    "business consulting Africa",
     "business consulting Nigeria",
     "business operations guidance",
   ],
@@ -91,7 +92,7 @@ const orgSchema = {
     "Prowess Digital Solutions provides clear strategies, structured processes, and practical guidance to help business owners stay organised, improve operations, and achieve long-term success.",
   areaServed: {
     "@type": "Country",
-    name: "Nigeria",
+    name: "Africa",
   },
   sameAs: [
     // ✅ Keep only links that are real and active

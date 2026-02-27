@@ -50,8 +50,8 @@ const faqItems = [
     a: "You can continue with ongoing support, or we can hand over a clear plan you can run with your team.",
   },
   {
-    q: "Do you work with businesses outside Nigeria?",
-    a: "Yes. We work with clients inside and outside Nigeria, depending on the support you need.",
+    q: "Do you work with businesses outside Africa?",
+    a: "Yes. We work with clients inside and outside Africa, depending on the support you need.",
   },
 ];
 

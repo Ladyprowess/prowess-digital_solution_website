@@ -32,8 +32,8 @@ export async function sendConsultationEmail(p: EmailParams) {
       <p><strong>Service:</strong> ${p.service_name}</p>
 
       <p>
-        <strong>Start:</strong> ${fmt(p.startISO, p.timezone)}<br/>
-        <strong>End:</strong> ${fmt(p.endISO, p.timezone)}
+       <strong>Start:</strong> ${fmt(p.startISO, p.timezone)} (${p.timezone || "Africa/Lagos"})<br/>
+       <strong>End:</strong> ${fmt(p.endISO, p.timezone)} (${p.timezone || "Africa/Lagos"})
       </p>
 
       <p>Kindly add this event to your google calendar.</p>
@@ -49,7 +49,7 @@ export async function sendConsultationEmail(p: EmailParams) {
       "Content-Type": "application/json",
 
       // prevents accidental duplicate sends
-      "Idempotency-Key": `${p.to}-${p.startISO}`,
+     "Idempotency-Key": `${p.to}-${p.startISO}`,
     },
     body: JSON.stringify({
       from,

@@ -123,24 +123,39 @@ export async function POST(req: Request) {
         endISO: booking.end_at,
         timezone: booking.timezone || "Africa/Lagos",
       });
-
+    
       await supabase
         .from("consultation_bookings")
         .update({ google_event_id: gEventId })
         .eq("id", booking.id);
+    
+      // ✅ ADD THIS BLOCK HERE (replaces direct email call)
+     // ✅ HARD LOCK: only the first request can set this field
+const { data: marked, error: markErr } = await supabase
+.from("consultation_bookings")
+.update({ confirmation_email_sent_at: new Date().toISOString() })
+.eq("id", booking.id /* or booking_id in verify route */)
+.is("confirmation_email_sent_at", null)
+.select("id");
 
-      await sendConsultationEmail({
-        to: booking.email,
-        name: booking.full_name,
-        service_name: service.name,
-        startISO: booking.start_at,
-        endISO: booking.end_at,
-        timezone: booking.timezone || "Africa/Lagos",
-      });
+if (markErr) {
+// If marking fails, don't send email (prevents duplicates)
+return NextResponse.json({ ok: false, error: "Failed to send confirmation email." }, { status: 500 });
+}
 
+if (marked && marked.length > 0) {
+await sendConsultationEmail({
+  to: booking.email,
+  name: booking.full_name,
+  service_name: service.name,
+  startISO: booking.start_at,
+  endISO: booking.end_at,
+  timezone: booking.timezone || "Africa/Lagos",
+});
+}
+    
       return NextResponse.json({ ok: true, mode: "free", booking_id: booking.id }, { status: 200 });
     }
-
     // ✅ PAID => Paystack initialise
     const safeRef = String(booking.paystack_reference); // guaranteed for paid
     const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/consultation/success?reference=${encodeURIComponent(

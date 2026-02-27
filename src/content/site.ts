@@ -384,6 +384,6 @@ export const services: Service[] = [
   export const contact = {
     email: "info@prowessdigitalsolutions.com",
     whatsapp: "+2348162174443",
-    location: "Nigeria (Remote-friendly)",
+    location: "Africa (Remote-friendly)",
   };
   

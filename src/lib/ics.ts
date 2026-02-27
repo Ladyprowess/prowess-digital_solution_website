@@ -22,8 +22,8 @@ function pad(n: number) {
     const end = new Date(start.getTime() + durationMinutes * 60_000);
   
     const toICS = (dt: Date) =>
-      `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
-  
+      `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}00Z`;
+    
     const dtStart = toICS(start);
     const dtEnd = toICS(end);
     const stamp = toICS(new Date());
