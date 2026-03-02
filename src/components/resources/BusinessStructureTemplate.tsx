@@ -478,4 +478,153 @@ export default function BusinessStructureTemplate() {
 
           <FieldGroup label="Escalation Process (what happens when someone is stuck or there is a problem)">
             <textarea
-              
+              value={data.escalationProcess}
+              onChange={(e) =>
+                updateField("escalationProcess", e.target.value)
+              }
+              placeholder="e.g. Try to resolve it yourself first. If unresolved after 24 hours, escalate to your direct report. If urgent, message the founder directly."
+              rows={3}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
+            />
+          </FieldGroup>
+
+          <FieldGroup label="Additional Notes (anything else relevant to how your business is structured)">
+            <textarea
+              value={data.notes}
+              onChange={(e) => updateField("notes", e.target.value)}
+              placeholder="Optional. Any context about your current challenges, upcoming changes, or things you want to improve."
+              rows={3}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
+            />
+          </FieldGroup>
+
+          <NavButtons
+            onPrev={() => setActiveSection(2)}
+            onNext={() => setActiveSection(4)}
+          />
+        </div>
+      )}
+
+      {/* SECTION: REVIEW & EXPORT */}
+      {activeSection === 4 && (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Review & Export
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Here is a summary of your business structure. You can copy it,
+              download it as a text file, or use it as a starting point for a
+              more detailed structure document.
+            </p>
+
+            <div
+              ref={exportRef}
+              className="mt-5 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-5 font-mono text-xs leading-relaxed text-slate-700"
+            >
+              <pre className="whitespace-pre-wrap">{generateExportText()}</pre>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                onClick={handleCopyExport}
+                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
+              >
+                {copied ? "Copied!" : "Copy to Clipboard"}
+              </button>
+
+              <button
+                onClick={handleDownload}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Download as Text File
+              </button>
+
+              <button
+                onClick={handleReset}
+                className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm text-slate-400 underline hover:text-slate-600"
+              >
+                Start Over
+              </button>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+            <p className="text-sm leading-relaxed text-slate-600">
+              This template gives you a starting point. If you want help
+              designing a structure that fits your specific business, a clarity
+              session or business structure setup can take this further.
+            </p>
+            <a
+              href="/consultation"
+              className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#507c80] px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
+            >
+              Book a Clarity Session
+            </a>
+          </div>
+
+          <NavButtons onPrev={() => setActiveSection(3)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  HELPER COMPONENTS                                                  */
+/* ------------------------------------------------------------------ */
+
+function FieldGroup({
+  label,
+  children,
+  compact,
+}: {
+  label: string;
+  children: React.ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <div>
+      <label
+        className={`block font-medium text-slate-700 ${
+          compact ? "mb-1 text-sm" : "mb-2 text-sm"
+        }`}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function NavButtons({
+  onPrev,
+  onNext,
+}: {
+  onPrev?: () => void;
+  onNext?: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between pt-2">
+      {onPrev ? (
+        <button
+          onClick={onPrev}
+          className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+        >
+          Back
+        </button>
+      ) : (
+        <div />
+      )}
+      {onNext && (
+        <button
+          onClick={onNext}
+          className="rounded-xl bg-[#507c80] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+        >
+          Continue
+        </button>
+      )}
+    </div>
+  );
+}
