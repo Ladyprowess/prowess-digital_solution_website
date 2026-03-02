@@ -121,7 +121,7 @@ export default function ResourcesPage() {
             </div>
 
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Nigerian Small Business Starter Checklist
+              African Small Business Starter Checklist
             </h2>
 
             <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">
