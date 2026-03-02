@@ -234,7 +234,7 @@ export default function BusinessStructureTemplate() {
               value={data.businessName}
               onChange={(e) => updateField("businessName", e.target.value)}
               placeholder="e.g. Prowess Digital Solutions"
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             />
           </FieldGroup>
 
@@ -244,7 +244,7 @@ export default function BusinessStructureTemplate() {
               value={data.industry}
               onChange={(e) => updateField("industry", e.target.value)}
               placeholder="e.g. Business Consulting, E-commerce, EdTech"
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             />
           </FieldGroup>
 
@@ -254,7 +254,7 @@ export default function BusinessStructureTemplate() {
               value={data.teamSize}
               onChange={(e) => updateField("teamSize", e.target.value)}
               placeholder="e.g. 1, 3, 5, 10+"
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             />
           </FieldGroup>
 
@@ -262,7 +262,7 @@ export default function BusinessStructureTemplate() {
             <select
               value={data.stage}
               onChange={(e) => updateField("stage", e.target.value)}
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             >
               <option value="">Select your stage</option>
               <option value="idea">Idea / Pre-launch</option>
@@ -296,7 +296,7 @@ export default function BusinessStructureTemplate() {
               value={data.founderRole}
               onChange={(e) => updateField("founderRole", e.target.value)}
               placeholder="e.g. Founder & Lead Consultant, CEO, Managing Director"
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             />
           </FieldGroup>
 
@@ -308,7 +308,7 @@ export default function BusinessStructureTemplate() {
               }
               placeholder="e.g. Business strategy, client relationships, final pricing decisions, partnerships, financial oversight"
               rows={4}
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             />
           </FieldGroup>
 
@@ -318,7 +318,7 @@ export default function BusinessStructureTemplate() {
               onChange={(e) => updateField("founderDecisions", e.target.value)}
               placeholder="e.g. Hiring and firing, pricing changes above 20%, new service launches, partnership agreements, spending above a certain amount"
               rows={4}
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             />
           </FieldGroup>
 
@@ -369,7 +369,7 @@ export default function BusinessStructureTemplate() {
                       updateRole(index, "title", e.target.value)
                     }
                     placeholder="e.g. Operations Manager, VA, Content Lead"
-                    className="field-input"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
                   />
                 </FieldGroup>
 
@@ -381,7 +381,7 @@ export default function BusinessStructureTemplate() {
                       updateRole(index, "name", e.target.value)
                     }
                     placeholder="Name or 'To be hired'"
-                    className="field-input"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
                   />
                 </FieldGroup>
               </div>
@@ -394,7 +394,7 @@ export default function BusinessStructureTemplate() {
                   }
                   placeholder="What does this person own? What are they accountable for?"
                   rows={3}
-                  className="field-input"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
                 />
               </FieldGroup>
 
@@ -407,7 +407,7 @@ export default function BusinessStructureTemplate() {
                       updateRole(index, "reportsTo", e.target.value)
                     }
                     placeholder="e.g. Founder, Operations Lead"
-                    className="field-input"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
                   />
                 </FieldGroup>
 
@@ -419,7 +419,7 @@ export default function BusinessStructureTemplate() {
                       updateRole(index, "decisions", e.target.value)
                     }
                     placeholder="e.g. Scheduling, client comms, task prioritisation"
-                    className="field-input"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
                   />
                 </FieldGroup>
               </div>
@@ -462,7 +462,7 @@ export default function BusinessStructureTemplate() {
               }
               placeholder="e.g. WhatsApp for quick updates, Email for client communication, Slack for internal tasks, Weekly call for progress review"
               rows={4}
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             />
           </FieldGroup>
 
@@ -472,81 +472,10 @@ export default function BusinessStructureTemplate() {
               onChange={(e) => updateField("meetingRhythm", e.target.value)}
               placeholder="e.g. Monday morning check-in (15 min), Friday wrap-up (30 min), Monthly strategy review (1 hour)"
               rows={3}
-              className="field-input"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/10"
             />
           </FieldGroup>
 
           <FieldGroup label="Escalation Process (what happens when someone is stuck or there is a problem)">
             <textarea
-              value={data.escalationProcess}
-              onChange={(e) =>
-                updateField("escalationProcess", e.target.value)
-              }
-              placeholder="e.g. Try to resolve it yourself first. If unresolved after 24 hours, escalate to your direct report. If urgent, message the founder directly."
-              rows={3}
-              className="field-input"
-            />
-          </FieldGroup>
-
-          <FieldGroup label="Additional Notes (anything else relevant to how your business is structured)">
-            <textarea
-              value={data.notes}
-              onChange={(e) => updateField("notes", e.target.value)}
-              placeholder="Optional. Any context about your current challenges, upcoming changes, or things you want to improve."
-              rows={3}
-              className="field-input"
-            />
-          </FieldGroup>
-
-          <NavButtons
-            onPrev={() => setActiveSection(2)}
-            onNext={() => setActiveSection(4)}
-          />
-        </div>
-      )}
-
-      {/* SECTION: REVIEW & EXPORT */}
-      {activeSection === 4 && (
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Review & Export
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Here is a summary of your business structure. You can copy it,
-              download it as a text file, or use it as a starting point for a
-              more detailed structure document.
-            </p>
-
-            <div
-              ref={exportRef}
-              className="mt-5 max-h-96 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-5 font-mono text-xs leading-relaxed text-slate-700"
-            >
-              <pre className="whitespace-pre-wrap">{generateExportText()}</pre>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button
-                onClick={handleCopyExport}
-                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
-              >
-                {copied ? "Copied!" : "Copy to Clipboard"}
-              </button>
-
-              <button
-                onClick={handleDownload}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Download as Text File
-              </button>
-
-              <button
-                onClick={handleReset}
-                className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm text-slate-400 underline hover:text-slate-600"
-              >
-                Start Over
-              </button>
-            </div>
-          </div>
-
-        
+              
