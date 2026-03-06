@@ -4,11 +4,11 @@ import React from "react";
 
 const reviews = [
   {
-    name: "Ngozi Peace Okafor",
+    name: "Stanley Williams",
     initials: "NO",
     rating: 5,
-    text: "The company is competent with everything… They helped me in navigating my business and I also love how they follow up with everything. I highly recommend.",
-    timeAgo: "Recent",
+    text: "Working with Lady prowess is an absolute delight and easy going... I will strongly recommend for guaranteed satisfaction.",
+    timeAgo: "1 year ago",
   },
   {
     name: "Testers Connect",
@@ -107,7 +107,7 @@ export function ManualGoogleReviews() {
         {/* Bottom CTA */}
         <div className="mt-12 text-center">
           <a
-            href="https://g.page/r/prowessdigitalsolutions/review"
+            href="https://share.google/r6YQDMKKrZyPCHReu"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm font-medium text-[#507c80] underline-offset-4 hover:underline"
