@@ -10,7 +10,7 @@ const SITE_URL = "https://prowessdigitalsolutions.com";
 // ✅ SEO + Social metadata (site-wide)
 export const metadata: Metadata = {
   title: {
-    default: `${brand.name} | Business clarity and structure`,
+    default: `${brand.name} | Business Structure and Guidance for Africa`,
     template: `%s | ${brand.name}`,
   },
 
