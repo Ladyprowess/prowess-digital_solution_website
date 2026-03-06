@@ -5,8 +5,8 @@ import React from "react";
 const reviews = [
   {
     name: "Stanley Williams",
-    initials: "NO",
-    rating: 5,
+    initials: "SW",
+    rating: 4.5,
     text: "Working with Lady prowess is an absolute delight and easy going... I will strongly recommend for guaranteed satisfaction.",
     timeAgo: "1 year ago",
   },
