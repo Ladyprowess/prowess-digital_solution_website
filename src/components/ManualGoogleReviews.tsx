@@ -6,7 +6,7 @@ const reviews = [
   {
     name: "Stanley Williams",
     initials: "SW",
-    rating: 4.5,
+    rating: 4,
     text: "Working with Lady prowess is an absolute delight and easy going... I will strongly recommend for guaranteed satisfaction.",
     timeAgo: "1 year ago",
   },
