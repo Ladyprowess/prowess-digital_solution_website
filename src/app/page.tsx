@@ -2,34 +2,34 @@
 
 import React from 'react';
 import Link from "next/link";
+import { ManualGoogleReviews } from "@/components/ManualGoogleReviews";
 
+const values = ["Clarity", "Integrity", "Structure", "Simplicity", "Long-term thinking"];
+
+const services = [
+  {
+    title: "Business Clarity Sessions",
+    description: "Not sure what is wrong, just know something is off? This session helps you see clearly. We ask the right questions and give you an honest picture of where things stand.",
+    features: ["60–90 minute focused session", "Clear understanding of your problems", "Simple next steps you can act on", "Honest advice, no pressure to buy anything else"],
+  },
+  {
+    title: "Business Audit & Review",
+    description: "You are already running, but something is slowing you down. We go through your current setup and tell you exactly what is working, what is not, and what to fix first.",
+    features: ["Full review of your current setup", "Clear gaps and weak points identified", "Simple, prioritised recommendations", "Guidance to help you make better decisions"],
+  },
+  {
+    title: "Business Setup & Structure",
+    description: "If you are building from the ground up or restructuring, we help you do it right. Clear roles, clear processes, and a roadmap that actually fits your situation.",
+    features: ["3–12 month roadmaps", "Resource and team planning", "Simple systems and processes", "Milestone tracking so you know you are moving"],
+  },
+];
 
 export default function ModernHomePage() {
-  const values = ["Clarity", "Integrity", "Structure", "Simplicity", "Long-term thinking"];
-
-  const services = [
-    {
-      title: "Business Clarity Sessions",
-      description: "The essential first conversation. We help you understand what your business really need.",
-      features: ["60–90 minute focused session", "Clear understanding of your problems", "Simple next steps", "Honest advice no pressure"]
-    },
-    {
-      title: "Business Audit & Review",
-      description: "A structured review of what is working, what is not, and what to fix first.",
-      features: ["Review of your current setup", "Clear gaps and weak points", "Simple recommendations", "Guidance for better decisions"]
-    },
-    {
-      title: "Business Setup & Structure",
-      description: "Direction, operations, tools, and structure for a business that can run properly.",
-      features: ["3-12 month roadmaps", "Resource planning", "Simple systems and processes", "Milestone tracking"]
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-white">
+
       {/* HERO SECTION */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-32">
-        {/* Soft background effects */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-24 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#507c80]/10 blur-3xl" />
           <div className="absolute -bottom-24 right-0 h-[420px] w-[420px] rounded-full bg-slate-100 blur-3xl" />
@@ -37,62 +37,53 @@ export default function ModernHomePage() {
 
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            {/* Badge */}
+
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#507c80]/20 bg-[#507c80]/5 px-4 py-2 text-sm font-medium text-[#507c80]">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
-              The First Conversation Every Business Owner Should Have
+              Business Guidance for Africa
             </div>
 
-            {/* Main Heading */}
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-            Bringing Structure to{' '}
+              Bringing Structure to{' '}
               <span className="text-[#507c80]">Messy Businesses.</span>
             </h1>
 
-            {/* Subheading */}
             <p className="mb-10 text-lg leading-relaxed text-slate-600 sm:text-xl">
-            We help businesses simplify strategy, implement systems, and equip teams that guarantee results!
+              Most business problems are not about effort. They are about clarity. We help you understand exactly what is wrong and build a simple path forward.
             </p>
 
-            {/* CTA Buttons */}
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="https://prowessdigitalsolutions.com/consultation">
-            <button className="group inline-flex items-center justify-center gap-2 rounded-lg bg-[#507c80] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#507c80]/25 transition hover:bg-[#3d5f62] hover:shadow-xl hover:shadow-[#507c80]/30">
-                Book Clarity Session
-                <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </button>
+              <Link href="https://prowessdigitalsolutions.com/consultation">
+                <button className="group inline-flex items-center justify-center gap-2 rounded-lg bg-[#507c80] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#507c80]/25 transition hover:bg-[#3d5f62] hover:shadow-xl hover:shadow-[#507c80]/30">
+                  Book a Clarity Session
+                  <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </button>
               </Link>
               <Link href="/about">
-              <button className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-8 py-4 text-base font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50">
-                Learn Our Approach
-              </button>
+                <button className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-8 py-4 text-base font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50">
+                  Learn Our Approach
+                </button>
               </Link>
             </div>
 
-            {/* Trust indicators */}
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-slate-600">
-              <div className="flex items-center gap-2">
-                <svg className="h-5 w-5 text-[#507c80]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                No Sales Pressure
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="h-5 w-5 text-[#507c80]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Structured Thinking
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="h-5 w-5 text-[#507c80]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Long-Term Focus
-              </div>
+            {/* What happens when you book */}
+            <p className="mt-6 text-sm text-slate-500">
+              In 60 minutes, you will walk away knowing exactly what is wrong and what to fix first.
+            </p>
+
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-slate-600">
+              {["No Sales Pressure", "Structured Thinking", "Long-Term Focus"].map((item) => (
+                <div key={item} className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-[#507c80]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {item}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -103,49 +94,105 @@ export default function ModernHomePage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Tired of Running In Circles?
+              Does This Sound Familiar?
             </h2>
             <p className="text-lg text-slate-600">
-            You are not alone. Many business owners struggle because they are building without clear foundations.
+              These are the three things we hear most from business owners before they work with us.
             </p>
           </div>
 
           <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-10 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-              <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50">
-                <svg className="h-8 w-8 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {[
+              {
+                icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h3 className="mb-3 text-xl font-bold text-slate-900">Confused by Too Much Advice</h3>
-              <p className="text-base leading-relaxed text-slate-600">
-              Everyone gives different tips. You try many things, but nothing feels clear. You are busy, but not moving forward.
-              </p>
-            </div>
-
-            <div className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-10 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-              <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50">
-                <svg className="h-8 w-8 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                ),
+                title: "Too Much Advice, No Clear Direction",
+                body: "You have read the books, watched the videos, tried different things. Nothing sticks. That is usually a foundation problem, not an effort problem.",
+              },
+              {
+                icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
+                ),
+                title: "Busy Every Day, But Not Moving Forward",
+                body: "You are working hard but the business still feels scattered. The issue is not how much you are doing. It is that the right things are not being done in the right order.",
+              },
+              {
+                icon: (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                ),
+                title: "Every Decision Feels Like a Risk",
+                body: "You are not sure which tools to use, who to hire, or where to spend money. That uncertainty is expensive. Clarity removes it.",
+              },
+            ].map((card, idx) => (
+              <div key={idx} className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-10 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50">
+                  <svg className="h-8 w-8 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {card.icon}
+                  </svg>
+                </div>
+                <h3 className="mb-3 text-xl font-bold text-slate-900">{card.title}</h3>
+                <p className="text-base leading-relaxed text-slate-600">{card.body}</p>
               </div>
-              <h3 className="mb-3 text-xl font-bold text-slate-900">Working Hard With No Clear Direction</h3>
-              <p className="text-base leading-relaxed text-slate-600">
-              You put in effort every day, yet progress feels slow. Your business feels scattered and unfinished.
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BUSINESS HELPER — moved up as a lead capture tool */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#507c80] to-[#3d5f62] py-20 sm:py-24">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto max-w-6xl px-6 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+
+            <div>
+              <div className="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 ring-1 ring-white/15">
+                Free Tool
+              </div>
+              <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Not Sure Where to Start?
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-white/85 sm:text-lg">
+                Use the Business Helper before you book anything. Tell us what is happening in your business and get a structured diagnostic report with a Business Health Score and clear next steps.
               </p>
+              <p className="mt-3 text-sm text-white/65">
+                It takes less than 5 minutes. No sign-up required.
+              </p>
+              <div className="mt-8">
+                <Link href="/resources#business-helper">
+                  <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-[#507c80] shadow-2xl transition hover:scale-[1.02] hover:bg-white/95">
+                    Try the Business Helper Free
+                    <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </button>
+                </Link>
+              </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-10 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-              <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50">
-                <svg className="h-8 w-8 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="mb-3 text-xl font-bold text-slate-900">Afraid of Costly Mistakes</h3>
-              <p className="text-base leading-relaxed text-slate-600">
-              Every decision feels risky. You worry about wasting money on the wrong tools, people, or ideas.
-              </p>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
+              <p className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-6">What you get</p>
+              {[
+                "A Business Health Score based on your answers",
+                "Clear breakdown of what is working and what is not",
+                "Specific next steps ranked by priority",
+                "A starting point for your first real conversation with us",
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3 mb-4 last:mb-0">
+                  <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-white/85 leading-relaxed">{item}</p>
+                </div>
+              ))}
             </div>
+
           </div>
         </div>
       </section>
@@ -158,89 +205,56 @@ export default function ModernHomePage() {
               How We Work
             </h2>
             <p className="text-lg text-slate-600">
-            We believe in clarity before action, strong foundations before growth, and simple systems that last.
+              Clarity first. Structure second. Then we grow from there.
             </p>
           </div>
 
-          <div className="mt-16 space-y-8">
+          <div className="mt-16 grid gap-8 lg:grid-cols-3">
             {[
               {
-                step: "Step 1",
+                step: "01",
                 title: "Business Clarity Session",
-                desc: "We start with a focused conversation. We listen, ask the right questions, and help you understand what is really happening in your business. No selling. Just honest guidance.",
-                icon: (
-                  <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                )
+                body: "We start by listening. We ask the right questions and help you understand what is actually happening in your business. No selling. No assumptions. Just honest guidance.",
               },
               {
-                step: "Step 2",
+                step: "02",
                 title: "Building Proper Structure",
-                desc: "Once things are clear, we help you put simple systems in place. Clear roles, clear processes, and clear priorities. Everything is written down and easy to follow.",
-                icon: (
-                  <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                )
+                body: "Once things are clear, we put simple systems in place. Clear roles, clear processes, clear priorities. Everything is written down and easy for your team to follow.",
               },
               {
-                step: "Step 3",
+                step: "03",
                 title: "Ongoing Guidance",
-                desc: "As your business grows, new questions will come up. We stay with you, helping you think clearly and make better decisions at each stage.",
-                icon: (
-                  <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                )
-              }
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-8 shadow-sm transition hover:shadow-2xl sm:p-12"
-              >
-                <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
-                  <div className="flex-shrink-0">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#507c80] text-3xl shadow-lg shadow-[#507c80]/25 transition group-hover:scale-110">
-                      {item.icon}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-[#507c80]">
-                      {item.step}
-                    </div>
-                    <h3 className="mb-3 text-2xl font-bold text-slate-900 sm:text-3xl">
-                      {item.title}
-                    </h3>
-                    <p className="text-base leading-relaxed text-slate-600 sm:text-lg">
-                      {item.desc}
-                    </p>
-                  </div>
-                </div>
+                body: "As your business grows, new questions will come up. We stay with you, helping you think clearly and make better decisions at each stage.",
+              },
+            ].map((step, idx) => (
+              <div key={idx} className="relative rounded-3xl border border-slate-200 bg-white p-10 shadow-sm">
+                <div className="mb-6 text-5xl font-black text-[#507c80]/10">{step.step}</div>
+                <h3 className="mb-3 text-xl font-bold text-slate-900">{step.title}</h3>
+                <p className="text-base leading-relaxed text-slate-600">{step.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SERVICES SECTION */}
-      <section className="bg-slate-50 py-20 sm:py-28">
+      {/* TESTIMONIALS */}
+      <ManualGoogleReviews />
+
+      {/* SERVICES */}
+      <section className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               Our Core Services
             </h2>
             <p className="text-lg text-slate-600">
-              Everything you need to build a business that lasts.
+              Everything you need to build a business that runs properly.
             </p>
           </div>
 
-          <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-16 grid gap-8 lg:grid-cols-3">
             {services.map((service, idx) => (
-              <div
-                key={idx}
-                className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-              >
+              <div key={idx} className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                 <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#507c80] text-white">
                   {idx === 0 && (
                     <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -260,9 +274,7 @@ export default function ModernHomePage() {
                   )}
                 </div>
                 <h3 className="mb-3 text-xl font-bold text-slate-900">{service.title}</h3>
-                <p className="mb-6 text-base leading-relaxed text-slate-600">
-                  {service.description}
-                </p>
+                <p className="mb-6 text-base leading-relaxed text-slate-600">{service.description}</p>
                 <ul className="space-y-3">
                   {service.features.map((feature, fidx) => (
                     <li key={fidx} className="flex items-start gap-3 text-sm text-slate-600">
@@ -278,103 +290,73 @@ export default function ModernHomePage() {
           </div>
 
           <div className="mt-12 text-center">
-  <Link href="/services">
-    <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#507c80] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#507c80]/25 transition hover:bg-[#3d5f62] hover:shadow-xl">
-      Explore All Services
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-      </svg>
-    </button>
-  </Link>
-</div>
-
+            <Link href="/services">
+              <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#507c80] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#507c80]/25 transition hover:bg-[#3d5f62] hover:shadow-xl">
+                Explore All Services
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* VALUES */}
-      <section className="bg-white py-20 sm:py-28">
+      <section className="bg-slate-50 py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               Our Values
             </h2>
             <p className="text-lg text-slate-600">
-              We prefer simple thinking, clear steps, and long-term business decisions.
+              Simple principles that guide every conversation and every decision we make with clients.
             </p>
           </div>
 
           <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
             {values.map((value, idx) => (
-              <div
-                key={idx}
-                className="group inline-flex items-center gap-3 rounded-full border-2 border-[#507c80]/20 bg-white px-8 py-4 shadow-sm transition hover:border-[#507c80] hover:shadow-lg"
-              >
+              <div key={idx} className="group inline-flex items-center gap-3 rounded-full border-2 border-[#507c80]/20 bg-white px-8 py-4 shadow-sm transition hover:border-[#507c80] hover:shadow-lg">
                 <div className="h-2 w-2 rounded-full bg-[#507c80] transition group-hover:scale-125" />
                 <span className="text-base font-semibold text-slate-900">{value}</span>
               </div>
             ))}
           </div>
 
-          <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-[#507c80]/20 bg-gradient-to-br from-[#507c80]/5 to-white p-10 text-center shadow-xl">
+          {/* Replaced generic "Our Promise" with something specific */}
+          <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-[#507c80]/20 bg-white p-10 text-center shadow-xl">
             <p className="text-lg leading-relaxed text-slate-700 sm:text-xl">
               <span className="font-bold text-slate-900">Our Promise:</span>
-              <br />
-              <em>A partner that understands business properly, not just in theory, but in practice.</em>
+            </p>
+            <p className="mt-3 text-lg leading-relaxed text-slate-600">
+              We do not give advice and walk away. We sit with you, understand your specific situation, and help you build something that actually works for your business. Not a template. Not theory.
             </p>
           </div>
         </div>
       </section>
 
-
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#507c80] to-[#3d5f62] py-24 sm:py-32">
-  <div className="pointer-events-none absolute inset-0">
-    <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-    <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-  </div>
-
-  <div className="relative mx-auto max-w-6xl px-6 lg:px-8">
-    <div className="mx-auto max-w-3xl text-center">
-
-      {/* Small badge */}
-      <div className="mx-auto inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 ring-1 ring-white/15">
-        Free Tool
-      </div>
-
-      {/* Title */}
-      <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-5xl">
-        Try the Business Helper
-      </h2>
-
-      {/* Description */}
-      <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/90 sm:text-lg">
-        Share what is happening in your business and get a structured diagnostic report with a Business Health Score and next steps.
-      </p>
-
-      {/* CTA button */}
-      <div className="mt-10 flex justify-center">
-        <Link href="/resources#business-helper">
-          <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#507c80] shadow-2xl transition hover:scale-[1.02] hover:bg-white/95">
-            Open Business Helper
-            <svg
-              className="h-5 w-5 transition group-hover:translate-x-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </button>
-        </Link>
-      </div>
-
-      {/* Small helper text */}
-      <p className="mt-4 text-xs text-white/75">
-        No pressure. Just clarity.
-      </p>
-
-    </div>
-  </div>
-</section>
+      {/* FINAL CTA */}
+      <section className="bg-white py-20 sm:py-28">
+        <div className="mx-auto max-w-3xl px-6 text-center lg:px-8">
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+            Ready to Get Clear?
+          </h2>
+          <p className="mb-10 text-lg leading-relaxed text-slate-600">
+            Book a session and spend 60 minutes getting real answers about your business. No pressure. Just clarity.
+          </p>
+          <Link href="https://prowessdigitalsolutions.com/consultation">
+            <button className="group inline-flex items-center justify-center gap-2 rounded-lg bg-[#507c80] px-10 py-5 text-base font-semibold text-white shadow-lg shadow-[#507c80]/25 transition hover:bg-[#3d5f62] hover:shadow-xl hover:shadow-[#507c80]/30">
+              Book a Clarity Session
+              <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </button>
+          </Link>
+          <p className="mt-4 text-sm text-slate-500">
+            In 60 minutes, you will know exactly what is wrong and what to fix first.
+          </p>
+        </div>
+      </section>
 
     </div>
   );
