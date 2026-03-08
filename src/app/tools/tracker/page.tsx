@@ -415,30 +415,155 @@ export default function TrackerPage(){
 
   function signOut(){localStorage.removeItem("pds-access-tracker");setGrantedCode(null);setCode("");setStatus("idle");}
 
+
+
   if(grantedCode) return <TrackerTool code={grantedCode} onSignOut={signOut}/>;
 
   return(
-    <div style={{minHeight:"100vh",background:`linear-gradient(145deg,${DARK},#0f2627)`,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{maxWidth:420,width:"100%"}}>
-        <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{width:64,height:64,background:"rgba(255,255,255,.1)",borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",fontSize:28}}>📊</div>
-          <div style={{fontSize:11,fontWeight:700,color:MID,letterSpacing:1.6,textTransform:"uppercase",marginBottom:6}}>Prowess Digital Solutions</div>
-          <div style={{fontSize:24,fontWeight:900,color:W,marginBottom:4}}>Profit Tracker</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,.5)"}}>Enter your access code to continue</div>
-        </div>
-        <div style={{background:"rgba(255,255,255,.06)",borderRadius:16,padding:"26px 28px",border:"1px solid rgba(255,255,255,.1)"}}>
-          <label style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,.7)",display:"block",marginBottom:8,textTransform:"uppercase",letterSpacing:.8}}>Your Access Code</label>
-          <input value={code} placeholder="PDS-XXXX-XXXX" onChange={e=>{setCode(e.target.value.toUpperCase());setStatus("idle");}}
-            onKeyDown={e=>e.key==="Enter"&&verify()} disabled={status==="checking"} autoComplete="off"
-            style={{width:"100%",padding:"13px 16px",background:"rgba(255,255,255,.08)",border:`2px solid ${status==="denied"?"#ff8a80":"rgba(255,255,255,.2)"}`,borderRadius:10,color:W,fontSize:16,fontWeight:700,outline:"none",textAlign:"center",letterSpacing:2,boxSizing:"border-box"}}/>
-          {status==="denied"&&<div style={{color:"#ff8a80",fontSize:12,marginTop:8,fontWeight:600,textAlign:"center"}}>{REASON_MSG[reason]??REASON_MSG.invalid}</div>}
-          <button onClick={verify} disabled={status==="checking"||!code.trim()}
-            style={{marginTop:14,width:"100%",padding:"13px",background:code.trim()?B:"rgba(255,255,255,.1)",color:W,border:"none",borderRadius:10,fontWeight:800,fontSize:14,cursor:code.trim()?"pointer":"default"}}>
-            {status==="checking"?"Checking...":"Access Tool →"}
-          </button>
-          <p style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,.3)",margin:"12px 0 0"}}>Code provided by Prowess Digital Solutions on registration.</p>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+        .g-root{min-height:100vh;background:#08141a;display:flex;flex-direction:column;align-items:stretch;font-family:'DM Sans',sans-serif;position:relative;overflow:hidden;color:#fff}
+        .g-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(80,124,128,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(80,124,128,.07) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 40%,transparent 100%);pointer-events:none}
+        .g-orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(80px)}
+        .g-orb-tl{width:700px;height:700px;background:radial-gradient(circle,rgba(80,124,128,.28) 0%,transparent 65%);top:-300px;left:-200px;animation:gOrbTL 14s ease-in-out infinite}
+        .g-orb-br{width:500px;height:500px;background:radial-gradient(circle,rgba(40,80,84,.35) 0%,transparent 65%);bottom:-200px;right:-150px;animation:gOrbBR 18s ease-in-out infinite reverse}
+        .g-orb-mid{width:400px;height:400px;background:radial-gradient(circle,rgba(80,124,128,.12) 0%,transparent 65%);top:40%;left:55%;animation:gOrbMid 11s ease-in-out infinite}
+        @keyframes gOrbTL{0%,100%{transform:translate(0,0)}40%{transform:translate(60px,40px)}70%{transform:translate(-30px,70px)}}
+        @keyframes gOrbBR{0%,100%{transform:translate(0,0)}35%{transform:translate(-50px,-40px)}65%{transform:translate(30px,-70px)}}
+        @keyframes gOrbMid{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,30px)}}
+        .g-dot{position:absolute;border-radius:50%;background:rgba(80,124,128,.4);pointer-events:none}
+        .g-dot-1{width:4px;height:4px;top:18%;left:12%;animation:gDot1 6s ease-in-out infinite}
+        .g-dot-2{width:3px;height:3px;top:65%;left:8%;animation:gDot2 8s ease-in-out infinite 1s}
+        .g-dot-3{width:5px;height:5px;top:30%;right:14%;animation:gDot1 7s ease-in-out infinite 2s}
+        .g-dot-4{width:3px;height:3px;top:75%;right:18%;animation:gDot2 9s ease-in-out infinite .5s}
+        .g-dot-5{width:4px;height:4px;top:50%;left:22%;animation:gDot1 5s ease-in-out infinite 3s}
+        @keyframes gDot1{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-12px)}}
+        @keyframes gDot2{0%,100%{opacity:.2;transform:translateY(0)}50%{opacity:.8;transform:translateY(10px)}}
+        .g-nav{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:20px 28px}
+        .g-nav-brand{display:flex;align-items:center;gap:8px;text-decoration:none}
+        .g-nav-dot{width:7px;height:7px;border-radius:50%;background:#507c80;box-shadow:0 0 12px rgba(80,124,128,.8);animation:navBlink 2.5s ease-in-out infinite}
+        @keyframes navBlink{0%,100%{opacity:1}50%{opacity:.4}}
+        .g-nav-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.3px}
+        .g-nav-back{font-size:12px;font-weight:600;color:rgba(255,255,255,.3);text-decoration:none;padding:7px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.08);transition:color .2s,border-color .2s}
+        .g-nav-back:hover{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.18)}
+        .g-body{flex:1;display:flex;align-items:center;justify-content:center;padding:24px 20px 40px;position:relative;z-index:10}
+        .g-split{width:100%;max-width:960px;display:grid;grid-template-columns:1fr 400px;gap:64px;align-items:center}
+        @media(max-width:800px){.g-split{grid-template-columns:1fr;gap:32px;max-width:440px}}
+        .g-left{animation:gSlideLeft .7s cubic-bezier(.22,.68,0,1.2) both}
+        @keyframes gSlideLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+        .g-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:99px;border:1px solid rgba(80,124,128,.35);background:rgba(80,124,128,.1);font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:#6ab8bd;margin-bottom:24px}
+        .g-tag-pulse{width:6px;height:6px;border-radius:50%;background:#6ab8bd;box-shadow:0 0 8px rgba(106,184,189,.8);animation:tagPulse 1.8s ease-in-out infinite}
+        @keyframes tagPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
+        .g-headline{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(34px,4.5vw,54px);font-weight:800;line-height:1.06;letter-spacing:-1.2px;margin-bottom:18px}
+        .g-headline .hi{background:linear-gradient(135deg,#7ecdd2 0%,#507c80 60%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .g-body-txt{font-size:16px;color:rgba(255,255,255,.42);line-height:1.75;margin-bottom:32px;max-width:420px}
+        .g-pills{display:flex;flex-direction:column;gap:12px}
+        .g-pill{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);animation:gPillIn .5s cubic-bezier(.22,.68,0,1.2) both}
+        .g-pill:nth-child(1){animation-delay:.15s}
+        .g-pill:nth-child(2){animation-delay:.25s}
+        .g-pill:nth-child(3){animation-delay:.35s}
+        @keyframes gPillIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
+        .g-pill-icon{width:36px;height:36px;border-radius:10px;background:rgba(80,124,128,.15);border:1px solid rgba(80,124,128,.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+        .g-pill-text{display:flex;flex-direction:column}
+        .g-pill-title{font-size:13px;font-weight:700;color:rgba(255,255,255,.8)}
+        .g-pill-sub{font-size:11px;color:rgba(255,255,255,.3);margin-top:1px}
+        .g-card{animation:gCardIn .7s cubic-bezier(.22,.68,0,1.2) .1s both}
+        @keyframes gCardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+        .g-card-inner{position:relative;border-radius:24px;padding:32px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(20px)}
+        .g-card-inner::before{content:'';position:absolute;inset:0;border-radius:24px;background:linear-gradient(145deg,rgba(80,124,128,.12) 0%,transparent 50%);pointer-events:none}
+        .g-card-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:60%;height:1px;background:linear-gradient(90deg,transparent,rgba(80,124,128,.9),transparent)}
+        .g-card-eyebrow{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(80,124,128,.8);margin-bottom:6px}
+        .g-card-title{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:-.3px}
+        .g-card-sub{font-size:13px;color:rgba(255,255,255,.35);line-height:1.55;margin-bottom:24px}
+        .g-code-wrap{position:relative;margin-bottom:6px}
+        .g-code-label{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:10px}
+        .g-code-input{width:100%;padding:15px 18px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;color:#fff;font-size:18px;font-weight:800;font-family:'DM Sans',sans-serif;outline:none;text-align:center;letter-spacing:4px;box-sizing:border-box;transition:border-color .25s,background .25s,box-shadow .25s;-webkit-text-fill-color:#fff}
+        .g-code-input::placeholder{color:rgba(255,255,255,.2);letter-spacing:2px;font-weight:500;font-size:14px}
+        .g-code-input:focus{border-color:rgba(80,124,128,.8);background:rgba(80,124,128,.07);box-shadow:0 0 0 4px rgba(80,124,128,.12)}
+        .g-code-input.err{border-color:rgba(255,120,100,.6);box-shadow:0 0 0 4px rgba(255,120,100,.08)}
+        .g-code-input.ok{border-color:rgba(46,160,67,.6);box-shadow:0 0 0 4px rgba(46,160,67,.08)}
+        .g-err-txt{font-size:12px;font-weight:700;color:#ff8a80;text-align:center;min-height:20px;margin:8px 0 0;animation:errShake .3s cubic-bezier(.36,.07,.19,.97)}
+        @keyframes errShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+        .g-submit{margin-top:14px;width:100%;padding:16px;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;position:relative;overflow:hidden;transition:opacity .2s,transform .2s;letter-spacing:.2px}
+        .g-submit:not(:disabled){background:linear-gradient(135deg,#507c80 0%,#3a5c60 100%);color:#fff;box-shadow:0 4px 20px rgba(80,124,128,.4)}
+        .g-submit:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(80,124,128,.5)}
+        .g-submit:not(:disabled):active{transform:translateY(0)}
+        .g-submit:disabled{background:rgba(255,255,255,.07);color:rgba(255,255,255,.3);cursor:default}
+        .g-submit::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.1) 50%,transparent 100%);transform:translateX(-100%);transition:transform .5s ease}
+        .g-submit:not(:disabled):hover::after{transform:translateX(100%)}
+        .g-hint{font-size:11px;color:rgba(255,255,255,.18);text-align:center;margin-top:14px;line-height:1.7}
+        .g-sep{height:1px;background:rgba(255,255,255,.07);margin:20px 0}
+        .g-no-code{text-align:center;font-size:12px;color:rgba(255,255,255,.28);line-height:1.6}
+        .g-no-code a{color:rgba(80,124,128,.8);text-decoration:none;font-weight:700}
+        .g-no-code a:hover{color:#6ab8bd}
+        @media(max-width:800px){.g-left{display:none}.g-body{padding:16px 16px 36px}}
+      `}</style>
+      <div className="g-root">
+        <div className="g-grid"/>
+        <div className="g-orb g-orb-tl"/><div className="g-orb g-orb-br"/><div className="g-orb g-orb-mid"/>
+        <div className="g-dot g-dot-1"/><div className="g-dot g-dot-2"/><div className="g-dot g-dot-3"/><div className="g-dot g-dot-4"/><div className="g-dot g-dot-5"/>
+
+        <nav className="g-nav">
+          <a href="/tools" className="g-nav-brand"><div className="g-nav-dot"/><span className="g-nav-label">Prowess Digital Solutions</span></a>
+          <a href="/tools" className="g-nav-back">← All Tools</a>
+        </nav>
+
+        <div className="g-body">
+          <div className="g-split">
+            <div className="g-left">
+              <div className="g-tag"><span className="g-tag-pulse"/><span>Premium Tool</span></div>
+              <h1 className="g-headline">Your money deserves<br/><span className="hi">a clear picture.</span></h1>
+              <p className="g-body-txt">Running a business without tracking your cashflow is like driving without looking at the road. This tracker gives you a full view of every naira, every month, every year.</p>
+              <div className="g-pills">
+                {[
+                  {icon:"📅",title:"Monthly Tracker",sub:"Every transaction, every category, every day"},
+                  {icon:"📊",title:"Annual Overview",sub:"See how your year performed at a glance"},
+                  {icon:"🔮",title:"Cashflow Forecast",sub:"Project ahead so you never get caught short"},
+                ].map((f,i)=>(
+                  <div key={i} className="g-pill">
+                    <div className="g-pill-icon">{f.icon}</div>
+                    <div className="g-pill-text"><span className="g-pill-title">{f.title}</span><span className="g-pill-sub">{f.sub}</span></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="g-card">
+              <div className="g-card-inner">
+                <div className="g-card-glow"/>
+                <div className="g-card-eyebrow">Client Access</div>
+                <div className="g-card-title">Profit Tracker</div>
+                <div className="g-card-sub">Enter your Prowess Digital Solutions access code to unlock the full tracker.</div>
+
+                <span className="g-code-label">Your access code</span>
+                <div className="g-code-wrap">
+                  <input
+                    value={code}
+                    placeholder="PDS-XXXX-XXXX"
+                    onChange={e=>{setCode(e.target.value.toUpperCase());setStatus("idle");}}
+                    onKeyDown={e=>e.key==="Enter"&&verify()}
+                    disabled={status==="checking"}
+                    autoComplete="off"
+                    className={`g-code-input${status==="denied"?" err":status==="granted"?" ok":""}`}
+                  />
+                </div>
+                <div className="g-err-txt">{status==="denied"?(REASON_MSG[reason]??REASON_MSG.invalid):""}</div>
+
+                <button onClick={verify} disabled={status==="checking"||!code.trim()} className="g-submit">
+                  {status==="checking"?"Verifying your code...":"Unlock Tracker →"}
+                </button>
+
+                <p className="g-hint">Your access code was provided when you engaged with Prowess Digital Solutions. Keep it safe.</p>
+                <div className="g-sep"/>
+                <div className="g-no-code">No code yet? <a href="/contact">Get in touch</a> to become a client.</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+

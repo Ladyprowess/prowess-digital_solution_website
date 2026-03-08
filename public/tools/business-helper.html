@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Helper · Prowess Digital Solutions</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f4f6f7;min-height:100vh}
+input,select,textarea{font-size:16px !important;}
+.pds-nav{background:#0c1a1b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.06)}
+.pds-nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.pds-nav-dot{width:8px;height:8px;border-radius:50%;background:#507c80;box-shadow:0 0 10px rgba(80,124,128,.7);animation:navPulse 2.5s ease-in-out infinite}
+@keyframes navPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+.pds-nav-name{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.7)}
+.pds-nav-right{display:flex;align-items:center;gap:12px}
+.pds-nav-back{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.55);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;text-decoration:none;transition:background .2s,color .2s}
+.pds-nav-back:hover{background:rgba(255,255,255,.1);color:#fff}
+.pds-nav-badge{padding:5px 11px;border-radius:20px;background:rgba(46,160,67,.15);border:1px solid rgba(46,160,67,.25);color:#4cba6f;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="pds-nav">
+  <a href="/" class="pds-nav-brand">
+    <div class="pds-nav-dot"></div>
+    <span class="pds-nav-name">Prowess Digital Solutions</span>
+  </a>
+  <div class="pds-nav-right">
+    <span class="pds-nav-badge">Free Tool</span>
+    <a href="/tools" class="pds-nav-back">← All Tools</a>
+  </div>
+</div>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo}=React;
+const B="#507c80",DARK="#3a5c60",MID="#6a9ea3",LITE="#e8f4f5",LGRAY="#f4f6f7",MGRAY="#c8d8da",W="#fff";
+
+const PROBLEMS=["Low sales","Pricing confusion","No steady customers","Cashflow issues","High expenses","No clear business structure","Marketing is not working","Team/staff problems","Other"];
+
+function ScoreRing({score}){
+  const r=38,sw=9,c=2*Math.PI*r,offset=c-(score/100)*c;
+  return <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <svg width={96} height={96} style={{transform:"rotate(-90deg)"}}>
+      <circle cx={48} cy={48} r={r} stroke="#e5e7eb" strokeWidth={sw} fill="transparent"/>
+      <circle cx={48} cy={48} r={r} stroke={B} strokeWidth={sw} fill="transparent" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" style={{transition:"stroke-dashoffset .9s ease"}}/>
+    </svg>
+    <div style={{position:"absolute",textAlign:"center"}}>
+      <div style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:18,fontWeight:800,color:B}}>{Math.round(score)}%</div>
+      <div style={{fontSize:10,fontWeight:600,color:"#94a3b8"}}>Health Score</div>
+    </div>
+  </div>;
+}
+
+function App(){
+  const [bizType,setBizType]=useState("");
+  const [problem,setProblem]=useState(PROBLEMS[0]);
+  const [details,setDetails]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+  const [result,setResult]=useState(null);
+  const [downloading,setDownloading]=useState(false);
+
+  const canGo=useMemo(()=>bizType.trim().length>1&&details.trim().length>10,[bizType,details]);
+
+  async function generate(){
+    setLoading(true);setErr(null);
+    try{
+      const res=await fetch("/api/business-helper",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({businessType:bizType,problem,details})});
+      if(!res.ok)throw new Error("Failed to generate report.");
+      const data=await res.json();
+      if(typeof data.healthScore!=="number"||!Array.isArray(data.sections))throw new Error("Invalid response.");
+      setResult({...data,reportId:data.reportId||"RPT-"+Math.random().toString(36).slice(2,7).toUpperCase(),generatedAt:data.generatedAt||new Date().toISOString()});
+    }catch(e){setErr("Something went wrong. Please try again.");}
+    setLoading(false);
+  }
+
+  async function downloadPdf(){
+    if(!result)return;
+    setDownloading(true);setErr(null);
+    try{
+      const res=await fetch("/api/business-helper/pdf",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({businessType:bizType,problem,details,result})});
+      if(!res.ok)throw new Error("PDF failed.");
+      const blob=await res.blob();const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=url;a.download="Prowess_Business_Diagnostic_Report.pdf";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    }catch(e){setErr("PDF download failed. Please try again.");}
+    setDownloading(false);
+  }
+
+  const inp={width:"100%",padding:"12px 16px",border:`1.5px solid ${MGRAY}`,borderRadius:12,fontSize:15,fontFamily:"'DM Sans',sans-serif",outline:"none",color:DARK,background:W,boxSizing:"border-box"};
+
+  return <div style={{maxWidth:720,margin:"0 auto",padding:"32px 16px 60px"}}>
+    <div style={{marginBottom:32}}>
+      <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:MID,marginBottom:10}}>Prowess Digital Solutions</div>
+      <h1 style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:"clamp(26px,5vw,40px)",fontWeight:800,color:DARK,lineHeight:1.1,letterSpacing:"-.5px",marginBottom:12}}>Business Helper</h1>
+      <p style={{fontSize:15,color:"#64748b",lineHeight:1.7,maxWidth:540}}>Tell us what is happening in your business. Get a structured diagnostic report with a Business Health Score and clear next steps, powered by AI.</p>
+    </div>
+
+    <div style={{background:W,borderRadius:20,padding:"28px",border:`1px solid ${MGRAY}`,boxShadow:"0 2px 20px rgba(58,92,96,.08)",marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
+        <div>
+          <label style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.8,display:"block",marginBottom:8}}>Business type</label>
+          <input value={bizType} onChange={e=>setBizType(e.target.value)} placeholder="e.g. Food business, Fashion brand, Salon" style={inp}/>
+        </div>
+        <div>
+          <label style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.8,display:"block",marginBottom:8}}>Main problem</label>
+          <select value={problem} onChange={e=>setProblem(e.target.value)} style={{...inp,appearance:"none"}}>
+            {PROBLEMS.map(p=><option key={p}>{p}</option>)}
+          </select>
+        </div>
+      </div>
+      <div style={{marginBottom:16}}>
+        <label style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.8,display:"block",marginBottom:8}}>Tell us what is happening</label>
+        <textarea value={details} onChange={e=>setDetails(e.target.value)} placeholder="Explain the situation clearly: what you tried, what happened, and what you want to change." rows={5} style={{...inp,resize:"vertical"}}/>
+      </div>
+      {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"12px 16px",fontSize:13,color:"#dc2626",marginBottom:14}}>{err}</div>}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+        <p style={{fontSize:12,color:"#94a3b8"}}>General guidance only. Not legal or financial advice.</p>
+        <button onClick={generate} disabled={!canGo||loading} style={{padding:"13px 26px",background:canGo?B:"rgba(80,124,128,.4)",color:W,border:"none",borderRadius:12,fontWeight:800,fontSize:14,fontFamily:"'DM Sans',sans-serif",cursor:canGo?"pointer":"default",opacity:loading?.7:1}}>
+          {loading?"Generating...":"Generate report →"}
+        </button>
+      </div>
+    </div>
+
+    {result&&<div style={{background:W,borderRadius:20,border:`1px solid ${MGRAY}`,overflow:"hidden",boxShadow:"0 2px 20px rgba(58,92,96,.08)"}}>
+      <div style={{background:DARK,padding:"20px 28px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:16}}>
+        <div>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:"rgba(255,255,255,.5)",marginBottom:6}}>Diagnostic Report</div>
+          <div style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:18,fontWeight:800,color:W,lineHeight:1.2}}>{result.reportTitle}</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,.4)",marginTop:4}}>Generated {new Date(result.generatedAt).toLocaleString()}</div>
+        </div>
+        <ScoreRing score={result.healthScore}/>
+      </div>
+
+      <div style={{padding:"24px 28px"}}>
+        <div style={{background:LITE,borderRadius:14,padding:"16px 20px",marginBottom:20,border:`1px solid ${MGRAY}`}}>
+          <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>What this means</div>
+          <p style={{fontSize:14,color:DARK,lineHeight:1.75}}>{(result.scoreNote||"").split(/[.!?]/).slice(0,2).join(".")+"."}</p>
+        </div>
+
+        {Array.isArray(result.detectedAreas)&&result.detectedAreas.length>0&&<div style={{marginBottom:20}}>
+          <div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Key areas to focus on</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            {result.detectedAreas.slice(0,4).map(a=><span key={a} style={{padding:"5px 14px",borderRadius:20,background:LITE,border:`1px solid ${MGRAY}`,fontSize:12,fontWeight:700,color:B}}>{a}</span>)}
+          </div>
+        </div>}
+
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <button onClick={downloadPdf} disabled={downloading} style={{flex:1,minWidth:180,padding:"13px 20px",background:B,color:W,border:"none",borderRadius:12,fontWeight:800,fontSize:14,fontFamily:"'DM Sans',sans-serif",cursor:"pointer",opacity:downloading?.7:1}}>
+            {downloading?"Preparing PDF...":"Download Full Report (PDF)"}
+          </button>
+          <a href="/contact" style={{flex:1,minWidth:160,padding:"13px 20px",background:W,color:DARK,border:`1px solid ${MGRAY}`,borderRadius:12,fontWeight:700,fontSize:14,textDecoration:"none",textAlign:"center",display:"inline-flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif"}}>Book a Consultation</a>
+        </div>
+        {result.disclaimer&&<p style={{fontSize:11,color:"#94a3b8",marginTop:14,lineHeight:1.6}}>{result.disclaimer}</p>}
+      </div>
+    </div>}
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

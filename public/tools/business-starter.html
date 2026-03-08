@@ -7,11 +7,147 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#f2f5f5}</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:#f0f4f5;color:#1a2e30;-webkit-font-smoothing:antialiased;min-height:100vh}
+input,select,textarea{font-size:16px!important;font-family:'DM Sans',sans-serif}
+button{font-family:'DM Sans',sans-serif}
 
-<style>input,select,textarea{font-size:16px !important;}</style>
-</head>
-<body><div id="root"></div>
+/* ─── Inner container ─── */
+.inner{max-width:1060px;margin:0 auto;padding:0 24px}
+@media(max-width:600px){.inner{padding:0 16px}}
+
+/* ─── Animations ─── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes dotPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+/* ─── Nav ─── */
+.nav{background:#0c1a1b;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.05)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1060px;margin:0 auto;gap:12px}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:#507c80;box-shadow:0 0 10px rgba(80,124,128,.8);animation:dotPulse 2.5s ease-in-out infinite;flex-shrink:0}
+.nav-name{font-size:13px;font-weight:700;color:rgba(255,255,255,.65);letter-spacing:.3px}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-badge{padding:4px 10px;border-radius:99px;background:rgba(46,160,67,.15);border:1px solid rgba(46,160,67,.25);color:#4cba6f;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
+.nav-back{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-size:12px;font-weight:600;text-decoration:none;transition:all .2s}
+.nav-back:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* ─── Hero ─── */
+.hero{background:#0c1a1b;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hero-glow-a{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(80,124,128,.18) 0%,transparent 70%);top:-200px;left:-100px}
+.hero-glow-b{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(58,92,96,.15) 0%,transparent 70%);bottom:-100px;right:0}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(80,124,128,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(80,124,128,.07) 1px,transparent 1px);background-size:48px 48px}
+.hero-content{position:relative;z-index:1;padding:36px 24px 40px;max-width:1060px;margin:0 auto;animation:fadeUp .6s cubic-bezier(.22,.68,0,1.2) both}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.hero-eyebrow{font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(80,124,128,.9);margin-bottom:12px}
+.hero-title{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(26px,5vw,44px);font-weight:800;color:#fff;line-height:1.05;letter-spacing:-.5px;margin-bottom:10px}
+.hero-title em{font-style:normal;background:linear-gradient(135deg,#7ecdd2 0%,#507c80 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-desc{font-size:14px;color:rgba(255,255,255,.45);line-height:1.65;max-width:480px}
+.hero-country{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 14px;color:#fff;font-size:13px;font-weight:600;outline:none;cursor:pointer;min-width:140px;margin-top:4px}
+.hero-country option{background:#1a2e30;color:#fff}
+.hero-filters{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.hero-filters{grid-template-columns:1fr}.hero-top{flex-direction:column}}
+.filter-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:8px}
+.budget-input{width:100%;padding:12px 16px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:12px;color:#fff;font-size:15px;font-weight:700;outline:none;transition:border-color .2s,background .2s}
+.budget-input::placeholder{color:rgba(255,255,255,.25);font-weight:400}
+.budget-input:focus{border-color:rgba(80,124,128,.6);background:rgba(255,255,255,.11)}
+.range-pills{display:flex;flex-wrap:wrap;gap:6px}
+.rpill{padding:7px 13px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);border-radius:99px;color:rgba(255,255,255,.6);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
+.rpill:hover{background:rgba(255,255,255,.12);color:#fff}
+.rpill.on{background:rgba(80,124,128,.35);border-color:rgba(80,124,128,.7);color:#fff;box-shadow:0 2px 12px rgba(80,124,128,.25)}
+
+/* ─── Search bar ─── */
+.search-wrap{background:#fff;border-bottom:1.5px solid #e2eaeb;padding:14px 24px;animation:fadeIn .4s ease .15s both}
+.search-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.search-field{position:relative;flex:1;min-width:200px;max-width:320px}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;pointer-events:none}
+.search-input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid #dde3e4;border-radius:99px;font-size:13px;outline:none;background:#f8fbfb;transition:border-color .2s,background .2s;color:#1a2e30}
+.search-input:focus{border-color:#507c80;background:#fff}
+.result-ct{font-size:12px;font-weight:700;color:#94a3b8;margin-left:auto}
+
+/* ─── Content area ─── */
+.content{padding:24px 24px 48px;max-width:1060px;margin:0 auto}
+
+/* ─── Category card ─── */
+.cat-card{background:#fff;border-radius:18px;border:1.5px solid #e2eaeb;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:border-color .2s,box-shadow .25s;animation:fadeUp .5s cubic-bezier(.22,.68,0,1.2) both}
+.cat-card.open{border-color:#507c80;box-shadow:0 6px 24px rgba(80,124,128,.13)}
+.cat-btn{width:100%;padding:18px 20px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;transition:background .15s}
+.cat-card.open .cat-btn{background:#f0f8f8}
+.cat-indicator{width:10px;height:10px;border-radius:3px;background:#dde8e9;flex-shrink:0;transition:all .2s}
+.cat-card.open .cat-indicator{background:#507c80;box-shadow:0 0 8px rgba(80,124,128,.4)}
+.cat-info{flex:1;min-width:0}
+.cat-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cat-name{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:700;color:#1a2e30}
+.cat-pill{background:#f0f8f8;color:#507c80;font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;border:1px solid rgba(80,124,128,.2);flex-shrink:0}
+.cat-desc{font-size:12px;color:#7a9ea3;margin-top:5px;line-height:1.55}
+.chevron{flex-shrink:0;transition:transform .2s;color:#94a3b8}
+.cat-card.open .chevron{transform:rotate(180deg)}
+.cat-body{border-top:1.5px solid #edf4f4;padding:18px 20px}
+.cat-intro-box{background:#f8fbfb;border-left:3px solid #507c80;border-radius:0 10px 10px 0;padding:12px 16px;font-size:13px;color:#3a5c60;line-height:1.65;margin-bottom:14px}
+
+/* ─── Business row ─── */
+.biz-row{background:#fff;border:1.5px solid #e2eaeb;border-radius:12px;margin-bottom:6px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.biz-row.open{border-color:#507c80;box-shadow:0 3px 14px rgba(80,124,128,.1)}
+.biz-btn{width:100%;padding:13px 16px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left}
+.biz-row.open .biz-btn{background:#f8fbfb}
+.biz-dot{width:6px;height:6px;border-radius:50%;background:#c8d8da;flex-shrink:0;transition:background .2s}
+.biz-row.open .biz-dot{background:#507c80}
+.biz-name{font-size:13.5px;font-weight:600;color:#1a2e30}
+.biz-income{font-size:11.5px;color:#6b8f93;margin-top:2px}
+.biz-tags{display:flex;gap:5px;flex-shrink:0;align-items:center}
+.tag{font-size:10px;font-weight:800;padding:2px 9px;border-radius:99px}
+.tag-tight{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.tag-over{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.biz-body{border-top:1px solid #edf2f3}
+
+/* ─── Detail tabs ─── */
+.dtabs{display:flex;background:#f8fbfb;border-bottom:1px solid #edf2f3}
+.dtab{padding:11px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:700;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+.dtab.on{color:#507c80;border-bottom-color:#507c80}
+.dbody{padding:18px}
+
+/* ─── Progress ─── */
+.prog-wrap{padding:12px 18px;background:#f8fbfb;border-bottom:1px solid #edf2f3}
+.prog-row{display:flex;justify-content:space-between;margin-bottom:6px}
+.prog-label{font-size:12px;font-weight:700;color:#1a2e30}
+.prog-pct{font-size:12px;font-weight:700;color:#507c80}
+.prog-bar{height:5px;background:#e2eaeb;border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#507c80,#7ecdd2);transition:width .5s ease}
+
+/* ─── Week header ─── */
+.week-hdr{background:linear-gradient(90deg,#507c80,#6aabaf);color:#fff;border-radius:9px;padding:7px 14px;font-weight:700;font-size:13px;margin-bottom:8px}
+
+/* ─── Task item ─── */
+.task{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:10px;cursor:pointer;border:1.5px solid transparent;margin-bottom:5px;transition:all .15s}
+.task:hover{background:#f8fbfb;border-color:#e2eaeb}
+.task.done{background:#f0f9f1;border-color:#c3e6c3}
+.task-cb{width:20px;height:20px;border-radius:6px;border:2px solid #c8d8da;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s}
+.task.done .task-cb{background:#27ae60;border-color:#27ae60}
+.task-txt{font-size:13px;line-height:1.55;color:#1a2e30;transition:color .15s}
+.task.done .task-txt{color:#999;text-decoration:line-through}
+
+/* ─── Cost boxes ─── */
+.cost-box{background:#f8fbfb;border:1.5px solid #e2eaeb;border-radius:14px;padding:18px;margin-bottom:10px}
+.cost-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:8px}
+.cost-val{font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:800;color:#507c80;line-height:1}
+.cost-sub{font-size:12px;color:#94a3b8;margin-top:6px;line-height:1.5}
+
+/* ─── Tips ─── */
+.tip-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.tip-num{width:26px;height:26px;border-radius:8px;background:#f0f8f8;border:1.5px solid rgba(80,124,128,.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#507c80;flex-shrink:0}
+.warning-box{background:#fff8f0;border-radius:12px;padding:14px;border-left:3px solid #e65100}
+.warning-label{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#e65100;margin-bottom:5px}
+
+/* ─── Footer ─── */
+.footer{text-align:center;padding:28px 16px;font-size:12px;color:#94a3b8}
+</style>
+
+<nav class="nav"><div class="nav-inner"><a href="/" class="nav-brand"><div class="nav-dot"></div><span class="nav-name">Prowess Digital Solutions</span></a><div class="nav-right"><span class="nav-badge">Free Tool</span><a href="/tools" class="nav-back">← All Tools</a></div></div></nav><div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect}=React;
 const COUNTRIES=[["Algeria","DA"],["Angola","Kz"],["Benin","CFA"],["Botswana","P"],["Burkina Faso","CFA"],["Burundi","Fr"],["Cabo Verde","Esc"],["Cameroon","CFA"],["Central African Republic","CFA"],["Chad","CFA"],["Comoros","Fr"],["Congo DR","FC"],["Congo Republic","CFA"],["Côte d'Ivoire","CFA"],["Djibouti","Fr"],["Egypt","E£"],["Equatorial Guinea","CFA"],["Eritrea","Nfk"],["Eswatini","L"],["Ethiopia","Br"],["Gabon","CFA"],["Gambia","D"],["Ghana","GH₵"],["Guinea","Fr"],["Guinea-Bissau","CFA"],["Kenya","KSh"],["Lesotho","L"],["Liberia","L$"],["Libya","LD"],["Madagascar","Ar"],["Malawi","MK"],["Mali","CFA"],["Mauritania","UM"],["Mauritius","₨"],["Morocco","MAD"],["Mozambique","MT"],["Namibia","N$"],["Niger","CFA"],["Nigeria","₦"],["Rwanda","Fr"],["São Tomé and Príncipe","Db"],["Senegal","CFA"],["Seychelles","₨"],["Sierra Leone","Le"],["Somalia","Sh"],["South Africa","R"],["South Sudan","£"],["Sudan","£"],["Tanzania","TSh"],["Togo","CFA"],["Tunisia","DT"],["Uganda","USh"],["Zambia","ZK"],["Zimbabwe","Z$"]];
@@ -444,133 +580,91 @@ const RANGES=[
 ];
 
 function BusinessDetail({b,budget,sym="₦",country="Nigeria"}){
-  const [bTab,setBTab]=useState("checklist");
+  const [tab,setTab]=useState("checklist");
   const [done,setDone]=useState({});
-  const [name,category,templateKey,min,max,income]=b;
+  const [name,,templateKey,min,max,income]=b;
   const tmpl=TEMPLATES[templateKey];
   if(!tmpl)return null;
   const totalTasks=tmpl.checklist.reduce((a,w)=>a+w.tasks.length,0);
   const doneCnt=Object.values(done).filter(Boolean).length;
   const pct=totalTasks>0?Math.round(doneCnt/totalTasks*100):0;
   return(
-    <div>
-      {pct>0&&<div style={{padding:"10px 18px",background:LITE,borderBottom:`1px solid ${MGRAY}`}}>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-          <span style={{fontSize:12,fontWeight:700,color:DARK}}>Your Progress</span>
-          <span style={{fontSize:12,fontWeight:700,color:B}}>{doneCnt}/{totalTasks} tasks ({pct}%)</span>
+    <div style={{background:"#fff",borderRadius:16,border:"1.5px solid #e2eaeb",overflow:"hidden",marginBottom:12,boxShadow:"0 2px 12px rgba(0,0,0,.05)"}}>
+      <div style={{padding:"16px 20px",borderBottom:"1px solid #f0f4f5",display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+        <div>
+          <div style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:16,fontWeight:800,color:"#1a2e30",marginBottom:3}}>{name}</div>
+          <div style={{fontSize:12,color:"#6b8f93"}}>{income.replace(/\$(\d+) to \$(\d+)/,(m,a,bb)=>rangeLocal(+a,+bb,country)).replace(/ USD/g,"")}</div>
         </div>
-        <div style={{height:7,background:MGRAY,borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:`${pct}%`,background:B,borderRadius:4}}/></div>
-      </div>}
-      <div style={{display:"flex",background:LGRAY,borderBottom:`1px solid ${MGRAY}`}}>
-        {[["checklist","📋 Checklist"],["costs","💰 Costs"],["tips","💡 Tips"]].map(([v,l])=>(
-          <button key={v} onClick={()=>setBTab(v)} style={{padding:"10px 16px",background:bTab===v?W:"transparent",border:"none",cursor:"pointer",fontSize:13,fontWeight:700,color:bTab===v?B:"#888",borderBottom:bTab===v?`3px solid ${B}`:"3px solid transparent",marginBottom:-1}}>{l}</button>
+        {pct>0&&<div style={{minWidth:120}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+            <span style={{fontSize:11,fontWeight:700,color:"#94a3b8"}}>Progress</span>
+            <span style={{fontSize:11,fontWeight:800,color:"#507c80"}}>{pct}%</span>
+          </div>
+          <div style={{height:5,background:"#e2eaeb",borderRadius:99,overflow:"hidden"}}>
+            <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,#507c80,#7ecdd2)",borderRadius:99,transition:"width .5s ease"}}/>
+          </div>
+        </div>}
+      </div>
+      <div style={{display:"flex",borderBottom:"1px solid #f0f4f5",background:"#fafcfc"}}>
+        {[["checklist","Checklist"],["costs","Costs & Income"],["tips","Tips & Risks"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setTab(v)} style={{padding:"10px 18px",border:"none",background:"transparent",cursor:"pointer",fontSize:13,fontWeight:700,color:tab===v?"#507c80":"#94a3b8",borderBottom:tab===v?"2px solid #507c80":"2px solid transparent",marginBottom:-1,transition:"color .15s",whiteSpace:"nowrap"}}>{l}</button>
         ))}
       </div>
-      <div style={{padding:"18px 18px"}}>
-        {bTab==="checklist"&&<div>
-          <p style={{fontSize:13,color:MID,marginBottom:14,lineHeight:1.6}}>Work through each step in order. Tick off as you go. Do not skip ahead, each week builds on the last.</p>
+      <div style={{padding:"18px 20px"}}>
+        {tab==="checklist"&&<div>
           {tmpl.checklist.map((week,wi)=>(
-            <div key={wi} style={{marginBottom:14}}>
-              <div style={{background:B,color:W,borderRadius:7,padding:"7px 13px",fontWeight:700,fontSize:13,marginBottom:8}}>{week.week}</div>
-              {week.tasks.map((task,ti)=>{
-                const key=`${wi}-${ti}`;
-                return(
-                  <div key={key} onClick={()=>setDone(d=>({...d,[key]:!d[key]}))}
-                    style={{display:"flex",gap:10,alignItems:"flex-start",padding:"8px 12px",background:done[key]?"#e8f5e9":W,borderRadius:7,marginBottom:5,cursor:"pointer",border:`1px solid ${done[key]?"#a5d6a7":MGRAY}`}}>
-                    <div style={{width:20,height:20,borderRadius:5,border:`2px solid ${done[key]?"#27ae60":MGRAY}`,background:done[key]?"#27ae60":W,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
-                      {done[key]&&<span style={{color:W,fontSize:12,fontWeight:700}}>✓</span>}
+            <div key={wi} style={{marginBottom:18}}>
+              <div style={{background:"linear-gradient(90deg,#507c80,#6aabaf)",color:"#fff",borderRadius:10,padding:"7px 14px",fontWeight:700,fontSize:13,marginBottom:10,display:"inline-block"}}>{week.week}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                {week.tasks.map((task,ti)=>{
+                  const k=wi+"-"+ti;
+                  return(
+                    <div key={k} onClick={()=>setDone(d=>({...d,[k]:!d[k]}))}
+                      style={{display:"flex",gap:10,alignItems:"flex-start",padding:"10px 12px",borderRadius:10,cursor:"pointer",border:"1.5px solid",borderColor:done[k]?"#b6ddb6":"#edf2f3",background:done[k]?"#f0f9f0":"#fff",transition:"all .15s"}}>
+                      <div style={{width:18,height:18,borderRadius:5,border:"2px solid",borderColor:done[k]?"#27ae60":"#c8d8da",background:done[k]?"#27ae60":"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,transition:"all .15s"}}>
+                        {done[k]&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                      <span style={{fontSize:13,lineHeight:1.55,color:done[k]?"#999":"#1a2e30",textDecoration:done[k]?"line-through":"none",transition:"all .15s"}}>{applyS(task,sym)}</span>
                     </div>
-                    <span style={{fontSize:13,color:done[key]?"#555":DARK,lineHeight:1.5,textDecoration:done[key]?"line-through":"none"}}>{applyS(task,sym)}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>}
-        {bTab==="costs"&&<div>
-          <div style={{background:LITE,borderRadius:9,padding:"13px 15px",marginBottom:14}}>
-            <div style={{fontSize:12,fontWeight:700,color:MID,marginBottom:4}}>Typical startup cost range</div>
-            <div style={{fontSize:20,fontWeight:800,color:B}}>{rangeLocal(min,max,country)}</div>
-            <div style={{fontSize:12,color:MID,marginTop:4}}>{tmpl.capital.replace(/\$(\d+) to \$(\d+)/,(m,a,b)=>rangeLocal(+a,+b,country)).replace(/ USD/g,"")}</div>
+        {tab==="costs"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div style={{background:"#f0f8f8",borderRadius:14,padding:"18px",border:"1.5px solid rgba(80,124,128,.15)"}}>
+            <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:"#6b8f93",marginBottom:8}}>Startup cost</div>
+            <div style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:26,fontWeight:800,color:"#507c80",lineHeight:1}}>{rangeLocal(min,max,country)}</div>
+            <div style={{fontSize:12,color:"#94a3b8",marginTop:6}}>{tmpl.capital.replace(/\$(\d+) to \$(\d+)/,(m,a,bb)=>rangeLocal(+a,+bb,country)).replace(/ USD/g,"")}</div>
             {budget>0&&<div style={{marginTop:10}}>
-              <div style={{height:6,background:LGRAY,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(budget/max*100,100)}%`,background:budget>=min?B:"#e74c3c",borderRadius:3}}/></div>
-              <div style={{fontSize:12,fontWeight:700,marginTop:5,color:budget>=min?"#27ae60":"#c0392b"}}>{budget>=min?budget>=max?"Budget fully covers this":"Budget covers the minimum, start lean":"Budget may be short for this business"}</div>
+              <div style={{height:4,background:"#d0e8e8",borderRadius:99,overflow:"hidden"}}>
+                <div style={{height:"100%",width:Math.min(budget/max*100,100)+"%",background:budget>=min?"#507c80":"#ef4444",borderRadius:99}}/>
+              </div>
+              <div style={{fontSize:11,fontWeight:700,marginTop:5,color:budget>=min?"#27ae60":"#ef4444"}}>{budget>=min?budget>=max?"Budget fully covers this":"Start lean — minimum met":"Budget may be short"}</div>
             </div>}
           </div>
-          <div style={{background:LITE,borderRadius:9,padding:"13px 15px"}}>
-            <div style={{fontSize:12,fontWeight:700,color:MID,marginBottom:4}}>Expected monthly income</div>
-            <div style={{fontSize:18,fontWeight:800,color:DARK}}>{income.replace(/\$(\d+) to \$(\d+)/,(m,a,b)=>rangeLocal(+a,+b,country)).replace(/ USD/g,"")}</div>
-            <div style={{fontSize:12,color:MID,marginTop:4}}>After costs, once you have built your client base</div>
+          <div style={{background:"#f8fbfb",borderRadius:14,padding:"18px",border:"1.5px solid #e2eaeb"}}>
+            <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:"#6b8f93",marginBottom:8}}>Monthly income</div>
+            <div style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:26,fontWeight:800,color:"#1a2e30",lineHeight:1}}>{income.replace(/\$(\d+) to \$(\d+)/,(m,a,bb)=>rangeLocal(+a,+bb,country)).replace(/ USD/g,"")}</div>
+            <div style={{fontSize:12,color:"#94a3b8",marginTop:6}}>After costs, once you have built your client base</div>
           </div>
         </div>}
-        {bTab==="tips"&&<div>
-          <div style={{marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:700,color:DARK,marginBottom:10}}>Key tips for this type of business</div>
+        {tab==="tips"&&<div>
+          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
             {tmpl.tips.map((tip,i)=>(
-              <div key={i} style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:10}}>
-                <div style={{width:24,height:24,background:LITE,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:12,fontWeight:700,color:B}}>{i+1}</div>
-                <span style={{fontSize:13,color:DARK,lineHeight:1.5}}>{applyS(tip,sym)}</span>
+              <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"12px 14px",background:"#f8fbfb",borderRadius:12,border:"1px solid #e8f4f5"}}>
+                <div style={{width:26,height:26,borderRadius:8,background:"#507c80",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,flexShrink:0}}>{i+1}</div>
+                <span style={{fontSize:13,color:"#1a2e30",lineHeight:1.6}}>{applyS(tip,sym)}</span>
               </div>
             ))}
           </div>
-          <div style={{background:"#fdecea",borderRadius:9,padding:"12px 14px",borderLeft:"4px solid #c0392b"}}>
-            <div style={{fontSize:12,fontWeight:700,color:"#c0392b",marginBottom:4}}>Key risk to know</div>
-            <div style={{fontSize:13,color:"#c0392b",lineHeight:1.6}}>{applyS(tmpl.warning,sym)}</div>
+          <div style={{background:"#fff5f0",borderRadius:12,padding:"14px 16px",borderLeft:"3px solid #e65100"}}>
+            <div style={{fontSize:10,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:"#e65100",marginBottom:5}}>Key risk</div>
+            <div style={{fontSize:13,color:"#7c3a1a",lineHeight:1.6}}>{applyS(tmpl.warning,sym)}</div>
           </div>
         </div>}
       </div>
-    </div>
-  );
-}
-
-function BusinessRow({b,budget,catColor,catBorder,sym="₦",country="Nigeria"}){
-  const [open,setOpen]=useState(false);
-  const [name,category,templateKey,min,max,income]=b;
-  const feasible=budget===0||budget>=min;
-  const tight=budget>0&&budget>=min&&budget<max;
-  return(
-    <div style={{background:W,border:`1.5px solid ${open?catBorder:MGRAY}`,borderRadius:10,marginBottom:8,overflow:"hidden"}}>
-      <button onClick={()=>setOpen(o=>!o)}
-        style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:12,textAlign:"left"}}>
-        <span style={{fontSize:24}}>{b[1]}</span>
-        <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:700,color:DARK}}>{name}</div>
-          <div style={{fontSize:12,color:MID,marginTop:2}}>{income.replace(/\$(\d+) to \$(\d+)/,(m,a,b)=>rangeLocal(+a,+b,country)).replace(/ USD/g,"")}</div>
-        </div>
-        <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
-          {tight&&<span style={{background:"#fff3e0",color:"#e65100",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>Tight</span>}
-          {!feasible&&budget>0&&<span style={{background:"#fdecea",color:"#c0392b",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>Over budget</span>}
-          <span style={{fontSize:16,color:MID}}>{open?"▲":"▼"}</span>
-        </div>
-      </button>
-      {open&&<div style={{borderTop:`1px solid ${LGRAY}`}}><BusinessDetail b={b} budget={budget} sym={sym} country={country}/></div>}
-    </div>
-  );
-}
-
-function CategorySection({cat,budget,search,sym="₦",country="Nigeria"}){
-  const filtered=cat.businesses.filter(b=>{
-    const [name,,, min]=b;
-    if(search&&!name.toLowerCase().includes(search.toLowerCase()))return false;
-    if(budget>0&&min>budget)return false;
-    return true;
-  });
-  if(filtered.length===0)return null;
-  const [open,setOpen]=useState(false);
-  return(
-    <div style={{background:W,borderRadius:14,border:`2px solid ${cat.border}`,marginBottom:14,overflow:"hidden"}}>
-      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",padding:"15px 20px",background:cat.color,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
-        <span style={{fontSize:28}}>{cat.emoji}</span>
-        <div style={{flex:1}}>
-          <div style={{fontSize:15,fontWeight:800,color:DARK}}>{cat.label}</div>
-          <div style={{fontSize:12,color:MID,marginTop:2}}>{filtered.length} business{filtered.length!==1?"es":""} shown · {cat.intro.slice(0,70)}...</div>
-        </div>
-        <span style={{fontSize:18,color:MID}}>{open?"▲":"▼"}</span>
-      </button>
-      {open&&<div style={{padding:"16px 18px"}}>
-        <div style={{background:cat.color,borderLeft:`4px solid ${cat.border}`,borderRadius:8,padding:"10px 14px",fontSize:13,color:DARK,lineHeight:1.6,marginBottom:14}}>{applyS(cat.intro,sym)}</div>
-        {filtered.map((b,i)=><BusinessRow key={i} b={b} budget={budget} catColor={cat.color} catBorder={cat.border} sym={sym} country={country}/>)}
-      </div>}
     </div>
   );
 }
@@ -582,64 +676,159 @@ function StarterApp(){
   const [capital,setCapital]=useState("");
   const [range,setRange]=useState(null);
   const [search,setSearch]=useState("");
+  const [activeTab,setActiveTab]=useState(0);
   const budget=parseInt(String(capital).replace(/,/g,""))||0;
+
+  const getFiltered=(cat)=>cat.businesses.filter(b=>{
+    if(search&&!b[0].toLowerCase().includes(search.toLowerCase()))return false;
+    if(range){const r=RANGES.find(r=>r.id===range);if(r&&b[3]>r.max)return false;}
+    else if(budget>0&&b[3]>budget)return false;
+    return true;
+  });
+
   const totalBiz=CATEGORIES_DATA.reduce((a,c)=>a+c.businesses.length,0);
-  const visibleBiz=CATEGORIES_DATA.reduce((a,cat)=>{
-    return a+cat.businesses.filter(b=>{
-      if(search&&!b[0].toLowerCase().includes(search.toLowerCase()))return false;
-      if(range){const r=RANGES.find(r=>r.id===range);if(r&&b[3]>r.max)return false;}
-      else if(budget>0&&b[3]>budget)return false;
-      return true;
-    }).length;
-  },0);
+  const activeCat=CATEGORIES_DATA[activeTab];
+  const filtered=getFiltered(activeCat);
 
   return(
-    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",minHeight:"100vh",background:LGRAY}}>
-      <div style={{background:DARK,padding:"13px 22px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div>
-          <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",letterSpacing:1.2,textTransform:"uppercase"}}>Prowess Digital Solutions · 2026</div>
-          <div style={{fontSize:18,fontWeight:800,color:W,marginTop:2}}>Business Starter, What Should I Start?</div>
-        </div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <select value={country} onChange={e=>saveCty(e.target.value)}
-            style={{background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,padding:"6px 9px",color:W,fontSize:12,fontWeight:600,outline:"none",cursor:"pointer",maxWidth:130}}>
-            {COUNTRIES.map(([n])=><option key={n} value={n} style={{color:"#333"}}>{n}</option>)}
-          </select>
-          
-        </div>
-      </div>
-      <div style={{background:B,padding:"16px 22px"}}>
-        <p style={{color:W,fontSize:13,lineHeight:1.7,marginBottom:14,maxWidth:700}}>Enter your budget and get a full list of businesses you can start in Africa right now, organised by category, with a week-by-week setup checklist for each one you can tick off as you go. {totalBiz} businesses across 12 categories.</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,maxWidth:700}}>
-          <div>
-            <label style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,.8)",display:"block",marginBottom:6}}>Your Budget</label>
-            <input value={capital} onChange={e=>setCapital(e.target.value)} placeholder={`e.g. ${toLocal(200,country)}`}
-              style={{width:"100%",padding:"11px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:9,color:W,fontSize:15,fontWeight:700,outline:"none",boxSizing:"border-box"}}/>
-            {budget>0&&<div style={{color:"rgba(255,255,255,.7)",fontSize:12,marginTop:4}}>{toLocal(budget,country)} — businesses within your budget</div>}
+    <div style={{minHeight:"100vh",background:"#f0f4f5"}}>
+      {/* Hero */}
+      <div style={{background:"#0c1a1b",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(80,124,128,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(80,124,128,.07) 1px,transparent 1px)",backgroundSize:"48px 48px",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",width:600,height:500,borderRadius:"50%",background:"radial-gradient(circle,rgba(80,124,128,.2) 0%,transparent 70%)",top:-200,left:-100,pointerEvents:"none"}}/>
+        <div style={{position:"relative",zIndex:1,maxWidth:1060,margin:"0 auto",padding:"32px 24px 36px",animation:"fadeUp .6s cubic-bezier(.22,.68,0,1.2) both"}}>
+          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexWrap:"wrap",gap:16,marginBottom:28}}>
+            <div>
+              <div style={{fontSize:10,fontWeight:800,letterSpacing:3,textTransform:"uppercase",color:"rgba(80,124,128,.9)",marginBottom:10}}>Prowess Digital Solutions · 2026</div>
+              <h1 style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:"clamp(26px,5vw,42px)",fontWeight:800,color:"#fff",lineHeight:1.05,letterSpacing:"-.5px",marginBottom:10}}>
+                What Should I <span style={{background:"linear-gradient(135deg,#7ecdd2,#507c80)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>Start?</span>
+              </h1>
+              <p style={{fontSize:14,color:"rgba(255,255,255,.45)",lineHeight:1.65,maxWidth:500}}>{totalBiz} businesses across 12 categories. Enter your budget and find what is realistic for you right now.</p>
+            </div>
+            <select value={country} onChange={e=>saveCty(e.target.value)} style={{background:"rgba(255,255,255,.08)",border:"1.5px solid rgba(255,255,255,.18)",borderRadius:12,padding:"10px 14px",color:"#fff",fontSize:13,fontWeight:600,outline:"none",cursor:"pointer",minWidth:140}}>
+              {COUNTRIES.map(([n])=><option key={n} value={n} style={{background:"#1a2e30"}}>{n}</option>)}
+            </select>
           </div>
-          <div>
-            <label style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,.8)",display:"block",marginBottom:6}}>Or select a range</label>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-              {RANGES.map(r=>(
-                <button key={r.id} onClick={()=>setRange(range===r.id?null:r.id)}
-                  style={{padding:"5px 11px",background:range===r.id?"rgba(255,255,255,.3)":"rgba(255,255,255,.1)",border:`1.5px solid ${range===r.id?"rgba(255,255,255,.8)":"rgba(255,255,255,.3)"}`,borderRadius:20,color:W,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
-                  {r.min===0?`Below ${toLocal(r.max,country)}`:r.max===99999999?`Above ${toLocal(r.min,country)}`:`${toLocal(r.min,country)} to ${toLocal(r.max,country)}`}
-                </button>
-              ))}
+          {/* Budget filters */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,maxWidth:700}}>
+            <div>
+              <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:"rgba(255,255,255,.35)",marginBottom:8}}>Your budget</div>
+              <input value={capital} onChange={e=>setCapital(e.target.value)} placeholder={"e.g. "+toLocal(200,country)}
+                style={{width:"100%",padding:"12px 16px",background:"rgba(255,255,255,.08)",border:"1.5px solid rgba(255,255,255,.15)",borderRadius:12,color:"#fff",fontSize:15,fontWeight:700,outline:"none"}}/>
+              {budget>0&&<div style={{color:"rgba(255,255,255,.4)",fontSize:12,marginTop:6,fontWeight:600}}>{toLocal(budget,country)} — showing what you can start</div>}
+            </div>
+            <div>
+              <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:"rgba(255,255,255,.35)",marginBottom:8}}>Or pick a range</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {RANGES.map(r=>(
+                  <button key={r.id} onClick={()=>setRange(range===r.id?null:r.id)}
+                    style={{padding:"7px 13px",background:range===r.id?"rgba(80,124,128,.4)":"rgba(255,255,255,.07)",border:"1.5px solid",borderColor:range===r.id?"rgba(80,124,128,.7)":"rgba(255,255,255,.12)",borderRadius:99,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s"}}>
+                    {r.min===0?"Below "+toLocal(r.max,country):r.max===99999999?"Above "+toLocal(r.min,country):toLocal(r.min,country)+" to "+toLocal(r.max,country)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div style={{background:W,borderBottom:`1px solid ${MGRAY}`,padding:"10px 22px",display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-        <span style={{fontSize:13,fontWeight:700,color:DARK}}>Search:</span>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Type any business name..."
-          style={{padding:"7px 14px",border:`1.5px solid ${MGRAY}`,borderRadius:20,fontSize:13,outline:"none",width:220}}/>
-        <span style={{fontSize:12,color:MID,marginLeft:"auto"}}>{visibleBiz} businesses shown</span>
+
+      {/* Category tabs */}
+      <div style={{background:"#fff",borderBottom:"1.5px solid #e2eaeb",position:"sticky",top:58,zIndex:50}}>
+        <div style={{maxWidth:1060,margin:"0 auto",padding:"0 24px",display:"flex",overflowX:"auto",gap:2,scrollbarWidth:"none"}}>
+          {CATEGORIES_DATA.map((cat,i)=>{
+            const count=getFiltered(cat).length;
+            return(
+              <button key={i} onClick={()=>setActiveTab(i)}
+                style={{padding:"14px 16px",border:"none",background:"transparent",cursor:"pointer",whiteSpace:"nowrap",fontSize:13,fontWeight:700,color:activeTab===i?"#507c80":"#94a3b8",borderBottom:activeTab===i?"2.5px solid #507c80":"2.5px solid transparent",marginBottom:-2,transition:"color .15s",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                {cat.label}
+                {count<cat.businesses.length&&count>0&&<span style={{background:"#f0f8f8",color:"#507c80",fontSize:10,fontWeight:800,padding:"1px 7px",borderRadius:99,border:"1px solid rgba(80,124,128,.2)"}}>{count}</span>}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div style={{padding:"16px 22px",maxWidth:980,margin:"0 auto"}}>
-        {CATEGORIES_DATA.map(cat=><CategorySection key={cat.id} cat={cat} budget={budget} search={search} sym={sym} country={country}/>)}
+
+      {/* Search + active category content */}
+      <div style={{maxWidth:1060,margin:"0 auto",padding:"24px 24px 48px"}}>
+        {/* Search + category info */}
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
+          <div style={{position:"relative",flex:"0 0 auto"}}>
+            <svg width="15" height="15" style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:"#94a3b8",pointerEvents:"none"}} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="M21 21l-4.35-4.35"/></svg>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search businesses..."
+              style={{padding:"9px 14px 9px 36px",border:"1.5px solid #e2eaeb",borderRadius:99,fontSize:13,outline:"none",background:"#fff",width:240,transition:"border-color .2s"}}/>
+          </div>
+          <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:13,fontWeight:700,color:"#507c80"}}>{filtered.length} businesses</span>
+            <span style={{fontSize:13,color:"#94a3b8"}}>in {activeCat.label}</span>
+          </div>
+        </div>
+
+        {/* Category intro */}
+        <div style={{background:"linear-gradient(135deg,#0c1a1b,#1a3a3e)",borderRadius:16,padding:"20px 24px",marginBottom:24,position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(80,124,128,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(80,124,128,.08) 1px,transparent 1px)",backgroundSize:"32px 32px",pointerEvents:"none"}}/>
+          <div style={{position:"relative",zIndex:1}}>
+            <div style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:"clamp(18px,3vw,24px)",fontWeight:800,color:"#fff",marginBottom:8}}>{activeCat.label}</div>
+            <p style={{fontSize:14,color:"rgba(255,255,255,.55)",lineHeight:1.65,maxWidth:600}}>{activeCat.intro}</p>
+          </div>
+        </div>
+
+        {/* Business cards */}
+        {filtered.length===0?(
+          <div style={{textAlign:"center",padding:"48px 0",color:"#94a3b8"}}>
+            <div style={{fontSize:32,marginBottom:12}}>🔍</div>
+            <div style={{fontWeight:700,fontSize:15}}>No businesses match your filters</div>
+            <div style={{fontSize:13,marginTop:4}}>Try adjusting your budget or search term</div>
+          </div>
+        ):(
+          <BusinessGrid businesses={filtered} budget={budget} sym={sym} country={country}/>
+        )}
       </div>
-      <div style={{textAlign:"center",padding:"14px",fontSize:12,color:"#aaa"}}>© 2026 Prowess Digital Solutions · prowessdigitalsolutions.com</div>
+      <div style={{textAlign:"center",padding:"24px 16px",fontSize:12,color:"#94a3b8"}}>© 2026 Prowess Digital Solutions · prowessdigitalsolutions.com</div>
+    </div>
+  );
+}
+
+// ─── BusinessGrid ──────────────────────────────────────────────────────────
+function BusinessGrid({businesses,budget,sym,country}){
+  const [expanded,setExpanded]=useState(null);
+  return(
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
+      {businesses.map((b,i)=>{
+        const [name,,templateKey,min,max,income]=b;
+        const isOpen=expanded===i;
+        const feasible=budget===0||budget>=min;
+        const tight=budget>0&&budget>=min&&budget<max;
+        return(
+          <div key={i} style={{gridColumn:isOpen?"1/-1":"auto",transition:"all .3s",animation:"fadeUp .4s ease both",animationDelay:i*.04+"s"}}>
+            {!isOpen?(
+              <div onClick={()=>setExpanded(i)} style={{background:"#fff",borderRadius:14,border:"1.5px solid #e2eaeb",padding:"16px 18px",cursor:"pointer",transition:"all .2s",boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#507c80";e.currentTarget.style.boxShadow="0 4px 16px rgba(80,124,128,.12)"}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="#e2eaeb";e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,.04)"}}>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:8}}>
+                  <div style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:14,fontWeight:700,color:"#1a2e30",lineHeight:1.35}}>{name}</div>
+                  <div style={{display:"flex",gap:4,flexShrink:0}}>
+                    {tight&&<span style={{background:"#fff7ed",color:"#c2410c",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:99,border:"1px solid #fed7aa",whiteSpace:"nowrap"}}>Tight</span>}
+                    {!feasible&&budget>0&&<span style={{background:"#fef2f2",color:"#b91c1c",fontSize:9,fontWeight:800,padding:"2px 7px",borderRadius:99,border:"1px solid #fecaca",whiteSpace:"nowrap"}}>Over</span>}
+                  </div>
+                </div>
+                <div style={{fontSize:12,color:"#6b8f93",lineHeight:1.4,marginBottom:12}}>{income.replace(/\$(\d+) to \$(\d+)/,(m,a,bb)=>rangeLocal(+a,+bb,country)).replace(/ USD/g,"")}</div>
+                <div style={{display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:600,color:"#507c80"}}>
+                  <span>View checklist</span>
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </div>
+              </div>
+            ):(
+              <div>
+                <button onClick={()=>setExpanded(null)} style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,background:"transparent",border:"none",cursor:"pointer",color:"#507c80",fontSize:13,fontWeight:700,padding:0}}>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                  Back to list
+                </button>
+                <BusinessDetail b={b} budget={budget} sym={sym} country={country}/>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

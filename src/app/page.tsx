@@ -151,21 +151,21 @@ export default function ModernHomePage() {
 
             <div>
               <div className="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 ring-1 ring-white/15">
-                Free Tool
+                Free Tools
               </div>
               <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
                 Not Sure Where to Start?
               </h2>
               <p className="mt-4 text-base leading-relaxed text-white/85 sm:text-lg">
-                Use the Business Helper before you book anything. Tell us what is happening in your business and get a structured diagnostic report with a Business Health Score and clear next steps.
+              We have built a set of free and premium tools for African business owners. Diagnose your business, plan your finances, map your structure, and more; all in one place.
               </p>
               <p className="mt-3 text-sm text-white/65">
-                It takes less than 5 minutes. No sign-up required.
+              No sign-up required for most tools. Start in under 5 minutes.
               </p>
               <div className="mt-8">
-                <Link href="/resources#business-helper">
+                <Link href="/tools">
                   <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-[#507c80] shadow-2xl transition hover:scale-[1.02] hover:bg-white/95">
-                    Try the Business Helper Free
+                  Explore All Tools
                     <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
@@ -177,10 +177,10 @@ export default function ModernHomePage() {
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
               <p className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-6">What you get</p>
               {[
-                "A Business Health Score based on your answers",
-                "Clear breakdown of what is working and what is not",
-                "Specific next steps ranked by priority",
-                "A starting point for your first real conversation with us",
+                "A Business Health Score from the Business Helper",
+"Startup cost and break-even calculations",
+"Profit and cashflow tracking for your business",
+"Checklists, templates, and guides built for Africa",
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3 mb-4 last:mb-0">
                   <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white/20">

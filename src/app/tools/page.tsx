@@ -1,45 +1,111 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-const B="#507c80",DARK="#3a5c60",MID="#6a9ea3",LITE="#e8f4f5",LGRAY="#f2f5f5",MGRAY="#c8d8da",W="#fff";
-
-const TOOLS=[
-  {key:"calculator",href:"/tools/calculator",icon:"🧮",title:"Startup Cost & Break-Even Calculator",desc:"Plan every cost before you launch. Calculate your break-even point, set prices, and know exactly how much funding you need.",badge:"Access Required"},
-  {key:"tracker",href:"/tools/tracker",icon:"📊",title:"Profit & Cashflow Tracker",desc:"Track every naira in and out. Monthly summaries, annual overview, and cashflow forecasting to keep your business healthy.",badge:"Access Required"},
-  {key:"customer-support",href:"/tools/customer-support.html",icon:"🤝",title:"Customer Service Guide",desc:"A practical guide to handling client communication, complaints, and retention for African service businesses.",badge:"Free"},
-  {key:"business-starter",href:"/tools/business-starter.html",icon:"🚀",title:"Business Starter Checklist",desc:"Step-by-step checklist to register, structure, and launch your business the right way in Nigeria.",badge:"Free"},
+const TOOLS = [
+  {key:"calculator",href:"/tools/calculator",icon:"🧮",badge:"Premium",title:"Startup Cost & Break-Even Calculator",desc:"Know exactly how much it costs to launch. Set the right price. Find your break-even point before you spend a single naira.",detail:"Startup costs · Pricing · Break-even · Funding tracker",gated:true},
+  {key:"tracker",href:"/tools/tracker",icon:"📊",badge:"Premium",title:"Profit & Cashflow Tracker",desc:"Track every naira in and out. Monthly summaries, annual overview, and cashflow forecasting so you always know where your business stands.",detail:"Monthly tracking · Annual view · Cashflow forecast",gated:true},
+  {key:"business-helper",href:"/tools/business-helper.html",icon:"🤖",badge:"Free",title:"Business Helper",desc:"Tell us what is happening in your business. Get a structured diagnostic report with a Business Health Score and clear next steps powered by AI.",detail:"AI diagnostic · Health score · Action plan",gated:false},
+  {key:"starter-checklist",href:"/tools/business-starter.html",icon:"✅",badge:"Free",title:"Business Starter Checklist",desc:"Work through the foundational things every business must have before chasing growth. Check off what you have. See where the gaps are.",detail:"36 checkpoints · 6 categories · Progress tracking",gated:false},
+  {key:"business-structure",href:"/tools/business-structure.html",icon:"🏗️",badge:"Free",title:"Business Structure Template",desc:"Map out your business structure step by step. Define roles, responsibilities, decision making, and communication flow.",detail:"Role mapping · Decision flow · Downloadable output",gated:false},
+  {key:"customer-support",href:"/tools/customer-support.html",icon:"🤝",badge:"Free",title:"Customer Service Guide",desc:"A practical guide to handling client communication, complaints, and retention. Built specifically for African service businesses.",detail:"Response scripts · Complaint handling · Retention",gated:false},
 ];
 
-export default function ToolsPage(){
-  return(
-    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",minHeight:"100vh",background:LGRAY}}>
-      <div style={{background:DARK,padding:"20px 28px"}}>
-        <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.5)",letterSpacing:1.4,textTransform:"uppercase",marginBottom:4}}>Prowess Digital Solutions</div>
-        <div style={{fontSize:26,fontWeight:900,color:W}}>Business Tools</div>
-        <div style={{fontSize:13,color:"rgba(255,255,255,.5)",marginTop:4}}>Built for African entrepreneurs. Use these tools to start, price, and track your business.</div>
-      </div>
-      <div style={{padding:"28px",maxWidth:900,margin:"0 auto"}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16}}>
-          {TOOLS.map(t=>(
-            <Link key={t.key} href={t.href} style={{textDecoration:"none"}}>
-              <div style={{background:W,borderRadius:14,padding:"22px 24px",border:`1px solid ${MGRAY}`,boxShadow:"0 1px 6px rgba(58,92,96,.08)",cursor:"pointer",transition:"transform .15s,box-shadow .15s"}}
-                onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.boxShadow="0 4px 18px rgba(58,92,96,.15)";(e.currentTarget as HTMLElement).style.transform="translateY(-2px)";}}
-                onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.boxShadow="0 1px 6px rgba(58,92,96,.08)";(e.currentTarget as HTMLElement).style.transform="none";}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-                  <div style={{fontSize:32}}>{t.icon}</div>
-                  <span style={{fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20,background:t.badge==="Free"?"#e8f5e9":LITE,color:t.badge==="Free"?"#2e7d32":B}}>{t.badge}</span>
+export default function ToolsPage() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600&display=swap');
+        .tr{font-family:'DM Sans',sans-serif;min-height:100vh;background:#0c1a1b;color:#fff}
+        .hero{position:relative;padding:80px 24px 72px;overflow:hidden;text-align:center}
+        .orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none}
+        .orb-a{width:520px;height:520px;background:radial-gradient(circle,rgba(80,124,128,.55) 0%,transparent 70%);top:-180px;left:50%;transform:translateX(-50%);animation:orbA 8s ease-in-out infinite}
+        .orb-b{width:320px;height:320px;background:radial-gradient(circle,rgba(58,92,96,.4) 0%,transparent 70%);bottom:-80px;right:10%;animation:orbB 11s ease-in-out infinite reverse}
+        @keyframes orbA{0%,100%{transform:translateY(0) translateX(-50%)}50%{transform:translateY(-28px) translateX(-50%)}}
+        @keyframes orbB{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+        .eyebrow{font-size:11px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#6a9ea3;margin-bottom:18px;position:relative}
+        .htitle{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(36px,6vw,66px);font-weight:800;line-height:1.08;letter-spacing:-1.5px;position:relative;margin:0 auto;max-width:780px}
+        .acc{background:linear-gradient(135deg,#6ab8bd 0%,#507c80 60%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hsub{margin:22px auto 0;max-width:540px;font-size:16px;line-height:1.75;color:rgba(255,255,255,.52);position:relative}
+        .statbar{display:flex;align-items:center;justify-content:center;gap:32px;margin-top:44px;position:relative;flex-wrap:wrap}
+        .statnum{font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800;color:#fff}
+        .statlabel{font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;text-align:center}
+        .sdiv{width:1px;height:36px;background:rgba(255,255,255,.1)}
+        .gsec{padding:0 20px 80px;max-width:1160px;margin:0 auto}
+        .slabel{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:20px;padding-left:4px}
+        .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+        .tc{position:relative;border-radius:20px;padding:28px;cursor:pointer;text-decoration:none;display:block;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);backdrop-filter:blur(8px);transition:transform .28s cubic-bezier(.22,.68,0,1.2),border-color .28s,background .28s,box-shadow .28s;opacity:0;transform:translateY(24px)}
+        .tc.vis{opacity:1;transform:translateY(0);transition:opacity .55s ease,transform .55s cubic-bezier(.22,.68,0,1.2),border-color .28s,background .28s,box-shadow .28s}
+        .tc:hover{transform:translateY(-5px) scale(1.015);border-color:rgba(80,124,128,.5);background:rgba(80,124,128,.08);box-shadow:0 20px 60px rgba(0,0,0,.35),0 0 0 1px rgba(80,124,128,.2)}
+        .tc.prem{background:linear-gradient(145deg,rgba(58,92,96,.18) 0%,rgba(80,124,128,.08) 100%);border-color:rgba(80,124,128,.25)}
+        .tc.prem::before{content:'';position:absolute;top:0;left:20px;right:20px;height:1px;background:linear-gradient(90deg,transparent,rgba(80,124,128,.8),transparent)}
+        .tc.prem:hover{border-color:rgba(106,158,163,.6);box-shadow:0 20px 60px rgba(0,0,0,.4),0 0 40px rgba(80,124,128,.15)}
+        .ctop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+        .cicon{width:50px;height:50px;background:rgba(255,255,255,.07);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform .3s ease}
+        .tc:hover .cicon{transform:scale(1.12) rotate(-4deg)}
+        .cbadge{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:4px 10px;border-radius:20px}
+        .bfree{background:rgba(46,160,67,.15);color:#4cba6f;border:1px solid rgba(46,160,67,.25)}
+        .bprem{background:rgba(80,124,128,.25);color:#7ec8cd;border:1px solid rgba(80,124,128,.4);animation:pp 3s ease-in-out infinite}
+        @keyframes pp{0%,100%{box-shadow:none}50%{box-shadow:0 0 10px rgba(80,124,128,.3)}}
+        .ctitle{font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;color:#fff;line-height:1.25;margin-bottom:10px;letter-spacing:-.3px}
+        .cdesc{font-size:14px;line-height:1.7;color:rgba(255,255,255,.48);margin-bottom:18px}
+        .cdetail{font-size:11px;color:rgba(80,124,128,.8);font-weight:600;letter-spacing:.5px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)}
+        .carrow{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;font-weight:600;color:rgba(255,255,255,.25);transition:color .2s,gap .2s}
+        .tc:hover .carrow{color:#7ec8cd;gap:10px}
+        .bcta{margin:0 auto;max-width:1160px;padding:0 20px 80px}
+        .ctacard{border-radius:24px;padding:40px 44px;background:linear-gradient(135deg,rgba(58,92,96,.35) 0%,rgba(15,38,39,.6) 100%);border:1px solid rgba(80,124,128,.25);display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;position:relative;overflow:hidden}
+        .ctacard::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(80,124,128,.6),transparent)}
+        .ctatitle{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:6px;letter-spacing:-.3px}
+        .ctasub{font-size:14px;color:rgba(255,255,255,.45);line-height:1.6;max-width:480px}
+        .ctabtn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:12px;background:#507c80;color:#fff;font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .2s,transform .2s;flex-shrink:0}
+        .ctabtn:hover{background:#3a5c60;transform:translateY(-2px)}
+        @media(max-width:640px){.hero{padding:60px 20px 52px}.tgrid{grid-template-columns:1fr}.ctacard{padding:28px 22px}.statbar{gap:20px}}
+      `}</style>
+      <div className="tr">
+        <div className="hero">
+          <div className="orb orb-a"/>
+          <div className="orb orb-b"/>
+          <p className="eyebrow">Prowess Digital Solutions &nbsp;·&nbsp; Business Tools</p>
+          <h1 className="htitle">Everything your business<br/>needs, <span className="acc">in one place</span></h1>
+          <p className="hsub">Six tools built for African entrepreneurs. From startup planning to daily cashflow tracking, the right tool for every stage of your journey.</p>
+          <div className="statbar">
+            <div><div className="statnum">6</div><div className="statlabel">Business tools</div></div>
+            <div className="sdiv"/>
+            <div><div className="statnum">54</div><div className="statlabel">African currencies</div></div>
+            <div className="sdiv"/>
+            <div><div className="statnum">4</div><div className="statlabel">Free tools</div></div>
+          </div>
+        </div>
+        <div className="gsec">
+          <p className="slabel">All Tools</p>
+          <div className="tgrid">
+            {TOOLS.map((tool,i)=>(
+              <Link key={tool.key} href={tool.href} className={`tc ${tool.gated?"prem":""} ${visible?"vis":""}`} style={{transitionDelay:visible?`${i*75}ms`:"0ms"}}>
+                <div className="ctop">
+                  <div className="cicon">{tool.icon}</div>
+                  <span className={`cbadge ${tool.gated?"bprem":"bfree"}`}>{tool.badge}</span>
                 </div>
-                <div style={{fontSize:15,fontWeight:800,color:DARK,marginBottom:8,lineHeight:1.3}}>{t.title}</div>
-                <div style={{fontSize:13,color:MID,lineHeight:1.6}}>{t.desc}</div>
-                <div style={{marginTop:14,fontSize:12,fontWeight:700,color:B}}>Open tool →</div>
-              </div>
-            </Link>
-          ))}
+                <div className="ctitle">{tool.title}</div>
+                <div className="cdesc">{tool.desc}</div>
+                <div className="cdetail">{tool.detail}</div>
+                <div className="carrow">Open tool <span>→</span></div>
+              </Link>
+            ))}
+          </div>
         </div>
-        <div style={{marginTop:28,background:W,borderRadius:12,padding:"18px 22px",border:`1px solid ${MGRAY}`,textAlign:"center"}}>
-          <div style={{fontSize:13,color:MID}}>Need an access code for the paid tools? Contact <span style={{fontWeight:700,color:DARK}}>Prowess Digital Solutions</span> to get started.</div>
+        <div className="bcta">
+          <div className="ctacard">
+            <div>
+              <div className="ctatitle">Need a Premium access code?</div>
+              <div className="ctasub">The Calculator and Tracker are available to Prowess Digital Solutions clients. Reach out to get your code and unlock the full suite.</div>
+            </div>
+            <a href="/contact" className="ctabtn">Get access →</a>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

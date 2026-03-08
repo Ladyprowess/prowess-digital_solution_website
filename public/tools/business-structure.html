@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Structure Template · Prowess Digital Solutions</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f4f6f7;min-height:100vh}
+input,select,textarea{font-size:16px !important;}
+.pds-nav{background:#0c1a1b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.06)}
+.pds-nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.pds-nav-dot{width:8px;height:8px;border-radius:50%;background:#507c80;box-shadow:0 0 10px rgba(80,124,128,.7);animation:navPulse 2.5s ease-in-out infinite}
+@keyframes navPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+.pds-nav-name{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.7)}
+.pds-nav-right{display:flex;align-items:center;gap:12px}
+.pds-nav-back{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.55);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;text-decoration:none;transition:background .2s,color .2s}
+.pds-nav-back:hover{background:rgba(255,255,255,.1);color:#fff}
+.pds-nav-badge{padding:5px 11px;border-radius:20px;background:rgba(46,160,67,.15);border:1px solid rgba(46,160,67,.25);color:#4cba6f;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="pds-nav">
+  <a href="/" class="pds-nav-brand">
+    <div class="pds-nav-dot"></div>
+    <span class="pds-nav-name">Prowess Digital Solutions</span>
+  </a>
+  <div class="pds-nav-right">
+    <span class="pds-nav-badge">Free Tool</span>
+    <a href="/tools" class="pds-nav-back">← All Tools</a>
+  </div>
+</div>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+const B="#507c80",DARK="#3a5c60",MID="#6a9ea3",LITE="#e8f4f5",LGRAY="#f4f6f7",MGRAY="#c8d8da",W="#fff";
+
+const mkid=()=>Math.random().toString(36).slice(2,8);
+
+const STRUCT_TYPES=["Sole Proprietorship","Partnership","Limited Liability Company (LLC)","Private Limited Company (Ltd)","Non-Profit / NGO","Cooperative"];
+const DEPT_PRESETS=["Operations","Finance & Accounts","Sales & Marketing","Customer Service","Technology & IT","Human Resources","Production / Fulfilment","Admin & Compliance"];
+const DECISION_TYPES=["Operational (daily tasks)","Financial (spending)","Strategic (direction)","HR (people)","Client-facing (deals)","Legal & Compliance"];
+
+function Field({label,value,set,ph="",multi=false}){
+  const [f,sf]=useState(false);
+  const base={width:"100%",padding:"10px 14px",border:`1.5px solid ${f?B:MGRAY}`,borderRadius:10,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",color:DARK,background:W,boxSizing:"border-box",transition:"border-color .2s"};
+  return <div style={{marginBottom:14}}>
+    <label style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.8,display:"block",marginBottom:6}}>{label}</label>
+    {multi?<textarea value={value} onChange={e=>set(e.target.value)} placeholder={ph} rows={3} onFocus={()=>sf(true)} onBlur={()=>sf(false)} style={{...base,resize:"vertical"}}/>
+    :<input value={value} onChange={e=>set(e.target.value)} placeholder={ph} onFocus={()=>sf(true)} onBlur={()=>sf(false)} style={base}/>}
+  </div>;
+}
+
+function Section({title,num,children}){
+  return <div style={{background:W,borderRadius:16,border:`1px solid ${MGRAY}`,padding:"24px 26px",marginBottom:16,boxShadow:"0 1px 8px rgba(0,0,0,.04)"}}>
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+      <div style={{width:32,height:32,borderRadius:10,background:B,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:W,flexShrink:0}}>{num}</div>
+      <h2 style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:18,fontWeight:800,color:DARK,letterSpacing:"-.2px"}}>{title}</h2>
+    </div>
+    {children}
+  </div>;
+}
+
+function App(){
+  const [bizName,setBizName]=useState("");
+  const [bizType,setBizType]=useState(STRUCT_TYPES[0]);
+  const [mission,setMission]=useState("");
+  const [vision,setVision]=useState("");
+  const [roles,setRoles]=useState([{id:mkid(),name:"",title:"",responsibilities:"",reportsTo:""}]);
+  const [depts,setDepts]=useState([{id:mkid(),name:DEPT_PRESETS[0],head:"",teamSize:"",focus:""}]);
+  const [decisions,setDecisions]=useState(DECISION_TYPES.map(t=>({id:mkid(),type:t,who:"",threshold:""})));
+  const [comms,setComms]=useState([{id:mkid(),channel:"WhatsApp",purpose:"",frequency:""}]);
+  const [values,setValues]=useState([{id:mkid(),value:"",meaning:""}]);
+  const [downloaded,setDownloaded]=useState(false);
+
+  const addRole=()=>setRoles(p=>[...p,{id:mkid(),name:"",title:"",responsibilities:"",reportsTo:""}]);
+  const addDept=()=>setDepts(p=>[...p,{id:mkid(),name:"",head:"",teamSize:"",focus:""}]);
+  const addComm=()=>setComms(p=>[...p,{id:mkid(),channel:"",purpose:"",frequency:""}]);
+  const addValue=()=>setValues(p=>[...p,{id:mkid(),value:"",meaning:""}]);
+
+  const upd=(setter,id,f,v)=>setter(p=>p.map(r=>r.id===id?{...r,[f]:v}:r));
+  const del=(setter,id)=>setter(p=>p.filter(r=>r.id!==id));
+
+  function download(){
+    let txt=`BUSINESS STRUCTURE DOCUMENT\n${"=".repeat(50)}\n`;
+    txt+=`Business Name: ${bizName||"Not specified"}\nStructure Type: ${bizType}\n\n`;
+    txt+=`MISSION\n${"-".repeat(30)}\n${mission||"Not specified"}\n\n`;
+    txt+=`VISION\n${"-".repeat(30)}\n${vision||"Not specified"}\n\n`;
+    txt+=`TEAM ROLES\n${"-".repeat(30)}\n`;
+    roles.forEach(r=>txt+=`${r.title||"Role"} | ${r.name||"Name TBD"} | Reports to: ${r.reportsTo||"N/A"}\n${r.responsibilities||""}\n\n`);
+    txt+=`DEPARTMENTS\n${"-".repeat(30)}\n`;
+    depts.forEach(d=>txt+=`${d.name} | Head: ${d.head||"TBD"} | Team: ${d.teamSize||"?"}\n${d.focus||""}\n\n`);
+    txt+=`DECISION MAKING\n${"-".repeat(30)}\n`;
+    decisions.forEach(d=>txt+=`${d.type}: ${d.who||"TBD"}${d.threshold?" (above "+d.threshold+")":" "}\n`);
+    txt+=`\nCOMMUNICATION CHANNELS\n${"-".repeat(30)}\n`;
+    comms.forEach(c=>txt+=`${c.channel}: ${c.purpose||""} | Frequency: ${c.frequency||""}\n`);
+    txt+=`\nCORE VALUES\n${"-".repeat(30)}\n`;
+    values.forEach(v=>txt+=`${v.value}: ${v.meaning||""}\n`);
+    txt+=`\n${"=".repeat(50)}\nGenerated by Prowess Digital Solutions | prowessdigitalsolutions.com\n`;
+    const blob=new Blob([txt],{type:"text/plain"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=`${bizName||"Business"}_Structure.txt`;
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    setDownloaded(true);setTimeout(()=>setDownloaded(false),2500);
+  }
+
+  const AddBtn=({fn,lbl})=><button onClick={fn} style={{marginTop:8,padding:"7px 16px",background:"transparent",border:`1.5px dashed ${MID}`,borderRadius:8,color:MID,fontSize:13,fontWeight:600,cursor:"pointer"}}>{lbl}</button>;
+  const DelBtn=({fn})=><button onClick={fn} style={{background:"none",border:"none",cursor:"pointer",color:"#e74c3c",fontSize:16,padding:"0 2px",flexShrink:0}}>×</button>;
+
+  return <div style={{maxWidth:760,margin:"0 auto",padding:"32px 16px 60px"}}>
+    <div style={{marginBottom:32}}>
+      <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:MID,marginBottom:10}}>Prowess Digital Solutions</div>
+      <h1 style={{fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:"clamp(26px,5vw,40px)",fontWeight:800,color:DARK,lineHeight:1.1,letterSpacing:"-.5px",marginBottom:12}}>Business Structure<br/>Template</h1>
+      <p style={{fontSize:15,color:"#64748b",lineHeight:1.7,maxWidth:560}}>Map out your business structure step by step. Fill in each section and download the result to use as the foundation your team operates from.</p>
+    </div>
+
+    <Section title="Business Identity" num="1">
+      <Field label="Business Name" value={bizName} set={setBizName} ph="Your registered business name"/>
+      <div style={{marginBottom:14}}>
+        <label style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.8,display:"block",marginBottom:6}}>Structure Type</label>
+        <select value={bizType} onChange={e=>setBizType(e.target.value)} style={{width:"100%",padding:"10px 14px",border:`1.5px solid ${MGRAY}`,borderRadius:10,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",color:DARK,background:W}}>
+          {STRUCT_TYPES.map(t=><option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <Field label="Mission (What you do and for whom)" value={mission} set={setMission} ph="We help African entrepreneurs build structured, sustainable businesses." multi/>
+      <Field label="Vision (Where you are going)" value={vision} set={setVision} ph="To be the most trusted business clarity resource in Africa." multi/>
+    </Section>
+
+    <Section title="Team Roles" num="2">
+      <p style={{fontSize:13,color:"#64748b",marginBottom:14,lineHeight:1.6}}>Define every role in your business, including yours. Be specific about what each person is responsible for.</p>
+      {roles.map((r,i)=><div key={r.id} style={{background:LGRAY,borderRadius:12,padding:"16px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:12,fontWeight:700,color:MID,textTransform:"uppercase",letterSpacing:.8}}>Role {i+1}</div>
+          {roles.length>1&&<DelBtn fn={()=>del(setRoles,r.id)}/>}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          <Field label="Full Name" value={r.name} set={v=>upd(setRoles,r.id,"name",v)} ph="Person's name"/>
+          <Field label="Job Title" value={r.title} set={v=>upd(setRoles,r.id,"title",v)} ph="e.g. Operations Manager"/>
+        </div>
+        <Field label="Reports to" value={r.reportsTo} set={v=>upd(setRoles,r.id,"reportsTo",v)} ph="Who do they answer to?"/>
+        <Field label="Key Responsibilities" value={r.responsibilities} set={v=>upd(setRoles,r.id,"responsibilities",v)} ph="List 3 to 5 core responsibilities for this role" multi/>
+      </div>)}
+      <AddBtn fn={addRole} lbl="+ Add Role"/>
+    </Section>
+
+    <Section title="Departments" num="3">
+      {depts.map((d,i)=><div key={d.id} style={{background:LGRAY,borderRadius:12,padding:"16px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:12,fontWeight:700,color:MID,textTransform:"uppercase",letterSpacing:.8}}>Department {i+1}</div>
+          {depts.length>1&&<DelBtn fn={()=>del(setDepts,d.id)}/>}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 80px",gap:10,marginBottom:10}}>
+          <div style={{marginBottom:0}}>
+            <label style={{fontSize:12,fontWeight:700,color:"#64748b",textTransform:"uppercase",letterSpacing:.8,display:"block",marginBottom:6}}>Department</label>
+            <select value={d.name} onChange={e=>upd(setDepts,d.id,"name",e.target.value)} style={{width:"100%",padding:"10px 14px",border:`1.5px solid ${MGRAY}`,borderRadius:10,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",color:DARK,background:W}}>
+              {DEPT_PRESETS.map(p=><option key={p}>{p}</option>)}
+            </select>
+          </div>
+          <Field label="Department Head" value={d.head} set={v=>upd(setDepts,d.id,"head",v)} ph="Name or TBD"/>
+          <Field label="Team Size" value={d.teamSize} set={v=>upd(setDepts,d.id,"teamSize",v)} ph="e.g. 3"/>
+        </div>
+        <Field label="Primary Focus" value={d.focus} set={v=>upd(setDepts,d.id,"focus",v)} ph="What does this department own?" multi/>
+      </div>)}
+      <AddBtn fn={addDept} lbl="+ Add Department"/>
+    </Section>
+
+    <Section title="Decision Making" num="4">
+      <p style={{fontSize:13,color:"#64748b",marginBottom:14,lineHeight:1.6}}>Clarity on who decides what prevents delays, conflicts, and confusion. Fill this in for every decision type.</p>
+      {decisions.map(d=><div key={d.id} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10,background:LGRAY,borderRadius:12,padding:"14px"}}>
+        <div><div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:4}}>{d.type}</div></div>
+        <Field label="Who decides?" value={d.who} set={v=>upd(setDecisions,d.id,"who",v)} ph="Name or role"/>
+        <Field label="Threshold (if financial)" value={d.threshold} set={v=>upd(setDecisions,d.id,"threshold",v)} ph="e.g. above ₦50k"/>
+      </div>)}
+    </Section>
+
+    <Section title="Communication Channels" num="5">
+      {comms.map((c,i)=><div key={c.id} style={{background:LGRAY,borderRadius:12,padding:"14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:700,color:MID,textTransform:"uppercase",letterSpacing:.8}}>Channel {i+1}</div>
+          {comms.length>1&&<DelBtn fn={()=>del(setComms,c.id)}/>}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          <Field label="Channel" value={c.channel} set={v=>upd(setComms,c.id,"channel",v)} ph="e.g. WhatsApp, Email"/>
+          <Field label="Purpose" value={c.purpose} set={v=>upd(setComms,c.id,"purpose",v)} ph="What is it used for?"/>
+          <Field label="Frequency" value={c.frequency} set={v=>upd(setComms,c.id,"frequency",v)} ph="e.g. Daily, Weekly"/>
+        </div>
+      </div>)}
+      <AddBtn fn={addComm} lbl="+ Add Channel"/>
+    </Section>
+
+    <Section title="Core Values" num="6">
+      {values.map((v,i)=><div key={v.id} style={{background:LGRAY,borderRadius:12,padding:"14px",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:700,color:MID,textTransform:"uppercase",letterSpacing:.8}}>Value {i+1}</div>
+          {values.length>1&&<DelBtn fn={()=>del(setValues,v.id)}/>}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10}}>
+          <Field label="Value" value={v.value} set={val=>upd(setValues,v.id,"value",val)} ph="e.g. Integrity"/>
+          <Field label="What it means in practice" value={v.meaning} set={val=>upd(setValues,v.id,"meaning",val)} ph="How does this value show up day to day?"/>
+        </div>
+      </div>)}
+      <AddBtn fn={addValue} lbl="+ Add Value"/>
+    </Section>
+
+    <div style={{textAlign:"center",marginTop:24}}>
+      <button onClick={download} style={{display:"inline-flex",alignItems:"center",gap:10,padding:"15px 30px",background:B,color:W,border:"none",borderRadius:12,fontWeight:800,fontSize:15,fontFamily:"'DM Sans',sans-serif",cursor:"pointer",transition:"background .2s,transform .2s"}}>
+        {downloaded?"✓ Downloaded!":"Download Structure Document"}
+      </button>
+      <p style={{fontSize:12,color:"#94a3b8",marginTop:10}}>Downloads as a plain text file you can paste anywhere.</p>
+    </div>
+
+    <div style={{marginTop:28,background:W,borderRadius:20,padding:"28px",border:`1px solid ${MGRAY}`,textAlign:"center",boxShadow:"0 2px 20px rgba(58,92,96,.08)"}}>
+      <p style={{fontSize:14,color:"#64748b",lineHeight:1.7,marginBottom:18}}>Need a fully customised structure built with you? A Business Structure Setup engagement gives you exactly that.</p>
+      <a href="/consultation" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"13px 26px",background:B,color:W,borderRadius:12,fontWeight:700,fontSize:14,textDecoration:"none",fontFamily:"'DM Sans',sans-serif"}}>Book a Structure Session →</a>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
