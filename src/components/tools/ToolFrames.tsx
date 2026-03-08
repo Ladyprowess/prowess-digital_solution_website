@@ -13,7 +13,6 @@ function ToolFrame({ src, title, minHeight = "700px" }: Props) {
   useEffect(() => {
     const iframe = ref.current;
     if (!iframe) return;
-
     function onLoad() {
       try {
         const h = iframe!.contentWindow!.document.body.scrollHeight;
@@ -22,28 +21,23 @@ function ToolFrame({ src, title, minHeight = "700px" }: Props) {
         if (iframe) iframe.style.height = minHeight;
       }
     }
-
     iframe.addEventListener("load", onLoad);
     return () => iframe.removeEventListener("load", onLoad);
   }, [minHeight]);
 
   return (
-    <iframe
-      ref={ref}
-      src={src}
-      title={title}
-      style={{ width: "100%", minHeight, border: "none", borderRadius: 12, display: "block" }}
-      loading="lazy"
-    />
+    <iframe ref={ref} src={src} title={title}
+      style={{ width:"100%", minHeight, border:"none", borderRadius:12, display:"block" }}
+      loading="lazy" />
   );
 }
 
-export function StartupCalculator() {
-  return <ToolFrame src="/tools/calculator.html" title="Startup Calculator" minHeight="750px" />;
+export function StartupCalculator({ code }: { code: string }) {
+  return <ToolFrame src={`/tools/calculator.html?code=${encodeURIComponent(code)}`} title="Startup Calculator" minHeight="750px" />;
 }
 
-export function ProfitTracker() {
-  return <ToolFrame src="/tools/tracker.html" title="Profit and Cashflow Tracker" minHeight="750px" />;
+export function ProfitTracker({ code }: { code: string }) {
+  return <ToolFrame src={`/tools/tracker.html?code=${encodeURIComponent(code)}`} title="Profit and Cashflow Tracker" minHeight="750px" />;
 }
 
 export function CustomerServiceGuide() {
