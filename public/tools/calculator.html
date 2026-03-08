@@ -24,30 +24,6 @@ const fmt=v=>Math.round(num(v)).toLocaleString("en")||"0";
 const pct=v=>v?(num(v)*100).toFixed(1)+"%":" ";
 const CATS=["Equipment","Premises / Rent","Stock / Inventory","Licences & Permits","Technology & Software","Marketing & Branding","Professional Fees","Transport","Staff & Training","Miscellaneous"];
 
-// ── Validate code from codes.json (cross-device) ──────────────────────────
-async function validateCode(code){
-  try{
-    const res=await fetch("/codes.json?t="+Date.now());
-    if(!res.ok)throw new Error("no file");
-    const codes=await res.json();
-    const c=codes[code.trim().toUpperCase()];
-    if(!c)return{valid:false,reason:"not_found"};
-    if(c.status==="revoked")return{valid:false,reason:"revoked",name:c.name};
-    if(c.type!=="forever"&&c.expires&&Date.now()>c.expires)return{valid:false,reason:"expired",name:c.name};
-    return{valid:true,client:c};
-  }catch{
-    // fallback to localStorage if codes.json not yet deployed
-    try{
-      const codes=JSON.parse(localStorage.getItem("pds-client-codes")||"{}");
-      const c=codes[code.trim().toUpperCase()];
-      if(!c)return{valid:false,reason:"not_found"};
-      if(c.status==="revoked")return{valid:false,reason:"revoked",name:c.name};
-      if(c.type!=="forever"&&c.expires&&Date.now()>c.expires)return{valid:false,reason:"expired",name:c.name};
-      return{valid:true,client:c};
-    }catch{return{valid:false,reason:"not_found"}}
-  }
-}
-
 // ── Shared UI ─────────────────────────────────────────────────────────────
 const card={background:W,borderRadius:12,padding:"20px 24px",boxShadow:"0 1px 6px rgba(58,92,96,.10)",border:`1px solid ${MGRAY}`,marginBottom:16};
 const TH={background:B,color:W,padding:"10px 12px",fontWeight:700,fontSize:12,textAlign:"left",whiteSpace:"nowrap"};
@@ -78,56 +54,29 @@ function Toggle({val,set,opts}){
   </div>;
 }
 
-// ── Access Gate ───────────────────────────────────────────────────────────
-function AccessGate({onAccess}){
-  const [code,setCode]=useState("");
-  const [status,setStatus]=useState("idle");
-  const [errMsg,setErrMsg]=useState("");
-  const [fi,sfi]=useState(false);
-  useEffect(()=>{const s=localStorage.getItem("pds-calc-session");if(s){setCode(s);run(s)}},[]);
-  const run=async(c)=>{
-    setStatus("checking");
-    const r=await validateCode(c||code);
-    if(r.valid){localStorage.setItem("pds-calc-session",(c||code).trim().toUpperCase());onAccess(r.client)}
-    else{
-      const msgs={not_found:"Code not found. Please check and try again.",revoked:`Access for ${r.name||"this code"} has been restricted.`,expired:"Your access has expired. Contact Prowess Digital Solutions."};
-      setErrMsg(msgs[r.reason]||"Invalid code.");
-      setStatus(r.reason==="revoked"?"revoked":r.reason==="expired"?"expired":"error");
-    }
-  };
-  return(
-    <div style={{minHeight:"100vh",background:`linear-gradient(145deg,${DARK},#0f2627)`,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{maxWidth:420,width:"100%"}}>
-        <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{width:64,height:64,background:"rgba(255,255,255,.1)",borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",fontSize:30,border:"2px solid rgba(255,255,255,.15)"}}>🔑</div>
-          <div style={{fontSize:11,fontWeight:700,color:MID,letterSpacing:1.6,textTransform:"uppercase",marginBottom:6}}>Prowess Digital Solutions</div>
-          <div style={{fontSize:24,fontWeight:900,color:"#fff",marginBottom:4}}>Startup Calculator</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,.5)"}}>Enter your access code to continue</div>
-        </div>
-        <div style={{background:"rgba(255,255,255,.06)",borderRadius:16,padding:"26px 28px",border:"1px solid rgba(255,255,255,.1)"}}>
-          {(status==="revoked"||status==="expired")?(
-            <div style={{textAlign:"center",padding:"10px 0"}}>
-              <div style={{fontSize:36,marginBottom:10}}>{status==="revoked"?"🚫":"⏰"}</div>
-              <div style={{fontSize:14,fontWeight:700,color:"#ff8a80",marginBottom:8}}>{status==="revoked"?"Access Restricted":"Access Expired"}</div>
-              <div style={{fontSize:13,color:"rgba(255,255,255,.6)",lineHeight:1.6}}>{errMsg}</div>
-              <button onClick={()=>{setStatus("idle");setCode("");setErrMsg("")}} style={{marginTop:18,padding:"9px 20px",background:"rgba(255,255,255,.1)",color:"#fff",border:"1px solid rgba(255,255,255,.2)",borderRadius:8,fontSize:13,cursor:"pointer",fontWeight:600}}>Try a Different Code</button>
-            </div>
-          ):(
-            <>
-              <label style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,.7)",display:"block",marginBottom:8,textTransform:"uppercase",letterSpacing:.8}}>Your Access Code</label>
-              <input value={code} placeholder="PDS-XXXX-XXXX" onChange={e=>setCode(e.target.value.toUpperCase())} onKeyDown={e=>e.key==="Enter"&&run()} onFocus={()=>sfi(true)} onBlur={()=>sfi(false)}
-                style={{width:"100%",padding:"13px 16px",background:"rgba(255,255,255,.08)",border:`2px solid ${fi?MID:"rgba(255,255,255,.15)"}`,borderRadius:10,color:"#fff",fontSize:16,fontWeight:700,outline:"none",boxSizing:"border-box",letterSpacing:2,fontFamily:"'Courier New',monospace",textAlign:"center"}}/>
-              {status==="error"&&<div style={{color:"#ff8a80",fontSize:12,marginTop:8,fontWeight:600,textAlign:"center"}}>{errMsg}</div>}
-              <button onClick={()=>run()} style={{marginTop:14,width:"100%",padding:"13px",background:code.trim()?B:"rgba(255,255,255,.1)",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:14,cursor:"pointer"}}>
-                {status==="checking"?"Checking...":"Access App →"}
-              </button>
-              <p style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,.3)",marginBottom:0,marginTop:12}}>Code provided by Prowess Digital Solutions on registration.</p>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+// ── Cross-device sync (Supabase via Next.js API) ────────────────────────────
+const _urlCode = new URLSearchParams(location.search).get('code') || '';
+async function apiLoad() {
+  if (!_urlCode) return null;
+  try {
+    const res = await fetch('/api/tools-data?code=' + encodeURIComponent(_urlCode) + '&tool=calculator');
+    if (res.ok) { const j = await res.json(); return j.data || null; }
+  } catch {}
+  return null;
+}
+let _saveTimer = null;
+function apiSave(data) {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    if (!_urlCode) return;
+    try {
+      await fetch('/api/tools-data', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ code: _urlCode, tool: 'calculator', data })
+      });
+    } catch {}
+  }, 1500);
 }
 
 // ── Default data ───────────────────────────────────────────────────────────
@@ -371,34 +320,43 @@ function TabFunding({d,sd,sym="₦"}){
 const TABS=[{id:"costs",l:"Startup Costs"},{id:"breakeven",l:"Break-Even"},{id:"pricing",l:"Pricing"},{id:"funding",l:"Funding"}];
 
 function CalcApp(){
-  const [client,setClient]=useState({name:"",business:""});
-  const [tab,setTab]=useState("costs");
+    const [tab,setTab]=useState("costs");
   const [d,sd]=useState(null);
   const sym=d?getSym(d.info.country||"Nigeria"):"₦";
   const [saved,setSaved]=useState(false);
 
   useEffect(()=>{
-    if(!client)return;
-    try{
-      const saved=localStorage.getItem("pds-calc-data");
-      if(saved){
-        const parsed=JSON.parse(saved);
-        // migrate: v2 used 'services', v3 uses 'items'
-        if(!parsed.items && parsed.services) parsed.items=parsed.services;
-        if(!parsed.items) parsed.items=DEF.items;
-        if(!parsed.info.country){const c=localStorage.getItem('pds-country');if(c)parsed.info.country=c;}
-        sd(parsed);
-      } else { sd(DEF); }
-    }catch{sd(DEF)}
-  },[client]);
+    async function load(){
+      // Try server first (cross-device sync)
+      const serverData = await apiLoad();
+      if(serverData){
+        if(!serverData.items && serverData.services) serverData.items=serverData.services;
+        if(!serverData.items) serverData.items=DEF.items;
+        sd(serverData); return;
+      }
+      // Fallback to localStorage (offline / first use)
+      try{
+        const saved=localStorage.getItem("pds-calc-data");
+        if(saved){
+          const parsed=JSON.parse(saved);
+          if(!parsed.items && parsed.services) parsed.items=parsed.services;
+          if(!parsed.items) parsed.items=DEF.items;
+          if(!parsed.info.country){const c=localStorage.getItem('pds-country');if(c)parsed.info.country=c;}
+          sd(parsed); return;
+        }
+      }catch{}
+      sd(DEF);
+    }
+    load();
+  },[]);
 
   useEffect(()=>{
-    if(!client||!d)return;
+    if(!d)return;
     try{localStorage.setItem("pds-calc-data",JSON.stringify(d))}catch{}
+    apiSave(d);
     setSaved(true);setTimeout(()=>setSaved(false),1800);
   },[d]);
 
-  // access handled by Next.js
   if(!d)return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",color:MID,fontSize:14}}>Loading...</div>;
 
   return(
@@ -422,8 +380,6 @@ function CalcApp(){
           {COUNTRIES.map(([n])=><option key={n} value={n} style={{color:"#333"}}>{n}</option>)}
         </select>
         <div style={{marginLeft:"auto",display:"flex",gap:8}}>
-          <a href="index.html" style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,textDecoration:"none"}}>← Tools</a>
-          <button onClick={()=>{localStorage.removeItem("pds-calc-session");setClient(null)}} style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,cursor:"pointer"}}>Sign Out</button>
         </div>
       </div>
       <div style={{background:W,borderBottom:`2px solid ${MGRAY}`,display:"flex",padding:"0 22px",overflowX:"auto"}}>

@@ -44,31 +44,6 @@ const lsGet = k => { try{const r=localStorage.getItem(k); return r?JSON.parse(r)
 const lsSet = (k,v) => { try{localStorage.setItem(k,JSON.stringify(v))}catch{} };
 
 // cross-device code validation
-async function validateCode(code) {
-  const key = code.trim().toUpperCase();
-  // try server-side codes.json first
-  try {
-    const res = await fetch("/codes.json?t="+Date.now());
-    if (res.ok) {
-      const codes = await res.json();
-      const c = codes[key];
-      if (!c) return {valid:false, reason:"not_found"};
-      if (c.status==="revoked") return {valid:false, reason:"revoked", name:c.name};
-      if (c.type!=="forever" && c.expires && Date.now()>c.expires) return {valid:false, reason:"expired", name:c.name};
-      return {valid:true, client:c};
-    }
-  } catch(e) {}
-  // fallback: localStorage (same device as admin)
-  try {
-    const codes = lsGet("pds-client-codes") || {};
-    const c = codes[key];
-    if (!c) return {valid:false, reason:"not_found"};
-    if (c.status==="revoked") return {valid:false, reason:"revoked", name:c.name};
-    if (c.type!=="forever" && c.expires && Date.now()>c.expires) return {valid:false, reason:"expired", name:c.name};
-    return {valid:true, client:c};
-  } catch(e) {}
-  return {valid:false, reason:"not_found"};
-}
 
 // ── blank data structures ────────────────────────────────────────────────
 const newRow = () => ({id:mkid(), date:"", desc:"", cat:"", income:"", expense:"", note:""});
@@ -81,49 +56,6 @@ const makeDefault = () => ({
 });
 
 // ── Access Gate ──────────────────────────────────────────────────────────
-function AccessGate({onAccess}) {
-  const [code, setCode] = useState("");
-  const [status, setStatus] = useState("idle");
-  const [errMsg, setErrMsg] = useState("");
-  const [focused, setFocused] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("pds-tracker-session");
-    if (saved) { setCode(saved); doCheck(saved); }
-  }, []);
-
-  const doCheck = async (c) => {
-    const val = c || code;
-    if (!val.trim()) return;
-    setStatus("checking");
-    const r = await validateCode(val);
-    if (r.valid) {
-      localStorage.setItem("pds-tracker-session", val.trim().toUpperCase());
-      onAccess(r.client);
-    } else {
-      const msgs = {
-        not_found: "Code not found. Please check and try again.",
-        revoked: "Access for this code has been restricted. Contact Prowess Digital Solutions.",
-        expired: "Your access has expired. Contact Prowess Digital Solutions."
-      };
-      setErrMsg(msgs[r.reason] || "Invalid code.");
-      setStatus(r.reason === "revoked" ? "revoked" : r.reason === "expired" ? "expired" : "error");
-    }
-  };
-
-  if (status === "revoked" || status === "expired") {
-    return (
-      <div style={{minHeight:"100vh", background:`linear-gradient(145deg,${DARK},#0f2627)`, display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
-        <div style={{maxWidth:400, width:"100%", background:"rgba(255,255,255,.06)", borderRadius:16, padding:"32px 28px", border:"1px solid rgba(255,255,255,.1)", textAlign:"center"}}>
-          <div style={{fontSize:40, marginBottom:12}}>{status==="revoked"?"🚫":"⏰"}</div>
-          <div style={{fontSize:15, fontWeight:700, color:"#ff8a80", marginBottom:10}}>{status==="revoked"?"Access Restricted":"Access Expired"}</div>
-          <div style={{fontSize:13, color:"rgba(255,255,255,.6)", lineHeight:1.6}}>{errMsg}</div>
-          <button onClick={()=>{setStatus("idle");setCode("");setErrMsg("");}} style={{marginTop:20, padding:"9px 22px", background:"rgba(255,255,255,.1)", color:"#fff", border:"1px solid rgba(255,255,255,.2)", borderRadius:8, fontSize:13, cursor:"pointer", fontWeight:600}}>Try Different Code</button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={{minHeight:"100vh", background:`linear-gradient(145deg,${DARK},#0f2627)`, display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
       <div style={{maxWidth:420, width:"100%"}}>
@@ -588,9 +520,33 @@ function Forecast({d, sd, sym="₦"}) {
   );
 }
 
+// ── Cross-device sync (Supabase via Next.js API) ────────────────────────────
+const _urlCode = new URLSearchParams(location.search).get('code') || '';
+async function apiLoad() {
+  if (!_urlCode) return null;
+  try {
+    const res = await fetch('/api/tools-data?code=' + encodeURIComponent(_urlCode) + '&tool=tracker');
+    if (res.ok) { const j = await res.json(); return j.data || null; }
+  } catch {}
+  return null;
+}
+let _saveTimer = null;
+function apiSave(data) {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    if (!_urlCode) return;
+    try {
+      await fetch('/api/tools-data', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ code: _urlCode, tool: 'tracker', data })
+      });
+    } catch {}
+  }, 1500);
+}
+
 // ── App Shell ────────────────────────────────────────────────────────────
 function TrackerApp() {
-  const [client, setClient] = useState({name:"",business:""});
   const [view, setView] = useState("month");
   const [mIdx, setMIdx] = useState(new Date().getMonth());
   const [d, sd] = useState(null);
@@ -598,19 +554,23 @@ function TrackerApp() {
   const sym = d ? getSym(d.info.country||'Nigeria') : '₦';
 
   useEffect(() => {
-    if (!client) return;
-    const stored = lsGet("pds-tracker-data");
-    sd(stored || makeDefault());
-  }, [client]);
+    async function load() {
+      const serverData = await apiLoad();
+      if (serverData) { sd(serverData); return; }
+      const stored = lsGet("pds-tracker-data");
+      sd(stored || makeDefault());
+    }
+    load();
+  }, []);
 
   useEffect(() => {
-    if (!client || !d) return;
+    if (!d) return;
     lsSet("pds-tracker-data", d);
+    apiSave(d);
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
   }, [d]);
 
-  // access handled by Next.js
   if (!d) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",fontSize:14,color:MID}}>Loading...</div>;
 
   const curMonth = d.months[mIdx];
@@ -643,8 +603,6 @@ function TrackerApp() {
           {COUNTRIES.map(([n])=><option key={n} value={n} style={{color:"#333"}}>{n}</option>)}
         </select>
         <div style={{marginLeft:"auto", display:"flex", gap:8}}>
-          <a href="index.html" style={{padding:"6px 14px", background:"rgba(255,255,255,.15)", border:"1.5px solid rgba(255,255,255,.4)", borderRadius:7, color:W, fontSize:12, fontWeight:700, textDecoration:"none"}}>← Tools</a>
-          <button onClick={()=>{localStorage.removeItem("pds-tracker-session");}} style={{padding:"6px 14px", background:"rgba(255,255,255,.15)", border:"1.5px solid rgba(255,255,255,.4)", borderRadius:7, color:W, fontSize:12, fontWeight:700, cursor:"pointer"}}>Sign Out</button>
         </div>
       </div>
 
@@ -679,7 +637,7 @@ function TrackerApp() {
                 {curProfit>=0?`${sym}${fmt(curProfit)} profit`:`${sym}${fmt(Math.abs(curProfit))} loss`}
               </span>}
             </div>
-            <MonthView mIdx={mIdx} d={d} sd={sd} clientName={client.name} sym={sym}/>
+            <MonthView mIdx={mIdx} d={d} sd={sd} clientName={""} sym={sym}/>
           </div>
         )}
         {view==="annual" && <AnnualSummary d={d} sym={sym}/>}
