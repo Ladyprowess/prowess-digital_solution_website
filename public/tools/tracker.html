@@ -55,36 +55,6 @@ const makeDefault = () => ({
   forecast: MONTHS.map(() => ({svc:"", product:"", other:"", fixed:"", variable:"", marketing:"", loan:"", otherExp:""}))
 });
 
-// ── Access Gate ──────────────────────────────────────────────────────────
-  return (
-    <div style={{minHeight:"100vh", background:`linear-gradient(145deg,${DARK},#0f2627)`, display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
-      <div style={{maxWidth:420, width:"100%"}}>
-        <div style={{textAlign:"center", marginBottom:28}}>
-          <div style={{width:64, height:64, background:"rgba(255,255,255,.1)", borderRadius:18, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px", fontSize:30, border:"2px solid rgba(255,255,255,.15)"}}>📊</div>
-          <div style={{fontSize:11, fontWeight:700, color:MID, letterSpacing:1.6, textTransform:"uppercase", marginBottom:6}}>Prowess Digital Solutions</div>
-          <div style={{fontSize:24, fontWeight:900, color:"#fff", marginBottom:4}}>Profit & Cashflow Tracker</div>
-          <div style={{fontSize:13, color:"rgba(255,255,255,.5)"}}>Enter your access code to continue</div>
-        </div>
-        <div style={{background:"rgba(255,255,255,.06)", borderRadius:16, padding:"26px 28px", border:"1px solid rgba(255,255,255,.1)"}}>
-          <label style={{fontSize:12, fontWeight:700, color:"rgba(255,255,255,.7)", display:"block", marginBottom:8, textTransform:"uppercase", letterSpacing:.8}}>Your Access Code</label>
-          <input
-            value={code} placeholder="PDS-XXXX-XXXX"
-            onChange={e => setCode(e.target.value.toUpperCase())}
-            onKeyDown={e => e.key==="Enter" && doCheck()}
-            onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-            style={{width:"100%", padding:"13px 16px", background:"rgba(255,255,255,.08)", border:`2px solid ${focused?MID:"rgba(255,255,255,.15)"}`, borderRadius:10, color:"#fff", fontSize:16, fontWeight:700, outline:"none", boxSizing:"border-box", letterSpacing:2, fontFamily:"'Courier New',monospace", textAlign:"center"}}
-          />
-          {status==="error" && <div style={{color:"#ff8a80", fontSize:12, marginTop:8, fontWeight:600, textAlign:"center"}}>{errMsg}</div>}
-          <button onClick={() => doCheck()} style={{marginTop:14, width:"100%", padding:"13px", background:code.trim()?B:"rgba(255,255,255,.1)", color:"#fff", border:"none", borderRadius:10, fontWeight:800, fontSize:14, cursor:"pointer"}}>
-            {status==="checking" ? "Checking..." : "Access App →"}
-          </button>
-          <p style={{textAlign:"center", fontSize:11, color:"rgba(255,255,255,.3)", margin:"12px 0 0"}}>Code provided by Prowess Digital Solutions on registration.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Shared UI helpers ────────────────────────────────────────────────────
 const card = {background:W, borderRadius:12, padding:"18px 22px", boxShadow:"0 1px 6px rgba(58,92,96,.10)", border:`1px solid ${MGRAY}`, marginBottom:14};
 const TH = {background:B, color:W, padding:"9px 10px", fontWeight:700, fontSize:12, textAlign:"left", whiteSpace:"nowrap"};
@@ -603,6 +573,8 @@ function TrackerApp() {
           {COUNTRIES.map(([n])=><option key={n} value={n} style={{color:"#333"}}>{n}</option>)}
         </select>
         <div style={{marginLeft:"auto", display:"flex", gap:8}}>
+          <a href="/tools" target="_top" style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,textDecoration:"none"}}>← Tools</a>
+          <button onClick={()=>{localStorage.removeItem("pds-access-tracker");window.top.location.href="/tools";}} style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,cursor:"pointer"}}>Sign Out</button>
         </div>
       </div>
 
