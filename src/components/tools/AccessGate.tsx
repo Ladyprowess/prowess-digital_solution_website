@@ -27,6 +27,7 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
   const [reason, setReason]           = useState("");
   const [client, setClient]           = useState<ClientInfo | null>(null);
 
+  // Restore session on mount
   useEffect(() => {
     const raw = localStorage.getItem(`pds-access-${toolKey}`);
     if (!raw) return;
@@ -36,6 +37,18 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
     } catch {
       localStorage.removeItem(`pds-access-${toolKey}`);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toolKey]);
+
+  // Listen for sign out message from iframe
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.data?.action === "signout" && e.data?.toolKey === toolKey) {
+        handleLogout();
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolKey]);
 
@@ -66,8 +79,14 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
         }
       }
     } catch {
-      if (silent && fallback) { setClient(fallback); setGrantedCode(input.trim().toUpperCase()); setStatus("granted"); }
-      else { setReason("invalid"); setStatus("denied"); }
+      if (silent && fallback) {
+        setClient(fallback);
+        setGrantedCode(input.trim().toUpperCase());
+        setStatus("granted");
+      } else {
+        setReason("invalid");
+        setStatus("denied");
+      }
     }
   }
 
