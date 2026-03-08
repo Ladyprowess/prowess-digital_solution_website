@@ -1,3 +1,4 @@
+"use client";
 import Container from "@/components/Container";
 import SectionTitle from "@/components/SectionTitle";
 import AccessGate from "@/components/tools/AccessGate";
