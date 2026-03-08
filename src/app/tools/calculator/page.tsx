@@ -528,7 +528,7 @@ export default function CalculatorPage(){
         <div className="g-dot g-dot-1"/><div className="g-dot g-dot-2"/><div className="g-dot g-dot-3"/><div className="g-dot g-dot-4"/><div className="g-dot g-dot-5"/>
 
         <nav className="g-nav">
-          <a href="/tools" className="g-nav-brand"><div className="g-nav-dot"/><span className="g-nav-label">Prowess Digital Solutions</span></a>
+          <a href="/" className="g-nav-brand"><div className="g-nav-dot"/><span className="g-nav-label">Prowess Digital Solutions</span></a>
           <a href="/tools" className="g-nav-back">← All Tools</a>
         </nav>
 
