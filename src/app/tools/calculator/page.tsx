@@ -368,7 +368,7 @@ const REASON_MSG:Record<string,string>={
 export default function CalculatorPage(){
   const [code,setCode]=useState("");
   const [grantedCode,setGrantedCode]=useState<string|null>(null);
-  const [status,setStatus]=useState<"idle"|"checking"|"denied">("idle");
+  const [status,setStatus]=useState<"idle"|"checking"|"granted"|"denied">("idle");
   const [reason,setReason]=useState("");
 
   useEffect(()=>{
