@@ -381,7 +381,7 @@ function CalcApp(){
         </select>
         <div style={{marginLeft:"auto",display:"flex",gap:8}}>
           <a href="/tools" target="_top" style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,textDecoration:"none"}}>← Tools</a>
-          <button onClick={()=>{localStorage.removeItem("pds-access-calculator");window.top.location.href="/tools";}} style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,cursor:"pointer"}}>Sign Out</button>
+          <button onClick={()=>window.parent.postMessage({action:"signout",toolKey:"calculator"},"*")} style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,cursor:"pointer"}}>Sign Out</button>
         </div>
       </div>
       <div style={{background:W,borderBottom:`2px solid ${MGRAY}`,display:"flex",padding:"0 22px",overflowX:"auto"}}>
