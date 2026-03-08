@@ -195,11 +195,11 @@ function PricingItem({sv,idx,TF,upd,del,sym}:{sv:any,idx:number,TF:number,upd:(f
     {(type==="service"||type==="both")&&<div style={{marginBottom:type==="both"?20:0}}>
       {type==="both"&&<div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:"uppercase",marginBottom:10,paddingBottom:6,borderBottom:`1px solid ${MGRAY}`}}>Service Pricing</div>}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:14}}>
-        {([`Materials / Ingredients (${sym})`,"mats"],[`Time Required (hours)`,"hrs"],[`Your Hourly Rate (${sym})`,"rate"],[`Other Service Costs (${sym})`,"svcOther"],["Target Margin (%)","margin"]) as [string,string][]).map(([l,f])=>
+        {([[`Materials / Ingredients (${sym})`,"mats"],[`Time Required (hours)`,"hrs"],[`Your Hourly Rate (${sym})`,"rate"],[`Other Service Costs (${sym})`,"svcOther"],["Target Margin (%)","margin"]] as [string,string][]).map(([l,f])=>
           <div key={f}><label style={{fontSize:11,fontWeight:700,color:MID,display:"block",marginBottom:4,textTransform:"uppercase"}}>{l}</label><Inp val={sv[f]} set={v=>upd(f,v)} type="number"/></div>)}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10}}>
-        {(["Time Cost",`${sym}${fmt(timeCost)}`,LGRAY,DARK],["Overhead",`${sym}${fmt(overhead)}`,LGRAY,DARK],["Total Cost",`${sym}${fmt(svcCost)}`,LGRAY,DARK],["Min Price",`${sym}${fmt(svcMin)}`,B,W],["Recommended",`${sym}${fmt(svcMin*1.1)}`,DARK,W]) as [string,string,string,string][]).map(([l,v,bg,tc])=>
+        {([["Time Cost",`${sym}${fmt(timeCost)}`,LGRAY,DARK],["Overhead",`${sym}${fmt(overhead)}`,LGRAY,DARK],["Total Cost",`${sym}${fmt(svcCost)}`,LGRAY,DARK],["Min Price",`${sym}${fmt(svcMin)}`,B,W],["Recommended",`${sym}${fmt(svcMin*1.1)}`,DARK,W]] as [string,string,string,string][]).map(([l,v,bg,tc])=>
           <div key={l} style={{background:bg,borderRadius:8,padding:"10px 12px"}}><div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:tc===W?"rgba(255,255,255,.7)":MID,marginBottom:3}}>{l}</div><div style={{fontSize:17,fontWeight:800,color:tc}}>{v}</div></div>)}
       </div>
     </div>}
@@ -208,7 +208,7 @@ function PricingItem({sv,idx,TF,upd,del,sym}:{sv:any,idx:number,TF:number,upd:(f
       <div style={{...card,background:LITE,border:`1px solid ${MID}`,padding:"12px 16px",marginBottom:14}}>
         <div style={{fontSize:12,fontWeight:700,color:DARK,marginBottom:10}}>Cost per Unit</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12}}>
-          {([`Cost Price/Unit (${sym})`,"costPrice","What you pay to make or buy it"],["Packaging/Unit (₦)","packaging","Bag, box, label etc."],["Transport/Unit (₦)","transport","Delivery or getting stock"],["Power Supply/Unit (₦)","powerSupply","Fuel cost spread per unit"],["Other Variable Cost (₦)","other","Any other cost per unit"],["Units per Month","qty","How many do you expect to sell?"]) as [string,string,string][]).map(([l,f,h])=>
+          {([[`Cost Price/Unit (${sym})`,"costPrice","What you pay to make or buy it"],["Packaging/Unit (₦)","packaging","Bag, box, label etc."],["Transport/Unit (₦)","transport","Delivery or getting stock"],["Power Supply/Unit (₦)","powerSupply","Fuel cost spread per unit"],["Other Variable Cost (₦)","other","Any other cost per unit"],["Units per Month","qty","How many do you expect to sell?"]] as [string,string,string][]).map(([l,f,h])=>
             <div key={f}><label style={{fontSize:11,fontWeight:700,color:DARK,display:"block",marginBottom:4}}>{l}</label><Inp val={sv[f]} set={v=>upd(f,v)} type="number" ph={h}/></div>)}
         </div>
       </div>
@@ -217,7 +217,7 @@ function PricingItem({sv,idx,TF,upd,del,sym}:{sv:any,idx:number,TF:number,upd:(f
         <div><label style={{fontSize:13,fontWeight:700,color:DARK,display:"block",marginBottom:6}}>Target Profit Margin (%)</label><Inp val={sv.margin} set={v=>upd("margin",v)} type="number" ph="e.g. 35"/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10}}>
-        {(["Unit Variable Cost",`${sym}${fmt(unitCost)}`,LGRAY,DARK],["Overhead/Unit",`${sym}${fmt(overhead/Math.max(num(sv.qty)||1,1))}`,LGRAY,DARK],["Total Cost/Unit",`${sym}${fmt(prodTotal)}`,LGRAY,DARK],["Min Selling Price",`${sym}${fmt(prodMin)}`,B,W]) as [string,string,string,string][]).map(([l,v,bg,tc])=>
+        {([["Unit Variable Cost",`${sym}${fmt(unitCost)}`,LGRAY,DARK],["Overhead/Unit",`${sym}${fmt(overhead/Math.max(num(sv.qty)||1,1))}`,LGRAY,DARK],["Total Cost/Unit",`${sym}${fmt(prodTotal)}`,LGRAY,DARK],["Min Selling Price",`${sym}${fmt(prodMin)}`,B,W]] as [string,string,string,string][]).map(([l,v,bg,tc])=>
           <div key={l} style={{background:bg,borderRadius:8,padding:"10px 12px"}}><div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:tc===W?"rgba(255,255,255,.7)":MID,marginBottom:3}}>{l}</div><div style={{fontSize:17,fontWeight:800,color:tc}}>{v}</div></div>)}
         {num(sv.sellPrice)>0&&<div style={{background:markupPct>=30?"#e8f5e9":"#fdecea",borderRadius:8,padding:"10px 12px"}}>
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:markupPct>=30?"#388e3c":"#c0392b",marginBottom:3}}>Markup on Cost</div>
@@ -332,7 +332,7 @@ function CalculatorTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
         </div>
       </div>
       <div style={{background:B,padding:"9px 22px",display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-        {(["biz","Business Name",170],["trade","Trade / Service",170],["city","City",130]) as [string,string,number][]).map(([f,p,w])=>
+        {([["biz","Business Name",170],["trade","Trade / Service",170],["city","City",130]] as [string,string,number][]).map(([f,p,w])=>
           <input key={f} value={d.info[f]||""} placeholder={p} onChange={e=>update(x=>({...x,info:{...x.info,[f]:e.target.value}}))}
             style={{background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,padding:"6px 12px",color:W,fontSize:13,fontWeight:600,outline:"none",width:w}}/>)}
         <select value={d.info.country||"Nigeria"} onChange={e=>update(x=>({...x,info:{...x.info,country:e.target.value}}))}
