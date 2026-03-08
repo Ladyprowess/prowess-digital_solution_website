@@ -14,6 +14,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f2f5f5}
 input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.8;filter:invert(1)}
 @media print{.noprint{display:none!important}}
 </style>
+
+<style>input,select,textarea{font-size:16px !important;}</style>
 </head>
 <body>
 <div id="root"></div>
@@ -588,7 +590,7 @@ function Forecast({d, sd, sym="₦"}) {
 
 // ── App Shell ────────────────────────────────────────────────────────────
 function TrackerApp() {
-  const [client, setClient] = useState(null);
+  const [client, setClient] = useState({name:"",business:""});
   const [view, setView] = useState("month");
   const [mIdx, setMIdx] = useState(new Date().getMonth());
   const [d, sd] = useState(null);
@@ -608,7 +610,7 @@ function TrackerApp() {
     setTimeout(() => setSaved(false), 1800);
   }, [d]);
 
-  if (!client) return <AccessGate onAccess={setClient}/>;
+  // access handled by Next.js
   if (!d) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",fontSize:14,color:MID}}>Loading...</div>;
 
   const curMonth = d.months[mIdx];
@@ -625,7 +627,7 @@ function TrackerApp() {
           <div style={{fontSize:18, fontWeight:800, color:W, marginTop:2}}>Profit & Cashflow Tracker</div>
         </div>
         <div style={{textAlign:"right"}}>
-          <div style={{fontSize:12, color:"rgba(255,255,255,.7)"}}>Welcome, <b style={{color:W}}>{client.name}</b></div>
+          <div style={{fontSize:12, color:"rgba(255,255,255,.7)"}}>Prowess Digital Solutions</div>
           <div style={{fontSize:11, fontWeight:600, color:saved?"#81c784":"rgba(255,255,255,.4)", marginTop:2}}>{saved?"✓ Saved":"Auto-saving..."}</div>
         </div>
       </div>
@@ -642,7 +644,7 @@ function TrackerApp() {
         </select>
         <div style={{marginLeft:"auto", display:"flex", gap:8}}>
           <a href="index.html" style={{padding:"6px 14px", background:"rgba(255,255,255,.15)", border:"1.5px solid rgba(255,255,255,.4)", borderRadius:7, color:W, fontSize:12, fontWeight:700, textDecoration:"none"}}>← Tools</a>
-          <button onClick={()=>{localStorage.removeItem("pds-tracker-session");setClient(null);}} style={{padding:"6px 14px", background:"rgba(255,255,255,.15)", border:"1.5px solid rgba(255,255,255,.4)", borderRadius:7, color:W, fontSize:12, fontWeight:700, cursor:"pointer"}}>Sign Out</button>
+          <button onClick={()=>{localStorage.removeItem("pds-tracker-session");}} style={{padding:"6px 14px", background:"rgba(255,255,255,.15)", border:"1.5px solid rgba(255,255,255,.4)", borderRadius:7, color:W, fontSize:12, fontWeight:700, cursor:"pointer"}}>Sign Out</button>
         </div>
       </div>
 

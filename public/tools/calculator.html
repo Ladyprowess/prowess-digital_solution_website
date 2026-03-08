@@ -8,6 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#f2f5f5}.wph::placeholder{color:rgba(255,255,255,.65)!important}</style>
+
+<style>input,select,textarea{font-size:16px !important;}</style>
 </head>
 <body><div id="root"></div>
 <script type="text/babel">
@@ -369,7 +371,7 @@ function TabFunding({d,sd,sym="₦"}){
 const TABS=[{id:"costs",l:"Startup Costs"},{id:"breakeven",l:"Break-Even"},{id:"pricing",l:"Pricing"},{id:"funding",l:"Funding"}];
 
 function CalcApp(){
-  const [client,setClient]=useState(null);
+  const [client,setClient]=useState({name:"",business:""});
   const [tab,setTab]=useState("costs");
   const [d,sd]=useState(null);
   const sym=d?getSym(d.info.country||"Nigeria"):"₦";
@@ -396,7 +398,7 @@ function CalcApp(){
     setSaved(true);setTimeout(()=>setSaved(false),1800);
   },[d]);
 
-  if(!client)return <AccessGate onAccess={setClient}/>;
+  // access handled by Next.js
   if(!d)return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",color:MID,fontSize:14}}>Loading...</div>;
 
   return(
@@ -407,7 +409,7 @@ function CalcApp(){
           <div style={{fontSize:18,fontWeight:800,color:W,marginTop:2}}>Startup Cost & Break-Even Calculator</div>
         </div>
         <div style={{textAlign:"right"}}>
-          <div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>Welcome, <b style={{color:W}}>{client.name}</b></div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>Prowess Digital Solutions</div>
           <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"✓ Saved":"Auto-saving..."}</div>
         </div>
       </div>
