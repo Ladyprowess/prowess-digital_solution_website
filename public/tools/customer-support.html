@@ -110,11 +110,19 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:16px}
 
 /* ─── Footer ─── */
 .footer{text-align:center;padding:28px 16px;font-size:12px;color:#94a3b8}
+
+/* ─── Mobile responsive grids ─── */
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-complaints{display:grid;grid-template-columns:1fr 1.4fr;gap:20px;align-items:start}
+.grid-script-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:640px){
+  .grid-2col,.grid-complaints,.grid-script-cols{grid-template-columns:1fr!important}
+}
 </style>
 
 </head>
 <body>
-<nav class="nav"><div class="nav-inner"><a href="/" class="nav-brand"><div class="nav-dot"></div><span class="nav-name">Prowess Digital Solutions</span></a><div class="nav-right"><span class="nav-badge">Free Tool</span><a href="/tools" class="nav-back">← All Tools</a></div></div></nav><div id="root"></div>
+<nav class="nav"><div class="nav-inner"><a href="/tools" class="nav-brand"><div class="nav-dot"></div><span class="nav-name">Prowess Digital Solutions</span></a><div class="nav-right"><span class="nav-badge">Free Tool</span><a href="/tools" class="nav-back">← All Tools</a></div></div></nav><div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect}=React;
 const COUNTRIES=[["Algeria","DA"],["Angola","Kz"],["Benin","CFA"],["Botswana","P"],["Burkina Faso","CFA"],["Burundi","Fr"],["Cabo Verde","Esc"],["Cameroon","CFA"],["Central African Republic","CFA"],["Chad","CFA"],["Comoros","Fr"],["Congo DR","FC"],["Congo Republic","CFA"],["Côte d'Ivoire","CFA"],["Djibouti","Fr"],["Egypt","E£"],["Equatorial Guinea","CFA"],["Eritrea","Nfk"],["Eswatini","L"],["Ethiopia","Br"],["Gabon","CFA"],["Gambia","D"],["Ghana","GH₵"],["Guinea","Fr"],["Guinea-Bissau","CFA"],["Kenya","KSh"],["Lesotho","L"],["Liberia","L$"],["Libya","LD"],["Madagascar","Ar"],["Malawi","MK"],["Mali","CFA"],["Mauritania","UM"],["Mauritius","₨"],["Morocco","MAD"],["Mozambique","MT"],["Namibia","N$"],["Niger","CFA"],["Nigeria","₦"],["Rwanda","Fr"],["São Tomé and Príncipe","Db"],["Senegal","CFA"],["Seychelles","₨"],["Sierra Leone","Le"],["Somalia","Sh"],["South Africa","R"],["South Sudan","£"],["Sudan","£"],["Tanzania","TSh"],["Togo","CFA"],["Tunisia","DT"],["Uganda","USh"],["Zambia","ZK"],["Zimbabwe","Z$"]];
@@ -295,7 +303,7 @@ function ScriptCard({s,sym="₦"}){
       {open&&<div style={{padding:"16px 18px",borderTop:"1px solid #f0f4f5"}}>
         {s.scenario&&<div style={{fontSize:13,color:"#4a6b70",marginBottom:14,lineHeight:1.6,background:"#f8fbfb",padding:"10px 14px",borderRadius:10}}>{s.scenario}</div>}
         {s.wrong?(
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <div className="grid-script-cols">
             <div style={{background:"#fef2f2",borderRadius:10,padding:"13px 14px"}}>
               <div style={{fontSize:10,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:"#dc2626",marginBottom:6}}>Do not say this</div>
               <div style={{fontSize:13,fontStyle:"italic",color:"#dc2626",lineHeight:1.6}}>"{applyS(s.wrong||"",sym)}"</div>
@@ -440,7 +448,7 @@ function CoreSectionContent({sec,sym="₦"}){
             </div>
           );
           if(item.type==="dosdonts")return(
-            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div key={i} className="grid-2col">
               <div style={{background:"#fff",borderRadius:14,padding:"18px",border:"1px solid #e2eaeb"}}>
                 <div style={{fontSize:11,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:"#16a34a",marginBottom:12}}>Do these</div>
                 {item.dos.map((d,j)=><div key={j} style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:8}}>
@@ -480,7 +488,7 @@ function ComplaintView({cat,sym="₦"}){
       </div>
 
       {/* Two-column layout: complaints list + scripts */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:20,alignItems:"start"}}>
+      <div className="grid-complaints">
         {/* Complaints list */}
         <div style={{background:"#fff",borderRadius:16,border:"1px solid #e2eaeb",overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>
           <div style={{padding:"16px 18px",borderBottom:"1px solid #f0f4f5",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
