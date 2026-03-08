@@ -139,7 +139,7 @@ function MonthView({mIdx,d,update,sym}:{mIdx:number,d:any,update:any,sym:string}
         </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10,marginBottom:16}}>
-        {(["Total Income",`${sym}${fmt(totalIncome)}`,LITE],["Total Expenses",`${sym}${fmt(totalExpense)}`,LGRAY],["Net Profit",profit>=0?`${sym}${fmt(profit)}`:`(${sym}${fmt(Math.abs(profit))})`,profit>=0?"#e8f5e9":"#fdecea"],["Profit Margin",fmtPct(margin),LITE],["Closing Balance",`${sym}${fmt(closingBal)}`,closingBal<0?"#fdecea":LITE]) as [string,string,string][]).map(([l,v,bg])=>(
+        {([["Total Income",`${sym}${fmt(totalIncome)}`,LITE],["Total Expenses",`${sym}${fmt(totalExpense)}`,LGRAY],["Net Profit",profit>=0?`${sym}${fmt(profit)}`:`(${sym}${fmt(Math.abs(profit))})`,profit>=0?"#e8f5e9":"#fdecea"],["Profit Margin",fmtPct(margin),LITE],["Closing Balance",`${sym}${fmt(closingBal)}`,closingBal<0?"#fdecea":LITE]] as [string,string,string][]).map(([l,v,bg])=>(
           <div key={l} style={{background:bg,borderRadius:8,padding:"11px 13px"}}>
             <div style={{fontSize:10,fontWeight:700,color:MID,textTransform:"uppercase",marginBottom:4}}>{l}</div>
             <div style={{fontSize:17,fontWeight:800,color:DARK}}>{v}</div>
@@ -224,7 +224,7 @@ function AnnualSummary({d,sym}:{d:any,sym:string}){
       </div>
     </div>
     {totI>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginTop:4}}>
-      {(["Best Month",best.name,`${sym}${fmt(best.profit)} profit`],["Monthly Avg Income",`${sym}${fmt(Math.round(totI/12))}`,"per month on average"],["Expense Ratio",fmtPct(totI>0?totE/totI:null),"of income spent on costs"]) as [string,string,string][]).map(([l,v,sub])=>(
+      {([["Best Month",best.name,`${sym}${fmt(best.profit)} profit`],["Monthly Avg Income",`${sym}${fmt(Math.round(totI/12))}`,"per month on average"],["Expense Ratio",fmtPct(totI>0?totE/totI:null),"of income spent on costs"]] as [string,string,string][]).map(([l,v,sub])=>(
         <div key={l} style={{background:W,borderRadius:10,border:`1px solid ${MGRAY}`,padding:"14px 16px"}}>
           <div style={{fontSize:10,fontWeight:700,color:MID,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>{l}</div>
           <div style={{fontSize:20,fontWeight:800,color:DARK}}>{v}</div>
@@ -334,7 +334,7 @@ function TrackerTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
       </div>
     </div>
     <div style={{background:B,padding:"9px 22px",display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-      {(["biz","Business Name",170],["trade","Trade / Service",170],["year","Year",90]) as [string,string,number][]).map(([f,p,w])=>(
+      {([["biz","Business Name",170],["trade","Trade / Service",170],["year","Year",90]] as [string,string,number][]).map(([f,p,w])=>(
         <input key={f} value={d.info[f]||""} placeholder={p} onChange={e=>update(x=>({...x,info:{...x.info,[f]:e.target.value}}))}
           style={{background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,padding:"6px 11px",color:W,fontSize:13,fontWeight:600,outline:"none",width:w}}/>
       ))}
@@ -348,7 +348,7 @@ function TrackerTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
       </div>
     </div>
     <div style={{background:W,borderBottom:`2px solid ${MGRAY}`,display:"flex",padding:"0 22px",overflowX:"auto",gap:2,alignItems:"stretch"}}>
-      {(["month","Monthly Tracker"],["annual","Annual Summary"],["forecast","Cashflow Forecast"]) as [string,string][]).map(([v,l])=>(
+      {([["month","Monthly Tracker"],["annual","Annual Summary"],["forecast","Cashflow Forecast"]] as [string,string][]).map(([v,l])=>(
         <button key={v} onClick={()=>setView(v)} style={{padding:"12px 17px",background:"transparent",border:"none",cursor:"pointer",fontSize:14,fontWeight:700,whiteSpace:"nowrap",color:view===v?B:"#999",borderBottom:view===v?`3px solid ${B}`:"3px solid transparent",marginBottom:-2}}>{l}</button>
       ))}
       {view==="month"&&<div style={{display:"flex",marginLeft:10,alignItems:"center",gap:2,overflowX:"auto",borderLeft:`1px solid ${MGRAY}`,paddingLeft:10}}>
