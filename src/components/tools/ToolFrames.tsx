@@ -1,0 +1,55 @@
+"use client";
+import { useEffect, useRef } from "react";
+
+interface Props {
+  src: string;
+  title: string;
+  minHeight?: string;
+}
+
+function ToolFrame({ src, title, minHeight = "700px" }: Props) {
+  const ref = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const iframe = ref.current;
+    if (!iframe) return;
+
+    function onLoad() {
+      try {
+        const h = iframe!.contentWindow!.document.body.scrollHeight;
+        if (h > 400) iframe!.style.height = h + "px";
+      } catch {
+        if (iframe) iframe.style.height = minHeight;
+      }
+    }
+
+    iframe.addEventListener("load", onLoad);
+    return () => iframe.removeEventListener("load", onLoad);
+  }, [minHeight]);
+
+  return (
+    <iframe
+      ref={ref}
+      src={src}
+      title={title}
+      style={{ width: "100%", minHeight, border: "none", borderRadius: 12, display: "block" }}
+      loading="lazy"
+    />
+  );
+}
+
+export function StartupCalculator() {
+  return <ToolFrame src="/tools/calculator.html" title="Startup Calculator" minHeight="750px" />;
+}
+
+export function ProfitTracker() {
+  return <ToolFrame src="/tools/tracker.html" title="Profit and Cashflow Tracker" minHeight="750px" />;
+}
+
+export function CustomerServiceGuide() {
+  return <ToolFrame src="/tools/customer-support.html" title="Customer Service Guide" minHeight="700px" />;
+}
+
+export function BusinessStarter() {
+  return <ToolFrame src="/tools/business-starter.html" title="Business Starter" minHeight="750px" />;
+}
