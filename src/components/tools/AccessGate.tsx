@@ -27,24 +27,24 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
   const [reason, setReason]           = useState("");
   const [client, setClient]           = useState<ClientInfo | null>(null);
 
-  // Restore session on mount
+  // On mount, check if there's a saved session and verify it with the server
   useEffect(() => {
     const raw = localStorage.getItem(`pds-access-${toolKey}`);
-    if (!raw) return;
+    if (!raw) return; // No saved session — show gate
     try {
       const saved = JSON.parse(raw) as { code: string; client: ClientInfo };
-      verify(saved.code, true, saved.client);
+      silentVerify(saved.code);
     } catch {
       localStorage.removeItem(`pds-access-${toolKey}`);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolKey]);
 
-  // Listen for sign out message from iframe
+  // Listen for sign out message from inside the iframe
   useEffect(() => {
     function onMessage(e: MessageEvent) {
-      if (e.data?.action === "signout" && e.data?.toolKey === toolKey) {
-        handleLogout();
+      if (e.data?.action === "pds-signout" && e.data?.toolKey === toolKey) {
+        signOut();
       }
     }
     window.addEventListener("message", onMessage);
@@ -52,10 +52,36 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolKey]);
 
-  async function verify(input: string, silent = false, fallback: ClientInfo | null = null) {
-    if (!silent) setStatus("checking");
+  // Silent verify on page load — if it fails for ANY reason, clear and show gate
+  async function silentVerify(savedCode: string) {
     try {
-      const res  = await fetch("/api/verify-code", {
+      const res = await fetch("/api/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: savedCode }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setClient(data.client);
+        setGrantedCode(savedCode);
+        setStatus("granted");
+        // Refresh the saved client info
+        localStorage.setItem(`pds-access-${toolKey}`, JSON.stringify({ code: savedCode, client: data.client }));
+      } else {
+        // Code is revoked, expired, or invalid — clear session, show gate
+        signOut();
+      }
+    } catch {
+      // Network error — clear session, show gate. Better safe than auto-granting access.
+      signOut();
+    }
+  }
+
+  // Manual login
+  async function verify(input: string) {
+    setStatus("checking");
+    try {
+      const res = await fetch("/api/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: input }),
@@ -68,40 +94,28 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
         setStatus("granted");
         localStorage.setItem(`pds-access-${toolKey}`, JSON.stringify({ code: cleanCode, client: data.client }));
       } else {
-        if (silent && fallback) {
-          setClient(fallback);
-          setGrantedCode(input.trim().toUpperCase());
-          setStatus("granted");
-        } else {
-          setReason(data.reason ?? "invalid");
-          setStatus("denied");
-          localStorage.removeItem(`pds-access-${toolKey}`);
-        }
+        setReason(data.reason ?? "invalid");
+        setStatus("denied");
+        localStorage.removeItem(`pds-access-${toolKey}`);
       }
     } catch {
-      if (silent && fallback) {
-        setClient(fallback);
-        setGrantedCode(input.trim().toUpperCase());
-        setStatus("granted");
-      } else {
-        setReason("invalid");
-        setStatus("denied");
-      }
+      setReason("invalid");
+      setStatus("denied");
     }
+  }
+
+  function signOut() {
+    localStorage.removeItem(`pds-access-${toolKey}`);
+    setStatus("idle");
+    setCode("");
+    setClient(null);
+    setGrantedCode(null);
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!code.trim()) return;
     verify(code.trim());
-  }
-
-  function handleLogout() {
-    localStorage.removeItem(`pds-access-${toolKey}`);
-    setStatus("idle");
-    setCode("");
-    setClient(null);
-    setGrantedCode(null);
   }
 
   if (status === "granted" && grantedCode) {
@@ -118,7 +132,7 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
             {client?.name ? `${client.name}${client.business ? ` · ${client.business}` : ""} · ` : ""}
             {expiry}
           </p>
-          <button onClick={handleLogout} className="ml-4 text-xs font-semibold text-[#507c80] hover:underline">
+          <button onClick={signOut} className="ml-4 text-xs font-semibold text-[#507c80] hover:underline">
             Sign out
           </button>
         </div>
