@@ -1,97 +1,45 @@
 "use client";
-import Container from "@/components/Container";
-import SectionTitle from "@/components/SectionTitle";
-import AccessGate from "@/components/tools/AccessGate";
-import {
-  StartupCalculator,
-  ProfitTracker,
-  CustomerServiceGuide,
-  BusinessStarter,
-} from "@/components/tools/ToolFrames";
+import Link from "next/link";
 
-export default function ToolsPage() {
-  return (
-    <section className="py-12 sm:py-16 bg-slate-50/40">
-      <Container>
+const B="#507c80",DARK="#3a5c60",MID="#6a9ea3",LITE="#e8f4f5",LGRAY="#f2f5f5",MGRAY="#c8d8da",W="#fff";
 
-        <div className="max-w-3xl">
-          <SectionTitle
-            title="Business Tools"
-            desc="Practical tools built for African entrepreneurs. Free tools are open to everyone. The Calculator and Tracker require an access code."
-          />
-        </div>
+const TOOLS=[
+  {key:"calculator",href:"/tools/calculator",icon:"🧮",title:"Startup Cost & Break-Even Calculator",desc:"Plan every cost before you launch. Calculate your break-even point, set prices, and know exactly how much funding you need.",badge:"Access Required"},
+  {key:"tracker",href:"/tools/tracker",icon:"📊",title:"Profit & Cashflow Tracker",desc:"Track every naira in and out. Monthly summaries, annual overview, and cashflow forecasting to keep your business healthy.",badge:"Access Required"},
+  {key:"customer-support",href:"/tools/customer-support.html",icon:"🤝",title:"Customer Service Guide",desc:"A practical guide to handling client communication, complaints, and retention for African service businesses.",badge:"Free"},
+  {key:"business-starter",href:"/tools/business-starter.html",icon:"🚀",title:"Business Starter Checklist",desc:"Step-by-step checklist to register, structure, and launch your business the right way in Nigeria.",badge:"Free"},
+];
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { emoji:"🧮", title:"Startup Calculator", desc:"Calculate startup costs, break-even point, and the right pricing for your service or product.", href:"#calculator" },
-            { emoji:"📊", title:"Profit & Cashflow Tracker", desc:"Track income and expenses monthly, see category breakdowns, and forecast your cashflow.", href:"#tracker" },
-            { emoji:"💬", title:"Customer Service Guide", desc:"200+ complaint scenarios with word-for-word response scripts for the African market.", href:"#customer-service" },
-            { emoji:"🚀", title:"Business Starter", desc:"Enter your budget and get matching business ideas with costs in your local currency.", href:"#business-starter" },
-          ].map(c => (
-            <div key={c.href} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-2xl mb-3">{c.emoji}</div>
-              <h3 className="text-base font-semibold">{c.title}</h3>
-              <p className="mt-2 text-sm text-slate-600">{c.desc}</p>
-              <div className="mt-4">
-                <a href={c.href} className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white hover:opacity-90" style={{ background:"var(--steel-teal)" }}>
-                  Open Tool
-                </a>
+export default function ToolsPage(){
+  return(
+    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",minHeight:"100vh",background:LGRAY}}>
+      <div style={{background:DARK,padding:"20px 28px"}}>
+        <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.5)",letterSpacing:1.4,textTransform:"uppercase",marginBottom:4}}>Prowess Digital Solutions</div>
+        <div style={{fontSize:26,fontWeight:900,color:W}}>Business Tools</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,.5)",marginTop:4}}>Built for African entrepreneurs. Use these tools to start, price, and track your business.</div>
+      </div>
+      <div style={{padding:"28px",maxWidth:900,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16}}>
+          {TOOLS.map(t=>(
+            <Link key={t.key} href={t.href} style={{textDecoration:"none"}}>
+              <div style={{background:W,borderRadius:14,padding:"22px 24px",border:`1px solid ${MGRAY}`,boxShadow:"0 1px 6px rgba(58,92,96,.08)",cursor:"pointer",transition:"transform .15s,box-shadow .15s"}}
+                onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.boxShadow="0 4px 18px rgba(58,92,96,.15)";(e.currentTarget as HTMLElement).style.transform="translateY(-2px)";}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.boxShadow="0 1px 6px rgba(58,92,96,.08)";(e.currentTarget as HTMLElement).style.transform="none";}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                  <div style={{fontSize:32}}>{t.icon}</div>
+                  <span style={{fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20,background:t.badge==="Free"?"#e8f5e9":LITE,color:t.badge==="Free"?"#2e7d32":B}}>{t.badge}</span>
+                </div>
+                <div style={{fontSize:15,fontWeight:800,color:DARK,marginBottom:8,lineHeight:1.3}}>{t.title}</div>
+                <div style={{fontSize:13,color:MID,lineHeight:1.6}}>{t.desc}</div>
+                <div style={{marginTop:14,fontSize:12,fontWeight:700,color:B}}>Open tool →</div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
-
-        {/* STARTUP CALCULATOR */}
-        <section id="calculator" className="mt-24 rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 sm:p-12">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#507c80]/10 px-3 py-1 text-xs font-semibold text-[#507c80]">Access Required</div>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Startup Calculator</h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">Calculate exactly what your business will cost to start, when you will break even, how to price correctly, and where your funding gap is.</p>
-          </div>
-          <div className="mt-10">
-            <AccessGate toolKey="calculator" toolName="Startup Calculator">
-              {(code) => <StartupCalculator code={code} />}
-            </AccessGate>
-          </div>
-          <p className="mt-6 text-sm text-slate-500">Your data syncs across all your devices automatically.</p>
-        </section>
-
-        {/* PROFIT TRACKER */}
-        <section id="tracker" className="mt-24 rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 sm:p-12">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#507c80]/10 px-3 py-1 text-xs font-semibold text-[#507c80]">Access Required</div>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Profit & Cashflow Tracker</h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">Track every naira, cedi, shilling or rand coming in and going out. Monthly breakdowns, annual summary, cashflow forecast.</p>
-          </div>
-          <div className="mt-10">
-            <AccessGate toolKey="tracker" toolName="Profit & Cashflow Tracker">
-              {(code) => <ProfitTracker code={code} />}
-            </AccessGate>
-          </div>
-          <p className="mt-6 text-sm text-slate-500">Your data syncs across all your devices automatically.</p>
-        </section>
-
-        {/* CUSTOMER SERVICE */}
-        <section id="customer-service" className="mt-24 rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 sm:p-12">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">Free Tool</div>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Customer Service Guide</h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">200+ real complaint scenarios with word-for-word scripts. Covers everything from angry customers to delivery failures. Written for the African market.</p>
-          </div>
-          <div className="mt-10"><CustomerServiceGuide /></div>
-        </section>
-
-        {/* BUSINESS STARTER */}
-        <section id="business-starter" className="mt-24 rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 sm:p-12">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">Free Tool</div>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Business Starter</h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">Enter your budget and get every business you can start right now across 54 African countries, with costs in your local currency and a full setup checklist.</p>
-          </div>
-          <div className="mt-10"><BusinessStarter /></div>
-        </section>
-
-      </Container>
-    </section>
+        <div style={{marginTop:28,background:W,borderRadius:12,padding:"18px 22px",border:`1px solid ${MGRAY}`,textAlign:"center"}}>
+          <div style={{fontSize:13,color:MID}}>Need an access code for the paid tools? Contact <span style={{fontWeight:700,color:DARK}}>Prowess Digital Solutions</span> to get started.</div>
+        </div>
+      </div>
+    </div>
   );
 }
