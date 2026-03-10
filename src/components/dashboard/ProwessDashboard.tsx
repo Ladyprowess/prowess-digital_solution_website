@@ -1653,10 +1653,8 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
           const leaders = users.filter((x: any) => x.role === "leader" || x.role === "admin");
           const assignedLeader = u.managed_by ? normUser(users.find((x: any) => x.id === u.managed_by)) : null;
           return (
-            <Card key={u.id} style={{ padding: 24, textAlign: "center", cursor: "pointer", transition: "box-shadow 0.2s", }}
-              onClick={() => setSelectedMember(u)}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 20px rgba(80,124,128,0.15)")}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = "")}>
+            <Card key={u.id} style={{ padding: 24, textAlign: "center", cursor: "pointer", transition: "box-shadow 0.2s" }}
+              onClick={() => setSelectedMember(u)}>
               <Av user={u} size={54} />
               <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 12 }}>{nu.name}</div>
               <div style={{ fontSize: 13, color: "#64748b" }}>{nu.title || (u.role === "admin" ? "Administrator" : u.role === "leader" ? "Team Leader" : "Team Member")}</div>
