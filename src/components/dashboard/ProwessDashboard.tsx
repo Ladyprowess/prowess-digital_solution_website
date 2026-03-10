@@ -275,48 +275,102 @@ const sBtn = (c: string): React.CSSProperties => ({
 });
 
 const NAV = [
-  { id: "dashboard",   label: "Dashboard",    icon: "⊞" },
-  { id: "tasks",       label: "Tasks",        icon: "✓" },
-  { id: "activity",    label: "Activity Log", icon: "⏱" },
+  { id: "dashboard",   label: "Dashboard",    icon: "🏠" },
+  { id: "tasks",       label: "Tasks",        icon: "✅" },
+  { id: "activity",    label: "Activity Log", icon: "📝" },
   { id: "leaderboard", label: "Leaderboard",  icon: "🏆" },
   { id: "reports",     label: "Reports",      icon: "📊", privileged: true },
   { id: "team",        label: "Team",         icon: "👥", privileged: true },
-  { id: "settings",    label: "Settings",     icon: "⚙" },
+  { id: "settings",    label: "Settings",     icon: "⚙️" },
 ];
 
-// ─── Bottom nav (mobile only) ──────────────────────────────────────────────────
-function BottomNav({ user, page, setPage, onLogout }: any) {
+// ─── Mobile drawer (slides in from left) ──────────────────────────────────────
+function MobileDrawer({ user, page, setPage, onLogout, open, onClose }: any) {
   const items = NAV.filter(n => !n.privileged || isPrivileged(user));
   return (
-    <div style={{
-      position: "fixed", bottom: 0, left: 0, right: 0, background: "#111827",
-      borderTop: "1px solid #1f2937", display: "flex", zIndex: 50,
-      paddingBottom: "env(safe-area-inset-bottom, 0px)",
-    }}>
-      {items.map(n => {
-        const on = page === n.id;
-        return (
-          <button key={n.id} onClick={() => setPage(n.id)} style={{
-            flex: 1, padding: "10px 2px 8px", background: "none", border: "none",
-            cursor: "pointer", display: "flex", flexDirection: "column",
-            alignItems: "center", gap: 2, color: on ? B : "#6b7280",
-          }}>
-            <span style={{ fontSize: 19 }}>{n.icon}</span>
-            <span style={{ fontSize: 9, fontWeight: on ? 700 : 400, whiteSpace: "nowrap" }}>
-              {n.label === "Activity Log" ? "Activity" : n.label}
-            </span>
-            {on && <div style={{ width: 14, height: 2, borderRadius: 2, background: B }} />}
-          </button>
-        );
-      })}
-      <button onClick={onLogout} style={{
-        flex: 1, padding: "10px 2px 8px", background: "none", border: "none",
-        cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: "#6b7280",
+    <>
+      {/* Backdrop */}
+      {open && (
+        <div
+          onClick={onClose}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)",
+            zIndex: 80, WebkitTapHighlightColor: "transparent",
+          }}
+        />
+      )}
+      {/* Drawer panel */}
+      <div style={{
+        position: "fixed", top: 0, left: 0, bottom: 0, width: 280,
+        background: "#111827", zIndex: 90,
+        transform: open ? "translateX(0)" : "translateX(-100%)",
+        transition: "transform 0.25s cubic-bezier(0.4,0,0.2,1)",
+        display: "flex", flexDirection: "column",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}>
-        <span style={{ fontSize: 19 }}>⏻</span>
-        <span style={{ fontSize: 9 }}>Sign Out</span>
-      </button>
-    </div>
+        {/* Drawer header */}
+        <div style={{
+          padding: "16px 16px 14px", borderBottom: "1px solid #1f2937",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: B, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "white", fontSize: 18, fontWeight: 800 }}>P</span>
+            </div>
+            <div>
+              <div style={{ color: "white", fontWeight: 700, fontSize: 14 }}>Prowess</div>
+              <div style={{ color: "#4b5563", fontSize: 11 }}>Digital Solutions</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: "#374151", border: "none", borderRadius: 9, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "white", fontSize: 17, fontWeight: 700, flexShrink: 0 }}>
+            ✕
+          </button>
+        </div>
+
+        {/* User pill */}
+        <div style={{ margin: "14px 12px 4px", padding: "12px 14px", background: "#1f2937", borderRadius: 12, display: "flex", alignItems: "center", gap: 10 }}>
+          <Av user={user} size={36} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: "white", fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</div>
+            <div style={{ color: "#6b7280", fontSize: 11 }}>{user.role === "admin" ? "Administrator" : user.role === "leader" ? "Team Leader" : "Team Member"}</div>
+          </div>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
+        </div>
+
+        {/* Nav items */}
+        <nav style={{ flex: 1, padding: "10px 12px", overflowY: "auto" }}>
+          {items.map(n => {
+            const on = page === n.id;
+            return (
+              <button key={n.id} onClick={() => { setPage(n.id); onClose(); }} style={{
+                display: "flex", alignItems: "center", gap: 12, width: "100%",
+                padding: "12px 14px", borderRadius: 11, marginBottom: 3,
+                background: on ? B + "22" : "transparent",
+                border: on ? `1px solid ${B}44` : "1px solid transparent",
+                cursor: "pointer", color: on ? "#7ecfd4" : "#9ca3af",
+                fontSize: 14, fontWeight: on ? 600 : 400, textAlign: "left",
+              }}>
+                <span style={{ fontSize: 20, width: 26, textAlign: "center", flexShrink: 0 }}>{n.icon}</span>
+                <span style={{ flex: 1 }}>{n.label}</span>
+                {on && <div style={{ width: 6, height: 6, borderRadius: "50%", background: B }} />}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Sign out */}
+        <div style={{ padding: "12px 12px 16px", borderTop: "1px solid #1f2937" }}>
+          <button onClick={onLogout} style={{
+            display: "flex", alignItems: "center", gap: 12, width: "100%",
+            padding: "12px 14px", borderRadius: 11, background: "#1f2937",
+            border: "none", cursor: "pointer", color: "#ef4444", fontSize: 14, fontWeight: 500,
+          }}>
+            <span style={{ fontSize: 20, width: 26, textAlign: "center" }}>🚪</span>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -395,39 +449,55 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen }: any) {
   );
 }
 
-function TopBar({ user, page, isMobile }: { user: any; page: string; isMobile?: boolean }) {
+function TopBar({ user, page, isMobile, onMenuOpen }: { user: any; page: string; isMobile?: boolean; onMenuOpen?: () => void }) {
   const titles: Record<string, string> = {
     dashboard: "Dashboard", tasks: "Tasks", activity: "Activity Log",
     leaderboard: "Leaderboard", reports: "Reports", team: "Team", settings: "Settings",
   };
+  const icons: Record<string, string> = {
+    dashboard: "🏠", tasks: "✅", activity: "📝", leaderboard: "🏆",
+    reports: "📊", team: "👥", settings: "⚙️",
+  };
   return (
     <div style={{
       background: "white", borderBottom: "1px solid #e2e8f0",
-      padding: isMobile ? "0 16px" : "0 28px",
-      height: isMobile ? 52 : 58,
+      padding: isMobile ? "0 14px" : "0 28px",
+      height: isMobile ? 54 : 58,
       display: "flex", alignItems: "center",
       justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Mobile: hamburger button */}
         {isMobile && (
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: B, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "white", fontSize: 14, fontWeight: 800 }}>P</span>
-          </div>
+          <button onClick={onMenuOpen} style={{
+            background: "#f1f5f9", border: "none", borderRadius: 9, width: 38, height: 38,
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", gap: 4, cursor: "pointer", flexShrink: 0,
+          }}>
+            <span style={{ display: "block", width: 16, height: 2, background: "#374151", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 16, height: 2, background: "#374151", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 10, height: 2, background: "#374151", borderRadius: 2, alignSelf: "flex-start", marginLeft: 3 }} />
+          </button>
         )}
-        <h1 style={{ fontSize: isMobile ? 16 : 17, fontWeight: 700, color: "#0f172a", margin: 0 }}>
-          {titles[page]}
-        </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          {isMobile && <span style={{ fontSize: 18 }}>{icons[page]}</span>}
+          <h1 style={{ fontSize: isMobile ? 16 : 17, fontWeight: 700, color: "#0f172a", margin: 0 }}>
+            {titles[page]}
+          </h1>
+        </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 6 : 14 }}>
         {!isMobile && (
           <div style={{ fontSize: 12, color: "#94a3b8" }}>
             {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
           </div>
         )}
-        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e" }} />
-        <span style={{ fontSize: 13, color: "#475569", fontWeight: 500, maxWidth: isMobile ? 100 : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {user.name}
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#f1f5f9", padding: "5px 10px 5px 6px", borderRadius: 20 }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e" }} />
+          <span style={{ fontSize: 12, color: "#475569", fontWeight: 500, maxWidth: isMobile ? 90 : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {user.name}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -460,7 +530,7 @@ function AdminDashboard({ tasks, logs, users, setPage }: any) {
         <Stat icon="⚠️" label="Overdue"      value={overdue}   sub="Need attention" color="#ef4444" trend={-5} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
+      <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
         <Card style={{ padding: 24 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>Weekly Task Completion</div>
           <ResponsiveContainer width="100%" height={190}>
@@ -495,7 +565,7 @@ function AdminDashboard({ tasks, logs, users, setPage }: any) {
         </Card>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
+      <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
         <Card style={{ padding: 24 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 16 }}>Recent Team Activity</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1603,6 +1673,7 @@ export default function ProwessDashboard({
 }) {
   const [page,        setPage]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [drawerOpen,  setDrawerOpen]  = useState(false);
   const [localTasks,  setLocalTasks]  = useState(tasks);
   const [localLogs,   setLocalLogs]   = useState(logs);
   const isMobile = useIsMobile();
@@ -1638,21 +1709,27 @@ export default function ProwessDashboard({
   return (
     <div style={{ display: "flex", height: isMobile ? "100svh" : "100vh", background: "#f0f4f5", fontFamily: "'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
       <GlobalStyles />
+
+      {/* Mobile slide-out drawer */}
+      {isMobile && (
+        <MobileDrawer
+          user={user} page={page} setPage={setPage}
+          onLogout={onSignOut} open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        />
+      )}
+
       {/* Desktop sidebar — hidden on mobile */}
       {!isMobile && (
         <Sidebar user={user} page={page} setPage={setPage} onLogout={onSignOut} open={sidebarOpen} setOpen={setSidebarOpen} />
       )}
+
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
-        <TopBar user={user} page={page} isMobile={isMobile} />
-        {/* On mobile, add bottom padding so content doesn't hide behind bottom nav */}
-        <div style={{ flex: 1, overflowY: "auto", paddingBottom: isMobile ? 80 : 0 }}>
+        <TopBar user={user} page={page} isMobile={isMobile} onMenuOpen={() => setDrawerOpen(true)} />
+        <div style={{ flex: 1, overflowY: "auto" }}>
           {content()}
         </div>
       </div>
-      {/* Bottom nav — mobile only */}
-      {isMobile && (
-        <BottomNav user={user} page={page} setPage={setPage} onLogout={onSignOut} />
-      )}
     </div>
   );
 }
