@@ -815,6 +815,8 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
           </div>
         </Card>
       )}
+
+      <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <Card style={{ padding: 24 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>My Tasks</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1083,7 +1085,7 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                     )}
                   </div>
                 </div>
-                <div style={{ fontSize: 18, color: "#cbd5e1", flexShrink: 0, paddingTop: 2 }}>></div>
+                <div style={{ fontSize: 18, color: "#cbd5e1", flexShrink: 0, paddingTop: 2 }}>{">"}</div>
               </div>
             </Card>
           );
@@ -2032,7 +2034,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
               )
             }
           </div>
-          <span style={{ fontSize: 18, color: "#94a3b8", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}>></span>
+          <span style={{ fontSize: 18, color: "#94a3b8", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}>{">"}</span>
         </button>
 
         {isOpen && (
@@ -2070,9 +2072,9 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         {/* Month navigator */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "white", borderRadius: 12, padding: "6px 8px", border: "1px solid #e2e8f0" }}>
-          <button onClick={prevMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}><</button>
+          <button onClick={prevMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}>{"<"}</button>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", minWidth: 140, textAlign: "center" }}>{monthLabel()}</span>
-          <button onClick={nextMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}>></button>
+          <button onClick={nextMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}>{">"}</button>
         </div>
         {isPrivileged(user) && isCurrentMonth && (
           <button onClick={() => setShowAssign(true)} style={{ padding: "10px 18px", borderRadius: 11, background: B, border: "none", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
