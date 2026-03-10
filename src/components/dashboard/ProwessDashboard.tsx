@@ -1697,8 +1697,8 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
         return (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
             onClick={() => setSelectedMember(null)}>
-            <Card style={{ padding: 32, width: 480, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}
-              onClick={e => e.stopPropagation()}>
+            <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+            <Card style={{ padding: 32, width: 480, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
 
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
@@ -1789,6 +1789,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
               )}
 
             </Card>
+            </div>
           </div>
         );
       })()}
