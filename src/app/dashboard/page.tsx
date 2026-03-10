@@ -24,18 +24,37 @@ export default function DashboardPage() {
       if (!user) { router.push("/login"); return; }
 
       // Fetch own profile first
-      const { data: profile, error: profileErr } = await supabase
+      const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
+      let profile = profileData;
+
+      // Profile missing — auto-create it from auth user metadata
       if (profileErr || !profile) {
-        throw new Error(
-          profileErr?.message?.includes("multiple (or no) rows")
-            ? "Your profile was not found. Please contact your admin."
-            : profileErr?.message || "Could not load your profile."
-        );
+        const initials = user.email ? user.email[0].toUpperCase() : "?";
+        const fallbackName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Team Member";
+        const { data: created, error: createErr } = await supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || fallbackName,
+            role: user.user_metadata?.role || "member",
+            job_title: user.user_metadata?.job_title || null,
+            avatar_initials: initials,
+          })
+          .select()
+          .single();
+
+        if (createErr || !created) {
+          throw new Error(
+            `Profile not found and could not be created automatically. Please ask your admin to run the schema setup SQL again, or manually insert a row in the profiles table for your user ID: ${user.id}`
+          );
+        }
+        profile = created;
       }
 
       // Fetch everything else in parallel
@@ -94,6 +113,9 @@ export default function DashboardPage() {
       `}</style>
     </div>
   );
+
+  // Catch-all: if state or profile is somehow null past the loading screen, don't crash
+  if (!state || !state.profile) return null;
 
   // Error screen — shows the actual error so Ngozi can debug
   if (error) return (
