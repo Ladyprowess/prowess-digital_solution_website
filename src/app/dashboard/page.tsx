@@ -243,6 +243,14 @@ export default function DashboardPage() {
     setState((p: any) => ({ ...p, profile: { ...p.profile, ...updates } }));
   }
 
+  async function assignLeader(memberId: string, leaderId: string | null) {
+    await supabase.from("profiles").update({ managed_by: leaderId }).eq("id", memberId);
+    setState((p: any) => ({
+      ...p,
+      users: p.users.map((u: any) => u.id === memberId ? { ...u, managed_by: leaderId } : u),
+    }));
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     router.push("/login");
@@ -310,6 +318,7 @@ export default function DashboardPage() {
       onAddLog={addLog}
       onDeleteLog={deleteLog}
       onUpdateProfile={updateProfile}
+      onAssignLeader={assignLeader}
       onCreateMember={createMember}
       onSignOut={signOut}
     />
