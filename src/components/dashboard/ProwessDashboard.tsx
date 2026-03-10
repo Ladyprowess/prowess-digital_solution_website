@@ -81,6 +81,17 @@ const normLog = (l: any) => l ? ({
   links:     l.links      ?? [],
 }) : null;
 
+// Format a Supabase ISO timestamp -> "10 Mar 2026, 7:59 PM"
+const fmtTime = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleString("en-GB", {
+      day: "numeric", month: "short", year: "numeric",
+      hour: "numeric", minute: "2-digit", hour12: true,
+    });
+  } catch { return ""; }
+};
+
 const COLORS = ["#507c80","#6366f1","#ec4899","#f59e0b","#10b981","#3b82f6","#8b5cf6","#ef4444"];
 const avatarColor = (id: string) =>
   COLORS[Math.abs([...id].reduce((a, c) => a + c.charCodeAt(0), 0)) % COLORS.length];
@@ -593,7 +604,9 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }
                     <div style={{ fontSize: 12, color: "#64748b" }}>
                       {log.taskTitle} {" | "} {log.timeSpent}h {" | "} {log.project}
                     </div>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{log.date}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                      {fmtTime(log.created_at) || log.date}
+                    </div>
                   </div>
                 </div>
               );
@@ -854,7 +867,10 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
                   <div style={{ fontSize: 11, color: "#94a3b8" }}>{log.timeSpent}h</div>
                 </div>
                 <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{log.description}</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{log.project} {" | "} {log.date}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                  {log.project && <>{log.project} {" | "}</>}
+                  {fmtTime(log.created_at) || log.date}
+                </div>
               </div>
             ))}
             {myL.length === 0 && <div style={{ color: "#94a3b8", fontSize: 13 }}>No activity logged yet.</div>}
@@ -1204,7 +1220,7 @@ function LogDetailModal({ log, users, onClose, onDelete }: any) {
 
         <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: log.links?.length ? 16 : 24 }}>
           {[
-            ["Date",       log.date],
+            ["Logged At",   fmtTime(log.created_at) || log.date],
             ["Time Spent", `${log.timeSpent}h`],
             ["Project",    log.project || "None"],
             ["Status",     cs === "completed" ? "Completed" : cs === "blocked" ? "Blocked" : "In Progress"],
@@ -1374,6 +1390,11 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
                         <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{log.description}</div>
                         <div style={{ display: "flex", gap: 10, marginTop: 5, alignItems: "center", flexWrap: "wrap" }}>
                           <div style={{ fontSize: 11, color: "#94a3b8" }}>📁 {log.project}</div>
+                          {log.created_at && (
+                            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                              🕐 {fmtTime(log.created_at)}
+                            </div>
+                          )}
                           {log.completion_status && (
                             <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
                               background: log.completion_status === "completed" ? "#f0fdf4" : log.completion_status === "blocked" ? "#fef2f2" : "#eff6ff",
