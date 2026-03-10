@@ -147,9 +147,10 @@ export default function DashboardPage() {
     if (!error && data) setState((p: any) => ({ ...p, tasks: [data, ...p.tasks] }));
   }
 
-  async function updateTaskStatus(taskId: string, status: string) {
+  async function updateTaskStatus(taskId: string, status: string, submissionLinks?: any[] | null) {
     const updates: any = { status };
     if (status === "completed") updates.completed_at = new Date().toISOString();
+    if (submissionLinks && submissionLinks.length > 0) updates.submission_links = submissionLinks;
     await supabase.from("tasks").update(updates).eq("id", taskId);
     setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, ...updates } : t) }));
   }
@@ -165,6 +166,7 @@ export default function DashboardPage() {
       description: form.description, project: form.project,
       time_spent: parseFloat(form.timeSpent) || 0,
       completion_status: form.completionStatus || "in-progress",
+      links: form.links?.length ? form.links : null,
       log_date: new Date().toISOString().split("T")[0],
     }).select().single();
     if (!error && data) setState((p: any) => ({ ...p, logs: [data, ...p.logs] }));
