@@ -35,7 +35,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#0a1628,#0f2832,#0a1628)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'DM Sans',-apple-system,sans-serif" }}>
+    <div style={{ minHeight: "100svh", background: "linear-gradient(135deg,#0a1628,#0f2832,#0a1628)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'DM Sans',-apple-system,sans-serif" }}>
+      {/* Prevent iOS zoom on inputs */}
+      <style>{`input,select,textarea{font-size:16px!important}`}</style>
       <div style={{ width: 400, maxWidth: "100%" }}>
 
         <div style={{ textAlign: "center", marginBottom: 32 }}>
@@ -57,7 +59,7 @@ export default function LoginPage() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleLogin()}
-              style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }}
+              style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }}
             />
           </div>
 
@@ -68,7 +70,7 @@ export default function LoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleLogin()}
-              style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }}
+              style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }}
             />
           </div>
 
