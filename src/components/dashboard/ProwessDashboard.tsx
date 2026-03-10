@@ -637,7 +637,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>🎯 KPI Health - {new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
             <button onClick={() => setPage("kpi")} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, background: B + "12", border: `1px solid ${B}30`, color: B, fontWeight: 600, cursor: "pointer" }}>
-              Manage KPIs ->
+              Manage KPIs {">"}
             </button>
           </div>
 
@@ -751,7 +751,7 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>🎯 My KPIs this month</div>
             <button onClick={() => setPage("kpi")} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, background: B + "12", border: `1px solid ${B}30`, color: B, fontWeight: 600, cursor: "pointer" }}>
-              View all ->
+              View all {">"}
             </button>
           </div>
 
@@ -809,7 +809,7 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
             })}
             {myKpis.length > 4 && (
               <button onClick={() => setPage("kpi")} style={{ fontSize: 12, color: B, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, marginTop: 2 }}>
-                +{myKpis.length - 4} more KPIs ->
+                +{myKpis.length - 4} more KPIs {">"}
               </button>
             )}
           </div>
