@@ -630,21 +630,32 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   );
 }
 
+const COMPLETION_STATUS = [
+  { value: "in-progress", label: "Still in progress" },
+  { value: "completed",   label: "Completed today"   },
+  { value: "blocked",     label: "Blocked"            },
+];
+
 function ActivityLogPage({ user, users, logs, setLogs, onAddLog }: any) {
-  const [form, setForm] = useState({ taskTitle: "", description: "", project: "", timeSpent: "" });
+  const [form, setForm] = useState({ taskTitle: "", description: "", project: "", timeSpent: "", completionStatus: "in-progress" });
+  const [saving, setSaving] = useState(false);
   const normLogs = logs.map(normLog);
   const visible  = user.role === "admin" ? normLogs : normLogs.filter((l: any) => l.userId === user.id);
   const sorted   = [...visible].sort((a: any, b: any) => b.date.localeCompare(a.date));
 
   const add = async () => {
     if (!form.taskTitle || !form.description) return;
+    setSaving(true);
     if (onAddLog) await onAddLog(form);
     else setLogs((p: any[]) => [...p, {
       id: "l" + Date.now(), user_id: user.id, task_title: form.taskTitle,
       description: form.description, project: form.project,
-      time_spent: parseFloat(form.timeSpent) || 0, log_date: fmt(today),
+      time_spent: parseFloat(form.timeSpent) || 0,
+      completion_status: form.completionStatus,
+      log_date: fmt(today),
     }]);
-    setForm({ taskTitle: "", description: "", project: "", timeSpent: "" });
+    setForm({ taskTitle: "", description: "", project: "", timeSpent: "", completionStatus: "in-progress" });
+    setSaving(false);
   };
 
   const grp: Record<string, any[]> = {};
@@ -658,33 +669,47 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog }: any) {
         <div style={{ width: 320, flexShrink: 0 }}>
           <Card style={{ padding: 24, position: "sticky", top: 82 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 20 }}>Log Today&apos;s Work</div>
-            {[
-              ["Task Title", "taskTitle", "text"],
-              ["What did you do?", "description", "textarea"],
-              ["Project", "project", "text"],
-              ["Time Spent (hrs)", "timeSpent", "number"],
-            ].map(([l, k, t]) => (
-              <div key={k} style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>{l}</label>
-                {t === "textarea" ? (
-                  <textarea
-                    value={(form as any)[k]}
-                    onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))}
-                    rows={3}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 13, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit" }}
-                  />
-                ) : (
-                  <input
-                    type={t as string}
-                    value={(form as any)[k]}
-                    onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 13, boxSizing: "border-box", outline: "none" }}
-                  />
-                )}
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Task Title</label>
+              <input value={form.taskTitle} onChange={e => setForm(f => ({ ...f, taskTitle: e.target.value }))}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 13, boxSizing: "border-box", outline: "none" }} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>What did you do?</label>
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 13, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Project</label>
+              <input value={form.project} onChange={e => setForm(f => ({ ...f, project: e.target.value }))}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 13, boxSizing: "border-box", outline: "none" }} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Time Spent (hrs)</label>
+              <input type="number" value={form.timeSpent} onChange={e => setForm(f => ({ ...f, timeSpent: e.target.value }))}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 13, boxSizing: "border-box", outline: "none" }} />
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Completion Status</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {COMPLETION_STATUS.map(opt => (
+                  <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, border: `2px solid ${form.completionStatus === opt.value ? B : "#e2e8f0"}`, cursor: "pointer", background: form.completionStatus === opt.value ? B + "0d" : "white" }}>
+                    <input type="radio" name="completionStatus" value={opt.value} checked={form.completionStatus === opt.value}
+                      onChange={e => setForm(f => ({ ...f, completionStatus: e.target.value }))}
+                      style={{ accentColor: B }} />
+                    <span style={{ fontSize: 13, color: "#374151" }}>{opt.label}</span>
+                  </label>
+                ))}
               </div>
-            ))}
-            <button onClick={add} style={{ width: "100%", padding: "12px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
-              Log Activity
+            </div>
+
+            <button onClick={add} disabled={saving} style={{ width: "100%", padding: "12px", borderRadius: 10, background: saving ? "#94a3b8" : B, color: "white", border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 600 }}>
+              {saving ? "Saving..." : "Log Activity"}
             </button>
           </Card>
         </div>
@@ -720,7 +745,16 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog }: any) {
                           <div style={{ fontSize: 12, color: B, fontWeight: 600, marginBottom: 3 }}>{lu.name}</div>
                         )}
                         <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>{log.description}</div>
-                        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 5 }}>📁 {log.project}</div>
+                        <div style={{ display: "flex", gap: 10, marginTop: 5, alignItems: "center", flexWrap: "wrap" }}>
+                          <div style={{ fontSize: 11, color: "#94a3b8" }}>📁 {log.project}</div>
+                          {log.completion_status && (
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
+                              background: log.completion_status === "completed" ? "#f0fdf4" : log.completion_status === "blocked" ? "#fef2f2" : "#eff6ff",
+                              color: log.completion_status === "completed" ? "#22c55e" : log.completion_status === "blocked" ? "#ef4444" : "#3b82f6" }}>
+                              {log.completion_status === "completed" ? "Completed" : log.completion_status === "blocked" ? "Blocked" : "In Progress"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -808,10 +842,25 @@ function ReportsPage({ tasks, logs, users }: any) {
     };
   });
 
-  const trend = [
-    { week: "W1", score: 38 }, { week: "W2", score: 52 }, { week: "W3", score: 47 },
-    { week: "W4", score: 63 }, { week: "W5", score: 70 }, { week: "W6", score: 78 },
-  ];
+  // Calculate real weekly trend from task completions over last 6 weeks
+  const trend = useMemo(() => {
+    const weeks = [];
+    for (let w = 5; w >= 0; w--) {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - (w * 7) - today.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      const ws = fmt(weekStart);
+      const we = fmt(weekEnd);
+      const completedInWeek = tasks.filter((t: any) =>
+        t.status === "completed" && t.completed_at &&
+        t.completed_at.slice(0, 10) >= ws && t.completed_at.slice(0, 10) <= we
+      ).length;
+      const logsInWeek = normL.filter((l: any) => l.date >= ws && l.date <= we).length;
+      weeks.push({ week: `W${6 - w}`, score: completedInWeek * 10 + logsInWeek * 2 });
+    }
+    return weeks;
+  }, [tasks, normL]);
 
   const compl  = tasks.filter((t: any) => t.status === "completed").length;
   const totHrs = normL.reduce((s: number, l: any) => s + (l.timeSpent || 0), 0);
@@ -895,10 +944,40 @@ function ReportsPage({ tasks, logs, users }: any) {
   );
 }
 
-function TeamPage({ users }: any) {
+function TeamPage({ users, onCreateMember }: any) {
+  const [modal,  setModal]  = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState("");
+  const [done,   setDone]   = useState(false);
+  const [form,   setForm]   = useState({ fullName: "", email: "", password: "", jobTitle: "", role: "member" });
+
+  async function add() {
+    if (!form.fullName || !form.email || !form.password) {
+      setError("Name, email and password are required.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await onCreateMember(form);
+      setDone(true);
+      setTimeout(() => { setDone(false); setModal(false); setForm({ fullName: "", email: "", password: "", jobTitle: "", role: "member" }); }, 1500);
+    } catch (e: any) {
+      setError(e.message || "Something went wrong. Please try again.");
+    }
+    setSaving(false);
+  }
+
   return (
     <div style={{ padding: "24px 28px" }}>
-      <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>{users.length} members total</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+        <div style={{ fontSize: 13, color: "#64748b" }}>{users.length} members total</div>
+        <button onClick={() => { setModal(true); setError(""); setDone(false); }}
+          style={{ padding: "10px 18px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+          Add Team Member
+        </button>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px,1fr))", gap: 14 }}>
         {users.map((u: any) => {
           const nu = normUser(u);
@@ -915,6 +994,64 @@ function TeamPage({ users }: any) {
           );
         })}
       </div>
+
+      {modal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <Card style={{ padding: 32, width: 460, maxWidth: "100%" }}>
+            {done ? (
+              <div style={{ textAlign: "center", padding: "24px 0" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>Account created!</div>
+                <div style={{ fontSize: 13, color: "#64748b", marginTop: 6 }}>They can now log in at /login</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", marginBottom: 20 }}>Add Team Member</div>
+
+                {[
+                  ["Full Name", "fullName", "text"],
+                  ["Email Address", "email", "email"],
+                  ["Password", "password", "password"],
+                  ["Job Title", "jobTitle", "text"],
+                ].map(([label, key, type]) => (
+                  <div key={key} style={{ marginBottom: 14 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>{label}</label>
+                    <input
+                      type={type}
+                      value={(form as any)[key]}
+                      onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }}
+                    />
+                  </div>
+                ))}
+
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Role</label>
+                  <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} style={{ ...SEL, width: "100%" }}>
+                    <option value="member">Team Member</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                {error && (
+                  <div style={{ fontSize: 13, color: "#ef4444", padding: "10px 14px", background: "#fef2f2", borderRadius: 8, marginBottom: 16 }}>
+                    {error}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={add} disabled={saving} style={{ flex: 1, padding: "12px", borderRadius: 10, background: saving ? "#94a3b8" : B, color: "white", border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 600 }}>
+                    {saving ? "Creating..." : "Create Account"}
+                  </button>
+                  <button onClick={() => setModal(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#f1f5f9", color: "#374151", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
@@ -1022,6 +1159,7 @@ export default function ProwessDashboard({
   onDeleteTask,
   onAddLog,
   onUpdateProfile,
+  onCreateMember,
   onSignOut,
 }: {
   currentUser: any;
@@ -1033,6 +1171,7 @@ export default function ProwessDashboard({
   onDeleteTask?: (id: string) => Promise<void>;
   onAddLog?: (form: any) => Promise<void>;
   onUpdateProfile?: (updates: { full_name: string; job_title: string }) => Promise<void>;
+  onCreateMember?: (form: any) => Promise<void>;
   onSignOut?: () => void;
 }) {
   const [page,       setPage]       = useState("dashboard");
@@ -1059,7 +1198,7 @@ export default function ProwessDashboard({
       case "reports":
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} />;
       case "team":
-        return user.role === "admin" ? <TeamPage users={users} /> : null;
+        return user.role === "admin" ? <TeamPage users={users} onCreateMember={onCreateMember} /> : null;
       case "settings":
         return <SettingsPage user={user} onUpdateProfile={onUpdateProfile} />;
       default:
