@@ -66,9 +66,10 @@ const normUser = (u: any) => u ? ({
 
 const normTask = (t: any) => t ? ({
   ...t,
-  assignedTo:  t.assigned_to  ?? t.assignedTo  ?? null,
-  completedAt: t.completed_at ?? t.completedAt ?? null,
-  links:       t.links        ?? [],
+  assignedTo:      t.assigned_to      ?? t.assignedTo      ?? null,
+  completedAt:     t.completed_at     ?? t.completedAt     ?? null,
+  links:           t.links            ?? [],
+  submission_links: t.submission_links ?? [],
 }) : null;
 
 const normLog = (l: any) => l ? ({
@@ -77,11 +78,73 @@ const normLog = (l: any) => l ? ({
   taskTitle: l.task_title ?? l.taskTitle ?? "",
   timeSpent: l.time_spent ?? l.timeSpent ?? 0,
   date:      l.log_date   ?? l.date      ?? "",
+  links:     l.links      ?? [],
 }) : null;
 
 const COLORS = ["#507c80","#6366f1","#ec4899","#f59e0b","#10b981","#3b82f6","#8b5cf6","#ef4444"];
 const avatarColor = (id: string) =>
   COLORS[Math.abs([...id].reduce((a, c) => a + c.charCodeAt(0), 0)) % COLORS.length];
+
+// Reusable link list display — used in task detail + log detail modals
+function LinkDisplay({ links }: { links: { label?: string; url: string }[] }) {
+  if (!links || links.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {links.map((link, i) => (
+        <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+          style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: B + "0d", borderRadius: 10, textDecoration: "none", border: `1px solid ${B}22` }}
+        >
+          <span style={{ fontSize: 16, flexShrink: 0 }}>🔗</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: B, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {link.label || link.url}
+            </div>
+            {link.label && <div style={{ fontSize: 11, color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{link.url}</div>}
+          </div>
+          <span style={{ fontSize: 12, color: "#94a3b8", flexShrink: 0 }}>↗</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+// Reusable link builder — used in create task form + activity log form
+function LinkAttacher({ links, onChange }: { links: { label: string; url: string }[]; onChange: (links: { label: string; url: string }[]) => void }) {
+  const add    = () => onChange([...links, { label: "", url: "" }]);
+  const remove = (i: number) => onChange(links.filter((_, idx) => idx !== i));
+  const update = (i: number, field: "label" | "url", val: string) =>
+    onChange(links.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+          Attach Links <span style={{ fontWeight: 400, color: "#94a3b8" }}>(optional)</span>
+        </label>
+        <button onClick={add} type="button" style={{ fontSize: 12, fontWeight: 600, color: B, background: B + "12", border: `1px solid ${B}30`, padding: "4px 12px", borderRadius: 8, cursor: "pointer" }}>
+          + Add Link
+        </button>
+      </div>
+      {links.length === 0 ? (
+        <button onClick={add} type="button" style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1.5px dashed #e2e8f0", background: "transparent", color: "#94a3b8", fontSize: 13, cursor: "pointer", textAlign: "center" }}>
+          🔗 Attach a URL, doc, or submission link
+        </button>
+      ) : links.map((link, i) => (
+        <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+            <input placeholder="Label (e.g. Google Doc, Submission, Figma)" value={link.label}
+              onChange={e => update(i, "label", e.target.value)}
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+            <input placeholder="https://" value={link.url}
+              onChange={e => update(i, "url", e.target.value)}
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+          <button onClick={() => remove(i)} type="button" style={{ padding: "8px 10px", borderRadius: 8, background: "#fef2f2", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 16, flexShrink: 0, marginTop: 2 }}>✕</button>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const PRI: Record<string, { label: string; color: string; bg: string }> = {
   high:   { label: "High",   color: "#ef4444", bg: "#fef2f2" },
@@ -580,9 +643,16 @@ function MemberDashboard({ user, tasks, logs }: any) {
 function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any) {
   const asgn = normUser(users.find((u: any) => u.id === task.assignedTo));
   const late = task.deadline < fmt(today) && task.status !== "completed";
+  const [subLinks, setSubLinks] = useState<{ label: string; url: string }[]>([]);
 
   const STATUS_ORDER = ["pending", "in-progress", "completed"];
   const currentIdx = STATUS_ORDER.indexOf(task.status);
+
+  const handleStatusUpdate = (s: string) => {
+    const validLinks = subLinks.filter(l => l.url.trim());
+    onUpdate(task.id, s, validLinks.length ? validLinks : null);
+    onClose();
+  };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -599,27 +669,19 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
           {task.description || "No description provided."}
         </div>
 
-        {/* Links section */}
+        {/* Reference links set by admin when creating the task */}
         {task.links && task.links.length > 0 && (
-          <div style={{ marginBottom: 22 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Links</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {task.links.map((link: any, i: number) => (
-                <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
-                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: B + "0d", borderRadius: 10, textDecoration: "none", border: `1px solid ${B}22` }}
-                  onClick={e => e.stopPropagation()}
-                >
-                  <span style={{ fontSize: 16 }}>🔗</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: B, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {link.label || link.url}
-                    </div>
-                    {link.label && <div style={{ fontSize: 11, color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{link.url}</div>}
-                  </div>
-                  <span style={{ fontSize: 12, color: "#94a3b8", flexShrink: 0 }}>↗</span>
-                </a>
-              ))}
-            </div>
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Reference Links</div>
+            <LinkDisplay links={task.links} />
+          </div>
+        )}
+
+        {/* Submitted work links — shown when already submitted */}
+        {task.submission_links && task.submission_links.length > 0 && (
+          <div style={{ marginBottom: 18, padding: "14px 16px", background: "#f0fdf4", borderRadius: 12, border: "1px solid #bbf7d0" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>✅ Submitted Work</div>
+            <LinkDisplay links={task.submission_links} />
           </div>
         )}
 
@@ -639,17 +701,27 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
           ))}
         </div>
 
-        {/* Status controls — admin can move in any direction, members can only move forward */}
+        {/* Submission links — member can attach URLs before marking complete */}
+        {task.status !== "completed" && (
+          <div style={{ marginBottom: 16, padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 12 }}>
+              📎 Attach work links <span style={{ fontWeight: 400, color: "#94a3b8" }}>— add before or when marking complete</span>
+            </div>
+            <LinkAttacher links={subLinks} onChange={setSubLinks} />
+          </div>
+        )}
+
+        {/* Status controls */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 10 }}>Update Status</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {STATUS_ORDER.map((s, idx) => (
-              <button
-                key={s}
+              <button key={s}
                 disabled={task.status === s || (!isPrivileged(user) && idx < currentIdx)}
-                onClick={() => { onUpdate(task.id, s); onClose(); }}
+                onClick={() => handleStatusUpdate(s)}
                 style={{
-                  padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: task.status === s ? "default" : "pointer",
+                  padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                  cursor: task.status === s ? "default" : "pointer",
                   background: task.status === s ? B : "#f1f5f9",
                   color: task.status === s ? "white" : "#374151",
                   border: task.status === s ? `2px solid ${B}` : "2px solid transparent",
@@ -681,11 +753,6 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   const [form,       setForm]       = useState({ title: "", description: "", assignedTo: "", priority: "medium", project: "", deadline: "" });
   const [links,      setLinks]      = useState<{ label: string; url: string }[]>([]);
 
-  const addLink    = () => setLinks(l => [...l, { label: "", url: "" }]);
-  const removeLink = (i: number) => setLinks(l => l.filter((_, idx) => idx !== i));
-  const updateLink = (i: number, field: "label" | "url", val: string) =>
-    setLinks(l => l.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
-
   const normTasks = tasks.map(normTask);
   const base = user.role === "admin"
     ? normTasks
@@ -699,9 +766,9 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
     (fStat === "all" || t.status === fStat) && (fPri === "all" || t.priority === fPri)
   );
 
-  const upd = (id: string, s: string) => {
-    if (onUpdateTaskStatus) onUpdateTaskStatus(id, s);
-    else setTasks((p: any[]) => p.map(t => t.id === id ? { ...t, status: s } : t));
+  const upd = (id: string, s: string, submissionLinks?: any[] | null) => {
+    if (onUpdateTaskStatus) onUpdateTaskStatus(id, s, submissionLinks);
+    else setTasks((p: any[]) => p.map(t => t.id === id ? { ...t, status: s, ...(submissionLinks ? { submission_links: submissionLinks } : {}) } : t));
   };
   const del = (id: string) => {
     if (onDeleteTask) onDeleteTask(id);
@@ -786,6 +853,11 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                         🔗 {task.links.length} link{task.links.length > 1 ? "s" : ""}
                       </span>
                     )}
+                    {task.submission_links?.length > 0 && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#16a34a", background: "#f0fdf4", padding: "2px 8px", borderRadius: 20 }}>
+                        ✅ Submitted
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div style={{ fontSize: 18, color: "#cbd5e1", flexShrink: 0, paddingTop: 2 }}>›</div>
@@ -863,39 +935,7 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
               </div>
             </div>
 
-            {/* Links builder */}
-            <div style={{ marginBottom: 22 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Links <span style={{ fontWeight: 400, color: "#94a3b8" }}>(optional)</span></label>
-                <button onClick={addLink} style={{ fontSize: 12, fontWeight: 600, color: B, background: B + "12", border: `1px solid ${B}30`, padding: "4px 12px", borderRadius: 8, cursor: "pointer" }}>
-                  + Add Link
-                </button>
-              </div>
-              {links.length === 0 && (
-                <div style={{ fontSize: 12, color: "#94a3b8", padding: "10px 14px", background: "#f8fafc", borderRadius: 10, textAlign: "center" }}>
-                  Add submission links, reference docs, or resource URLs
-                </div>
-              )}
-              {links.map((link, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-                    <input
-                      placeholder="Label (e.g. Submit here, Figma file)"
-                      value={link.label}
-                      onChange={e => updateLink(i, "label", e.target.value)}
-                      style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }}
-                    />
-                    <input
-                      placeholder="https://"
-                      value={link.url}
-                      onChange={e => updateLink(i, "url", e.target.value)}
-                      style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }}
-                    />
-                  </div>
-                  <button onClick={() => removeLink(i)} style={{ padding: "8px 10px", borderRadius: 8, background: "#fef2f2", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 16, flexShrink: 0, marginTop: 2 }}>✕</button>
-                </div>
-              ))}
-            </div>
+            <LinkAttacher links={links} onChange={setLinks} />
 
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={create} style={{ flex: 1, padding: "12px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
@@ -937,7 +977,7 @@ function LogDetailModal({ log, users, onClose, onDelete }: any) {
           {log.description}
         </div>
 
-        <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+        <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: log.links?.length ? 16 : 24 }}>
           {[
             ["Date",       log.date],
             ["Time Spent", `${log.timeSpent}h`],
@@ -950,6 +990,13 @@ function LogDetailModal({ log, users, onClose, onDelete }: any) {
             </div>
           ))}
         </div>
+
+        {log.links && log.links.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Attached Links</div>
+            <LinkDisplay links={log.links} />
+          </div>
+        )}
 
         {onDelete && (
           <button onClick={() => { onDelete(log.id); onClose(); }} style={{ width: "100%", padding: "11px", borderRadius: 10, background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
@@ -969,6 +1016,7 @@ const COMPLETION_STATUS = [
 
 function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: any) {
   const [form, setForm] = useState({ taskTitle: "", description: "", project: "", timeSpent: "", completionStatus: "in-progress" });
+  const [logLinks, setLogLinks] = useState<{ label: string; url: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [detailLog, setDetailLog] = useState<any>(null);
   const normLogs = logs.map(normLog);
@@ -985,15 +1033,18 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
   const add = async () => {
     if (!form.taskTitle || !form.description) return;
     setSaving(true);
-    if (onAddLog) await onAddLog(form);
+    const validLinks = logLinks.filter(l => l.url.trim());
+    if (onAddLog) await onAddLog({ ...form, links: validLinks });
     else setLogs((p: any[]) => [...p, {
       id: "l" + Date.now(), user_id: user.id, task_title: form.taskTitle,
       description: form.description, project: form.project,
       time_spent: parseFloat(form.timeSpent) || 0,
       completion_status: form.completionStatus,
+      links: validLinks,
       log_date: fmt(today),
     }]);
     setForm({ taskTitle: "", description: "", project: "", timeSpent: "", completionStatus: "in-progress" });
+    setLogLinks([]);
     setSaving(false);
   };
 
@@ -1052,6 +1103,8 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
               </div>
             </div>
 
+            <LinkAttacher links={logLinks} onChange={setLogLinks} />
+
             <button onClick={add} disabled={saving} style={{ width: "100%", padding: "12px", borderRadius: 10, background: saving ? "#94a3b8" : B, color: "white", border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 600 }}>
               {saving ? "Saving..." : "Log Activity"}
             </button>
@@ -1101,6 +1154,11 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
                               background: log.completion_status === "completed" ? "#f0fdf4" : log.completion_status === "blocked" ? "#fef2f2" : "#eff6ff",
                               color: log.completion_status === "completed" ? "#22c55e" : log.completion_status === "blocked" ? "#ef4444" : "#3b82f6" }}>
                               {log.completion_status === "completed" ? "Completed" : log.completion_status === "blocked" ? "Blocked" : "In Progress"}
+                            </span>
+                          )}
+                          {log.links?.length > 0 && (
+                            <span style={{ fontSize: 11, fontWeight: 600, color: B, background: B + "12", padding: "2px 8px", borderRadius: 20 }}>
+                              🔗 {log.links.length} link{log.links.length > 1 ? "s" : ""}
                             </span>
                           )}
                         </div>
