@@ -77,9 +77,23 @@ export default function DashboardPage() {
       description: form.description,
       project: form.project,
       time_spent: parseFloat(form.timeSpent) || 0,
+      completion_status: form.completionStatus || "in-progress",
       log_date: new Date().toISOString().split("T")[0],
     }).select().single();
     if (!error && data) setState((p: any) => ({ ...p, logs: [data, ...p.logs] }));
+  }
+
+  async function createMember(form: any) {
+    const res = await fetch("/api/create-member", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to create account.");
+    // Reload users list so the new member appears immediately
+    const { data: users } = await supabase.from("profiles").select("*").order("full_name");
+    setState((p: any) => ({ ...p, users: users || [] }));
   }
 
   async function updateProfile(updates: { full_name: string; job_title: string }) {
@@ -103,6 +117,7 @@ export default function DashboardPage() {
       onDeleteTask={deleteTask}
       onAddLog={addLog}
       onUpdateProfile={updateProfile}
+      onCreateMember={createMember}
       onSignOut={signOut}
     />
   );
