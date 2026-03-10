@@ -919,8 +919,27 @@ function TeamPage({ users }: any) {
   );
 }
 
-function SettingsPage({ user }: any) {
+function SettingsPage({ user, onUpdateProfile }: any) {
   const nu = normUser(user);
+  const [name,    setName]    = useState(nu.name   || "");
+  const [title,   setTitle]   = useState(nu.title  || "");
+  const [status,  setStatus]  = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  async function save() {
+    if (!onUpdateProfile) return;
+    setStatus("saving");
+    try {
+      await onUpdateProfile({ full_name: name, job_title: title });
+      setStatus("saved");
+      setTimeout(() => setStatus("idle"), 2500);
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  const btnLabel = status === "saving" ? "Saving..." : status === "saved" ? "Saved!" : status === "error" ? "Error, try again" : "Save Changes";
+  const btnColor = status === "saved" ? "#22c55e" : status === "error" ? "#ef4444" : B;
+
   return (
     <div style={{ padding: "24px 28px", maxWidth: 580 }}>
       <Card style={{ padding: 32, marginBottom: 16 }}>
@@ -928,24 +947,48 @@ function SettingsPage({ user }: any) {
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 26, padding: 20, background: "#f8fafc", borderRadius: 14 }}>
           <Av user={user} size={54} />
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>{nu.name}</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>{name || nu.name}</div>
             <div style={{ fontSize: 13, color: "#64748b" }}>{user.email}</div>
             <span style={{ marginTop: 6, display: "inline-block", fontSize: 11, fontWeight: 600, padding: "3px 12px", borderRadius: 20, background: B + "18", color: B }}>
-              {user.role === "admin" ? "Administrator" : nu.title}
+              {user.role === "admin" ? "Administrator" : title || nu.title}
             </span>
           </div>
         </div>
-        {[["Full Name", nu.name], ["Email Address", user.email], ["Job Title", nu.title]].map(([label, val]) => (
-          <div key={label} style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>{label}</label>
-            <input
-              defaultValue={val}
-              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none", background: "#fafafa" }}
-            />
-          </div>
-        ))}
-        <button style={{ marginTop: 8, padding: "12px 24px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
-          Save Changes
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Full Name</label>
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }}
+          />
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Email Address</label>
+          <input
+            value={user.email}
+            disabled
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none", background: "#f8fafc", color: "#94a3b8" }}
+          />
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>Email cannot be changed here</div>
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Job Title</label>
+          <input
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }}
+          />
+        </div>
+
+        <button
+          onClick={save}
+          disabled={status === "saving"}
+          style={{ padding: "12px 24px", borderRadius: 10, background: btnColor, color: "white", border: "none", cursor: status === "saving" ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 600, transition: "background 0.2s" }}
+        >
+          {btnLabel}
         </button>
       </Card>
       <Card style={{ padding: 32 }}>
@@ -968,7 +1011,7 @@ function SettingsPage({ user }: any) {
   );
 }
 
-// This is the main component that your dashboard page.tsx uses
+// This is the main component
 export default function ProwessDashboard({
   currentUser,
   users = [],
@@ -978,6 +1021,7 @@ export default function ProwessDashboard({
   onUpdateTaskStatus,
   onDeleteTask,
   onAddLog,
+  onUpdateProfile,
   onSignOut,
 }: {
   currentUser: any;
@@ -988,6 +1032,7 @@ export default function ProwessDashboard({
   onUpdateTaskStatus?: (id: string, status: string) => Promise<void>;
   onDeleteTask?: (id: string) => Promise<void>;
   onAddLog?: (form: any) => Promise<void>;
+  onUpdateProfile?: (updates: { full_name: string; job_title: string }) => Promise<void>;
   onSignOut?: () => void;
 }) {
   const [page,       setPage]       = useState("dashboard");
@@ -1016,7 +1061,7 @@ export default function ProwessDashboard({
       case "team":
         return user.role === "admin" ? <TeamPage users={users} /> : null;
       case "settings":
-        return <SettingsPage user={user} />;
+        return <SettingsPage user={user} onUpdateProfile={onUpdateProfile} />;
       default:
         return null;
     }
