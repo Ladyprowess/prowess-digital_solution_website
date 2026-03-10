@@ -1593,7 +1593,7 @@ export default function ProwessDashboard({
   tasks?: any[];
   logs?: any[];
   onCreateTask?: (form: any) => Promise<void>;
-  onUpdateTaskStatus?: (id: string, status: string) => Promise<void>;
+  onUpdateTaskStatus?: (id: string, status: string, submissionLinks?: any[] | null) => Promise<void>;
   onDeleteTask?: (id: string) => Promise<void>;
   onAddLog?: (form: any) => Promise<void>;
   onDeleteLog?: (id: string) => Promise<void>;
