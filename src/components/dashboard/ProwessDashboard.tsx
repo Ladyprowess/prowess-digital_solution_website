@@ -6,7 +6,7 @@ import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
 
-// ─── iOS Safari zoom fix + global mobile resets ───────────────────────────────
+// --- iOS Safari zoom fix + global mobile resets -------------------------------
 // Safari zooms when inputs have font-size < 16px. This injects the fix once.
 const MOBILE_CSS = `
   input, textarea, select, button {
@@ -85,7 +85,7 @@ const COLORS = ["#507c80","#6366f1","#ec4899","#f59e0b","#10b981","#3b82f6","#8b
 const avatarColor = (id: string) =>
   COLORS[Math.abs([...id].reduce((a, c) => a + c.charCodeAt(0), 0)) % COLORS.length];
 
-// Reusable link list display — used in task detail + log detail modals
+// Reusable link list display - used in task detail + log detail modals
 function LinkDisplay({ links }: { links: { label?: string; url: string }[] }) {
   if (!links || links.length === 0) return null;
   return (
@@ -109,7 +109,7 @@ function LinkDisplay({ links }: { links: { label?: string; url: string }[] }) {
   );
 }
 
-// Reusable link builder — used in create task form + activity log form
+// Reusable link builder - used in create task form + activity log form
 function LinkAttacher({ links, onChange }: { links: { label: string; url: string }[]; onChange: (links: { label: string; url: string }[]) => void }) {
   const add    = () => onChange([...links, { label: "", url: "" }]);
   const remove = (i: number) => onChange(links.filter((_, idx) => idx !== i));
@@ -285,7 +285,7 @@ const NAV = [
   { id: "settings",    label: "Settings",     icon: "⚙️" },
 ];
 
-// ─── Mobile drawer (slides in from left) ──────────────────────────────────────
+// --- Mobile drawer (slides in from left) --------------------------------------
 function MobileDrawer({ user, page, setPage, onLogout, open, onClose }: any) {
   const items = NAV.filter(n => !n.privileged || isPrivileged(user));
   return (
@@ -375,7 +375,7 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose }: any) {
   );
 }
 
-// ─── Desktop sidebar ───────────────────────────────────────────────────────────
+// --- Desktop sidebar -----------------------------------------------------------
 function Sidebar({ user, page, setPage, onLogout, open, setOpen }: any) {
   return (
     <div style={{
@@ -522,7 +522,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }
   ];
   const recent = [...logs].map(normLog).sort((a: any, b: any) => b.date.localeCompare(a.date)).slice(0, 5);
 
-  // ── KPI health for this month ──────────────────────────────────────────────
+  // -- KPI health for this month ----------------------------------------------
   const thisMonth = fmt(today).slice(0, 7);
   const monthKpis = (kpiAssignments || []).filter((a: any) => a.month === thisMonth);
   const staffUsers = (users || []).filter((u: any) => u.role === "member" || u.role === "leader");
@@ -591,7 +591,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{u?.name}</div>
                     <div style={{ fontSize: 12, color: "#64748b" }}>
-                      {log.taskTitle} {" · "} {log.timeSpent}h {" · "} {log.project}
+                      {log.taskTitle} {" | "} {log.timeSpent}h {" | "} {log.project}
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8" }}>{log.date}</div>
                   </div>
@@ -631,13 +631,13 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }
           </button>
         </Card>
       </div>
-      {/* ── KPI Health this month ── */}
+      {/* -- KPI Health this month -- */}
       {(kpiTotal > 0 || membersWithoutKpi.length > 0) && (
         <Card style={{ padding: 22 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>🎯 KPI Health — {new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>🎯 KPI Health - {new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
             <button onClick={() => setPage("kpi")} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, background: B + "12", border: `1px solid ${B}30`, color: B, fontWeight: 600, cursor: "pointer" }}>
-              Manage KPIs →
+              Manage KPIs ->
             </button>
           </div>
 
@@ -713,7 +713,7 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
   pts = Math.max(0, pts + myL.length * 2);
   const prog = myT.length ? Math.round(done / myT.length * 100) : 0;
 
-  // ── KPI snapshot ──────────────────────────────────────────────────────────
+  // -- KPI snapshot ----------------------------------------------------------
   const thisMonth   = fmt(today).slice(0, 7);
   const myKpis      = (kpiAssignments || []).filter((a: any) => a.assigned_to === user.id && a.month === thisMonth);
   const kpiOnTrack  = myKpis.filter((a: any) => kpiPct(kpiCurrentValue(a, kpiLogs || []), a.target_value) >= 50).length;
@@ -745,13 +745,13 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
         </div>
       </Card>
 
-      {/* ── KPI Summary card ── */}
+      {/* -- KPI Summary card -- */}
       {myKpis.length > 0 && (
         <Card style={{ padding: 20 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>🎯 My KPIs this month</div>
             <button onClick={() => setPage("kpi")} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, background: B + "12", border: `1px solid ${B}30`, color: B, fontWeight: 600, cursor: "pointer" }}>
-              View all →
+              View all ->
             </button>
           </div>
 
@@ -798,7 +798,7 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
                     <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{a.metric_name}</span>
                     <span style={{ fontSize: 12, color: barColor, fontWeight: 700 }}>
                       {cur} / {a.target_value} {a.unit}
-                      {a.verdict && <> {" · "} <VerdictBadge verdict={a.verdict} /></>}
+                      {a.verdict && <> {" | "} <VerdictBadge verdict={a.verdict} /></>}
                     </span>
                   </div>
                   <div style={{ height: 6, background: "#f1f5f9", borderRadius: 99, overflow: "hidden" }}>
@@ -809,7 +809,7 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
             })}
             {myKpis.length > 4 && (
               <button onClick={() => setPage("kpi")} style={{ fontSize: 12, color: B, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, marginTop: 2 }}>
-                +{myKpis.length - 4} more KPIs →
+                +{myKpis.length - 4} more KPIs ->
               </button>
             )}
           </div>
@@ -852,7 +852,7 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
                   <div style={{ fontSize: 11, color: "#94a3b8" }}>{log.timeSpent}h</div>
                 </div>
                 <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{log.description}</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{log.project} {" · "} {log.date}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{log.project} {" | "} {log.date}</div>
               </div>
             ))}
             {myL.length === 0 && <div style={{ color: "#94a3b8", fontSize: 13 }}>No activity logged yet.</div>}
@@ -900,7 +900,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
           </div>
         )}
 
-        {/* Submitted work links — shown when already submitted */}
+        {/* Submitted work links - shown when already submitted */}
         {task.submission_links && task.submission_links.length > 0 && (
           <div style={{ marginBottom: 18, padding: "14px 16px", background: "#f0fdf4", borderRadius: 12, border: "1px solid #bbf7d0" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>✅ Submitted Work</div>
@@ -924,11 +924,11 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
           ))}
         </div>
 
-        {/* Submission links — member can attach URLs before marking complete */}
+        {/* Submission links - member can attach URLs before marking complete */}
         {task.status !== "completed" && (
           <div style={{ marginBottom: 16, padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 12 }}>
-              📎 Attach work links <span style={{ fontWeight: 400, color: "#94a3b8" }}>— add before or when marking complete</span>
+              📎 Attach work links <span style={{ fontWeight: 400, color: "#94a3b8" }}>- add before or when marking complete</span>
             </div>
             <LinkAttacher links={subLinks} onChange={setSubLinks} />
           </div>
@@ -1083,7 +1083,7 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                     )}
                   </div>
                 </div>
-                <div style={{ fontSize: 18, color: "#cbd5e1", flexShrink: 0, paddingTop: 2 }}>›</div>
+                <div style={{ fontSize: 18, color: "#cbd5e1", flexShrink: 0, paddingTop: 2 }}>></div>
               </div>
             </Card>
           );
@@ -1115,11 +1115,11 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
             </div>
 
-            {/* Description — textarea */}
+            {/* Description - textarea */}
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Description</label>
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={4}
-                placeholder="Full task details, instructions, requirements…"
+                placeholder="Full task details, instructions, requirements..."
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit", lineHeight: 1.6 }} />
             </div>
 
@@ -1455,7 +1455,7 @@ function LeaderboardPage({ tasks, logs, users }: any) {
                   <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>
                     {s.score}<span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400 }}>pt</span>
                   </div>
-                  <div style={{ fontSize: 11, color: "#64748b" }}>{s.tasksCompleted} done {" · "} {s.logsCount} logs</div>
+                  <div style={{ fontSize: 11, color: "#64748b" }}>{s.tasksCompleted} done {" | "} {s.logsCount} logs</div>
                 </div>
               </div>
             );
@@ -1796,7 +1796,7 @@ function SettingsPage({ user, onUpdateProfile }: any) {
   );
 }
 
-// ─── KPI helpers ──────────────────────────────────────────────────────────────
+// --- KPI helpers --------------------------------------------------------------
 function kpiCurrentValue(assignment: any, logs: any[]): number {
   const myLogs = logs.filter((l: any) => l.assignment_id === assignment.id)
     .sort((a: any, b: any) => a.created_at?.localeCompare(b.created_at));
@@ -1827,7 +1827,7 @@ function VerdictBadge({ verdict }: { verdict: string }) {
   );
 }
 
-// ─── KPI Page ─────────────────────────────────────────────────────────────────
+// --- KPI Page -----------------------------------------------------------------
 function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onLogKPI, onSetVerdict, onDeleteAssignment }: any) {
   const [month,        setMonth]        = useState(() => fmt(today).slice(0, 7));
   const [showAssign,   setShowAssign]   = useState(false);
@@ -1864,7 +1864,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
       })
     : [normUser((users || []).find((u: any) => u.id === user.id)) || user];
 
-  // ── Assign KPI modal ────────────────────────────────────────────────────────
+  // -- Assign KPI modal --------------------------------------------------------
   const [aForm, setAForm] = useState({
     assignMode: "individual" as "individual" | "role",
     assignTo: "",
@@ -1905,7 +1905,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
     } finally { setSaving(false); }
   }
 
-  // ── Log KPI modal ───────────────────────────────────────────────────────────
+  // -- Log KPI modal -----------------------------------------------------------
   const [lForm, setLForm] = useState({ value: "", note: "" });
 
   async function submitLog() {
@@ -1918,7 +1918,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
     } finally { setSaving(false); }
   }
 
-  // ── Verdict modal ───────────────────────────────────────────────────────────
+  // -- Verdict modal -----------------------------------------------------------
   const [vForm, setVForm] = useState({ verdict: "", note: "" });
 
   async function submitVerdict() {
@@ -1931,7 +1931,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
     } finally { setSaving(false); }
   }
 
-  // ── KPI card for a single assignment ───────────────────────────────────────
+  // -- KPI card for a single assignment ---------------------------------------
   function KPICard({ assignment, canManage, isMine }: { assignment: any; canManage: boolean; isMine: boolean }) {
     const logs = (kpiLogs || []).filter((l: any) => l.assignment_id === assignment.id)
       .sort((a: any, b: any) => b.created_at?.localeCompare(a.created_at));
@@ -1945,7 +1945,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{assignment.metric_name}</div>
             <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-              {assignment.metric_type === "cumulative" ? "📈 Cumulative" : "📸 Snapshot"} {" · "} Target: <strong style={{ color: "#475569" }}>{assignment.target_value} {assignment.unit}</strong>
+              {assignment.metric_type === "cumulative" ? "📈 Cumulative" : "📸 Snapshot"} {" | "} Target: <strong style={{ color: "#475569" }}>{assignment.target_value} {assignment.unit}</strong>
             </div>
           </div>
           {assignment.verdict
@@ -2001,7 +2001,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
     );
   }
 
-  // ── Member KPI summary card (admin/leader view) ─────────────────────────────
+  // -- Member KPI summary card (admin/leader view) -----------------------------
   function MemberKPICard({ member }: { member: any }) {
     const mu = normUser(member);
     if (!mu) return null;
@@ -2032,7 +2032,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
               )
             }
           </div>
-          <span style={{ fontSize: 18, color: "#94a3b8", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}>›</span>
+          <span style={{ fontSize: 18, color: "#94a3b8", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}>></span>
         </button>
 
         {isOpen && (
@@ -2057,7 +2057,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
     );
   }
 
-  // ── My KPIs (member view) ───────────────────────────────────────────────────
+  // -- My KPIs (member view) ---------------------------------------------------
   const myAssignments = monthAssignments.filter((a: any) => a.assigned_to === user.id);
   const myTotal = myAssignments.length;
   const myMet = myAssignments.filter((a: any) => a.verdict === "met" || a.verdict === "exceeded").length;
@@ -2070,9 +2070,9 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         {/* Month navigator */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "white", borderRadius: 12, padding: "6px 8px", border: "1px solid #e2e8f0" }}>
-          <button onClick={prevMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+          <button onClick={prevMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}><</button>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", minWidth: 140, textAlign: "center" }}>{monthLabel()}</span>
-          <button onClick={nextMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+          <button onClick={nextMonth} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}>></button>
         </div>
         {isPrivileged(user) && isCurrentMonth && (
           <button onClick={() => setShowAssign(true)} style={{ padding: "10px 18px", borderRadius: 11, background: B, border: "none", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
@@ -2123,11 +2123,11 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
         </div>
       )}
 
-      {/* ── Assign KPI modal ── */}
+      {/* -- Assign KPI modal -- */}
       {showAssign && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={e => { if (e.target === e.currentTarget) setShowAssign(false); }}>
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 24px 40px" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}>🎯 Assign KPI — {monthLabel()}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}>🎯 Assign KPI - {monthLabel()}</div>
 
             {/* Assign mode */}
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
@@ -2142,10 +2142,10 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
               <div style={{ marginBottom: 14 }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Assign to</label>
                 <select value={aForm.assignTo} onChange={e => setAForm(f => ({ ...f, assignTo: e.target.value }))} style={{ ...SEL, width: "100%" }}>
-                  <option value="">Select member…</option>
+                  <option value="">Select member...</option>
                   {visibleUsers.map((u: any) => {
                     const nu = normUser(u);
-                    return <option key={nu.id} value={nu.id}>{nu.name} {nu.title ? `— ${nu.title}` : ""}</option>;
+                    return <option key={nu.id} value={nu.id}>{nu.name} {nu.title ? `- ${nu.title}` : ""}</option>;
                   })}
                 </select>
               </div>
@@ -2153,7 +2153,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
               <div style={{ marginBottom: 14 }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Apply to all members with role</label>
                 <select value={aForm.assignRole} onChange={e => setAForm(f => ({ ...f, assignRole: e.target.value }))} style={{ ...SEL, width: "100%" }}>
-                  <option value="">Select role…</option>
+                  <option value="">Select role...</option>
                   {roleOptions.map((r: any) => <option key={r} value={r}>{r}</option>)}
                 </select>
                 {aForm.assignRole && (
@@ -2191,53 +2191,53 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
             </div>
 
             <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 20, padding: "8px 12px", background: "#f8fafc", borderRadius: 8 }}>
-              <strong>Cumulative</strong> — numbers add up (emails sent, clients onboarded, posts published) &nbsp;{" · "}&nbsp; <strong>Snapshot</strong> — latest reading wins (follower count, revenue figure, engagement rate)
+              <strong>Cumulative</strong> - numbers add up (emails sent, clients onboarded, posts published) &nbsp;{" | "}&nbsp; <strong>Snapshot</strong> - latest reading wins (follower count, revenue figure, engagement rate)
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowAssign(false)} style={{ flex: 1, padding: "12px", borderRadius: 11, background: "#f1f5f9", border: "none", color: "#64748b", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Cancel</button>
               <button onClick={submitAssign} disabled={saving} style={{ flex: 2, padding: "12px", borderRadius: 11, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
-                {saving ? "Assigning…" : "Assign KPI"}
+                {saving ? "Assigning..." : "Assign KPI"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Log Progress modal ── */}
+      {/* -- Log Progress modal -- */}
       {showLog && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={e => { if (e.target === e.currentTarget) setShowLog(null); }}>
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 500, padding: "28px 24px 40px" }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>📊 Log Progress</div>
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
-              {showLog.metric_name} {" · "} Target: {showLog.target_value} {showLog.unit}
+              {showLog.metric_name} {" | "} Target: {showLog.target_value} {showLog.unit}
               <span style={{ marginLeft: 8, fontSize: 12, color: "#94a3b8" }}>({showLog.metric_type === "cumulative" ? "adds to total" : "replaces last value"})</span>
             </div>
 
             <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>
               {showLog.metric_type === "cumulative" ? "How many did you achieve? (will be added to your total)" : "What is the current value?"}
             </label>
-            <input type="number" value={lForm.value} onChange={e => setLForm(f => ({ ...f, value: e.target.value }))} placeholder={`Enter ${showLog.unit}…`} style={{ ...SEL, width: "100%", marginBottom: 14 }} autoFocus />
+            <input type="number" value={lForm.value} onChange={e => setLForm(f => ({ ...f, value: e.target.value }))} placeholder={`Enter ${showLog.unit}...`} style={{ ...SEL, width: "100%", marginBottom: 14 }} autoFocus />
 
             <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Note (optional)</label>
-            <textarea value={lForm.note} onChange={e => setLForm(f => ({ ...f, note: e.target.value }))} placeholder="Add context about this achievement…" rows={3} style={{ ...SEL, width: "100%", resize: "none", marginBottom: 20 }} />
+            <textarea value={lForm.note} onChange={e => setLForm(f => ({ ...f, note: e.target.value }))} placeholder="Add context about this achievement..." rows={3} style={{ ...SEL, width: "100%", resize: "none", marginBottom: 20 }} />
 
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowLog(null)} style={{ flex: 1, padding: "12px", borderRadius: 11, background: "#f1f5f9", border: "none", color: "#64748b", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Cancel</button>
               <button onClick={submitLog} disabled={saving || !lForm.value} style={{ flex: 2, padding: "12px", borderRadius: 11, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: saving || !lForm.value ? 0.6 : 1 }}>
-                {saving ? "Saving…" : "Log Progress"}
+                {saving ? "Saving..." : "Log Progress"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Verdict modal ── */}
+      {/* -- Verdict modal -- */}
       {showVerdict && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={e => { if (e.target === e.currentTarget) setShowVerdict(null); }}>
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 500, padding: "28px 24px 40px" }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>⚖️ Set Verdict</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>{showVerdict.metric_name} — {kpiCurrentValue(showVerdict, kpiLogs || [])} / {showVerdict.target_value} {showVerdict.unit} achieved</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>{showVerdict.metric_name} - {kpiCurrentValue(showVerdict, kpiLogs || [])} / {showVerdict.target_value} {showVerdict.unit} achieved</div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
               {Object.entries(VERDICT_CFG).map(([key, cfg]) => (
@@ -2254,24 +2254,24 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
             </div>
 
             <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Feedback / Comment (optional)</label>
-            <textarea value={vForm.note} onChange={e => setVForm(f => ({ ...f, note: e.target.value }))} placeholder="Leave a note for the team member…" rows={3} style={{ ...SEL, width: "100%", resize: "none", marginBottom: 20 }} />
+            <textarea value={vForm.note} onChange={e => setVForm(f => ({ ...f, note: e.target.value }))} placeholder="Leave a note for the team member..." rows={3} style={{ ...SEL, width: "100%", resize: "none", marginBottom: 20 }} />
 
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowVerdict(null)} style={{ flex: 1, padding: "12px", borderRadius: 11, background: "#f1f5f9", border: "none", color: "#64748b", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Cancel</button>
               <button onClick={submitVerdict} disabled={saving || !vForm.verdict} style={{ flex: 2, padding: "12px", borderRadius: 11, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: saving || !vForm.verdict ? 0.6 : 1 }}>
-                {saving ? "Saving…" : "Submit Verdict"}
+                {saving ? "Saving..." : "Submit Verdict"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Log history modal ── */}
+      {/* -- Log history modal -- */}
       {showHistory && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={e => { if (e.target === e.currentTarget) setShowHistory(null); }}>
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 500, maxHeight: "80vh", overflowY: "auto", padding: "28px 24px 40px" }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>{showHistory.metric_name}</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>Log history {" · "} {monthLabel()}</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>Log history {" | "} {monthLabel()}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {(kpiLogs || [])
                 .filter((l: any) => l.assignment_id === showHistory.id)
@@ -2410,7 +2410,7 @@ export default function ProwessDashboard({
         />
       )}
 
-      {/* Desktop sidebar — hidden on mobile */}
+      {/* Desktop sidebar - hidden on mobile */}
       {!isMobile && (
         <Sidebar user={user} page={page} setPage={setPage} onLogout={onSignOut} open={sidebarOpen} setOpen={setSidebarOpen} />
       )}
