@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import SiteShell from "@/components/SiteShell";
 import { brand } from "@/content/site";
@@ -134,7 +135,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
 
-        <SiteShell>{children}</SiteShell>
+        <Suspense>
+          <SiteShell>{children}</SiteShell>
+        </Suspense>
       </body>
     </html>
   );
