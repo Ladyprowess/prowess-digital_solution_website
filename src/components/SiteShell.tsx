@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const hideShell = pathname.startsWith("/dashboard") || pathname.startsWith("/login");
+  const hideShell = pathname.startsWith("/dashboard") || pathname.startsWith("/tools") || pathname.startsWith("/login");
 
   if (hideShell) {
     return <>{children}</>;
