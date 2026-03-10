@@ -1610,7 +1610,7 @@ function ReportsPage({ tasks, logs, users, user }: any) {
   );
 }
 
-function TeamPage({ users, user, onCreateMember }: any) {
+function TeamPage({ users, user, onCreateMember, onAssignLeader }: any) {
   const [modal,  setModal]  = useState(false);
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState("");
@@ -1649,6 +1649,8 @@ function TeamPage({ users, user, onCreateMember }: any) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px,1fr))", gap: 14 }}>
         {users.map((u: any) => {
           const nu = normUser(u);
+          const leaders = users.filter((x: any) => x.role === "leader");
+          const assignedLeader = u.managed_by ? normUser(users.find((x: any) => x.id === u.managed_by)) : null;
           return (
             <Card key={u.id} style={{ padding: 24, textAlign: "center" }}>
               <Av user={u} size={54} />
@@ -1660,6 +1662,32 @@ function TeamPage({ users, user, onCreateMember }: any) {
                 {u.role === "admin" ? "Admin" : u.role === "leader" ? "Leader" : "Member"}
               </span>
               <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 8 }}>{u.email}</div>
+
+              {/* Assign leader - admin only, only for non-admin users */}
+              {user.role === "admin" && u.role !== "admin" && leaders.length > 0 && (
+                <div style={{ marginTop: 14, textAlign: "left" }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: 5 }}>
+                    Team Leader
+                  </label>
+                  <select
+                    value={u.managed_by || ""}
+                    onChange={e => onAssignLeader?.(u.id, e.target.value || null)}
+                    style={{ ...SEL, width: "100%", fontSize: 13 }}
+                  >
+                    <option value="">-- No leader assigned --</option>
+                    {leaders.map((l: any) => (
+                      <option key={l.id} value={l.id}>{normUser(l).name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Show assigned leader for non-admin view */}
+              {user.role !== "admin" && assignedLeader && (
+                <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
+                  Leader: <strong>{assignedLeader.name}</strong>
+                </div>
+              )}
             </Card>
           );
         })}
@@ -2069,7 +2097,12 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
               : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 16 }}>
                   {myAssignments.map((a: any) => (
-                    <KPICard key={a.id} assignment={a} canManage={true} isMine={false} />
+                    <KPICard
+                      key={a.id}
+                      assignment={a}
+                      canManage={user.role === "admin" || (user.role === "leader" && member.role !== "admin")}
+                      isMine={mu.id === user.id}
+                    />
                   ))}
                 </div>
               )
@@ -2336,6 +2369,7 @@ export default function ProwessDashboard({
   onAddLog,
   onDeleteLog,
   onUpdateProfile,
+  onAssignLeader,
   onCreateMember,
   onSignOut,
 }: {
@@ -2412,7 +2446,7 @@ export default function ProwessDashboard({
       case "reports":
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
       case "team":
-        return isPrivileged(user) ? <TeamPage users={users} user={user} onCreateMember={onCreateMember} /> : null;
+        return isPrivileged(user) ? <TeamPage users={users} user={user} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} /> : null;
       case "settings":
         return <SettingsPage user={user} onUpdateProfile={onUpdateProfile} />;
       default:
