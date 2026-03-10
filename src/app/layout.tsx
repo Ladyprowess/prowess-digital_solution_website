@@ -1,30 +1,23 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import SiteShell from "@/components/SiteShell";
 import { brand } from "@/content/site";
 import Script from "next/script";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
-// ✅ SEO + Social metadata (site-wide)
 export const metadata: Metadata = {
   title: {
     default: `${brand.name} | Business Structure and Guidance for Africa`,
     template: `%s | ${brand.name}`,
   },
-
   description:
     "Prowess Digital Solutions provides structured guidance to help business owners gain clarity, build strong business systems, and run organised, sustainable businesses.",
-
   metadataBase: new URL(SITE_URL),
-
-  // ✅ Canonical (helps Google pick the correct URL)
   alternates: {
     canonical: `${SITE_URL}/`,
   },
-
-  // ✅ Indexing rules
   robots: {
     index: true,
     follow: true,
@@ -36,8 +29,6 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-
-  // ✅ Small extra signals (safe + aligned)
   applicationName: brand.name,
   category: "Business consulting",
   keywords: [
@@ -52,7 +43,6 @@ export const metadata: Metadata = {
     "business consulting Nigeria",
     "business operations guidance",
   ],
-
   openGraph: {
     title: `${brand.name}`,
     description:
@@ -69,7 +59,6 @@ export const metadata: Metadata = {
       },
     ],
   },
-
   twitter: {
     card: "summary_large_image",
     title: brand.name,
@@ -79,8 +68,6 @@ export const metadata: Metadata = {
   },
 };
 
-// ✅ 1) SITE-WIDE SCHEMA (Organisation + Website)
-// Using ProfessionalService fits your positioning better than generic Organization.
 const orgSchema = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
@@ -95,7 +82,6 @@ const orgSchema = {
     name: "Africa",
   },
   sameAs: [
-    // ✅ Keep only links that are real and active
     "https://www.instagram.com/prowessdigitalsolutions",
     "https://twitter.com/prowessDS",
     "https://www.linkedin.com/company/prowess-digital-solutions",
@@ -113,13 +99,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-GB">
       <head>
-        {/* Google Analytics (GA4) */}
         <Script
-  src="https://www.googletagmanager.com/gtag/js?id=G-N9N42PJ7YT"
-  strategy="afterInteractive"
-  async
-  crossOrigin="anonymous"
-/>
+          src="https://www.googletagmanager.com/gtag/js?id=G-N9N42PJ7YT"
+          strategy="afterInteractive"
+          async
+          crossOrigin="anonymous"
+        />
         <Script id="ga4" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
@@ -128,34 +113,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             gtag('config', 'G-N9N42PJ7YT');
           `}
         </Script>
-
-        {/* Google AdSense */}
-<Script
-  id="adsense"
-  async
-  strategy="afterInteractive"
-  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7888248635786937"
-  crossOrigin="anonymous"
-/>
+        <Script
+          id="adsense"
+          async
+          strategy="afterInteractive"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7888248635786937"
+          crossOrigin="anonymous"
+        />
       </head>
       <body>
-        {/* ✅ Inject JSON-LD */}
         <Script
-  id="schema-org"
-  type="application/ld+json"
-  strategy="beforeInteractive"
-  dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
-/>
-<Script
-  id="schema-website"
-  type="application/ld+json"
-  strategy="beforeInteractive"
-  dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-/>
+          id="schema-org"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        />
+        <Script
+          id="schema-website"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
 
-        <Navbar />
-        <main className="min-h-[70vh]">{children}</main>
-        <Footer />
+        <Suspense>
+          <SiteShell>{children}</SiteShell>
+        </Suspense>
       </body>
     </html>
   );
