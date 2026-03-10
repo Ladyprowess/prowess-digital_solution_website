@@ -82,6 +82,11 @@ export default function DashboardPage() {
     if (!error && data) setState((p: any) => ({ ...p, logs: [data, ...p.logs] }));
   }
 
+  async function updateProfile(updates: { full_name: string; job_title: string }) {
+    await supabase.from("profiles").update(updates).eq("id", state.profile.id);
+    setState((p: any) => ({ ...p, profile: { ...p.profile, ...updates } }));
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     router.push("/login");
@@ -97,6 +102,7 @@ export default function DashboardPage() {
       onUpdateTaskStatus={updateTaskStatus}
       onDeleteTask={deleteTask}
       onAddLog={addLog}
+      onUpdateProfile={updateProfile}
       onSignOut={signOut}
     />
   );
