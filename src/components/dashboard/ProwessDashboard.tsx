@@ -1610,12 +1610,13 @@ function ReportsPage({ tasks, logs, users, user }: any) {
   );
 }
 
-function TeamPage({ users, user, onCreateMember, onAssignLeader }: any) {
-  const [modal,  setModal]  = useState(false);
+function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: any) {
+  const [modal,        setModal]        = useState(false);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState("");
   const [done,   setDone]   = useState(false);
-  const [form,   setForm]   = useState({ fullName: "", email: "", password: "", jobTitle: "", role: "member" });
+  const [form,   setForm]   = useState({ fullName: "", email: "", password: "", jobTitle: "", role: "member", managedBy: "" });
 
   async function add() {
     if (!form.fullName || !form.email || !form.password) {
@@ -1625,9 +1626,9 @@ function TeamPage({ users, user, onCreateMember, onAssignLeader }: any) {
     setSaving(true);
     setError("");
     try {
-      await onCreateMember(form);
+      await onCreateMember({ ...form, managed_by: form.managedBy || null });
       setDone(true);
-      setTimeout(() => { setDone(false); setModal(false); setForm({ fullName: "", email: "", password: "", jobTitle: "", role: "member" }); }, 1500);
+      setTimeout(() => { setDone(false); setModal(false); setForm({ fullName: "", email: "", password: "", jobTitle: "", role: "member", managedBy: "" }); }, 1500);
     } catch (e: any) {
       setError(e.message || "Something went wrong. Please try again.");
     }
@@ -1649,10 +1650,13 @@ function TeamPage({ users, user, onCreateMember, onAssignLeader }: any) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px,1fr))", gap: 14 }}>
         {users.map((u: any) => {
           const nu = normUser(u);
-          const leaders = users.filter((x: any) => x.role === "leader");
+          const leaders = users.filter((x: any) => x.role === "leader" || x.role === "admin");
           const assignedLeader = u.managed_by ? normUser(users.find((x: any) => x.id === u.managed_by)) : null;
           return (
-            <Card key={u.id} style={{ padding: 24, textAlign: "center" }}>
+            <Card key={u.id} style={{ padding: 24, textAlign: "center", cursor: "pointer", transition: "box-shadow 0.2s", }}
+              onClick={() => setSelectedMember(u)}
+              onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 20px rgba(80,124,128,0.15)")}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow = "")}>
               <Av user={u} size={54} />
               <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 12 }}>{nu.name}</div>
               <div style={{ fontSize: 13, color: "#64748b" }}>{nu.title || (u.role === "admin" ? "Administrator" : u.role === "leader" ? "Team Leader" : "Team Member")}</div>
@@ -1662,17 +1666,121 @@ function TeamPage({ users, user, onCreateMember, onAssignLeader }: any) {
                 {u.role === "admin" ? "Admin" : u.role === "leader" ? "Leader" : "Member"}
               </span>
               <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 8 }}>{u.email}</div>
+              {assignedLeader && (
+                <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
+                  Leader: <strong>{assignedLeader.name}</strong>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
 
-              {/* Assign leader - admin only, only for non-admin users */}
-              {user.role === "admin" && u.role !== "admin" && leaders.length > 0 && (
-                <div style={{ marginTop: 14, textAlign: "left" }}>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: 5 }}>
-                    Team Leader
-                  </label>
+      {/* Member detail modal */}
+      {selectedMember && (() => {
+        const mu = normUser(selectedMember);
+        const leaders = users.filter((x: any) => x.role === "leader" || x.role === "admin");
+        const assignedLeader = selectedMember.managed_by ? normUser(users.find((x: any) => x.id === selectedMember.managed_by)) : null;
+        const memberTasks = (tasks || []).map(normTask).filter((t: any) => t.assignedTo === selectedMember.id);
+        const memberLogs  = (logs  || []).map(normLog) .filter((l: any) => l.userId   === selectedMember.id);
+        const completed   = memberTasks.filter((t: any) => t.status === "completed").length;
+        const inProgress  = memberTasks.filter((t: any) => t.status === "in-progress").length;
+        const overdue     = memberTasks.filter((t: any) => t.status !== "completed" && t.deadline && t.deadline < fmt(today)).length;
+        let pts = 0;
+        memberTasks.forEach((t: any) => {
+          if (t.status === "completed") { pts += 10; if (t.completedAt && t.deadline && t.completedAt <= t.deadline) pts += 5; }
+          else if (t.deadline && t.deadline < fmt(today)) pts -= 3;
+        });
+        pts = Math.max(0, pts + memberLogs.length * 2);
+        const joinDate = selectedMember.created_at
+          ? new Date(selectedMember.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+          : null;
+
+        return (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+            onClick={() => setSelectedMember(null)}>
+            <Card style={{ padding: 32, width: 480, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}
+              onClick={e => e.stopPropagation()}>
+
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+                <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                  <Av user={selectedMember} size={56} />
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>{mu.name}</div>
+                    <div style={{ fontSize: 13, color: "#64748b" }}>{mu.title || "No job title"}</div>
+                    <span style={{ display: "inline-block", marginTop: 4, fontSize: 11, fontWeight: 600, padding: "2px 10px", borderRadius: 20,
+                      background: selectedMember.role === "admin" ? B + "18" : selectedMember.role === "leader" ? "#fef9c3" : "#f1f5f9",
+                      color: selectedMember.role === "admin" ? B : selectedMember.role === "leader" ? "#b45309" : "#64748b" }}>
+                      {selectedMember.role === "admin" ? "Admin" : selectedMember.role === "leader" ? "Leader" : "Member"}
+                    </span>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedMember(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94a3b8", lineHeight: 1 }}>{"x"}</button>
+              </div>
+
+              {/* Contact info */}
+              <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 10 }}>Contact</div>
+                <div style={{ fontSize: 13, color: "#374151", marginBottom: 6 }}>
+                  <strong>Email:</strong> {selectedMember.email}
+                </div>
+                {assignedLeader && (
+                  <div style={{ fontSize: 13, color: "#374151", marginBottom: 6 }}>
+                    <strong>Reports to:</strong> {assignedLeader.name}
+                  </div>
+                )}
+                {joinDate && (
+                  <div style={{ fontSize: 13, color: "#374151" }}>
+                    <strong>Joined:</strong> {joinDate}
+                  </div>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+                {[
+                  { label: "Tasks Assigned", value: memberTasks.length, color: "#6366f1" },
+                  { label: "Completed",       value: completed,          color: "#22c55e" },
+                  { label: "In Progress",     value: inProgress,         color: B },
+                  { label: "Overdue",         value: overdue,            color: overdue > 0 ? "#ef4444" : "#94a3b8" },
+                  { label: "Activity Logs",   value: memberLogs.length,  color: "#6366f1" },
+                  { label: "Score",           value: `${pts}pt`,         color: "#f59e0b" },
+                ].map(s => (
+                  <div key={s.label} style={{ background: "#f8fafc", borderRadius: 10, padding: "12px 14px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Recent tasks */}
+              {memberTasks.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 10 }}>Recent Tasks</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[...memberTasks].sort((a: any, b: any) => (b.deadline || "").localeCompare(a.deadline || "")).slice(0, 4).map((t: any) => (
+                      <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f8fafc", borderRadius: 8 }}>
+                        <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 600, flex: 1, marginRight: 8 }}>{t.title}</div>
+                        <Pill type="status" value={t.status} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Assign leader — admin only */}
+              {user.role === "admin" && selectedMember.role !== "admin" && (
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: 8 }}>Assign Team Leader</label>
                   <select
-                    value={u.managed_by || ""}
-                    onChange={e => onAssignLeader?.(u.id, e.target.value || null)}
-                    style={{ ...SEL, width: "100%", fontSize: 13 }}
+                    value={selectedMember.managed_by || ""}
+                    onChange={e => {
+                      const val = e.target.value || null;
+                      onAssignLeader?.(selectedMember.id, val);
+                      setSelectedMember((prev: any) => ({ ...prev, managed_by: val }));
+                    }}
+                    style={{ ...SEL, width: "100%" }}
                   >
                     <option value="">-- No leader assigned --</option>
                     {leaders.map((l: any) => (
@@ -1682,16 +1790,10 @@ function TeamPage({ users, user, onCreateMember, onAssignLeader }: any) {
                 </div>
               )}
 
-              {/* Show assigned leader for non-admin view */}
-              {user.role !== "admin" && assignedLeader && (
-                <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
-                  Leader: <strong>{assignedLeader.name}</strong>
-                </div>
-              )}
             </Card>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })()}
 
       {modal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -1723,7 +1825,7 @@ function TeamPage({ users, user, onCreateMember, onAssignLeader }: any) {
                   </div>
                 ))}
 
-                <div style={{ marginBottom: 20 }}>
+                <div style={{ marginBottom: 14 }}>
                   <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Role</label>
                   <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} style={{ ...SEL, width: "100%" }}>
                     <option value="member">Team Member</option>
@@ -1731,6 +1833,21 @@ function TeamPage({ users, user, onCreateMember, onAssignLeader }: any) {
                     <option value="admin">Admin</option>
                   </select>
                 </div>
+
+                {form.role !== "admin" && (
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Assign to Leader <span style={{ fontWeight: 400, color: "#94a3b8" }}>(optional)</span></label>
+                    <select value={form.managedBy} onChange={e => setForm(f => ({ ...f, managedBy: e.target.value }))} style={{ ...SEL, width: "100%" }}>
+                      <option value="">-- No leader assigned --</option>
+                      {users.filter((u: any) => u.role === "leader" || u.role === "admin").map((l: any) => (
+                        <option key={l.id} value={l.id}>{normUser(l).name}</option>
+                      ))}
+                    </select>
+                    {users.filter((u: any) => u.role === "leader" || u.role === "admin").length === 0 && (
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>No leaders yet — you can assign one later from the Team page.</div>
+                    )}
+                  </div>
+                )}
 
                 {error && (
                   <div style={{ fontSize: 13, color: "#ef4444", padding: "10px 14px", background: "#fef2f2", borderRadius: 8, marginBottom: 16 }}>
@@ -2447,7 +2564,7 @@ export default function ProwessDashboard({
       case "reports":
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
       case "team":
-        return isPrivileged(user) ? <TeamPage users={users} user={user} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} /> : null;
+        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} /> : null;
       case "settings":
         return <SettingsPage user={user} onUpdateProfile={onUpdateProfile} />;
       default:
