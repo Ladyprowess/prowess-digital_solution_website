@@ -173,7 +173,28 @@ export default function DashboardPage() {
       deadline: form.deadline || null,
       links: form.links?.length ? form.links : null,
     }).select().single();
-    if (!error && data) setState((p: any) => ({ ...p, tasks: [data, ...p.tasks] }));
+    if (!error && data) {
+      setState((p: any) => ({ ...p, tasks: [data, ...p.tasks] }));
+      if (form.assignedTo) {
+        const assignee = state.users.find((u: any) => u.id === form.assignedTo);
+        if (assignee?.email) {
+          fetch("/api/notify-task", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: assignee.email,
+              assigneeName: assignee.full_name || assignee.email,
+              assignerName: state.profile.full_name || "Your manager",
+              taskTitle: form.title,
+              taskDescription: form.description || "",
+              priority: form.priority || "medium",
+              deadline: form.deadline || null,
+              project: form.project || "",
+            }),
+          }).catch(() => {});
+        }
+      }
+    }
   }
 
   async function updateTaskStatus(taskId: string, status: string, submissionLinks?: any[] | null) {
