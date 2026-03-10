@@ -159,12 +159,12 @@ function Pill({ type, value }: { type: "priority" | "status"; value: string }) {
   );
 }
 
-function Card({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function Card({ children, style = {}, ...rest }: { children: React.ReactNode; style?: React.CSSProperties; [key: string]: any }) {
   return (
     <div style={{
       background: "white", borderRadius: 16,
       border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ...style,
-    }}>
+    }} {...rest}>
       {children}
     </div>
   );
