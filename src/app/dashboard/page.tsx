@@ -54,6 +54,7 @@ export default function DashboardPage() {
       priority: form.priority,
       project: form.project,
       deadline: form.deadline || null,
+      links: form.links?.length ? form.links : null,
     }).select().single();
     if (!error && data) setState((p: any) => ({ ...p, tasks: [data, ...p.tasks] }));
   }
@@ -81,6 +82,11 @@ export default function DashboardPage() {
       log_date: new Date().toISOString().split("T")[0],
     }).select().single();
     if (!error && data) setState((p: any) => ({ ...p, logs: [data, ...p.logs] }));
+  }
+
+  async function deleteLog(logId: string) {
+    const { error } = await supabase.from("activity_logs").delete().eq("id", logId);
+    if (!error) setState((p: any) => ({ ...p, logs: p.logs.filter((l: any) => l.id !== logId) }));
   }
 
   async function createMember(form: any) {
@@ -116,6 +122,7 @@ export default function DashboardPage() {
       onUpdateTaskStatus={updateTaskStatus}
       onDeleteTask={deleteTask}
       onAddLog={addLog}
+      onDeleteLog={deleteLog}
       onUpdateProfile={updateProfile}
       onCreateMember={createMember}
       onSignOut={signOut}
