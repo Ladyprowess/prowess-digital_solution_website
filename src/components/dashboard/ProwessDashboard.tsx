@@ -591,7 +591,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{u?.name}</div>
                     <div style={{ fontSize: 12, color: "#64748b" }}>
-                      {log.taskTitle} · {log.timeSpent}h · {log.project}
+                      {log.taskTitle} {" · "} {log.timeSpent}h {" · "} {log.project}
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8" }}>{log.date}</div>
                   </div>
@@ -798,7 +798,7 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
                     <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{a.metric_name}</span>
                     <span style={{ fontSize: 12, color: barColor, fontWeight: 700 }}>
                       {cur} / {a.target_value} {a.unit}
-                      {a.verdict && <> · <VerdictBadge verdict={a.verdict} /></>}
+                      {a.verdict && <> {" · "} <VerdictBadge verdict={a.verdict} /></>}
                     </span>
                   </div>
                   <div style={{ height: 6, background: "#f1f5f9", borderRadius: 99, overflow: "hidden" }}>
@@ -852,7 +852,7 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
                   <div style={{ fontSize: 11, color: "#94a3b8" }}>{log.timeSpent}h</div>
                 </div>
                 <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{log.description}</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{log.project} · {log.date}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{log.project} {" · "} {log.date}</div>
               </div>
             ))}
             {myL.length === 0 && <div style={{ color: "#94a3b8", fontSize: 13 }}>No activity logged yet.</div>}
@@ -1455,7 +1455,7 @@ function LeaderboardPage({ tasks, logs, users }: any) {
                   <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>
                     {s.score}<span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400 }}>pt</span>
                   </div>
-                  <div style={{ fontSize: 11, color: "#64748b" }}>{s.tasksCompleted} done · {s.logsCount} logs</div>
+                  <div style={{ fontSize: 11, color: "#64748b" }}>{s.tasksCompleted} done {" · "} {s.logsCount} logs</div>
                 </div>
               </div>
             );
@@ -1945,7 +1945,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{assignment.metric_name}</div>
             <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-              {assignment.metric_type === "cumulative" ? "📈 Cumulative" : "📸 Snapshot"} · Target: <strong style={{ color: "#475569" }}>{assignment.target_value} {assignment.unit}</strong>
+              {assignment.metric_type === "cumulative" ? "📈 Cumulative" : "📸 Snapshot"} {" · "} Target: <strong style={{ color: "#475569" }}>{assignment.target_value} {assignment.unit}</strong>
             </div>
           </div>
           {assignment.verdict
@@ -2191,7 +2191,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
             </div>
 
             <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 20, padding: "8px 12px", background: "#f8fafc", borderRadius: 8 }}>
-              <strong>Cumulative</strong> — numbers add up (emails sent, clients onboarded, posts published) &nbsp;·&nbsp; <strong>Snapshot</strong> — latest reading wins (follower count, revenue figure, engagement rate)
+              <strong>Cumulative</strong> — numbers add up (emails sent, clients onboarded, posts published) &nbsp;{" · "}&nbsp; <strong>Snapshot</strong> — latest reading wins (follower count, revenue figure, engagement rate)
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>
@@ -2210,7 +2210,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 500, padding: "28px 24px 40px" }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>📊 Log Progress</div>
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
-              {showLog.metric_name} · Target: {showLog.target_value} {showLog.unit}
+              {showLog.metric_name} {" · "} Target: {showLog.target_value} {showLog.unit}
               <span style={{ marginLeft: 8, fontSize: 12, color: "#94a3b8" }}>({showLog.metric_type === "cumulative" ? "adds to total" : "replaces last value"})</span>
             </div>
 
@@ -2271,7 +2271,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={e => { if (e.target === e.currentTarget) setShowHistory(null); }}>
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 500, maxHeight: "80vh", overflowY: "auto", padding: "28px 24px 40px" }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>{showHistory.metric_name}</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>Log history · {monthLabel()}</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>Log history {" · "} {monthLabel()}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {(kpiLogs || [])
                 .filter((l: any) => l.assignment_id === showHistory.id)
