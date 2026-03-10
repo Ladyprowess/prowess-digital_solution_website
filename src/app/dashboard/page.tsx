@@ -18,21 +18,12 @@ export default function DashboardPage() {
     setError(null);
 
     try {
-      // 1. Check auth — with a 10s timeout so it never hangs forever
-      const authResult = await Promise.race([
-        supabase.auth.getUser(),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("Connection timed out. Check your internet and try again.")), 10000)
-        ),
-      ]) as Awaited<ReturnType<typeof supabase.auth.getUser>>;
+      // getSession() reads from localStorage — no LockManager, works with multiple tabs
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) { router.push("/login"); return; }
 
-      const user = authResult.data?.user;
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      // 2. Fetch own profile first — everything else depends on role
+      // Fetch own profile first
       const { data: profile, error: profileErr } = await supabase
         .from("profiles")
         .select("*")
@@ -41,34 +32,28 @@ export default function DashboardPage() {
 
       if (profileErr || !profile) {
         throw new Error(
-          profileErr?.message === "JSON object requested, multiple (or no) rows returned"
+          profileErr?.message?.includes("multiple (or no) rows")
             ? "Your profile was not found. Please contact your admin."
             : profileErr?.message || "Could not load your profile."
         );
       }
 
-      // 3. Fetch tasks, logs, and all profiles in parallel — each one safe
+      // Fetch everything else in parallel
       const [
-        { data: tasks,   error: tasksErr  },
-        { data: logs,    error: logsErr   },
-        { data: users,   error: usersErr  },
+        { data: tasks,  error: tasksErr },
+        { data: logs,   error: logsErr  },
+        { data: users,  error: usersErr },
       ] = await Promise.all([
         supabase.from("tasks").select("*").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
         supabase.from("profiles").select("*").order("full_name"),
       ]);
 
-      // Surface any query errors with helpful context
-      if (tasksErr)  throw new Error(`Tasks failed to load: ${tasksErr.message}`);
-      if (logsErr)   throw new Error(`Activity logs failed to load: ${logsErr.message}`);
-      if (usersErr)  throw new Error(`Team profiles failed to load: ${usersErr.message}`);
+      if (tasksErr) throw new Error(`Tasks failed to load: ${tasksErr.message}`);
+      if (logsErr)  throw new Error(`Activity logs failed to load: ${logsErr.message}`);
+      if (usersErr) throw new Error(`Team profiles failed to load: ${usersErr.message}`);
 
-      setState({
-        profile,
-        tasks: tasks   || [],
-        logs:  logs    || [],
-        users: users   || [],
-      });
+      setState({ profile, tasks: tasks || [], logs: logs || [], users: users || [] });
 
     } catch (err: any) {
       setError(err.message || "Something went wrong loading the dashboard.");
@@ -79,18 +64,16 @@ export default function DashboardPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ── Loading screen ──────────────────────────────────────────────
+  // Loading screen
   if (loading) return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", height: "100svh",
-      fontFamily: "'DM Sans',-apple-system,sans-serif", gap: 16,
-      background: "#f0f4f5",
+      justifyContent: "center", height: "100svh", gap: 16,
+      background: "#f0f4f5", fontFamily: "'DM Sans',-apple-system,sans-serif",
     }}>
       <div style={{
         width: 44, height: 44, borderRadius: 11, background: B,
         display: "flex", alignItems: "center", justifyContent: "center",
-        marginBottom: 4,
       }}>
         <span style={{ color: "white", fontSize: 24, fontWeight: 800 }}>P</span>
       </div>
@@ -99,7 +82,6 @@ export default function DashboardPage() {
           <div key={i} style={{
             width: 8, height: 8, borderRadius: "50%", background: B,
             animation: `prowess-bounce 1.2s ${i * 0.2}s ease-in-out infinite`,
-            opacity: 0.7,
           }} />
         ))}
       </div>
@@ -113,7 +95,7 @@ export default function DashboardPage() {
     </div>
   );
 
-  // ── Error screen ────────────────────────────────────────────────
+  // Error screen — shows the actual error so Ngozi can debug
   if (error) return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
@@ -128,19 +110,16 @@ export default function DashboardPage() {
       <div style={{
         fontSize: 13, color: "#64748b", maxWidth: 340, lineHeight: 1.6,
         background: "white", padding: "14px 18px", borderRadius: 12,
-        border: "1px solid #e2e8f0",
+        border: "1px solid #e2e8f0", wordBreak: "break-word",
       }}>
         {error}
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-        <button
-          onClick={load}
-          style={{
-            padding: "11px 24px", borderRadius: 10, background: B,
-            color: "white", border: "none", cursor: "pointer",
-            fontSize: 14, fontWeight: 600,
-          }}
-        >
+        <button onClick={load} style={{
+          padding: "11px 24px", borderRadius: 10, background: B,
+          color: "white", border: "none", cursor: "pointer",
+          fontSize: 14, fontWeight: 600,
+        }}>
           Try Again
         </button>
         <button
@@ -157,17 +136,13 @@ export default function DashboardPage() {
     </div>
   );
 
-  // ── Dashboard ───────────────────────────────────────────────────
   async function createTask(form: any) {
     const { data, error } = await supabase.from("tasks").insert({
-      title:       form.title,
-      description: form.description,
-      assigned_to: form.assignedTo || null,
-      created_by:  state.profile.id,
-      priority:    form.priority,
-      project:     form.project,
-      deadline:    form.deadline || null,
-      links:       form.links?.length ? form.links : null,
+      title: form.title, description: form.description,
+      assigned_to: form.assignedTo || null, created_by: state.profile.id,
+      priority: form.priority, project: form.project,
+      deadline: form.deadline || null,
+      links: form.links?.length ? form.links : null,
     }).select().single();
     if (!error && data) setState((p: any) => ({ ...p, tasks: [data, ...p.tasks] }));
   }
@@ -176,10 +151,7 @@ export default function DashboardPage() {
     const updates: any = { status };
     if (status === "completed") updates.completed_at = new Date().toISOString();
     await supabase.from("tasks").update(updates).eq("id", taskId);
-    setState((p: any) => ({
-      ...p,
-      tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, ...updates } : t),
-    }));
+    setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, ...updates } : t) }));
   }
 
   async function deleteTask(taskId: string) {
@@ -189,13 +161,11 @@ export default function DashboardPage() {
 
   async function addLog(form: any) {
     const { data, error } = await supabase.from("activity_logs").insert({
-      user_id:           state.profile.id,
-      task_title:        form.taskTitle,
-      description:       form.description,
-      project:           form.project,
-      time_spent:        parseFloat(form.timeSpent) || 0,
+      user_id: state.profile.id, task_title: form.taskTitle,
+      description: form.description, project: form.project,
+      time_spent: parseFloat(form.timeSpent) || 0,
       completion_status: form.completionStatus || "in-progress",
-      log_date:          new Date().toISOString().split("T")[0],
+      log_date: new Date().toISOString().split("T")[0],
     }).select().single();
     if (!error && data) setState((p: any) => ({ ...p, logs: [data, ...p.logs] }));
   }
@@ -207,8 +177,7 @@ export default function DashboardPage() {
 
   async function createMember(form: any) {
     const res = await fetch("/api/create-member", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     const data = await res.json();
