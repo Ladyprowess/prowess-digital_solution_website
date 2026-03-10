@@ -27,11 +27,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const priorityColor = PRIORITY_COLOR[priority] || "#6366f1";
-    const priorityLabel = PRIORITY_LABEL[priority] || priority;
-    const deadlineText  = deadline
+    const priorityColor  = PRIORITY_COLOR[priority] || "#6366f1";
+    const priorityLabel  = PRIORITY_LABEL[priority] || priority;
+    const deadlineText   = deadline
       ? new Date(deadline).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
       : null;
+    const descSnippet    = taskDescription && taskDescription.length > 150
+      ? taskDescription.slice(0, 150).trimEnd() + "..."
+      : taskDescription;
 
     const html = `
 <!DOCTYPE html>
@@ -68,7 +71,7 @@ export async function POST(req: NextRequest) {
 
                 ${taskDescription ? `
                 <div style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #e2e8f0;">
-                  ${taskDescription}
+                  ${descSnippet}
                 </div>` : ""}
 
                 <table width="100%" cellpadding="0" cellspacing="0">
