@@ -59,20 +59,27 @@ export default function DashboardPage() {
 
       // Fetch everything else in parallel
       const [
-        { data: tasks,  error: tasksErr },
-        { data: logs,   error: logsErr  },
-        { data: users,  error: usersErr },
+        { data: tasks,    error: tasksErr   },
+        { data: logs,     error: logsErr    },
+        { data: users,    error: usersErr   },
+        { data: kpiAssignments, error: kpiAErr },
+        { data: kpiLogs,  error: kpiLErr    },
       ] = await Promise.all([
         supabase.from("tasks").select("*").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
         supabase.from("profiles").select("*").order("full_name"),
+        supabase.from("kpi_assignments").select("*").order("created_at", { ascending: false }),
+        supabase.from("kpi_logs").select("*").order("created_at", { ascending: false }),
       ]);
 
       if (tasksErr) throw new Error(`Tasks failed to load: ${tasksErr.message}`);
       if (logsErr)  throw new Error(`Activity logs failed to load: ${logsErr.message}`);
       if (usersErr) throw new Error(`Team profiles failed to load: ${usersErr.message}`);
-
-      setState({ profile, tasks: tasks || [], logs: logs || [], users: users || [] });
+      // KPI errors are non-fatal — tables may not exist yet if schema not yet run
+      setState({
+        profile, tasks: tasks || [], logs: logs || [], users: users || [],
+        kpiAssignments: kpiAssignments || [], kpiLogs: kpiLogs || [],
+      });
 
     } catch (err: any) {
       setError(err.message || "Something went wrong loading the dashboard.");
@@ -220,12 +227,62 @@ export default function DashboardPage() {
     router.push("/login");
   }
 
+  async function createAssignment(form: any) {
+    const { data, error } = await supabase.from("kpi_assignments").insert({
+      assigned_to:  form.assigned_to,
+      assigned_by:  state.profile.id,
+      metric_name:  form.metric_name,
+      unit:         form.unit,
+      metric_type:  form.metric_type,
+      target_value: form.target_value,
+      month:        form.month,
+    }).select().single();
+    if (!error && data) setState((p: any) => ({ ...p, kpiAssignments: [data, ...(p.kpiAssignments || [])] }));
+  }
+
+  async function logKPI(form: any) {
+    const { data, error } = await supabase.from("kpi_logs").insert({
+      assignment_id: form.assignment_id,
+      value:         form.value,
+      note:          form.note || null,
+      logged_by:     state.profile.id,
+      log_date:      new Date().toISOString().split("T")[0],
+    }).select().single();
+    if (!error && data) setState((p: any) => ({ ...p, kpiLogs: [data, ...(p.kpiLogs || [])] }));
+  }
+
+  async function setVerdict(form: any) {
+    await supabase.from("kpi_assignments").update({
+      verdict:      form.verdict,
+      verdict_note: form.verdict_note || null,
+      verdict_by:   state.profile.id,
+      verdict_at:   new Date().toISOString(),
+    }).eq("id", form.id);
+    setState((p: any) => ({
+      ...p,
+      kpiAssignments: (p.kpiAssignments || []).map((a: any) =>
+        a.id === form.id ? { ...a, verdict: form.verdict, verdict_note: form.verdict_note } : a
+      ),
+    }));
+  }
+
+  async function deleteAssignment(id: string) {
+    await supabase.from("kpi_assignments").delete().eq("id", id);
+    setState((p: any) => ({ ...p, kpiAssignments: (p.kpiAssignments || []).filter((a: any) => a.id !== id) }));
+  }
+
   return (
     <ProwessDashboard
       currentUser={state.profile}
       users={state.users}
       tasks={state.tasks}
       logs={state.logs}
+      kpiAssignments={state.kpiAssignments}
+      kpiLogs={state.kpiLogs}
+      onCreateAssignment={createAssignment}
+      onLogKPI={logKPI}
+      onSetVerdict={setVerdict}
+      onDeleteAssignment={deleteAssignment}
       onCreateTask={createTask}
       onUpdateTaskStatus={updateTaskStatus}
       onDeleteTask={deleteTask}
