@@ -68,6 +68,7 @@ const normTask = (t: any) => t ? ({
   ...t,
   assignedTo:  t.assigned_to  ?? t.assignedTo  ?? null,
   completedAt: t.completed_at ?? t.completedAt ?? null,
+  links:       t.links        ?? [],
 }) : null;
 
 const normLog = (l: any) => l ? ({
@@ -594,7 +595,33 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", flexShrink: 0, padding: 4 }}>✕</button>
         </div>
 
-        <div style={{ fontSize: 14, color: "#64748b", lineHeight: 1.7, marginBottom: 22 }}>{task.description || "No description provided."}</div>
+        <div style={{ fontSize: 14, color: "#64748b", lineHeight: 1.7, marginBottom: task.links?.length ? 16 : 22, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {task.description || "No description provided."}
+        </div>
+
+        {/* Links section */}
+        {task.links && task.links.length > 0 && (
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Links</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {task.links.map((link: any, i: number) => (
+                <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: B + "0d", borderRadius: 10, textDecoration: "none", border: `1px solid ${B}22` }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <span style={{ fontSize: 16 }}>🔗</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: B, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {link.label || link.url}
+                    </div>
+                    {link.label && <div style={{ fontSize: 11, color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{link.url}</div>}
+                  </div>
+                  <span style={{ fontSize: 12, color: "#94a3b8", flexShrink: 0 }}>↗</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
           {[
@@ -652,6 +679,12 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   const [fStat,      setFStat]      = useState("all");
   const [fPri,       setFPri]       = useState("all");
   const [form,       setForm]       = useState({ title: "", description: "", assignedTo: "", priority: "medium", project: "", deadline: "" });
+  const [links,      setLinks]      = useState<{ label: string; url: string }[]>([]);
+
+  const addLink    = () => setLinks(l => [...l, { label: "", url: "" }]);
+  const removeLink = (i: number) => setLinks(l => l.filter((_, idx) => idx !== i));
+  const updateLink = (i: number, field: "label" | "url", val: string) =>
+    setLinks(l => l.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
 
   const normTasks = tasks.map(normTask);
   const base = user.role === "admin"
@@ -676,9 +709,11 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   };
   const create = async () => {
     if (!form.title || !form.assignedTo) return;
-    if (onCreateTask) await onCreateTask(form);
-    else setTasks((p: any[]) => [...p, { id: "t" + Date.now(), ...form, assigned_to: form.assignedTo, status: "pending", created_at: fmt(today) }]);
+    const validLinks = links.filter(l => l.url.trim());
+    if (onCreateTask) await onCreateTask({ ...form, links: validLinks });
+    else setTasks((p: any[]) => [...p, { id: "t" + Date.now(), ...form, links: validLinks, assigned_to: form.assignedTo, status: "pending", created_at: fmt(today) }]);
     setForm({ title: "", description: "", assignedTo: "", priority: "medium", project: "", deadline: "" });
+    setLinks([]);
     setModal(false);
   };
 
@@ -730,7 +765,11 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                     <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{task.title}</div>
                     {late && <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 600, background: "#fef2f2", padding: "2px 8px", borderRadius: 20 }}>Overdue</span>}
                   </div>
-                  <div style={{ fontSize: 13, color: "#64748b", marginBottom: 10, lineHeight: 1.5 }}>{task.description}</div>
+                  {task.description && (
+                    <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {task.description}
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                     <Pill type="priority" value={task.priority} />
                     <Pill type="status" value={task.status} />
@@ -741,6 +780,11 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                         <Av user={asgn} size={18} />
                         <span style={{ fontSize: 12, color: "#64748b" }}>{asgn.name}</span>
                       </div>
+                    )}
+                    {task.links?.length > 0 && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: B, background: B + "12", padding: "2px 8px", borderRadius: 20 }}>
+                        🔗 {task.links.length} link{task.links.length > 1 ? "s" : ""}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -766,46 +810,98 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
       {/* Create task modal */}
       {modal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <Card style={{ padding: 32, width: 480, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+          <Card style={{ padding: 32, width: 520, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Create New Task</div>
-            {[
-              ["Title", "title", "text"],
-              ["Description", "description", "text"],
-              ["Project", "project", "text"],
-              ["Deadline", "deadline", "date"],
-            ].map(([l, k, t]) => (
-              <div key={k} style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>{l}</label>
-                <input
-                  type={t as string}
-                  value={(form as any)[k]}
-                  onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))}
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }}
-                />
-              </div>
-            ))}
+
+            {/* Title */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Assign To</label>
-              <select value={form.assignedTo} onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))} style={{ ...SEL, width: "100%" }}>
-                <option value="">Select team member</option>
-                {users.filter((u: any) => isStaff(u)).map((u: any) => (
-                  <option key={u.id} value={u.id}>{u.full_name ?? u.name}</option>
-                ))}
-              </select>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Title</label>
+              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
             </div>
+
+            {/* Description — textarea */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Description</label>
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={4}
+                placeholder="Full task details, instructions, requirements…"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit", lineHeight: 1.6 }} />
+            </div>
+
+            {/* Project + Deadline side by side */}
+            <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Project</label>
+                <input value={form.project} onChange={e => setForm(f => ({ ...f, project: e.target.value }))}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Deadline</label>
+                <input type="date" value={form.deadline} onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+              </div>
+            </div>
+
+            {/* Assign + Priority side by side */}
+            <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Assign To</label>
+                <select value={form.assignedTo} onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))} style={{ ...SEL, width: "100%" }}>
+                  <option value="">Select member</option>
+                  {users.filter((u: any) => isStaff(u)).map((u: any) => (
+                    <option key={u.id} value={u.id}>{u.full_name ?? u.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Priority</label>
+                <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={{ ...SEL, width: "100%" }}>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Links builder */}
             <div style={{ marginBottom: 22 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Priority</label>
-              <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={{ ...SEL, width: "100%" }}>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Links <span style={{ fontWeight: 400, color: "#94a3b8" }}>(optional)</span></label>
+                <button onClick={addLink} style={{ fontSize: 12, fontWeight: 600, color: B, background: B + "12", border: `1px solid ${B}30`, padding: "4px 12px", borderRadius: 8, cursor: "pointer" }}>
+                  + Add Link
+                </button>
+              </div>
+              {links.length === 0 && (
+                <div style={{ fontSize: 12, color: "#94a3b8", padding: "10px 14px", background: "#f8fafc", borderRadius: 10, textAlign: "center" }}>
+                  Add submission links, reference docs, or resource URLs
+                </div>
+              )}
+              {links.map((link, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                    <input
+                      placeholder="Label (e.g. Submit here, Figma file)"
+                      value={link.label}
+                      onChange={e => updateLink(i, "label", e.target.value)}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }}
+                    />
+                    <input
+                      placeholder="https://"
+                      value={link.url}
+                      onChange={e => updateLink(i, "url", e.target.value)}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }}
+                    />
+                  </div>
+                  <button onClick={() => removeLink(i)} style={{ padding: "8px 10px", borderRadius: 8, background: "#fef2f2", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 16, flexShrink: 0, marginTop: 2 }}>✕</button>
+                </div>
+              ))}
             </div>
+
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={create} style={{ flex: 1, padding: "12px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
                 Create Task
               </button>
-              <button onClick={() => setModal(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#f1f5f9", color: "#374151", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
+              <button onClick={() => { setModal(false); setLinks([]); }} style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#f1f5f9", color: "#374151", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
                 Cancel
               </button>
             </div>
@@ -997,7 +1093,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
                         {isPrivileged(user) && lu && (
                           <div style={{ fontSize: 12, color: B, fontWeight: 600, marginBottom: 3 }}>{lu.name}</div>
                         )}
-                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.description}</div>
+                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{log.description}</div>
                         <div style={{ display: "flex", gap: 10, marginTop: 5, alignItems: "center", flexWrap: "wrap" }}>
                           <div style={{ fontSize: 11, color: "#94a3b8" }}>📁 {log.project}</div>
                           {log.completion_status && (
