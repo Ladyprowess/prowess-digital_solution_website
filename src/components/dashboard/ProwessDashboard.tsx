@@ -2389,6 +2389,7 @@ export default function ProwessDashboard({
   onAddLog?: (form: any) => Promise<void>;
   onDeleteLog?: (id: string) => Promise<void>;
   onUpdateProfile?: (updates: { full_name: string; job_title: string }) => Promise<void>;
+  onAssignLeader?: (memberId: string, leaderId: string | null) => Promise<void>;
   onCreateMember?: (form: any) => Promise<void>;
   onSignOut?: () => void;
 }) {
