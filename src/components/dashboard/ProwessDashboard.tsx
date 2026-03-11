@@ -1991,15 +1991,13 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek 
 // APPROVAL PAGE -- Admin only
 // -------------------------------------------------------------------
 function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, onApproveLog, onRejectLog }: any) {
-  const [tab,        setTab]        = useState<"tasks" | "logs">("tasks");
-  const [rejectId,   setRejectId]   = useState<string | null>(null);
-  const [rejectType, setRejectType] = useState<"task" | "log">("task");
-  const [rejectNote, setRejectNote] = useState("");
-  const [saving,     setSaving]     = useState(false);
+  const [tab,         setTab]         = useState<"tasks" | "logs">("tasks");
+  const [selected,    setSelected]    = useState<any>(null);
+  const [selectedType,setSelectedType]= useState<"task" | "log">("task");
+  const [rejectMode,  setRejectMode]  = useState(false);
+  const [rejectNote,  setRejectNote]  = useState("");
+  const [saving,      setSaving]      = useState(false);
 
-  // Build set of user IDs this person can approve for:
-  // Admin: everyone except themselves (admins don't need self-approval)
-  // Leader: only members directly managed by them (managed_by === leader.id), excludes admins
   const approvableIds: Set<string> = (() => {
     if (user.role === "admin") {
       return new Set(users.filter((u: any) => u.role !== "admin").map((u: any) => u.id));
@@ -2021,176 +2019,270 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
     l.approvalStatus === "needs-review" && approvableIds.has(l.userId)
   );
 
-  async function handleApprove(id: string, type: "task" | "log") {
+  function openDetail(item: any, type: "task" | "log") {
+    setSelected(item);
+    setSelectedType(type);
+    setRejectMode(false);
+    setRejectNote("");
+  }
+
+  function closeDetail() {
+    setSelected(null);
+    setRejectMode(false);
+    setRejectNote("");
+  }
+
+  async function handleApprove() {
+    if (!selected) return;
     setSaving(true);
-    if (type === "task") await onApproveTask?.(id);
-    else                  await onApproveLog?.(id);
+    if (selectedType === "task") await onApproveTask?.(selected.id);
+    else await onApproveLog?.(selected.id);
     setSaving(false);
+    closeDetail();
   }
 
   async function handleReject() {
-    if (!rejectId || !rejectNote.trim()) return;
+    if (!selected || !rejectNote.trim()) return;
     setSaving(true);
-    if (rejectType === "task") await onRejectTask?.(rejectId, rejectNote.trim());
-    else                        await onRejectLog?.(rejectId, rejectNote.trim());
-    setRejectId(null);
-    setRejectNote("");
+    if (selectedType === "task") await onRejectTask?.(selected.id, rejectNote.trim());
+    else await onRejectLog?.(selected.id, rejectNote.trim());
     setSaving(false);
+    closeDetail();
   }
 
   return (
-    <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
+    <div style={{ padding: "20px 20px" }}>
 
       {/* Tab bar */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <button onClick={() => setTab("tasks")}
-          style={{ padding: "9px 20px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
+          style={{ padding: "8px 18px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
             background: tab === "tasks" ? B : "#f1f5f9", color: tab === "tasks" ? "white" : "#64748b" }}>
           Tasks ({pendingTasks.length})
         </button>
         <button onClick={() => setTab("logs")}
-          style={{ padding: "9px 20px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
+          style={{ padding: "8px 18px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
             background: tab === "logs" ? B : "#f1f5f9", color: tab === "logs" ? "white" : "#64748b" }}>
           Activity Logs ({pendingLogs.length})
         </button>
       </div>
 
-      {/* Pending Tasks */}
+      {/* Pending Tasks - clickable summary cards */}
       {tab === "tasks" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {pendingTasks.length === 0 ? (
-            <Card style={{ padding: 40, textAlign: "center" }}>
+            <div style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>
               <div style={{ fontSize: 30, marginBottom: 8 }}>✅</div>
-              <div style={{ color: "#94a3b8" }}>No tasks pending approval</div>
-            </Card>
+              No tasks pending approval
+            </div>
           ) : pendingTasks.map((task: any) => {
             const assignee = normUser(users.find((u: any) => u.id === task.assignedTo));
             return (
-              <Card key={task.id} style={{ padding: "18px 20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>{task.title}</div>
-                    {assignee && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                        <Av user={assignee} size={22} />
-                        <span style={{ fontSize: 13, color: "#64748b" }}>{assignee.name}</span>
-                      </div>
-                    )}
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-                      <Pill type="priority" value={task.priority} />
-                      {task.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {task.project}</span>}
-                      {task.deadline && <span style={{ fontSize: 12, color: "#94a3b8" }}>📅 {task.deadline}</span>}
+              <div key={task.id} onClick={() => openDetail(task, "task")}
+                style={{ background: "white", borderRadius: 14, border: "1px solid #e2e8f0", padding: "14px 16px", cursor: "pointer", transition: "box-shadow 0.15s" }}
+                onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
+                onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>{task.title}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  {assignee && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <Av user={assignee} size={20} />
+                      <span style={{ fontSize: 12, color: "#64748b" }}>{assignee.name}</span>
                     </div>
-                    {task.description && (
-                      <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
-                        {task.description}
-                      </div>
-                    )}
-                    {task.submission_links && task.submission_links.length > 0 && (
-                      <div style={{ marginTop: 6 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 6 }}>Submission:</div>
-                        <LinkDisplay links={task.submission_links} />
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                    <button onClick={() => handleApprove(task.id, "task")} disabled={saving}
-                      style={{ padding: "8px 16px", borderRadius: 9, background: "#22c55e", border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer" }}>
-                      Approve
-                    </button>
-                    <button onClick={() => { setRejectId(task.id); setRejectType("task"); setRejectNote(""); }}
-                      style={{ padding: "8px 16px", borderRadius: 9, background: "#fee2e2", border: "none", color: "#dc2626", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                      Reject
-                    </button>
-                  </div>
+                  )}
+                  <Pill type="priority" value={task.priority} />
+                  {task.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {task.project}</span>}
                 </div>
-              </Card>
+                <div style={{ fontSize: 12, color: "#d97706", fontWeight: 600, marginTop: 8 }}>Tap to review</div>
+              </div>
             );
           })}
         </div>
       )}
 
-      {/* Pending Logs */}
+      {/* Pending Logs - clickable summary cards */}
       {tab === "logs" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {pendingLogs.length === 0 ? (
-            <Card style={{ padding: 40, textAlign: "center" }}>
+            <div style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>
               <div style={{ fontSize: 30, marginBottom: 8 }}>✅</div>
-              <div style={{ color: "#94a3b8" }}>No activity logs pending approval</div>
-            </Card>
+              No activity logs pending approval
+            </div>
           ) : pendingLogs.map((log: any) => {
             const logUser = normUser(users.find((u: any) => u.id === log.userId));
             return (
-              <Card key={log.id} style={{ padding: "18px 20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>{log.taskTitle}</div>
-                    {logUser && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                        <Av user={logUser} size={22} />
-                        <span style={{ fontSize: 13, color: "#64748b" }}>{logUser.name}</span>
-                        <span style={{ fontSize: 12, color: "#94a3b8" }}>-- {log.date}</span>
-                      </div>
-                    )}
-                    {log.description && (
-                      <div style={{ fontSize: 13, color: "#64748b", marginBottom: 6, lineHeight: 1.5 }}>{log.description}</div>
-                    )}
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      {log.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {log.project}</span>}
-                      {log.timeSpent > 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>{log.timeSpent}h</span>}
+              <div key={log.id} onClick={() => openDetail(log, "log")}
+                style={{ background: "white", borderRadius: 14, border: "1px solid #e2e8f0", padding: "14px 16px", cursor: "pointer", transition: "box-shadow 0.15s" }}
+                onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
+                onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>{log.taskTitle}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  {logUser && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <Av user={logUser} size={20} />
+                      <span style={{ fontSize: 12, color: "#64748b" }}>{logUser.name}</span>
                     </div>
-                    {log.links && log.links.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <LinkDisplay links={log.links} />
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                    <button onClick={() => handleApprove(log.id, "log")} disabled={saving}
-                      style={{ padding: "8px 16px", borderRadius: 9, background: "#22c55e", border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer" }}>
-                      Approve
-                    </button>
-                    <button onClick={() => { setRejectId(log.id); setRejectType("log"); setRejectNote(""); }}
-                      style={{ padding: "8px 16px", borderRadius: 9, background: "#fee2e2", border: "none", color: "#dc2626", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                      Reject
-                    </button>
-                  </div>
+                  )}
+                  <span style={{ fontSize: 12, color: "#94a3b8" }}>{log.date}</span>
+                  {log.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {log.project}</span>}
                 </div>
-              </Card>
+                {log.description && (
+                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+                    {log.description}
+                  </div>
+                )}
+                <div style={{ fontSize: 12, color: "#d97706", fontWeight: 600, marginTop: 8 }}>Tap to review</div>
+              </div>
             );
           })}
         </div>
       )}
 
-      {/* Reject reason modal */}
-      {rejectId && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <Card style={{ padding: 28, width: 440, maxWidth: "100%" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>
-              Reject {rejectType === "task" ? "Task" : "Activity Log"}
-            </div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 14 }}>
-              Give a reason so the team member can fix and resubmit:
-            </div>
-            <textarea
-              value={rejectNote}
-              onChange={e => setRejectNote(e.target.value)}
-              rows={3}
-              placeholder="e.g. Submission link missing, task not fully completed..."
-              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit", marginBottom: 16 }}
-            />
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={handleReject} disabled={saving || !rejectNote.trim()}
-                style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#dc2626", border: "none", color: "white", fontWeight: 700, fontSize: 14,
-                  cursor: saving || !rejectNote.trim() ? "not-allowed" : "pointer", opacity: !rejectNote.trim() ? 0.5 : 1 }}>
-                {saving ? "Rejecting..." : "Confirm Reject"}
-              </button>
-              <button onClick={() => { setRejectId(null); setRejectNote(""); }}
-                style={{ padding: "12px 20px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
-                Cancel
+      {/* Detail modal - opens when a card is tapped */}
+      {selected && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 400, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+          onClick={e => { if (e.target === e.currentTarget) closeDetail(); }}>
+          <div style={{
+            background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 560,
+            maxHeight: "85vh", overflowY: "auto", padding: "24px 24px 36px",
+            animation: "slideUp 0.22s ease",
+          }}>
+            <style>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
+
+            {/* Handle bar */}
+            <div style={{ width: 40, height: 4, background: "#e2e8f0", borderRadius: 99, margin: "0 auto 20px" }} />
+
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", flex: 1, paddingRight: 12, lineHeight: 1.4 }}>
+                {selectedType === "task" ? selected.title : selected.taskTitle}
+              </div>
+              <button onClick={closeDetail} style={{ background: "#f1f5f9", border: "none", borderRadius: 9, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: "#64748b", flexShrink: 0 }}>
+                ✕
               </button>
             </div>
-          </Card>
+
+            {/* Task detail fields */}
+            {selectedType === "task" && (() => {
+              const assignee = normUser(users.find((u: any) => u.id === selected.assignedTo));
+              return (
+                <>
+                  {assignee && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                      <Av user={assignee} size={28} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{assignee.name}</div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{assignee.title}</div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                    <Pill type="priority" value={selected.priority} />
+                    <Pill type="status" value={selected.status} />
+                    {selected.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {selected.project}</span>}
+                    {selected.deadline && <span style={{ fontSize: 12, color: "#94a3b8" }}>📅 {selected.deadline}</span>}
+                  </div>
+                  {selected.description && (
+                    <div style={{ fontSize: 14, color: "#475569", lineHeight: 1.7, marginBottom: 16, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {selected.description}
+                    </div>
+                  )}
+                  {selected.links && selected.links.length > 0 && (
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Reference Links</div>
+                      <LinkDisplay links={selected.links} />
+                    </div>
+                  )}
+                  {selected.submission_links && selected.submission_links.length > 0 && (
+                    <div style={{ marginBottom: 16, padding: "14px 16px", background: "#f0fdf4", borderRadius: 12, border: "1px solid #bbf7d0" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Submitted Work</div>
+                      <LinkDisplay links={selected.submission_links} />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* Log detail fields */}
+            {selectedType === "log" && (() => {
+              const logUser = normUser(users.find((u: any) => u.id === selected.userId));
+              return (
+                <>
+                  {logUser && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                      <Av user={logUser} size={28} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{logUser.name}</div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{selected.date}</div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+                    {selected.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {selected.project}</span>}
+                    {selected.timeSpent > 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>⏱ {selected.timeSpent}h</span>}
+                    {selected.completion_status && (
+                      <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
+                        background: selected.completion_status === "completed" ? "#f0fdf4" : selected.completion_status === "blocked" ? "#fef2f2" : "#eff6ff",
+                        color: selected.completion_status === "completed" ? "#22c55e" : selected.completion_status === "blocked" ? "#ef4444" : "#3b82f6" }}>
+                        {selected.completion_status === "completed" ? "Completed" : selected.completion_status === "blocked" ? "Blocked" : "In Progress"}
+                      </span>
+                    )}
+                  </div>
+                  {selected.description && (
+                    <div style={{ fontSize: 14, color: "#475569", lineHeight: 1.7, marginBottom: 16, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {selected.description}
+                    </div>
+                  )}
+                  {selected.links && selected.links.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Attached Links</div>
+                      <LinkDisplay links={selected.links} />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* Reject reason input - shown when reject is tapped */}
+            {rejectMode && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Reason for rejection</div>
+                <textarea
+                  value={rejectNote}
+                  onChange={e => setRejectNote(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Submission link missing, task not fully completed..."
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit" }}
+                />
+              </div>
+            )}
+
+            {/* Action buttons */}
+            {!rejectMode ? (
+              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                <button onClick={handleApprove} disabled={saving}
+                  style={{ flex: 1, padding: "14px", borderRadius: 12, background: "#22c55e", border: "none", color: "white", fontWeight: 700, fontSize: 15, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                  {saving ? "Approving..." : "Approve"}
+                </button>
+                <button onClick={() => setRejectMode(true)}
+                  style={{ flex: 1, padding: "14px", borderRadius: 12, background: "#fee2e2", border: "none", color: "#dc2626", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  Reject
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                <button onClick={handleReject} disabled={saving || !rejectNote.trim()}
+                  style={{ flex: 1, padding: "14px", borderRadius: 12, background: "#dc2626", border: "none", color: "white", fontWeight: 700, fontSize: 15,
+                    cursor: saving || !rejectNote.trim() ? "not-allowed" : "pointer", opacity: !rejectNote.trim() ? 0.5 : 1 }}>
+                  {saving ? "Rejecting..." : "Confirm Reject"}
+                </button>
+                <button onClick={() => { setRejectMode(false); setRejectNote(""); }}
+                  style={{ padding: "14px 18px", borderRadius: 12, background: "#f1f5f9", border: "none", color: "#374151", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>
+                  Back
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
