@@ -399,7 +399,7 @@ const NAV = [
 
 // --- Mobile drawer (slides in from left) --------------------------------------
 function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCount = 0 }: any) {
-  const items = NAV.filter(n => (!n.privileged || isPrivileged(user)) && (!n.adminOnly || user.role === 'admin'));
+  const items = NAV.filter(n => !n.privileged || isPrivileged(user));
   return (
     <>
       {/* Backdrop */}
@@ -523,7 +523,7 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
       </div>
 
       <nav style={{ flex: 1, padding: "10px 8px", overflowY: "auto", overflowX: "hidden" }}>
-        {NAV.filter(n => (!n.privileged || isPrivileged(user)) && (!n.adminOnly || user.role === "admin")).map(n => {
+        {NAV.filter(n => !n.privileged || isPrivileged(user)).map(n => {
           const on = page === n.id;
           return (
             <button key={n.id} onClick={() => setPage(n.id)} title={n.label} style={{
