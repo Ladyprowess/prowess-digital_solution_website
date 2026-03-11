@@ -70,15 +70,19 @@ const normTask = (t: any) => t ? ({
   completedAt:     t.completed_at     ?? t.completedAt     ?? null,
   links:           t.links            ?? [],
   submission_links: t.submission_links ?? [],
+  approvalStatus:  t.approval_status  ?? t.approvalStatus  ?? "approved",
+  approvalNote:    t.approval_note    ?? t.approvalNote    ?? "",
 }) : null;
 
 const normLog = (l: any) => l ? ({
   ...l,
-  userId:    l.user_id    ?? l.userId    ?? "",
-  taskTitle: l.task_title ?? l.taskTitle ?? "",
-  timeSpent: l.time_spent ?? l.timeSpent ?? 0,
-  date:      l.log_date   ?? l.date      ?? "",
-  links:     l.links      ?? [],
+  userId:         l.user_id        ?? l.userId        ?? "",
+  taskTitle:      l.task_title     ?? l.taskTitle     ?? "",
+  timeSpent:      l.time_spent     ?? l.timeSpent     ?? 0,
+  date:           l.log_date       ?? l.date          ?? "",
+  links:          l.links          ?? [],
+  approvalStatus: l.approval_status ?? l.approvalStatus ?? "approved",
+  approvalNote:   l.approval_note   ?? l.approvalNote   ?? "",
 }) : null;
 
 // Format a Supabase ISO timestamp -> "10 Mar 2026, 7:59 PM"
@@ -157,6 +161,22 @@ function LinkAttacher({ links, onChange }: { links: { label: string; url: string
   );
 }
 
+// Approval status badge
+function ApprBadge({ status }: { status: string }) {
+  const cfg: Record<string, { label: string; color: string; bg: string }> = {
+    "needs-review": { label: "Needs Review", color: "#d97706", bg: "#fffbeb" },
+    "approved":     { label: "Approved",     color: "#059669", bg: "#d1fae5" },
+    "rejected":     { label: "Rejected",     color: "#dc2626", bg: "#fee2e2" },
+  };
+  const s = cfg[status];
+  if (!s) return null;
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 20, background: s.bg, color: s.color, flexShrink: 0 }}>
+      {s.label}
+    </span>
+  );
+}
+
 const PRI: Record<string, { label: string; color: string; bg: string }> = {
   high:   { label: "High",   color: "#ef4444", bg: "#fef2f2" },
   medium: { label: "Medium", color: "#f59e0b", bg: "#fffbeb" },
@@ -172,28 +192,75 @@ const STA: Record<string, { label: string; color: string; bg: string; dot: strin
 function isStaff(u: any) { return u.role === "member" || u.role === "leader"; }
 function isPrivileged(u: any) { return u.role === "admin" || u.role === "leader"; }
 
+// Helper: current week Monday..Sunday
+function getWeekBounds(): { start: string; end: string } {
+  const d = new Date(today);
+  const day = d.getDay(); // 0=Sun
+  const diffToMon = day === 0 ? -6 : 1 - day;
+  const mon = new Date(d); mon.setDate(d.getDate() + diffToMon);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return { start: fmt(mon), end: fmt(sun) };
+}
+
+// All-time scores (approved items only, new point values)
 function computeScores(tasks: any[], logs: any[], users: any[]) {
   return users
     .filter(u => isStaff(u))
     .map(u => {
       const nu = normUser(u);
       let pts = 0;
-      const ut = tasks.map(normTask).filter(t => t.assignedTo === u.id);
+      const ut = tasks.map(normTask).filter(t => t.assignedTo === u.id && t.approvalStatus === "approved");
       ut.forEach(t => {
         if (t.status === "completed") {
           pts += 10;
+          if (t.priority === "high") pts += 5;
           if (t.completedAt && t.deadline && t.completedAt <= t.deadline) pts += 5;
-        } else if (t.deadline && t.deadline < fmt(today)) {
-          pts -= 3;
+          else if (t.completedAt && t.deadline && t.completedAt > t.deadline) pts -= 5;
         }
       });
-      const ul = logs.map(normLog).filter(l => l.userId === u.id);
-      pts += ul.length * 2;
+      const ul = logs.map(normLog).filter(l => l.userId === u.id && l.approvalStatus === "approved");
+      pts += ul.length * 3;
       return {
         userId: u.id, name: nu.name, avatar: nu.avatar, title: nu.title,
         score: Math.max(0, pts),
         tasksCompleted: ut.filter(t => t.status === "completed").length,
         tasksTotal: ut.length,
+        logsCount: ul.length,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
+// This-week scores (approved items completed/logged this week only)
+function computeWeeklyScores(tasks: any[], logs: any[], users: any[]) {
+  const { start: ws } = getWeekBounds();
+  return users
+    .filter(u => isStaff(u))
+    .map(u => {
+      const nu = normUser(u);
+      let pts = 0;
+      const ut = tasks.map(normTask).filter(t =>
+        t.assignedTo === u.id &&
+        t.approvalStatus === "approved" &&
+        t.status === "completed" &&
+        t.completedAt && t.completedAt >= ws
+      );
+      ut.forEach(t => {
+        pts += 10;
+        if (t.priority === "high") pts += 5;
+        if (t.completedAt && t.deadline && t.completedAt <= t.deadline) pts += 5;
+        else if (t.completedAt && t.deadline && t.completedAt > t.deadline) pts -= 5;
+      });
+      const ul = logs.map(normLog).filter(l =>
+        l.userId === u.id &&
+        l.approvalStatus === "approved" &&
+        l.date >= ws
+      );
+      pts += ul.length * 3;
+      return {
+        userId: u.id, name: nu.name, avatar: nu.avatar, title: nu.title,
+        score: Math.max(0, pts),
+        tasksCompleted: ut.length,
         logsCount: ul.length,
       };
     })
@@ -245,6 +312,39 @@ function Card({ children, style = {}, ...rest }: { children: React.ReactNode; st
   );
 }
 
+function Pagination({ page, total, onChange }: { page: number; total: number; onChange: (p: number) => void }) {
+  if (total <= 1) return null;
+  const pages = Array.from({ length: total }, (_, i) => i + 1);
+  const visible = pages.filter(p => p === 1 || p === total || Math.abs(p - page) <= 1);
+  const withEllipsis: (number | "...")[] = [];
+  visible.forEach((p, i) => {
+    if (i > 0 && p - (visible[i - 1] as number) > 1) withEllipsis.push("...");
+    withEllipsis.push(p);
+  });
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 20, flexWrap: "wrap" }}>
+      <button onClick={() => onChange(page - 1)} disabled={page === 1}
+        style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid #e2e8f0", background: page === 1 ? "#f8fafc" : "white", color: page === 1 ? "#cbd5e1" : "#374151", cursor: page === 1 ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600 }}>
+        {"< Prev"}
+      </button>
+      {withEllipsis.map((p, i) =>
+        p === "..." ? (
+          <span key={`e${i}`} style={{ color: "#94a3b8", fontSize: 13, padding: "0 4px" }}>...</span>
+        ) : (
+          <button key={p} onClick={() => onChange(p as number)}
+            style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${p === page ? B : "#e2e8f0"}`, background: p === page ? B : "white", color: p === page ? "white" : "#374151", cursor: "pointer", fontSize: 13, fontWeight: p === page ? 700 : 400 }}>
+            {p}
+          </button>
+        )
+      )}
+      <button onClick={() => onChange(page + 1)} disabled={page === total}
+        style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid #e2e8f0", background: page === total ? "#f8fafc" : "white", color: page === total ? "#cbd5e1" : "#374151", cursor: page === total ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600 }}>
+        {"Next >"}
+      </button>
+    </div>
+  );
+}
+
 function Stat({ icon, label, value, sub, color = B, trend }: {
   icon: string; label: string; value: string | number;
   sub?: string; color?: string; trend?: number;
@@ -291,14 +391,15 @@ const NAV = [
   { id: "activity",    label: "Activity Log", icon: "📝" },
   { id: "kpi",         label: "KPIs",         icon: "🎯" },
   { id: "leaderboard", label: "Leaderboard",  icon: "🏆" },
+  { id: "approvals",   label: "Approvals",    icon: "🔍", privileged: true },
   { id: "reports",     label: "Reports",      icon: "📊", privileged: true },
   { id: "team",        label: "Team",         icon: "👥", privileged: true },
   { id: "settings",    label: "Settings",     icon: "⚙️" },
 ];
 
 // --- Mobile drawer (slides in from left) --------------------------------------
-function MobileDrawer({ user, page, setPage, onLogout, open, onClose }: any) {
-  const items = NAV.filter(n => !n.privileged || isPrivileged(user));
+function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCount = 0 }: any) {
+  const items = NAV.filter(n => (!n.privileged || isPrivileged(user)) && (!n.adminOnly || user.role === 'admin'));
   return (
     <>
       {/* Backdrop */}
@@ -364,6 +465,9 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose }: any) {
               }}>
                 <span style={{ fontSize: 20, width: 26, textAlign: "center", flexShrink: 0 }}>{n.icon}</span>
                 <span style={{ flex: 1 }}>{n.label}</span>
+                {n.id === "approvals" && approvalCount > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 700, background: "#ef4444", color: "white", borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{approvalCount}</span>
+                )}
                 {on && <div style={{ width: 6, height: 6, borderRadius: "50%", background: B }} />}
               </button>
             );
@@ -387,7 +491,7 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose }: any) {
 }
 
 // --- Desktop sidebar -----------------------------------------------------------
-function Sidebar({ user, page, setPage, onLogout, open, setOpen }: any) {
+function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount = 0 }: any) {
   return (
     <div style={{
       width: open ? 228 : 64, background: "#111827", height: "100vh",
@@ -419,7 +523,7 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen }: any) {
       </div>
 
       <nav style={{ flex: 1, padding: "10px 8px", overflowY: "auto", overflowX: "hidden" }}>
-        {NAV.filter(n => !n.privileged || isPrivileged(user)).map(n => {
+        {NAV.filter(n => (!n.privileged || isPrivileged(user)) && (!n.adminOnly || user.role === "admin")).map(n => {
           const on = page === n.id;
           return (
             <button key={n.id} onClick={() => setPage(n.id)} title={n.label} style={{
@@ -430,7 +534,13 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen }: any) {
               marginBottom: 2, textAlign: "left", overflow: "hidden", whiteSpace: "nowrap",
             }}>
               <span style={{ fontSize: 17, flexShrink: 0 }}>{n.icon}</span>
-              {open && <span>{n.label}</span>}
+              {open && <span style={{ flex: 1 }}>{n.label}</span>}
+              {open && n.id === "approvals" && approvalCount > 0 && (
+                <span style={{ fontSize: 11, fontWeight: 700, background: "#ef4444", color: "white", borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{approvalCount}</span>
+              )}
+              {!open && n.id === "approvals" && approvalCount > 0 && (
+                <span style={{ position: "absolute", top: 6, right: 6, width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
+              )}
               {open && on && <div style={{ marginLeft: "auto", width: 5, height: 5, borderRadius: "50%", background: B, flexShrink: 0 }} />}
             </button>
           );
@@ -515,7 +625,7 @@ function TopBar({ user, page, isMobile, onMenuOpen }: { user: any; page: string;
   );
 }
 
-function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }: any) {
+function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, setPage }: any) {
   const scores  = useMemo(() => computeScores(tasks, logs, users), [tasks, logs, users]);
   const total     = tasks.length;
   const completed = tasks.filter((t: any) => t.status === "completed").length;
@@ -546,13 +656,33 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }
   }).length;
   const kpiTotal = monthKpis.length;
 
+  const pendingApprovals = tasks.map(normTask).filter((t: any) => t.approvalStatus === "needs-review").length
+    + logs.map(normLog).filter((l: any) => l.approvalStatus === "needs-review").length;
+  const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
+
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
+      {lastWinner && (
+        <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fffbeb,#fef9c3)", border: "1px solid #fde68a", borderRadius: 14, padding: "14px 20px" }}>
+          <span style={{ fontSize: 32 }}>🏆</span>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.5px" }}>Last Team Member of the Week</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{lastWinner.winner_name}</div>
+            <div style={{ fontSize: 12, color: "#64748b" }}>
+              {lastWinner.total_points}pts -- {lastWinner.tasks_completed} tasks -- {lastWinner.logs_submitted} logs
+              {" | "} Week of {lastWinner.week_start}
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
         <Stat icon="📋" label="Total Tasks"  value={total}     sub="This month"   color="#6366f1" trend={12} />
         <Stat icon="✅" label="Completed"    value={completed} sub={`${total ? Math.round(completed / total * 100) : 0}% rate`} color="#22c55e" trend={8} />
         <Stat icon="🔄" label="In Progress"  value={inProg}    sub="Active now"   color="#3b82f6" />
         <Stat icon="⚠️" label="Overdue"      value={overdue}   sub="Need attention" color="#ef4444" trend={-5} />
+        {pendingApprovals > 0 && (
+          <Stat icon="🔍" label="Need Approval" value={pendingApprovals} sub="Tasks and logs" color="#d97706" />
+        )}
       </div>
 
       <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
@@ -712,18 +842,36 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, setPage }
   );
 }
 
-function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }: any) {
+function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, setPage }: any) {
   const myT  = tasks.map(normTask).filter((t: any) => t.assignedTo === user.id);
   const myL  = logs.map(normLog).filter((l: any) => l.userId === user.id);
   const done = myT.filter((t: any) => t.status === "completed").length;
   const od   = myT.filter((t: any) => t.deadline && t.deadline < fmt(today) && t.status !== "completed").length;
 
+  // Weekly scoring (approved only)
+  const weeklyScores = useMemo(() => computeWeeklyScores(tasks, logs, users || []), [tasks, logs, users]);
+  const myWeekly = weeklyScores.find((s: any) => s.userId === user.id);
+  const weeklyPts = myWeekly?.score || 0;
+  const weeklyRank = weeklyScores.findIndex((s: any) => s.userId === user.id) + 1;
+  const leader = weeklyScores[0];
+  const toFirst = leader && leader.userId !== user.id ? Math.max(0, leader.score - weeklyPts + 1) : 0;
+  const pctToFirst = leader && leader.score > 0 ? Math.min(100, Math.round((weeklyPts / leader.score) * 100)) : (weeklyPts > 0 ? 100 : 0);
+
+  // Last winner from DB
+  const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
+  const isTMOTW = lastWinner && lastWinner.winner_id === user.id;
+  const isCurrentLeader = weeklyScores.length > 0 && weeklyScores[0].userId === user.id && weeklyPts > 0;
+
   let pts = 0;
   myT.forEach((t: any) => {
-    if (t.status === "completed") { pts += 10; if (t.completedAt && t.completedAt <= t.deadline) pts += 5; }
-    else if (t.deadline && t.deadline < fmt(today)) pts -= 3;
+    if (t.status === "completed" && t.approvalStatus === "approved") {
+      pts += 10;
+      if (t.priority === "high") pts += 5;
+      if (t.completedAt && t.completedAt <= t.deadline) pts += 5;
+      else if (t.completedAt && t.deadline && t.completedAt > t.deadline) pts -= 5;
+    }
   });
-  pts = Math.max(0, pts + myL.length * 2);
+  pts = Math.max(0, pts + myL.filter((l: any) => l.approvalStatus === "approved").length * 3);
   const prog = myT.length ? Math.round(done / myT.length * 100) : 0;
 
   // -- KPI snapshot ----------------------------------------------------------
@@ -734,12 +882,65 @@ function MemberDashboard({ user, tasks, logs, kpiAssignments, kpiLogs, setPage }
 
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* TMOTW / current leader badge */}
+      {isTMOTW && (
+        <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fffbeb,#fef9c3)", border: "2px solid #f59e0b", borderRadius: 16, padding: "16px 20px" }}>
+          <span style={{ fontSize: 40 }}>🏆</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.5px" }}>Team Member of the Week</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>Congratulations, {user.name}!</div>
+            <div style={{ fontSize: 12, color: "#64748b" }}>
+              {lastWinner.total_points}pts -- {lastWinner.tasks_completed} tasks -- {lastWinner.logs_submitted} logs
+            </div>
+          </div>
+        </div>
+      )}
+      {!isTMOTW && isCurrentLeader && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, background: "linear-gradient(135deg,#f0fdf4,#dcfce7)", border: "1px solid #86efac", borderRadius: 14, padding: "12px 18px" }}>
+          <span style={{ fontSize: 28 }}>🌟</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#166534" }}>You are currently #1 this week!</div>
+            <div style={{ fontSize: 12, color: "#4ade80" }}>Keep going to claim the weekly title.</div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-        <Stat icon="📋" label="Assigned Tasks" value={myT.length} color="#6366f1" />
-        <Stat icon="✅" label="Completed"      value={done}        color="#22c55e" />
-        <Stat icon="⚡" label="My Score"       value={`${pts}pt`}  sub="Productivity" color={B} />
-        <Stat icon="⚠️" label="Overdue"        value={od}          color="#ef4444" />
+        <Stat icon="📋" label="Assigned Tasks" value={myT.length}       color="#6366f1" />
+        <Stat icon="✅" label="Completed"      value={done}             color="#22c55e" />
+        <Stat icon="⚡" label="All-Time Score" value={`${pts}pt`}       sub="Approved only" color={B} />
+        <Stat icon="📅" label="Weekly Points"  value={`${weeklyPts}pt`} sub={`Rank #${weeklyRank}`} color="#f59e0b" />
+        <Stat icon="⚠️" label="Overdue"        value={od}               color="#ef4444" />
       </div>
+
+      {/* Weekly progress to #1 */}
+      {weeklyScores.length > 1 && (
+        <Card style={{ padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Weekly Race</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>Rank #{weeklyRank} of {weeklyScores.length}</div>
+          </div>
+          <div style={{ height: 10, background: "#f1f5f9", borderRadius: 10, overflow: "hidden", marginBottom: 8 }}>
+            <div style={{ height: "100%", width: `${pctToFirst}%`, background: "linear-gradient(90deg,#f59e0b,#fbbf24)", borderRadius: 10, transition: "width 0.6s ease" }} />
+          </div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            {isCurrentLeader
+              ? "You are leading this week!"
+              : `${toFirst} more point${toFirst !== 1 ? "s" : ""} to reach #1 (${leader?.name || ""})`}
+          </div>
+          {/* Mini leaderboard top 3 */}
+          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
+            {weeklyScores.slice(0, 3).map((s: any, i: number) => (
+              <div key={s.userId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, background: s.userId === user.id ? B + "12" : "#f8fafc", border: s.userId === user.id ? `1px solid ${B}30` : "1px solid #f1f5f9" }}>
+                <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</span>
+                <Av user={users?.find((u: any) => u.id === s.userId)} size={26} />
+                <span style={{ fontSize: 13, fontWeight: s.userId === user.id ? 700 : 400, color: "#0f172a", flex: 1 }}>{s.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? "#f59e0b" : "#64748b" }}>{s.score}pt</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card style={{ padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -942,8 +1143,26 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
           ))}
         </div>
 
-        {/* Submission links - member can attach URLs before marking complete */}
-        {task.status !== "completed" && (
+        {/* Approval status banner */}
+        {task.approvalStatus === "needs-review" && (
+          <div style={{ marginBottom: 16, padding: "12px 16px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 20 }}>⏳</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>Waiting for admin approval</div>
+              <div style={{ fontSize: 12, color: "#b45309" }}>Points will count once approved.</div>
+            </div>
+          </div>
+        )}
+        {task.approvalStatus === "rejected" && (
+          <div style={{ marginBottom: 16, padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>Task rejected by admin</div>
+            {task.approvalNote && <div style={{ fontSize: 13, color: "#7f1d1d", lineHeight: 1.5 }}>Reason: {task.approvalNote}</div>}
+            <div style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>Update your submission below and click Resubmit.</div>
+          </div>
+        )}
+
+        {/* Submission links - show when not yet approved or when rejected */}
+        {(task.status !== "completed" || task.approvalStatus === "rejected") && (
           <div style={{ marginBottom: 16, padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 12 }}>
               📎 Attach work links <span style={{ fontWeight: 400, color: "#94a3b8" }}>- add before or when marking complete</span>
@@ -955,25 +1174,43 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
         {/* Status controls */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 10 }}>Update Status</div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {STATUS_ORDER.map((s, idx) => (
-              <button key={s}
-                disabled={task.status === s || (!isPrivileged(user) && idx < currentIdx)}
-                onClick={() => handleStatusUpdate(s)}
-                style={{
-                  padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600,
-                  cursor: task.status === s ? "default" : "pointer",
-                  background: task.status === s ? B : "#f1f5f9",
-                  color: task.status === s ? "white" : "#374151",
-                  border: task.status === s ? `2px solid ${B}` : "2px solid transparent",
-                  opacity: !isPrivileged(user) && idx < currentIdx ? 0.4 : 1,
-                }}
-              >
-                {s === "pending" ? "Pending" : s === "in-progress" ? "In Progress" : "Completed"}
-              </button>
-            ))}
-          </div>
-          {!isPrivileged(user) && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>Only admins and leaders can move a task backwards</div>}
+          {task.approvalStatus === "needs-review" ? (
+            <div style={{ fontSize: 13, color: "#94a3b8", padding: "10px 14px", background: "#f8fafc", borderRadius: 10 }}>
+              This task is pending approval and cannot be changed right now.
+            </div>
+          ) : task.approvalStatus === "approved" && task.status === "completed" ? (
+            <div style={{ fontSize: 13, color: "#059669", padding: "10px 14px", background: "#d1fae5", borderRadius: 10, fontWeight: 600 }}>
+              ✅ Approved and counted in your score.
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {STATUS_ORDER.map((s, idx) => (
+                  <button key={s}
+                    disabled={task.status === s || (!isPrivileged(user) && idx < currentIdx)}
+                    onClick={() => handleStatusUpdate(s)}
+                    style={{
+                      padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                      cursor: task.status === s ? "default" : "pointer",
+                      background: task.status === s ? B : "#f1f5f9",
+                      color: task.status === s ? "white" : "#374151",
+                      border: task.status === s ? `2px solid ${B}` : "2px solid transparent",
+                      opacity: !isPrivileged(user) && idx < currentIdx ? 0.4 : 1,
+                    }}
+                  >
+                    {s === "pending" ? "Pending" : s === "in-progress" ? "In Progress" : "Completed"}
+                  </button>
+                ))}
+              </div>
+              {task.approvalStatus === "rejected" && task.status === "completed" && (
+                <button onClick={() => { handleStatusUpdate("completed"); }}
+                  style={{ marginTop: 10, width: "100%", padding: "11px", borderRadius: 10, background: "#d97706", border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                  Resubmit for Approval
+                </button>
+              )}
+              {!isPrivileged(user) && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>Only admins and leaders can move a task backwards</div>}
+            </>
+          )}
         </div>
 
         {user.role === "admin" && (
@@ -991,6 +1228,9 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   const [detailTask, setDetailTask] = useState<any>(null);
   const [fStat,      setFStat]      = useState("all");
   const [fPri,       setFPri]       = useState("all");
+  const [fPeriod,    setFPeriod]    = useState("all");
+  const [taskPage,   setTaskPage]   = useState(1);
+  const TASKS_PER_PAGE = 10;
   const [form,       setForm]       = useState({ title: "", description: "", assignedTo: "", priority: "medium", project: "", deadline: "" });
   const [links,      setLinks]      = useState<{ label: string; url: string }[]>([]);
 
@@ -1003,13 +1243,31 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
           return t.assignedTo === user.id || (assignee && assignee.managed_by === user.id);
         })
       : normTasks.filter((t: any) => t.assignedTo === user.id);
-  const filtered  = base.filter((t: any) =>
-    (fStat === "all" || t.status === fStat) && (fPri === "all" || t.priority === fPri)
-  );
+  const filtered  = base.filter((t: any) => {
+    if (fStat !== "all" && t.status !== fStat) return false;
+    if (fPri  !== "all" && t.priority !== fPri) return false;
+    if (fPeriod !== "all") {
+      const d = t.createdAt || t.deadline || "";
+      if (!d) return false;
+      const dt = new Date(d);
+      const now = new Date();
+      if (fPeriod === "today") return d === fmt(today);
+      if (fPeriod === "week") { const w = new Date(now); w.setDate(now.getDate() - 7); return dt >= w; }
+      if (fPeriod === "month") return d.slice(0, 7) === fmt(today).slice(0, 7);
+      if (fPeriod === "year")  return d.slice(0, 4) === fmt(today).slice(0, 4);
+    }
+    return true;
+  });
+  const taskTotalPages = Math.ceil(filtered.length / TASKS_PER_PAGE);
+  const pagedTasks = filtered.slice((taskPage - 1) * TASKS_PER_PAGE, taskPage * TASKS_PER_PAGE);
 
   const upd = (id: string, s: string, submissionLinks?: any[] | null) => {
     if (onUpdateTaskStatus) onUpdateTaskStatus(id, s, submissionLinks);
-    else setTasks((p: any[]) => p.map(t => t.id === id ? { ...t, status: s, ...(submissionLinks ? { submission_links: submissionLinks } : {}) } : t));
+    else setTasks((p: any[]) => p.map(t => t.id === id ? {
+      ...t, status: s,
+      approval_status: s === "completed" ? "needs-review" : t.approval_status,
+      ...(submissionLinks ? { submission_links: submissionLinks } : {})
+    } : t));
   };
   const del = (id: string) => {
     if (onDeleteTask) onDeleteTask(id);
@@ -1033,17 +1291,24 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
             New Task
           </button>
         )}
-        <select value={fStat} onChange={e => setFStat(e.target.value)} style={SEL}>
+        <select value={fStat} onChange={e => { setFStat(e.target.value); setTaskPage(1); }} style={SEL}>
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
           <option value="in-progress">In Progress</option>
           <option value="completed">Completed</option>
         </select>
-        <select value={fPri} onChange={e => setFPri(e.target.value)} style={SEL}>
+        <select value={fPri} onChange={e => { setFPri(e.target.value); setTaskPage(1); }} style={SEL}>
           <option value="all">All Priority</option>
           <option value="high">High</option>
           <option value="medium">Medium</option>
           <option value="low">Low</option>
+        </select>
+        <select value={fPeriod} onChange={e => { setFPeriod(e.target.value); setTaskPage(1); }} style={SEL}>
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
         </select>
         <span style={{ fontSize: 13, color: "#94a3b8", marginLeft: "auto" }}>
           {filtered.length} task{filtered.length !== 1 ? "s" : ""}
@@ -1057,7 +1322,7 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
             <div style={{ color: "#94a3b8" }}>No tasks match your filters</div>
           </Card>
         )}
-        {filtered.map((task: any) => {
+        {pagedTasks.map((task: any) => {
           const asgn = normUser(users.find((u: any) => u.id === task.assignedTo));
           const late = task.deadline < fmt(today) && task.status !== "completed";
           return (
@@ -1081,6 +1346,9 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                   <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                     <Pill type="priority" value={task.priority} />
                     <Pill type="status" value={task.status} />
+                    {task.approvalStatus && task.approvalStatus !== "pending" && (
+                      <ApprBadge status={task.approvalStatus} />
+                    )}
                     <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {task.project}</span>
                     <span style={{ fontSize: 12, color: late ? "#ef4444" : "#94a3b8" }}>📅 {task.deadline}</span>
                     {asgn && (
@@ -1108,7 +1376,10 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
         })}
       </div>
 
-      {/* Task detail modal */}
+      {/* Tasks pagination */}
+      {taskTotalPages > 1 && (
+        <Pagination page={taskPage} total={taskTotalPages} onChange={setTaskPage} />
+      )}
       {detailTask && (
         <TaskDetailModal
           task={detailTask}
@@ -1258,8 +1529,12 @@ const COMPLETION_STATUS = [
 function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: any) {
   const [form, setForm] = useState({ taskTitle: "", description: "", project: "", timeSpent: "", completionStatus: "in-progress" });
   const [logLinks, setLogLinks] = useState<{ label: string; url: string }[]>([]);
-  const [saving, setSaving] = useState(false);
+  const [saving,    setSaving]    = useState(false);
   const [detailLog, setDetailLog] = useState<any>(null);
+  const [fPeriod,   setFPeriod]   = useState("all");
+  const [fUser,     setFUser]     = useState("all");
+  const [logPage,   setLogPage]   = useState(1);
+  const LOGS_PER_PAGE = 15;
   const normLogs = logs.map(normLog);
   const visible = user.role === "admin"
     ? normLogs
@@ -1269,7 +1544,23 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
           return l.userId === user.id || (member && member.managed_by === user.id);
         })
       : normLogs.filter((l: any) => l.userId === user.id);
-  const sorted   = [...visible].sort((a: any, b: any) => b.date.localeCompare(a.date));
+  const filteredLogs = visible.filter((l: any) => {
+    if (fUser !== "all" && l.userId !== fUser) return false;
+    if (fPeriod !== "all") {
+      const d = l.date || "";
+      if (!d) return false;
+      const dt = new Date(d);
+      const now = new Date();
+      if (fPeriod === "today") return d === fmt(today);
+      if (fPeriod === "week")  { const w = new Date(now); w.setDate(now.getDate() - 7); return dt >= w; }
+      if (fPeriod === "month") return d.slice(0, 7) === fmt(today).slice(0, 7);
+      if (fPeriod === "year")  return d.slice(0, 4) === fmt(today).slice(0, 4);
+    }
+    return true;
+  });
+  const sorted = [...filteredLogs].sort((a: any, b: any) => b.date.localeCompare(a.date));
+  const logTotalPages = Math.ceil(sorted.length / LOGS_PER_PAGE);
+  const pagedLogs = sorted.slice((logPage - 1) * LOGS_PER_PAGE, logPage * LOGS_PER_PAGE);
 
   const add = async () => {
     if (!form.taskTitle || !form.description) return;
@@ -1295,7 +1586,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
   };
 
   const grp: Record<string, any[]> = {};
-  sorted.forEach((l: any) => { (grp[l.date] = grp[l.date] || []).push(l); });
+  pagedLogs.forEach((l: any) => { (grp[l.date] = grp[l.date] || []).push(l); });
 
   const yesterday = fmt(new Date(today.getTime() - 86400000));
 
@@ -1353,6 +1644,28 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Filter bar */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap", alignItems: "center" }}>
+          <select value={fPeriod} onChange={e => { setFPeriod(e.target.value); setLogPage(1); }} style={SEL}>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="year">This Year</option>
+          </select>
+          {isPrivileged(user) && (
+            <select value={fUser} onChange={e => { setFUser(e.target.value); setLogPage(1); }} style={SEL}>
+              <option value="all">All Members</option>
+              {users.filter((u: any) => isStaff(u)).map((u: any) => (
+                <option key={u.id} value={u.id}>{normUser(u).name}</option>
+              ))}
+            </select>
+          )}
+          <span style={{ fontSize: 13, color: "#94a3b8", marginLeft: "auto" }}>
+            {sorted.length} entr{sorted.length !== 1 ? "ies" : "y"}
+          </span>
+        </div>
+
         {Object.keys(grp).length === 0 && (
           <Card style={{ padding: 40, textAlign: "center" }}>
             <div style={{ fontSize: 30, marginBottom: 8 }}>📝</div>
@@ -1402,6 +1715,9 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
                               {log.completion_status === "completed" ? "Completed" : log.completion_status === "blocked" ? "Blocked" : "In Progress"}
                             </span>
                           )}
+                          {log.approvalStatus && log.approvalStatus !== "approved" && (
+                            <ApprBadge status={log.approvalStatus} />
+                          )}
                           {log.links?.length > 0 && (
                             <span style={{ fontSize: 11, fontWeight: 600, color: B, background: B + "12", padding: "2px 8px", borderRadius: 20 }}>
                               🔗 {log.links.length} link{log.links.length > 1 ? "s" : ""}
@@ -1416,6 +1732,10 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
             </div>
           </div>
         ))}
+
+        {logTotalPages > 1 && (
+          <Pagination page={logPage} total={logTotalPages} onChange={setLogPage} />
+        )}
       </div>
 
       {detailLog && (
@@ -1430,61 +1750,406 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
   );
 }
 
-function LeaderboardPage({ tasks, logs, users }: any) {
-  const sc = useMemo(() => computeScores(tasks, logs, users), [tasks, logs, users]);
+function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek }: any) {
+  const [lbTab,      setLbTab]      = useState<"week" | "alltime" | "history">("week");
+  const [lbPage,     setLbPage]     = useState(1);
+  const [closeModal, setCloseModal] = useState(false);
+  const [closing,    setClosing]    = useState(false);
+  const LB_PER_PAGE = 10;
+  const { start: weekStart, end: weekEnd } = getWeekBounds();
+
+  const weeklySc   = useMemo(() => computeWeeklyScores(tasks, logs, users), [tasks, logs, users]);
+  const alltimeSc  = useMemo(() => computeScores(tasks, logs, users),       [tasks, logs, users]);
+  const sc         = lbTab === "week" ? weeklySc : alltimeSc;
   const [top, ...rest] = sc;
-  const medals = ["🥇", "🥈", "🥉"];
+  const medals     = ["🥇", "🥈", "🥉"];
+  const lbTotalPages = Math.ceil(rest.length / LB_PER_PAGE);
+  const pagedRest  = rest.slice((lbPage - 1) * LB_PER_PAGE, lbPage * LB_PER_PAGE);
+  const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
+
+  async function handleCloseWeek() {
+    if (!weeklySc.length) return;
+    setClosing(true);
+    await onCloseWeek?.(weekStart, weekEnd, weeklySc);
+    setClosing(false);
+    setCloseModal(false);
+  }
 
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
-      {top && (
-        <Card style={{ padding: 32, background: `linear-gradient(135deg,${B}12,#e8f4f5)`, borderColor: B + "30", marginBottom: 22, textAlign: "center" }}>
-          <div style={{ fontSize: 28, marginBottom: 6 }}>🏆</div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: B, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 14 }}>
-            Team Member of the Week
-          </div>
-          <Av user={users.find((u: any) => u.id === top.userId)} size={64} />
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", marginTop: 12 }}>{top.name}</div>
-          <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>{top.title}</div>
-          <div style={{ display: "flex", gap: 28, justifyContent: "center", marginTop: 18 }}>
-            {([["Points", top.score, B], ["Tasks", top.tasksCompleted, "#22c55e"], ["Logs", top.logsCount, "#6366f1"]] as const).map(([l, v, c]) => (
-              <div key={l} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 26, fontWeight: 800, color: c as string }}>{v as number}</div>
-                <div style={{ fontSize: 12, color: "#94a3b8" }}>{l}</div>
+
+      {/* Tab bar + Close Week button */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 8 }}>
+          {(["week", "alltime", "history"] as const).map(t => (
+            <button key={t} onClick={() => { setLbTab(t); setLbPage(1); }}
+              style={{ padding: "8px 18px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700,
+                background: lbTab === t ? B : "#f1f5f9", color: lbTab === t ? "white" : "#64748b" }}>
+              {t === "week" ? "This Week" : t === "alltime" ? "All Time" : "Past Winners"}
+            </button>
+          ))}
+        </div>
+        {user?.role === "admin" && lbTab !== "history" && (
+          <button onClick={() => setCloseModal(true)}
+            style={{ padding: "9px 18px", borderRadius: 11, background: "#f59e0b", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            🏁 Close Week
+          </button>
+        )}
+      </div>
+
+      {/* Past Winners tab */}
+      {lbTab === "history" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {(!weeklyWinners || weeklyWinners.length === 0) ? (
+            <Card style={{ padding: 40, textAlign: "center" }}>
+              <div style={{ fontSize: 30, marginBottom: 8 }}>🏆</div>
+              <div style={{ color: "#94a3b8" }}>No weekly winners recorded yet. Close the first week to start the history.</div>
+            </Card>
+          ) : weeklyWinners.map((w: any, i: number) => (
+            <Card key={w.id} style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ fontSize: 28 }}>{i === 0 ? "🏆" : "🥈"}</div>
+              <Av user={users.find((u: any) => u.id === w.winner_id)} size={44} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{w.winner_name}</div>
+                <div style={{ fontSize: 12, color: "#64748b" }}>Week of {w.week_start} to {w.week_end}</div>
               </div>
-            ))}
-          </div>
-        </Card>
+              <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                {[["Points", w.total_points, "#f59e0b"], ["Tasks", w.tasks_completed, "#22c55e"], ["Logs", w.logs_submitted, "#6366f1"]].map(([l, v, clr]) => (
+                  <div key={String(l)} style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: String(clr) }}>{v}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
-      <Card style={{ padding: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>Full Rankings</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {sc.map((s: any, i: number) => {
-            const u = users.find((u: any) => u.id === s.userId);
-            const max = sc[0]?.score || 1;
-            return (
-              <div key={s.userId} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 14, background: i === 0 ? "#fffbeb" : "#fafafa", border: i === 0 ? "1px solid #fde68a" : "1px solid #f1f5f9" }}>
-                <div style={{ fontSize: i < 3 ? 22 : 16, fontWeight: 700, width: 32, textAlign: "center", color: i === 0 ? "#f59e0b" : i === 1 ? "#94a3b8" : i === 2 ? "#cd7c2f" : "#cbd5e1" }}>
-                  {i < 3 ? medals[i] : `#${i + 1}`}
-                </div>
-                <Av user={u} size={40} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{s.name}</div>
-                  <div style={{ height: 6, background: "#e2e8f0", borderRadius: 6, marginTop: 6, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${(s.score / max) * 100}%`, background: i === 0 ? "#f59e0b" : B, borderRadius: 6 }} />
-                  </div>
-                </div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>
-                    {s.score}<span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400 }}>pt</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: "#64748b" }}>{s.tasksCompleted} done {" | "} {s.logsCount} logs</div>
-                </div>
+
+      {/* Rankings tab (This Week or All Time) */}
+      {lbTab !== "history" && (
+        <>
+          {/* Current leader / last winner card */}
+          {lbTab === "week" && lastWinner && (
+            <Card style={{ padding: 22, background: "linear-gradient(135deg,#fffbeb,#fef9c3)", borderColor: "#fde68a", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 36 }}>🏆</span>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.5px" }}>Last Week Winner</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{lastWinner.winner_name}</div>
+                <div style={{ fontSize: 12, color: "#64748b" }}>{lastWinner.total_points}pts -- {lastWinner.tasks_completed} tasks -- {lastWinner.logs_submitted} logs</div>
               </div>
+            </Card>
+          )}
+          {top && (
+            <Card style={{ padding: 28, background: `linear-gradient(135deg,${B}12,#e8f4f5)`, borderColor: B + "30", marginBottom: 18, textAlign: "center" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: B, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 14 }}>
+                {lbTab === "week" ? "This Week Leader" : "All-Time Leader"}
+              </div>
+              <Av user={users.find((u: any) => u.id === top.userId)} size={64} />
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", marginTop: 12 }}>{top.name}</div>
+              <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>{top.title}</div>
+              <div style={{ display: "flex", gap: 28, justifyContent: "center", marginTop: 18 }}>
+                {([["Points", top.score, B], ["Tasks", top.tasksCompleted, "#22c55e"], ["Logs", top.logsCount, "#6366f1"]] as const).map(([l, v, clr]) => (
+                  <div key={l} style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: clr as string }}>{v as number}</div>
+                    <div style={{ fontSize: 12, color: "#94a3b8" }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+          {!top && (
+            <Card style={{ padding: 40, textAlign: "center", marginBottom: 18 }}>
+              <div style={{ fontSize: 30, marginBottom: 8 }}>📊</div>
+              <div style={{ color: "#94a3b8" }}>No approved activity this {lbTab === "week" ? "week" : "period"} yet.</div>
+            </Card>
+          )}
+          <Card style={{ padding: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 18 }}>Full Rankings</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {sc.slice(0, 1).concat(pagedRest).map((s: any, i: number) => {
+                const idx = i === 0 ? 0 : (lbPage - 1) * LB_PER_PAGE + i;
+                const u = users.find((u: any) => u.id === s.userId);
+                const max = sc[0]?.score || 1;
+                return (
+                  <div key={s.userId} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 14,
+                    background: idx === 0 ? "#fffbeb" : "#fafafa", border: idx === 0 ? "1px solid #fde68a" : "1px solid #f1f5f9" }}>
+                    <div style={{ fontSize: idx < 3 ? 22 : 16, fontWeight: 700, width: 32, textAlign: "center",
+                      color: idx === 0 ? "#f59e0b" : idx === 1 ? "#94a3b8" : idx === 2 ? "#cd7c2f" : "#cbd5e1" }}>
+                      {idx < 3 ? medals[idx] : `#${idx + 1}`}
+                    </div>
+                    <Av user={u} size={40} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{s.name}</div>
+                      <div style={{ height: 6, background: "#e2e8f0", borderRadius: 6, marginTop: 6, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${(s.score / max) * 100}%`, background: idx === 0 ? "#f59e0b" : B, borderRadius: 6 }} />
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>
+                        {s.score}<span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400 }}>pt</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "#64748b" }}>{s.tasksCompleted} done {" | "} {s.logsCount} logs</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {lbTotalPages > 1 && (
+              <Pagination page={lbPage} total={lbTotalPages} onChange={setLbPage} />
+            )}
+          </Card>
+        </>
+      )}
+
+      {/* Close Week confirmation modal */}
+      {closeModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <Card style={{ padding: 32, width: 460, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>Close Week</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
+              This will save the current weekly scores permanently and record {weeklySc[0]?.name || "the top scorer"} as Team Member of the Week for {weekStart} to {weekEnd}.
+            </div>
+            {weeklySc.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+                {weeklySc.map((s: any, i: number) => (
+                  <div key={s.userId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10,
+                    background: i === 0 ? "#fffbeb" : "#f8fafc", border: i === 0 ? "1px solid #fde68a" : "1px solid #f1f5f9" }}>
+                    <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{i === 0 ? "🏆" : `#${i + 1}`}</span>
+                    <Av user={users.find((u: any) => u.id === s.userId)} size={30} />
+                    <span style={{ fontSize: 13, fontWeight: i === 0 ? 700 : 400, flex: 1, color: "#0f172a" }}>{s.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? "#f59e0b" : "#64748b" }}>{s.score}pt</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ padding: "14px", background: "#fef2f2", borderRadius: 10, marginBottom: 20, fontSize: 13, color: "#dc2626" }}>
+                No approved activity this week yet. Close anyway?
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={handleCloseWeek} disabled={closing}
+                style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#f59e0b", border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: closing ? "not-allowed" : "pointer", opacity: closing ? 0.7 : 1 }}>
+                {closing ? "Saving..." : "Confirm Close Week"}
+              </button>
+              <button onClick={() => setCloseModal(false)}
+                style={{ padding: "12px 20px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// -------------------------------------------------------------------
+// APPROVAL PAGE -- Admin only
+// -------------------------------------------------------------------
+function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, onApproveLog, onRejectLog }: any) {
+  const [tab,        setTab]        = useState<"tasks" | "logs">("tasks");
+  const [rejectId,   setRejectId]   = useState<string | null>(null);
+  const [rejectType, setRejectType] = useState<"task" | "log">("task");
+  const [rejectNote, setRejectNote] = useState("");
+  const [saving,     setSaving]     = useState(false);
+
+  // Build set of user IDs this person can approve for:
+  // Admin: everyone except themselves (admins don't need self-approval)
+  // Leader: only members directly managed by them (managed_by === leader.id), excludes admins
+  const approvableIds: Set<string> = (() => {
+    if (user.role === "admin") {
+      return new Set(users.filter((u: any) => u.role !== "admin").map((u: any) => u.id));
+    }
+    if (user.role === "leader") {
+      return new Set(
+        users
+          .filter((u: any) => u.managed_by === user.id && u.role !== "admin")
+          .map((u: any) => u.id)
+      );
+    }
+    return new Set();
+  })();
+
+  const pendingTasks = tasks.map(normTask).filter((t: any) =>
+    t.approvalStatus === "needs-review" && approvableIds.has(t.assignedTo)
+  );
+  const pendingLogs = logs.map(normLog).filter((l: any) =>
+    l.approvalStatus === "needs-review" && approvableIds.has(l.userId)
+  );
+
+  async function handleApprove(id: string, type: "task" | "log") {
+    setSaving(true);
+    if (type === "task") await onApproveTask?.(id);
+    else                  await onApproveLog?.(id);
+    setSaving(false);
+  }
+
+  async function handleReject() {
+    if (!rejectId || !rejectNote.trim()) return;
+    setSaving(true);
+    if (rejectType === "task") await onRejectTask?.(rejectId, rejectNote.trim());
+    else                        await onRejectLog?.(rejectId, rejectNote.trim());
+    setRejectId(null);
+    setRejectNote("");
+    setSaving(false);
+  }
+
+  return (
+    <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
+
+      {/* Tab bar */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        <button onClick={() => setTab("tasks")}
+          style={{ padding: "9px 20px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
+            background: tab === "tasks" ? B : "#f1f5f9", color: tab === "tasks" ? "white" : "#64748b" }}>
+          Tasks ({pendingTasks.length})
+        </button>
+        <button onClick={() => setTab("logs")}
+          style={{ padding: "9px 20px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
+            background: tab === "logs" ? B : "#f1f5f9", color: tab === "logs" ? "white" : "#64748b" }}>
+          Activity Logs ({pendingLogs.length})
+        </button>
+      </div>
+
+      {/* Pending Tasks */}
+      {tab === "tasks" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {pendingTasks.length === 0 ? (
+            <Card style={{ padding: 40, textAlign: "center" }}>
+              <div style={{ fontSize: 30, marginBottom: 8 }}>✅</div>
+              <div style={{ color: "#94a3b8" }}>No tasks pending approval</div>
+            </Card>
+          ) : pendingTasks.map((task: any) => {
+            const assignee = normUser(users.find((u: any) => u.id === task.assignedTo));
+            return (
+              <Card key={task.id} style={{ padding: "18px 20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>{task.title}</div>
+                    {assignee && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                        <Av user={assignee} size={22} />
+                        <span style={{ fontSize: 13, color: "#64748b" }}>{assignee.name}</span>
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                      <Pill type="priority" value={task.priority} />
+                      {task.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {task.project}</span>}
+                      {task.deadline && <span style={{ fontSize: 12, color: "#94a3b8" }}>📅 {task.deadline}</span>}
+                    </div>
+                    {task.description && (
+                      <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+                        {task.description}
+                      </div>
+                    )}
+                    {task.submission_links && task.submission_links.length > 0 && (
+                      <div style={{ marginTop: 6 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 6 }}>Submission:</div>
+                        <LinkDisplay links={task.submission_links} />
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    <button onClick={() => handleApprove(task.id, "task")} disabled={saving}
+                      style={{ padding: "8px 16px", borderRadius: 9, background: "#22c55e", border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer" }}>
+                      Approve
+                    </button>
+                    <button onClick={() => { setRejectId(task.id); setRejectType("task"); setRejectNote(""); }}
+                      style={{ padding: "8px 16px", borderRadius: 9, background: "#fee2e2", border: "none", color: "#dc2626", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </Card>
             );
           })}
         </div>
-      </Card>
+      )}
+
+      {/* Pending Logs */}
+      {tab === "logs" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {pendingLogs.length === 0 ? (
+            <Card style={{ padding: 40, textAlign: "center" }}>
+              <div style={{ fontSize: 30, marginBottom: 8 }}>✅</div>
+              <div style={{ color: "#94a3b8" }}>No activity logs pending approval</div>
+            </Card>
+          ) : pendingLogs.map((log: any) => {
+            const logUser = normUser(users.find((u: any) => u.id === log.userId));
+            return (
+              <Card key={log.id} style={{ padding: "18px 20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>{log.taskTitle}</div>
+                    {logUser && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                        <Av user={logUser} size={22} />
+                        <span style={{ fontSize: 13, color: "#64748b" }}>{logUser.name}</span>
+                        <span style={{ fontSize: 12, color: "#94a3b8" }}>-- {log.date}</span>
+                      </div>
+                    )}
+                    {log.description && (
+                      <div style={{ fontSize: 13, color: "#64748b", marginBottom: 6, lineHeight: 1.5 }}>{log.description}</div>
+                    )}
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      {log.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {log.project}</span>}
+                      {log.timeSpent > 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>{log.timeSpent}h</span>}
+                    </div>
+                    {log.links && log.links.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <LinkDisplay links={log.links} />
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    <button onClick={() => handleApprove(log.id, "log")} disabled={saving}
+                      style={{ padding: "8px 16px", borderRadius: 9, background: "#22c55e", border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer" }}>
+                      Approve
+                    </button>
+                    <button onClick={() => { setRejectId(log.id); setRejectType("log"); setRejectNote(""); }}
+                      style={{ padding: "8px 16px", borderRadius: 9, background: "#fee2e2", border: "none", color: "#dc2626", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Reject reason modal */}
+      {rejectId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <Card style={{ padding: 28, width: 440, maxWidth: "100%" }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>
+              Reject {rejectType === "task" ? "Task" : "Activity Log"}
+            </div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 14 }}>
+              Give a reason so the team member can fix and resubmit:
+            </div>
+            <textarea
+              value={rejectNote}
+              onChange={e => setRejectNote(e.target.value)}
+              rows={3}
+              placeholder="e.g. Submission link missing, task not fully completed..."
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit", marginBottom: 16 }}
+            />
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={handleReject} disabled={saving || !rejectNote.trim()}
+                style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#dc2626", border: "none", color: "white", fontWeight: 700, fontSize: 14,
+                  cursor: saving || !rejectNote.trim() ? "not-allowed" : "pointer", opacity: !rejectNote.trim() ? 0.5 : 1 }}>
+                {saving ? "Rejecting..." : "Confirm Reject"}
+              </button>
+              <button onClick={() => { setRejectId(null); setRejectNote(""); }}
+                style={{ padding: "12px 20px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
@@ -1767,7 +2432,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
                 </div>
               )}
 
-              {/* Assign leader — admin only */}
+              {/* Assign leader -- admin only */}
               {user.role === "admin" && selectedMember.role !== "admin" && (
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: 8 }}>Assign Team Leader</label>
@@ -1843,7 +2508,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
                       ))}
                     </select>
                     {users.filter((u: any) => u.role === "leader" || u.role === "admin").length === 0 && (
-                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>No leaders yet — you can assign one later from the Team page.</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>No leaders yet -- you can assign one later from the Team page.</div>
                     )}
                   </div>
                 )}
@@ -2229,6 +2894,11 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
     );
   }
 
+  const [kpiPage, setKpiPage] = useState(1);
+  const KPI_PER_PAGE = 8;
+  const pagedVisibleUsers = visibleUsers.slice((kpiPage - 1) * KPI_PER_PAGE, kpiPage * KPI_PER_PAGE);
+  const kpiTotalPages = Math.ceil(visibleUsers.length / KPI_PER_PAGE);
+
   // -- My KPIs (member view) ---------------------------------------------------
   const myAssignments = monthAssignments.filter((a: any) => a.assigned_to === user.id);
   const myTotal = myAssignments.length;
@@ -2274,8 +2944,9 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {visibleUsers.length === 0
             ? <Card style={{ padding: 32, textAlign: "center", color: "#94a3b8", fontSize: 14 }}>No team members yet</Card>
-            : visibleUsers.map((u: any) => <MemberKPICard key={u.id} member={u} />)
+            : pagedVisibleUsers.map((u: any) => <MemberKPICard key={u.id} member={u} />)
           }
+          {kpiTotalPages > 1 && <Pagination page={kpiPage} total={kpiTotalPages} onChange={setKpiPage} />}
         </div>
       ) : (
         /* Member: own KPIs */
@@ -2475,6 +3146,7 @@ export default function ProwessDashboard({
   logs  = [],
   kpiAssignments = [],
   kpiLogs = [],
+  weeklyWinners = [],
   onCreateAssignment,
   onLogKPI,
   onSetVerdict,
@@ -2488,6 +3160,11 @@ export default function ProwessDashboard({
   onAssignLeader,
   onCreateMember,
   onSignOut,
+  onApproveTask,
+  onRejectTask,
+  onApproveLog,
+  onRejectLog,
+  onCloseWeek,
 }: {
   currentUser: any;
   users?: any[];
@@ -2495,6 +3172,7 @@ export default function ProwessDashboard({
   logs?: any[];
   kpiAssignments?: any[];
   kpiLogs?: any[];
+  weeklyWinners?: any[];
   onCreateAssignment?: (form: any) => Promise<void>;
   onLogKPI?: (form: any) => Promise<void>;
   onSetVerdict?: (form: any) => Promise<void>;
@@ -2508,29 +3186,49 @@ export default function ProwessDashboard({
   onAssignLeader?: (memberId: string, leaderId: string | null) => Promise<void>;
   onCreateMember?: (form: any) => Promise<void>;
   onSignOut?: () => void;
+  onApproveTask?: (id: string) => Promise<void>;
+  onRejectTask?: (id: string, note: string) => Promise<void>;
+  onApproveLog?: (id: string) => Promise<void>;
+  onRejectLog?: (id: string, note: string) => Promise<void>;
+  onCloseWeek?: (weekStart: string, weekEnd: string, scores: any[]) => Promise<void>;
 }) {
   const [page,        setPage]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [drawerOpen,  setDrawerOpen]  = useState(false);
-  const [localTasks,  setLocalTasks]  = useState(tasks);
-  const [localLogs,   setLocalLogs]   = useState(logs);
-  const [localKpiA,   setLocalKpiA]   = useState(kpiAssignments);
-  const [localKpiL,   setLocalKpiL]   = useState(kpiLogs);
+  const [localTasks,   setLocalTasks]   = useState(tasks);
+  const [localLogs,    setLocalLogs]    = useState(logs);
+  const [localKpiA,    setLocalKpiA]    = useState(kpiAssignments);
+  const [localKpiL,    setLocalKpiL]    = useState(kpiLogs);
+  const [localWinners, setLocalWinners] = useState(weeklyWinners);
   const isMobile = useIsMobile();
 
-  useEffect(() => setLocalTasks(tasks),         [tasks]);
-  useEffect(() => setLocalLogs(logs),           [logs]);
-  useEffect(() => setLocalKpiA(kpiAssignments), [kpiAssignments]);
-  useEffect(() => setLocalKpiL(kpiLogs),        [kpiLogs]);
+  useEffect(() => setLocalTasks(tasks),          [tasks]);
+  useEffect(() => setLocalLogs(logs),            [logs]);
+  useEffect(() => setLocalKpiA(kpiAssignments),  [kpiAssignments]);
+  useEffect(() => setLocalKpiL(kpiLogs),         [kpiLogs]);
+  useEffect(() => setLocalWinners(weeklyWinners),[weeklyWinners]);
 
   const user = normUser(currentUser);
+
+  const approvalCount = (() => {
+    if (!user) return 0;
+    const pendingTasks = localTasks.map(normTask).filter((t: any) => t.approvalStatus === "needs-review");
+    const pendingLogs  = localLogs.map(normLog).filter((l: any)  => l.approvalStatus === "needs-review");
+    if (user.role === "admin") return pendingTasks.length + pendingLogs.length;
+    if (user.role === "leader") {
+      const myTeamIds = new Set(users.filter((u: any) => u.managed_by === user.id).map((u: any) => u.id));
+      return pendingTasks.filter((t: any) => myTeamIds.has(t.assignedTo)).length
+           + pendingLogs.filter((l: any)  => myTeamIds.has(l.userId)).length;
+    }
+    return 0;
+  })();
 
   const content = () => {
     switch (page) {
       case "dashboard":
         return isPrivileged(user)
-          ? <AdminDashboard tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} setPage={setPage} />
-          : <MemberDashboard user={user} tasks={localTasks} logs={localLogs} kpiAssignments={localKpiA} kpiLogs={localKpiL} setPage={setPage} />;
+          ? <AdminDashboard tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} setPage={setPage} />
+          : <MemberDashboard user={user} tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} setPage={setPage} />;
       case "kpi":
         return <KPIPage
           user={user} users={users}
@@ -2559,8 +3257,29 @@ export default function ProwessDashboard({
       case "activity":
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} />;
       case "leaderboard":
-        return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} />;
+        return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); const winner = sc[0]; setLocalWinners((prev: any) => [{ id: Date.now().toString(), week_start: ws, week_end: we, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} />;
+      case "approvals":
+        return isPrivileged(user) ? <ApprovalPage
+          user={user} tasks={localTasks} logs={localLogs} users={users}
+          onApproveTask={async (id: string) => {
+            await onApproveTask?.(id);
+            setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "approved" } : t));
+          }}
+          onRejectTask={async (id: string, note: string) => {
+            await onRejectTask?.(id, note);
+            setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "rejected", approval_note: note } : t));
+          }}
+          onApproveLog={async (id: string) => {
+            await onApproveLog?.(id);
+            setLocalLogs((p: any[]) => p.map((l: any) => l.id === id ? { ...l, approval_status: "approved" } : l));
+          }}
+          onRejectLog={async (id: string, note: string) => {
+            await onRejectLog?.(id, note);
+            setLocalLogs((p: any[]) => p.map((l: any) => l.id === id ? { ...l, approval_status: "rejected", approval_note: note } : l));
+          }}
+        /> : null;
       case "reports":
+
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
       case "team":
         return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} /> : null;
@@ -2581,12 +3300,13 @@ export default function ProwessDashboard({
           user={user} page={page} setPage={setPage}
           onLogout={onSignOut} open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
+          approvalCount={approvalCount}
         />
       )}
 
       {/* Desktop sidebar - hidden on mobile */}
       {!isMobile && (
-        <Sidebar user={user} page={page} setPage={setPage} onLogout={onSignOut} open={sidebarOpen} setOpen={setSidebarOpen} />
+        <Sidebar user={user} page={page} setPage={setPage} onLogout={onSignOut} open={sidebarOpen} setOpen={setSidebarOpen} approvalCount={approvalCount} />
       )}
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
