@@ -21,7 +21,6 @@ const MOBILE_CSS = `
     .prowess-stat-row { flex-direction: column !important; }
     .prowess-two-col  { grid-template-columns: 1fr !important; }
     .prowess-actlog   { flex-direction: column !important; }
-    .prowess-actform  { width: 100% !important; position: static !important; }
   }
 `;
 
@@ -1716,6 +1715,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
   const [form, setForm] = useState({ taskTitle: "", description: "", project: "", timeSpent: "", completionStatus: "in-progress" });
   const [logLinks, setLogLinks] = useState<{ label: string; url: string }[]>([]);
   const [saving,    setSaving]    = useState(false);
+  const [logModal,  setLogModal]  = useState(false);
   const [detailLog, setDetailLog] = useState<any>(null);
   const [fPeriod,   setFPeriod]   = useState("all");
   const [fUser,     setFUser]     = useState("all");
@@ -1764,6 +1764,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
     setForm({ taskTitle: "", description: "", project: "", timeSpent: "", completionStatus: "in-progress" });
     setLogLinks([]);
     setSaving(false);
+    setLogModal(false);
   };
 
   const deleteLog = (id: string) => {
@@ -1777,34 +1778,147 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
   const yesterday = fmt(new Date(today.getTime() - 86400000));
 
   return (
-    <div className="prowess-page-pad prowess-actlog" style={{ padding: "24px 28px", display: "flex", gap: 22 }}>
-      {(user.role === "member" || user.role === "leader") && (
-        <div className="prowess-actform" style={{ width: 320, flexShrink: 0 }}>
-          <Card style={{ padding: 24, position: "sticky", top: 82 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 20 }}>Log Today&apos;s Work</div>
+    <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
+
+      {/* Filter bar + Log button */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap", alignItems: "center" }}>
+        <select value={fPeriod} onChange={e => { setFPeriod(e.target.value); setLogPage(1); }} style={SEL}>
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
+        </select>
+        {isPrivileged(user) && (
+          <select value={fUser} onChange={e => { setFUser(e.target.value); setLogPage(1); }} style={SEL}>
+            <option value="all">All Members</option>
+            {users.filter((u: any) => isStaff(u)).map((u: any) => (
+              <option key={u.id} value={u.id}>{normUser(u).name}</option>
+            ))}
+          </select>
+        )}
+        <span style={{ fontSize: 13, color: "#94a3b8", marginLeft: "auto" }}>
+          {sorted.length} entr{sorted.length !== 1 ? "ies" : "y"}
+        </span>
+        {(user.role === "member" || user.role === "leader") && (
+          <button onClick={() => setLogModal(true)}
+            style={{ padding: "9px 18px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Log Today&apos;s Work
+          </button>
+        )}
+      </div>
+
+      {/* Entries */}
+      {Object.keys(grp).length === 0 && (
+        <Card style={{ padding: 40, textAlign: "center" }}>
+          <div style={{ fontSize: 30, marginBottom: 8 }}>📝</div>
+          <div style={{ color: "#94a3b8", marginBottom: 16 }}>No activity logged yet</div>
+          {(user.role === "member" || user.role === "leader") && (
+            <button onClick={() => setLogModal(true)}
+              style={{ padding: "10px 20px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+              + Log Your First Entry
+            </button>
+          )}
+        </Card>
+      )}
+      {Object.entries(grp).map(([date, dl]) => (
+        <div key={date} style={{ marginBottom: 22 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
+            {date === fmt(today) ? "Today" : date === yesterday ? "Yesterday" : date}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {dl.map((log: any) => {
+              const lu = normUser(users.find((u: any) => u.id === log.userId));
+              return (
+                <Card key={log.id}
+                  onClick={() => setDetailLog(log)}
+                  style={{ padding: "16px 18px", cursor: "pointer" }}
+                  onMouseEnter={(e: any) => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
+                  onMouseLeave={(e: any) => e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"}
+                >
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <Av user={lu} size={32} />
+                      <div style={{ width: 2, flex: 1, background: "#f1f5f9", borderRadius: 2, minHeight: 16, marginTop: 4 }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{log.taskTitle}</div>
+                        <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>{log.timeSpent}h</div>
+                      </div>
+                      {isPrivileged(user) && lu && (
+                        <div style={{ fontSize: 12, color: B, fontWeight: 600, marginBottom: 3 }}>{lu.name}</div>
+                      )}
+                      <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{log.description}</div>
+                      <div style={{ display: "flex", gap: 10, marginTop: 5, alignItems: "center", flexWrap: "wrap" }}>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>📁 {log.project}</div>
+                        {log.created_at && (
+                          <div style={{ fontSize: 11, color: "#94a3b8" }}>🕐 {fmtTime(log.created_at)}</div>
+                        )}
+                        {log.completion_status && (
+                          <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
+                            background: log.completion_status === "completed" ? "#f0fdf4" : log.completion_status === "blocked" ? "#fef2f2" : "#eff6ff",
+                            color: log.completion_status === "completed" ? "#22c55e" : log.completion_status === "blocked" ? "#ef4444" : "#3b82f6" }}>
+                            {log.completion_status === "completed" ? "Completed" : log.completion_status === "blocked" ? "Blocked" : "In Progress"}
+                          </span>
+                        )}
+                        {log.approvalStatus && log.approvalStatus !== "approved" && (
+                          <ApprBadge status={log.approvalStatus} />
+                        )}
+                        {log.links?.length > 0 && (
+                          <span style={{ fontSize: 11, fontWeight: 600, color: B, background: B + "12", padding: "2px 8px", borderRadius: 20 }}>
+                            🔗 {log.links.length} link{log.links.length > 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {logTotalPages > 1 && (
+        <Pagination page={logPage} total={logTotalPages} onChange={setLogPage} />
+      )}
+
+      {/* Log Today's Work modal */}
+      {logModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) { setLogModal(false); } }}>
+          <Card style={{ padding: 28, width: 480, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>Log Today&apos;s Work</div>
+              <button onClick={() => setLogModal(false)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", padding: 4 }}>✕</button>
+            </div>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Task Title</label>
               <input value={form.taskTitle} onChange={e => setForm(f => ({ ...f, taskTitle: e.target.value }))}
+                placeholder="What task were you working on?"
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>What did you do?</label>
-              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3}
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={4}
+                placeholder="Describe what you worked on and what you accomplished..."
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} />
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Project</label>
-              <input value={form.project} onChange={e => setForm(f => ({ ...f, project: e.target.value }))}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Time Spent (hrs)</label>
-              <input type="number" value={form.timeSpent} onChange={e => setForm(f => ({ ...f, timeSpent: e.target.value }))}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Project</label>
+                <input value={form.project} onChange={e => setForm(f => ({ ...f, project: e.target.value }))}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Time Spent (hrs)</label>
+                <input type="number" value={form.timeSpent} onChange={e => setForm(f => ({ ...f, timeSpent: e.target.value }))} min="0" step="0.5"
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+              </div>
             </div>
 
             <div style={{ marginBottom: 20 }}>
@@ -1823,106 +1937,21 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
 
             <LinkAttacher links={logLinks} onChange={setLogLinks} />
 
-            <button onClick={add} disabled={saving} style={{ width: "100%", padding: "12px", borderRadius: 10, background: saving ? "#94a3b8" : B, color: "white", border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 600 }}>
-              {saving ? "Saving..." : "Log Activity"}
-            </button>
+            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+              <button onClick={add} disabled={saving || !form.taskTitle || !form.description}
+                style={{ flex: 1, padding: "13px", borderRadius: 10, background: B, color: "white", border: "none",
+                  cursor: saving || !form.taskTitle || !form.description ? "not-allowed" : "pointer",
+                  fontSize: 14, fontWeight: 700, opacity: !form.taskTitle || !form.description ? 0.6 : 1 }}>
+                {saving ? "Saving..." : "Log Activity"}
+              </button>
+              <button onClick={() => setLogModal(false)}
+                style={{ padding: "13px 20px", borderRadius: 10, background: "#f1f5f9", color: "#374151", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
+                Cancel
+              </button>
+            </div>
           </Card>
         </div>
       )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Filter bar */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap", alignItems: "center" }}>
-          <select value={fPeriod} onChange={e => { setFPeriod(e.target.value); setLogPage(1); }} style={SEL}>
-            <option value="all">All Time</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="year">This Year</option>
-          </select>
-          {isPrivileged(user) && (
-            <select value={fUser} onChange={e => { setFUser(e.target.value); setLogPage(1); }} style={SEL}>
-              <option value="all">All Members</option>
-              {users.filter((u: any) => isStaff(u)).map((u: any) => (
-                <option key={u.id} value={u.id}>{normUser(u).name}</option>
-              ))}
-            </select>
-          )}
-          <span style={{ fontSize: 13, color: "#94a3b8", marginLeft: "auto" }}>
-            {sorted.length} entr{sorted.length !== 1 ? "ies" : "y"}
-          </span>
-        </div>
-
-        {Object.keys(grp).length === 0 && (
-          <Card style={{ padding: 40, textAlign: "center" }}>
-            <div style={{ fontSize: 30, marginBottom: 8 }}>📝</div>
-            <div style={{ color: "#94a3b8" }}>No activity logged yet</div>
-          </Card>
-        )}
-        {Object.entries(grp).map(([date, dl]) => (
-          <div key={date} style={{ marginBottom: 22 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10 }}>
-              {date === fmt(today) ? "Today" : date === yesterday ? "Yesterday" : date}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {dl.map((log: any) => {
-                const lu = normUser(users.find((u: any) => u.id === log.userId));
-                return (
-                  <Card key={log.id}
-                    onClick={() => setDetailLog(log)}
-                    style={{ padding: "16px 18px", cursor: "pointer" }}
-                    onMouseEnter={(e: any) => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
-                    onMouseLeave={(e: any) => e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"}
-                  >
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                        <Av user={lu} size={32} />
-                        <div style={{ width: 2, flex: 1, background: "#f1f5f9", borderRadius: 2, minHeight: 16, marginTop: 4 }} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{log.taskTitle}</div>
-                          <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>{log.timeSpent}h</div>
-                        </div>
-                        {isPrivileged(user) && lu && (
-                          <div style={{ fontSize: 12, color: B, fontWeight: 600, marginBottom: 3 }}>{lu.name}</div>
-                        )}
-                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{log.description}</div>
-                        <div style={{ display: "flex", gap: 10, marginTop: 5, alignItems: "center", flexWrap: "wrap" }}>
-                          <div style={{ fontSize: 11, color: "#94a3b8" }}>📁 {log.project}</div>
-                          {log.created_at && (
-                            <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                              🕐 {fmtTime(log.created_at)}
-                            </div>
-                          )}
-                          {log.completion_status && (
-                            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
-                              background: log.completion_status === "completed" ? "#f0fdf4" : log.completion_status === "blocked" ? "#fef2f2" : "#eff6ff",
-                              color: log.completion_status === "completed" ? "#22c55e" : log.completion_status === "blocked" ? "#ef4444" : "#3b82f6" }}>
-                              {log.completion_status === "completed" ? "Completed" : log.completion_status === "blocked" ? "Blocked" : "In Progress"}
-                            </span>
-                          )}
-                          {log.approvalStatus && log.approvalStatus !== "approved" && (
-                            <ApprBadge status={log.approvalStatus} />
-                          )}
-                          {log.links?.length > 0 && (
-                            <span style={{ fontSize: 11, fontWeight: 600, color: B, background: B + "12", padding: "2px 8px", borderRadius: 20 }}>
-                              🔗 {log.links.length} link{log.links.length > 1 ? "s" : ""}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        {logTotalPages > 1 && (
-          <Pagination page={logPage} total={logTotalPages} onChange={setLogPage} />
-        )}
-      </div>
 
       {detailLog && (
         <LogDetailModal
