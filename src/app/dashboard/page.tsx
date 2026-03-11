@@ -18,7 +18,7 @@ export default function DashboardPage() {
     setError(null);
 
     try {
-      // getSession() reads from localStorage — no LockManager, works with multiple tabs
+      // getSession() reads from localStorage -- no LockManager, works with multiple tabs
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) { router.push("/login"); return; }
@@ -32,7 +32,7 @@ export default function DashboardPage() {
 
       let profile = profileData;
 
-      // Profile missing — auto-create it from auth user metadata
+      // Profile missing -- auto-create it from auth user metadata
       if (profileErr || !profile) {
         const initials = user.email ? user.email[0].toUpperCase() : "?";
         const fallbackName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Team Member";
@@ -64,21 +64,24 @@ export default function DashboardPage() {
         { data: users,    error: usersErr   },
         { data: kpiAssignments, error: kpiAErr },
         { data: kpiLogs,  error: kpiLErr    },
+        { data: weeklyWinners               },
       ] = await Promise.all([
         supabase.from("tasks").select("*").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
         supabase.from("profiles").select("*").order("full_name"),
         supabase.from("kpi_assignments").select("*").order("created_at", { ascending: false }),
         supabase.from("kpi_logs").select("*").order("created_at", { ascending: false }),
+        supabase.from("weekly_winners").select("*").order("week_end", { ascending: false }),
       ]);
 
       if (tasksErr) throw new Error(`Tasks failed to load: ${tasksErr.message}`);
       if (logsErr)  throw new Error(`Activity logs failed to load: ${logsErr.message}`);
       if (usersErr) throw new Error(`Team profiles failed to load: ${usersErr.message}`);
-      // KPI errors are non-fatal — tables may not exist yet if schema not yet run
+      // KPI errors are non-fatal -- tables may not exist yet if schema not yet run
       setState({
         profile, tasks: tasks || [], logs: logs || [], users: users || [],
         kpiAssignments: kpiAssignments || [], kpiLogs: kpiLogs || [],
+        weeklyWinners: weeklyWinners || [],
       });
 
     } catch (err: any) {
@@ -111,7 +114,7 @@ export default function DashboardPage() {
           }} />
         ))}
       </div>
-      <div style={{ fontSize: 13, color: "#94a3b8" }}>Loading your dashboard…</div>
+      <div style={{ fontSize: 13, color: "#94a3b8" }}>Loading your dashboard...</div>
       <style>{`
         @keyframes prowess-bounce {
           0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
@@ -124,7 +127,7 @@ export default function DashboardPage() {
   // Catch-all: if state or profile is somehow null past the loading screen, don't crash
   if (!state || !state.profile) return null;
 
-  // Error screen — shows the actual error so Ngozi can debug
+  // Error screen -- shows the actual error so Ngozi can debug
   if (error) return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
@@ -172,6 +175,7 @@ export default function DashboardPage() {
       priority: form.priority, project: form.project,
       deadline: form.deadline || null,
       links: form.links?.length ? form.links : null,
+      approval_status: "pending",
     }).select().single();
     if (!error && data) {
       setState((p: any) => ({ ...p, tasks: [data, ...p.tasks] }));
@@ -199,7 +203,11 @@ export default function DashboardPage() {
 
   async function updateTaskStatus(taskId: string, status: string, submissionLinks?: any[] | null) {
     const updates: any = { status };
-    if (status === "completed") updates.completed_at = new Date().toISOString();
+    if (status === "completed") {
+      updates.completed_at = new Date().toISOString();
+      updates.approval_status = "needs-review";
+      updates.approval_note = null;
+    }
     if (submissionLinks && submissionLinks.length > 0) updates.submission_links = submissionLinks;
     await supabase.from("tasks").update(updates).eq("id", taskId);
     setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, ...updates } : t) }));
@@ -218,6 +226,7 @@ export default function DashboardPage() {
       completion_status: form.completionStatus || "in-progress",
       links: form.links?.length ? form.links : null,
       log_date: new Date().toISOString().split("T")[0],
+      approval_status: "needs-review",
     }).select().single();
     if (!error && data) setState((p: any) => ({ ...p, logs: [data, ...p.logs] }));
   }
@@ -300,6 +309,46 @@ export default function DashboardPage() {
     setState((p: any) => ({ ...p, kpiAssignments: (p.kpiAssignments || []).filter((a: any) => a.id !== id) }));
   }
 
+  async function approveTask(id: string) {
+    await supabase.from("tasks").update({ approval_status: "approved", approved_by: state.profile.id, approved_at: new Date().toISOString(), approval_note: null }).eq("id", id);
+    setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === id ? { ...t, approval_status: "approved", approved_by: state.profile.id, approval_note: null } : t) }));
+  }
+
+  async function rejectTask(id: string, note: string) {
+    await supabase.from("tasks").update({ approval_status: "rejected", approval_note: note, approved_by: state.profile.id, approved_at: new Date().toISOString() }).eq("id", id);
+    setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === id ? { ...t, approval_status: "rejected", approval_note: note } : t) }));
+  }
+
+  async function approveLog(id: string) {
+    await supabase.from("activity_logs").update({ approval_status: "approved", approved_by: state.profile.id, approved_at: new Date().toISOString(), approval_note: null }).eq("id", id);
+    setState((p: any) => ({ ...p, logs: p.logs.map((l: any) => l.id === id ? { ...l, approval_status: "approved", approved_by: state.profile.id, approval_note: null } : l) }));
+  }
+
+  async function rejectLog(id: string, note: string) {
+    await supabase.from("activity_logs").update({ approval_status: "rejected", approval_note: note, approved_by: state.profile.id, approved_at: new Date().toISOString() }).eq("id", id);
+    setState((p: any) => ({ ...p, logs: p.logs.map((l: any) => l.id === id ? { ...l, approval_status: "rejected", approval_note: note } : l) }));
+  }
+
+  async function closeWeek(weekStart: string, weekEnd: string, scores: any[]) {
+    const winner = scores[0];
+    if (!winner) return;
+    const { data: winnerRow } = await supabase.from("weekly_winners").insert({
+      week_start: weekStart, week_end: weekEnd,
+      winner_id: winner.userId, winner_name: winner.name,
+      total_points: winner.score, tasks_completed: winner.tasksCompleted,
+      logs_submitted: winner.logsCount, created_by: state.profile.id,
+    }).select().single();
+    const snapshotRows = scores.map(s => ({
+      week_start: weekStart, week_end: weekEnd,
+      user_id: s.userId, user_name: s.name,
+      total_points: s.score, tasks_completed: s.tasksCompleted, logs_submitted: s.logsCount,
+    }));
+    await supabase.from("weekly_scores").insert(snapshotRows);
+    if (winnerRow) {
+      setState((p: any) => ({ ...p, weeklyWinners: [winnerRow, ...(p.weeklyWinners || [])] }));
+    }
+  }
+
   return (
     <ProwessDashboard
       currentUser={state.profile}
@@ -308,6 +357,7 @@ export default function DashboardPage() {
       logs={state.logs}
       kpiAssignments={state.kpiAssignments}
       kpiLogs={state.kpiLogs}
+      weeklyWinners={state.weeklyWinners || []}
       onCreateAssignment={createAssignment}
       onLogKPI={logKPI}
       onSetVerdict={setVerdict}
@@ -321,6 +371,11 @@ export default function DashboardPage() {
       onAssignLeader={assignLeader}
       onCreateMember={createMember}
       onSignOut={signOut}
+      onApproveTask={approveTask}
+      onRejectTask={rejectTask}
+      onApproveLog={approveLog}
+      onRejectLog={rejectLog}
+      onCloseWeek={closeWeek}
     />
   );
 }
