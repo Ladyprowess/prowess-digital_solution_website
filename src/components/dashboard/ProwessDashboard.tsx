@@ -1248,8 +1248,8 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
           </div>
         )}
 
-        {/* Submission links - show when not yet approved or when rejected */}
-        {(task.status !== "completed" || task.approvalStatus === "rejected") && (
+        {/* Submission links - show when task is not yet approved, only for assignee */}
+        {(task.status !== "completed" || task.approvalStatus === "rejected") && user.id === task.assignedTo && (
           <div style={{ marginBottom: 16, padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 12 }}>
               📎 Attach work links <span style={{ fontWeight: 400, color: "#94a3b8" }}>- add before or when marking complete</span>
@@ -1289,7 +1289,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
                   </button>
                 ))}
               </div>
-              {task.approvalStatus === "rejected" && task.status === "completed" && (
+              {task.approvalStatus === "rejected" && task.status === "completed" && user.id === task.assignedTo && (
                 <>
                   <div style={{ marginTop: 12, marginBottom: 4 }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>
@@ -1561,7 +1561,7 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   );
 }
 
-function LogDetailModal({ log, users, onClose, onDelete, onResubmit }: any) {
+function LogDetailModal({ log, users, currentUser, onClose, onDelete, onResubmit }: any) {
   const lu = normUser(users.find((u: any) => u.id === log.userId));
   const isRejected = log.approvalStatus === "rejected";
 
@@ -1687,8 +1687,8 @@ function LogDetailModal({ log, users, onClose, onDelete, onResubmit }: any) {
           </div>
         )}
 
-        {/* Resubmit button */}
-        {isRejected && onResubmit && (
+        {/* Resubmit button - only for the log owner */}
+        {isRejected && onResubmit && currentUser?.id === log.userId && (
           <button onClick={handleResubmit} disabled={saving || !editDesc.trim()}
             style={{ width: "100%", padding: "13px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14,
               cursor: saving || !editDesc.trim() ? "not-allowed" : "pointer", marginBottom: 10, opacity: saving || !editDesc.trim() ? 0.7 : 1 }}>
@@ -1928,6 +1928,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
         <LogDetailModal
           log={detailLog}
           users={users}
+          currentUser={user}
           onClose={() => setDetailLog(null)}
           onDelete={isPrivileged(user) ? deleteLog : undefined}
           onResubmit={onResubmitLog}
