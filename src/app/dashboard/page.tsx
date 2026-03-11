@@ -329,6 +329,23 @@ export default function DashboardPage() {
     setState((p: any) => ({ ...p, logs: p.logs.map((l: any) => l.id === id ? { ...l, approval_status: "rejected", approval_note: note } : l) }));
   }
 
+  async function resubmitLog(id: string, links: any[]) {
+    await supabase.from("activity_logs").update({
+      approval_status: "needs-review",
+      approval_note: null,
+      approved_by: null,
+      approved_at: null,
+      links: links.length ? links : null,
+    }).eq("id", id);
+    setState((p: any) => ({
+      ...p,
+      logs: p.logs.map((l: any) => l.id === id
+        ? { ...l, approval_status: "needs-review", approval_note: null, links }
+        : l
+      ),
+    }));
+  }
+
   async function closeWeek(weekStart: string, weekEnd: string, scores: any[]) {
     const winner = scores[0];
     if (!winner) return;
@@ -367,6 +384,7 @@ export default function DashboardPage() {
       onDeleteTask={deleteTask}
       onAddLog={addLog}
       onDeleteLog={deleteLog}
+      onResubmitLog={resubmitLog}
       onUpdateProfile={updateProfile}
       onAssignLeader={assignLeader}
       onCreateMember={createMember}
