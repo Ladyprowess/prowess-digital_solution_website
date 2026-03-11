@@ -26,9 +26,13 @@ function ToolFrame({ src, title, minHeight = "700px" }: Props) {
   }, [minHeight]);
 
   return (
-    <iframe ref={ref} src={src} title={title}
-      style={{ width:"100%", minHeight, border:"none", borderRadius:12, display:"block" }}
-      loading="lazy" />
+    <iframe
+      ref={ref}
+      src={src}
+      title={title}
+      style={{ width: "100%", minHeight, border: "none", borderRadius: 12, display: "block" }}
+      loading="lazy"
+    />
   );
 }
 
@@ -38,6 +42,18 @@ export function StartupCalculator({ code }: { code: string }) {
 
 export function ProfitTracker({ code }: { code: string }) {
   return <ToolFrame src={`/tools/tracker.html?code=${encodeURIComponent(code)}`} title="Profit and Cashflow Tracker" minHeight="750px" />;
+}
+
+export function InvoiceManager({ code }: { code: string }) {
+  return <ToolFrame src={`/tools/invoice.html?code=${encodeURIComponent(code)}`} title="Invoice Manager" minHeight="800px" />;
+}
+
+export function InventoryManager({ code }: { code: string }) {
+  return <ToolFrame src={`/tools/inventory.html?code=${encodeURIComponent(code)}`} title="Inventory Manager" minHeight="800px" />;
+}
+
+export function ReachPlanner({ code }: { code: string }) {
+  return <ToolFrame src={`/tools/reach.html?code=${encodeURIComponent(code)}`} title="Reach and Growth Planner" minHeight="800px" />;
 }
 
 export function CustomerServiceGuide() {
