@@ -1548,9 +1548,20 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   );
 }
 
-function LogDetailModal({ log, users, onClose, onDelete }: any) {
+function LogDetailModal({ log, users, onClose, onDelete, onResubmit }: any) {
   const lu = normUser(users.find((u: any) => u.id === log.userId));
   const cs = log.completion_status;
+  const [editLinks, setEditLinks] = useState<{ label: string; url: string }[]>(log.links || []);
+  const [saving, setSaving] = useState(false);
+  const isRejected = log.approvalStatus === "rejected";
+
+  async function handleResubmit() {
+    setSaving(true);
+    await onResubmit?.(log.id, editLinks);
+    setSaving(false);
+    onClose();
+  }
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <Card style={{ padding: 32, width: 480, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
@@ -1558,6 +1569,23 @@ function LogDetailModal({ log, users, onClose, onDelete }: any) {
           <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{log.taskTitle}</div>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", padding: 4 }}>✕</button>
         </div>
+
+        {/* Rejection banner */}
+        {isRejected && (
+          <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>This log was rejected</div>
+            {log.approvalNote && <div style={{ fontSize: 13, color: "#7f1d1d", lineHeight: 1.5 }}>Reason: {log.approvalNote}</div>}
+            <div style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>Update your links below if needed, then resubmit.</div>
+          </div>
+        )}
+
+        {/* Needs review banner */}
+        {log.approvalStatus === "needs-review" && (
+          <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 18 }}>⏳</span>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#92400e" }}>Waiting for approval</div>
+          </div>
+        )}
 
         {lu && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: B + "0d", borderRadius: 12, marginBottom: 20 }}>
@@ -1573,7 +1601,7 @@ function LogDetailModal({ log, users, onClose, onDelete }: any) {
           {log.description}
         </div>
 
-        <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: log.links?.length ? 16 : 24 }}>
+        <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
           {[
             ["Logged At",   fmtTime(log.created_at) || log.date],
             ["Time Spent", `${log.timeSpent}h`],
@@ -1587,11 +1615,25 @@ function LogDetailModal({ log, users, onClose, onDelete }: any) {
           ))}
         </div>
 
-        {log.links && log.links.length > 0 && (
+        {/* Links - editable if rejected, read-only otherwise */}
+        {isRejected ? (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Attached Links</div>
+            <LinkAttacher links={editLinks} onChange={setEditLinks} />
+          </div>
+        ) : log.links && log.links.length > 0 && (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Attached Links</div>
             <LinkDisplay links={log.links} />
           </div>
+        )}
+
+        {/* Resubmit button for rejected logs */}
+        {isRejected && onResubmit && (
+          <button onClick={handleResubmit} disabled={saving}
+            style={{ width: "100%", padding: "13px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", marginBottom: 10, opacity: saving ? 0.7 : 1 }}>
+            {saving ? "Resubmitting..." : "Resubmit for Approval"}
+          </button>
         )}
 
         {onDelete && (
@@ -1610,7 +1652,7 @@ const COMPLETION_STATUS = [
   { value: "blocked",     label: "Blocked"            },
 ];
 
-function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: any) {
+function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, onResubmitLog }: any) {
   const [form, setForm] = useState({ taskTitle: "", description: "", project: "", timeSpent: "", completionStatus: "in-progress" });
   const [logLinks, setLogLinks] = useState<{ label: string; url: string }[]>([]);
   const [saving,    setSaving]    = useState(false);
@@ -1828,6 +1870,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog }: 
           users={users}
           onClose={() => setDetailLog(null)}
           onDelete={isPrivileged(user) ? deleteLog : undefined}
+          onResubmit={onResubmitLog}
         />
       )}
     </div>
@@ -3332,6 +3375,7 @@ export default function ProwessDashboard({
   onDeleteTask,
   onAddLog,
   onDeleteLog,
+  onResubmitLog,
   onUpdateProfile,
   onAssignLeader,
   onCreateMember,
@@ -3358,6 +3402,7 @@ export default function ProwessDashboard({
   onDeleteTask?: (id: string) => Promise<void>;
   onAddLog?: (form: any) => Promise<void>;
   onDeleteLog?: (id: string) => Promise<void>;
+  onResubmitLog?: (id: string, links: any[]) => Promise<void>;
   onUpdateProfile?: (updates: { full_name: string; job_title: string }) => Promise<void>;
   onAssignLeader?: (memberId: string, leaderId: string | null) => Promise<void>;
   onCreateMember?: (form: any) => Promise<void>;
@@ -3432,7 +3477,7 @@ export default function ProwessDashboard({
       case "tasks":
         return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} />;
       case "activity":
-        return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} />;
+        return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} onResubmitLog={onResubmitLog} />;
       case "leaderboard":
         return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); const winner = sc[0]; setLocalWinners((prev: any) => [{ id: Date.now().toString(), week_start: ws, week_end: we, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} />;
       case "reports":
