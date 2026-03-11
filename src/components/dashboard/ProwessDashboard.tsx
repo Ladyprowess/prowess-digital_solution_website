@@ -925,7 +925,40 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
 
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* TMOTW / current leader badge */}
+
+      {/* Rejected items alert - shown prominently so member knows to resubmit */}
+      {(() => {
+        const rejectedTasks = myT.filter((t: any) => t.approvalStatus === "rejected");
+        const rejectedLogs  = myL.filter((l: any) => l.approvalStatus === "rejected");
+        const total = rejectedTasks.length + rejectedLogs.length;
+        if (total === 0) return null;
+        return (
+          <div style={{ background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 14, padding: "16px 20px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 22 }}>❌</span>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#dc2626" }}>
+                {total} item{total !== 1 ? "s" : ""} rejected -- action required
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {rejectedTasks.map((t: any) => (
+                <div key={t.id} style={{ background: "white", borderRadius: 10, padding: "10px 14px", border: "1px solid #fecaca" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 3 }}>Task: {t.title}</div>
+                  {t.approvalNote && <div style={{ fontSize: 12, color: "#7f1d1d" }}>Reason: {t.approvalNote}</div>}
+                  <div style={{ fontSize: 12, color: "#dc2626", marginTop: 4, fontWeight: 600 }}>Go to Tasks to resubmit</div>
+                </div>
+              ))}
+              {rejectedLogs.map((l: any) => (
+                <div key={l.id} style={{ background: "white", borderRadius: 10, padding: "10px 14px", border: "1px solid #fecaca" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 3 }}>Log: {l.taskTitle}</div>
+                  {l.approvalNote && <div style={{ fontSize: 12, color: "#7f1d1d" }}>Reason: {l.approvalNote}</div>}
+                  <div style={{ fontSize: 12, color: "#dc2626", marginTop: 4, fontWeight: 600 }}>Go to Activity Log to resubmit</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       {isTMOTW && (
         <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fffbeb,#fef9c3)", border: "2px solid #f59e0b", borderRadius: 16, padding: "16px 20px" }}>
           <span style={{ fontSize: 40 }}>🏆</span>
@@ -1077,24 +1110,27 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
         <Card style={{ padding: 24 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 14 }}>My Tasks</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {myT.filter((t: any) => t.status !== "completed")
+            {myT.filter((t: any) => t.status !== "completed" || t.approvalStatus === "rejected")
               .sort((a: any, b: any) => (a.deadline || "").localeCompare(b.deadline || ""))
               .slice(0, 5)
               .map((task: any) => (
-                <div key={task.id} style={{ padding: "12px 14px", borderRadius: 12, border: "1px solid #f1f5f9", background: "#fafafa" }}>
+                <div key={task.id} style={{ padding: "12px 14px", borderRadius: 12, border: `1px solid ${task.approvalStatus === "rejected" ? "#fecaca" : "#f1f5f9"}`, background: task.approvalStatus === "rejected" ? "#fef2f2" : "#fafafa" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", lineHeight: 1.3 }}>{task.title}</div>
                     <Pill type="priority" value={task.priority} />
                   </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                     <Pill type="status" value={task.status} />
+                    {task.approvalStatus && task.approvalStatus !== "pending" && task.approvalStatus !== "approved" && (
+                      <ApprBadge status={task.approvalStatus} />
+                    )}
                     <span style={{ fontSize: 11, color: task.deadline < fmt(today) ? "#ef4444" : "#94a3b8" }}>
                       📅 {task.deadline}
                     </span>
                   </div>
                 </div>
               ))}
-            {myT.filter((t: any) => t.status !== "completed").length === 0 && (
+            {myT.filter((t: any) => t.status !== "completed" || t.approvalStatus === "rejected").length === 0 && (
               <div style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "16px 0" }}>
                 All caught up! 🎉
               </div>
@@ -1106,14 +1142,19 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[...myL].sort((a: any, b: any) => b.date.localeCompare(a.date)).slice(0, 5).map((log: any) => (
               <div key={log.id} style={{ paddingBottom: 10, borderBottom: "1px solid #f8fafc" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{log.taskTitle}</div>
-                  <div style={{ fontSize: 11, color: "#94a3b8" }}>{log.timeSpent}h</div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>{log.timeSpent}h</div>
                 </div>
                 <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{log.description}</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                  {log.project && <>{log.project} {" | "}</>}
-                  {fmtTime(log.created_at) || log.date}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                    {log.project && <>{log.project} {" | "}</>}
+                    {fmtTime(log.created_at) || log.date}
+                  </span>
+                  {log.approvalStatus && log.approvalStatus !== "approved" && (
+                    <ApprBadge status={log.approvalStatus} />
+                  )}
                 </div>
               </div>
             ))}
