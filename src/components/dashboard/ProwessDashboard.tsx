@@ -1165,13 +1165,39 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
   );
 }
 
-function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any) {
+function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApproveTask, onRejectTask }: any) {
   const asgn = normUser(users.find((u: any) => u.id === task.assignedTo));
   const late = task.deadline < fmt(today) && task.status !== "completed";
   const [subLinks,     setSubLinks]     = useState<{ label: string; url: string }[]>(
     task.approvalStatus === "rejected" && task.submission_links ? task.submission_links : []
   );
   const [resubmitNote, setResubmitNote] = useState("");
+  const [rejectMode,   setRejectMode]   = useState(false);
+  const [rejectNote,   setRejectNote]   = useState("");
+  const [approveSaving, setApproveSaving] = useState(false);
+
+  // Can this user approve? Admin approves all non-admins. Leader approves their team members.
+  const assigneeUser = users.find((u: any) => u.id === task.assignedTo);
+  const canApprove = (() => {
+    if (task.approvalStatus !== "needs-review") return false;
+    if (user.role === "admin") return assigneeUser?.role !== "admin";
+    if (user.role === "leader") return assigneeUser?.managed_by === user.id && assigneeUser?.role !== "admin";
+    return false;
+  })();
+
+  async function handleApprove() {
+    setApproveSaving(true);
+    await onApproveTask?.(task.id);
+    setApproveSaving(false);
+    onClose();
+  }
+  async function handleReject() {
+    if (!rejectNote.trim()) return;
+    setApproveSaving(true);
+    await onRejectTask?.(task.id, rejectNote.trim());
+    setApproveSaving(false);
+    onClose();
+  }
 
   const STATUS_ORDER = ["pending", "in-progress", "completed"];
   const currentIdx = STATUS_ORDER.indexOf(task.status);
@@ -1309,6 +1335,46 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
           )}
         </div>
 
+        {/* ── Approve / Reject ── shown to admin/leader when task needs review */}
+        {canApprove && (
+          <div style={{ marginBottom: 16, padding: "16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 12 }}>
+              This task is awaiting your approval
+            </div>
+            {!rejectMode ? (
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={handleApprove} disabled={approveSaving}
+                  style={{ flex: 1, padding: "10px", borderRadius: 10, background: "#16a34a", border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: approveSaving ? "not-allowed" : "pointer", opacity: approveSaving ? 0.7 : 1 }}>
+                  {approveSaving ? "Approving..." : "Approve"}
+                </button>
+                <button onClick={() => setRejectMode(true)} disabled={approveSaving}
+                  style={{ flex: 1, padding: "10px", borderRadius: 10, background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                  Reject
+                </button>
+              </div>
+            ) : (
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Reason for rejection (required)
+                </label>
+                <textarea value={rejectNote} onChange={e => setRejectNote(e.target.value)} rows={3}
+                  placeholder="e.g. Submission link missing, task not fully completed..."
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 13, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit", marginBottom: 10 }} />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={handleReject} disabled={approveSaving || !rejectNote.trim()}
+                    style={{ flex: 1, padding: "10px", borderRadius: 10, background: "#dc2626", border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: !rejectNote.trim() ? "not-allowed" : "pointer", opacity: !rejectNote.trim() ? 0.6 : 1 }}>
+                    {approveSaving ? "Rejecting..." : "Confirm Rejection"}
+                  </button>
+                  <button onClick={() => { setRejectMode(false); setRejectNote(""); }}
+                    style={{ padding: "10px 16px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {user.role === "admin" && (
           <button onClick={() => { onDelete(task.id); onClose(); }} style={{ width: "100%", padding: "11px", borderRadius: 10, background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
             Delete Task
@@ -1319,7 +1385,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
   );
 }
 
-function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskStatus, onDeleteTask }: any) {
+function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskStatus, onDeleteTask, onApproveTask, onRejectTask }: any) {
   const [modal,      setModal]      = useState(false);
   const [detailTask, setDetailTask] = useState<any>(null);
   const [fStat,      setFStat]      = useState("all");
@@ -1484,6 +1550,8 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
           onClose={() => setDetailTask(null)}
           onUpdate={upd}
           onDelete={del}
+          onApproveTask={onApproveTask}
+          onRejectTask={onRejectTask}
         />
       )}
 
@@ -3565,7 +3633,7 @@ export default function ProwessDashboard({
           }}
         />;
       case "tasks":
-        return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} />;
+        return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} onApproveTask={onApproveTask} onRejectTask={onRejectTask} />;
       case "activity":
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} onResubmitLog={onResubmitLog} />;
       case "leaderboard":
