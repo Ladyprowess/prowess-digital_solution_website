@@ -1169,14 +1169,17 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
 function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any) {
   const asgn = normUser(users.find((u: any) => u.id === task.assignedTo));
   const late = task.deadline < fmt(today) && task.status !== "completed";
-  const [subLinks, setSubLinks] = useState<{ label: string; url: string }[]>([]);
+  const [subLinks,     setSubLinks]     = useState<{ label: string; url: string }[]>(
+    task.approvalStatus === "rejected" && task.submission_links ? task.submission_links : []
+  );
+  const [resubmitNote, setResubmitNote] = useState("");
 
   const STATUS_ORDER = ["pending", "in-progress", "completed"];
   const currentIdx = STATUS_ORDER.indexOf(task.status);
 
   const handleStatusUpdate = (s: string) => {
     const validLinks = subLinks.filter(l => l.url.trim());
-    onUpdate(task.id, s, validLinks.length ? validLinks : null);
+    onUpdate(task.id, s, validLinks.length ? validLinks : null, resubmitNote.trim() || null);
     onClose();
   };
 
@@ -1287,10 +1290,20 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete }: any
                 ))}
               </div>
               {task.approvalStatus === "rejected" && task.status === "completed" && (
-                <button onClick={() => { handleStatusUpdate("completed"); }}
-                  style={{ marginTop: 10, width: "100%", padding: "11px", borderRadius: 10, background: "#d97706", border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
-                  Resubmit for Approval
-                </button>
+                <>
+                  <div style={{ marginTop: 12, marginBottom: 4 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Add a note (optional)
+                    </label>
+                    <textarea value={resubmitNote} onChange={e => setResubmitNote(e.target.value)} rows={2}
+                      placeholder="Briefly explain what you changed or fixed..."
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} />
+                  </div>
+                  <button onClick={() => { handleStatusUpdate("completed"); }}
+                    style={{ marginTop: 10, width: "100%", padding: "11px", borderRadius: 10, background: "#d97706", border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                    Resubmit for Approval
+                  </button>
+                </>
               )}
               {!isPrivileged(user) && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>Only admins and leaders can move a task backwards</div>}
             </>
@@ -1345,8 +1358,8 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   const taskTotalPages = Math.ceil(filtered.length / TASKS_PER_PAGE);
   const pagedTasks = filtered.slice((taskPage - 1) * TASKS_PER_PAGE, taskPage * TASKS_PER_PAGE);
 
-  const upd = (id: string, s: string, submissionLinks?: any[] | null) => {
-    if (onUpdateTaskStatus) onUpdateTaskStatus(id, s, submissionLinks);
+  const upd = (id: string, s: string, submissionLinks?: any[] | null, resubmitNote?: string | null) => {
+    if (onUpdateTaskStatus) onUpdateTaskStatus(id, s, submissionLinks, resubmitNote);
     else setTasks((p: any[]) => p.map(t => t.id === id ? {
       ...t, status: s,
       approval_status: s === "completed" ? "needs-review" : t.approval_status,
@@ -1550,14 +1563,26 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
 
 function LogDetailModal({ log, users, onClose, onDelete, onResubmit }: any) {
   const lu = normUser(users.find((u: any) => u.id === log.userId));
-  const cs = log.completion_status;
-  const [editLinks, setEditLinks] = useState<{ label: string; url: string }[]>(log.links || []);
-  const [saving, setSaving] = useState(false);
   const isRejected = log.approvalStatus === "rejected";
+
+  const [editDesc,       setEditDesc]       = useState(log.description || "");
+  const [editProject,    setEditProject]    = useState(log.project || "");
+  const [editTimeSpent,  setEditTimeSpent]  = useState(String(log.timeSpent || ""));
+  const [editStatus,     setEditStatus]     = useState(log.completion_status || "in-progress");
+  const [editLinks,      setEditLinks]      = useState<{ label: string; url: string }[]>(log.links || []);
+  const [saving,         setSaving]         = useState(false);
+
+  const cs = isRejected ? editStatus : log.completion_status;
 
   async function handleResubmit() {
     setSaving(true);
-    await onResubmit?.(log.id, editLinks);
+    await onResubmit?.(log.id, {
+      description:       editDesc,
+      project:           editProject,
+      time_spent:        parseFloat(editTimeSpent) || 0,
+      completion_status: editStatus,
+      links:             editLinks,
+    });
     setSaving(false);
     onClose();
   }
@@ -1575,7 +1600,7 @@ function LogDetailModal({ log, users, onClose, onDelete, onResubmit }: any) {
           <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>This log was rejected</div>
             {log.approvalNote && <div style={{ fontSize: 13, color: "#7f1d1d", lineHeight: 1.5 }}>Reason: {log.approvalNote}</div>}
-            <div style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>Update your links below if needed, then resubmit.</div>
+            <div style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>Edit anything below and resubmit.</div>
           </div>
         )}
 
@@ -1597,28 +1622,62 @@ function LogDetailModal({ log, users, onClose, onDelete, onResubmit }: any) {
           </div>
         )}
 
-        <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.7, marginBottom: 22, padding: "14px 16px", background: "#f8fafc", borderRadius: 12 }}>
-          {log.description}
-        </div>
+        {/* Description - editable if rejected */}
+        {isRejected ? (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Description</label>
+            <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={4}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit", lineHeight: 1.6 }} />
+          </div>
+        ) : (
+          <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.7, marginBottom: 22, padding: "14px 16px", background: "#f8fafc", borderRadius: 12 }}>
+            {log.description}
+          </div>
+        )}
 
-        <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-          {[
-            ["Logged At",   fmtTime(log.created_at) || log.date],
-            ["Time Spent", `${log.timeSpent}h`],
-            ["Project",    log.project || "None"],
-            ["Status",     cs === "completed" ? "Completed" : cs === "blocked" ? "Blocked" : "In Progress"],
-          ].map(([label, val]) => (
-            <div key={label} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5 }}>{label}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: label === "Status" ? (cs === "completed" ? "#22c55e" : cs === "blocked" ? "#ef4444" : "#3b82f6") : "#374151" }}>{val}</div>
+        {/* Fields grid - editable if rejected */}
+        {isRejected ? (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Time Spent (hrs)</label>
+              <input type="number" value={editTimeSpent} onChange={e => setEditTimeSpent(e.target.value)} min="0" step="0.5"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }} />
             </div>
-          ))}
-        </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Project</label>
+              <input value={editProject} onChange={e => setEditProject(e.target.value)}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }} />
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Completion Status</label>
+              <select value={editStatus} onChange={e => setEditStatus(e.target.value)}
+                style={{ ...SEL, width: "100%" }}>
+                <option value="in-progress">Still in progress</option>
+                <option value="completed">Completed</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
+          </div>
+        ) : (
+          <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            {[
+              ["Logged At",   fmtTime(log.created_at) || log.date],
+              ["Time Spent", `${log.timeSpent}h`],
+              ["Project",    log.project || "None"],
+              ["Status",     cs === "completed" ? "Completed" : cs === "blocked" ? "Blocked" : "In Progress"],
+            ].map(([label, val]) => (
+              <div key={label} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5 }}>{label}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: label === "Status" ? (cs === "completed" ? "#22c55e" : cs === "blocked" ? "#ef4444" : "#3b82f6") : "#374151" }}>{val}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Links - editable if rejected, read-only otherwise */}
         {isRejected ? (
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Attached Links</div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px" }}>Attached Links</label>
             <LinkAttacher links={editLinks} onChange={setEditLinks} />
           </div>
         ) : log.links && log.links.length > 0 && (
@@ -1628,10 +1687,11 @@ function LogDetailModal({ log, users, onClose, onDelete, onResubmit }: any) {
           </div>
         )}
 
-        {/* Resubmit button for rejected logs */}
+        {/* Resubmit button */}
         {isRejected && onResubmit && (
-          <button onClick={handleResubmit} disabled={saving}
-            style={{ width: "100%", padding: "13px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", marginBottom: 10, opacity: saving ? 0.7 : 1 }}>
+          <button onClick={handleResubmit} disabled={saving || !editDesc.trim()}
+            style={{ width: "100%", padding: "13px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14,
+              cursor: saving || !editDesc.trim() ? "not-allowed" : "pointer", marginBottom: 10, opacity: saving || !editDesc.trim() ? 0.7 : 1 }}>
             {saving ? "Resubmitting..." : "Resubmit for Approval"}
           </button>
         )}
@@ -3398,7 +3458,7 @@ export default function ProwessDashboard({
   onSetVerdict?: (form: any) => Promise<void>;
   onDeleteAssignment?: (id: string) => Promise<void>;
   onCreateTask?: (form: any) => Promise<void>;
-  onUpdateTaskStatus?: (id: string, status: string, submissionLinks?: any[] | null) => Promise<void>;
+  onUpdateTaskStatus?: (id: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null) => Promise<void>;
   onDeleteTask?: (id: string) => Promise<void>;
   onAddLog?: (form: any) => Promise<void>;
   onDeleteLog?: (id: string) => Promise<void>;
