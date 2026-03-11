@@ -391,14 +391,13 @@ const NAV = [
   { id: "activity",    label: "Activity Log", icon: "📝" },
   { id: "kpi",         label: "KPIs",         icon: "🎯" },
   { id: "leaderboard", label: "Leaderboard",  icon: "🏆" },
-  { id: "approvals",   label: "Approvals",    icon: "🔍", privileged: true },
   { id: "reports",     label: "Reports",      icon: "📊", privileged: true },
   { id: "team",        label: "Team",         icon: "👥", privileged: true },
   { id: "settings",    label: "Settings",     icon: "⚙️" },
 ];
 
 // --- Mobile drawer (slides in from left) --------------------------------------
-function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCount = 0 }: any) {
+function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCount = 0, setApprovalsOpen }: any) {
   const items = NAV.filter(n => !n.privileged || isPrivileged(user));
   return (
     <>
@@ -474,6 +473,26 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCo
           })}
         </nav>
 
+        {/* Approvals button - privileged only */}
+        {isPrivileged(user) && (
+          <div style={{ padding: "0 12px 6px" }}>
+            <button onClick={() => { setApprovalsOpen(true); onClose(); }} style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "12px 14px", borderRadius: 11,
+              background: approvalCount > 0 ? "#d97706" + "22" : "transparent",
+              border: approvalCount > 0 ? "1px solid #d9770640" : "1px solid transparent",
+              cursor: "pointer", color: approvalCount > 0 ? "#fbbf24" : "#9ca3af",
+              fontSize: 14, fontWeight: approvalCount > 0 ? 600 : 400, textAlign: "left",
+            }}>
+              <span style={{ fontSize: 20, width: 26, textAlign: "center", flexShrink: 0 }}>🔍</span>
+              <span style={{ flex: 1 }}>Approvals</span>
+              {approvalCount > 0 && (
+                <span style={{ fontSize: 11, fontWeight: 700, background: "#ef4444", color: "white", borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{approvalCount}</span>
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Sign out */}
         <div style={{ padding: "12px 12px 16px", borderTop: "1px solid #1f2937" }}>
           <button onClick={onLogout} style={{
@@ -491,7 +510,7 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCo
 }
 
 // --- Desktop sidebar -----------------------------------------------------------
-function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount = 0 }: any) {
+function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount = 0, setApprovalsOpen }: any) {
   return (
     <div style={{
       width: open ? 228 : 64, background: "#111827", height: "100vh",
@@ -546,6 +565,30 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
           );
         })}
       </nav>
+
+      {/* Approvals button - privileged only */}
+      {isPrivileged(user) && (
+        <div style={{ padding: "0 8px 6px" }}>
+          <button onClick={() => setApprovalsOpen(true)} title="Approvals" style={{
+            display: "flex", alignItems: "center", gap: open ? 11 : 0, width: "100%",
+            padding: open ? "10px 12px" : "10px 0", borderRadius: 10, justifyContent: open ? "flex-start" : "center",
+            background: approvalCount > 0 ? "#d97706" + "22" : "transparent",
+            border: approvalCount > 0 ? "1px solid #d9770640" : "1px solid transparent",
+            cursor: "pointer", color: approvalCount > 0 ? "#fbbf24" : "#9ca3af",
+            fontSize: 14, fontWeight: approvalCount > 0 ? 600 : 400,
+            marginBottom: 2, textAlign: "left", overflow: "hidden", whiteSpace: "nowrap",
+          }}>
+            <span style={{ fontSize: 17, flexShrink: 0 }}>🔍</span>
+            {open && <span style={{ flex: 1 }}>Approvals</span>}
+            {open && approvalCount > 0 && (
+              <span style={{ fontSize: 11, fontWeight: 700, background: "#ef4444", color: "white", borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{approvalCount}</span>
+            )}
+            {!open && approvalCount > 0 && (
+              <span style={{ position: "absolute", top: 6, right: 6, width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
+            )}
+          </button>
+        </div>
+      )}
 
       <div style={{ padding: "12px 8px", borderTop: "1px solid #1f2937" }}>
         {open ? (
@@ -3194,7 +3237,8 @@ export default function ProwessDashboard({
 }) {
   const [page,        setPage]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [drawerOpen,  setDrawerOpen]  = useState(false);
+  const [drawerOpen,    setDrawerOpen]    = useState(false);
+  const [approvalsOpen, setApprovalsOpen] = useState(false);
   const [localTasks,   setLocalTasks]   = useState(tasks);
   const [localLogs,    setLocalLogs]    = useState(logs);
   const [localKpiA,    setLocalKpiA]    = useState(kpiAssignments);
@@ -3258,26 +3302,6 @@ export default function ProwessDashboard({
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} />;
       case "leaderboard":
         return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); const winner = sc[0]; setLocalWinners((prev: any) => [{ id: Date.now().toString(), week_start: ws, week_end: we, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} />;
-      case "approvals":
-        return isPrivileged(user) ? <ApprovalPage
-          user={user} tasks={localTasks} logs={localLogs} users={users}
-          onApproveTask={async (id: string) => {
-            await onApproveTask?.(id);
-            setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "approved" } : t));
-          }}
-          onRejectTask={async (id: string, note: string) => {
-            await onRejectTask?.(id, note);
-            setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "rejected", approval_note: note } : t));
-          }}
-          onApproveLog={async (id: string) => {
-            await onApproveLog?.(id);
-            setLocalLogs((p: any[]) => p.map((l: any) => l.id === id ? { ...l, approval_status: "approved" } : l));
-          }}
-          onRejectLog={async (id: string, note: string) => {
-            await onRejectLog?.(id, note);
-            setLocalLogs((p: any[]) => p.map((l: any) => l.id === id ? { ...l, approval_status: "rejected", approval_note: note } : l));
-          }}
-        /> : null;
       case "reports":
 
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
@@ -3301,12 +3325,13 @@ export default function ProwessDashboard({
           onLogout={onSignOut} open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           approvalCount={approvalCount}
+          setApprovalsOpen={setApprovalsOpen}
         />
       )}
 
       {/* Desktop sidebar - hidden on mobile */}
       {!isMobile && (
-        <Sidebar user={user} page={page} setPage={setPage} onLogout={onSignOut} open={sidebarOpen} setOpen={setSidebarOpen} approvalCount={approvalCount} />
+        <Sidebar user={user} page={page} setPage={setPage} onLogout={onSignOut} open={sidebarOpen} setOpen={setSidebarOpen} approvalCount={approvalCount} setApprovalsOpen={setApprovalsOpen} />
       )}
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
@@ -3315,6 +3340,51 @@ export default function ProwessDashboard({
           {content()}
         </div>
       </div>
+
+      {/* Approvals modal - sits on top of any page */}
+      {approvalsOpen && isPrivileged(user) && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-start", justifyContent: "flex-end", padding: 0 }}>
+          <div style={{
+            width: "min(520px, 100vw)", height: "100vh", background: "#f8fafc",
+            display: "flex", flexDirection: "column", overflowY: "auto",
+            boxShadow: "-8px 0 32px rgba(0,0,0,0.18)",
+            animation: "slideInRight 0.22s ease",
+          }}>
+            <style>{`@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+            {/* Modal header */}
+            <div style={{ padding: "18px 24px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between", background: "white", flexShrink: 0 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>🔍 Approvals</div>
+                {approvalCount > 0 && (
+                  <div style={{ fontSize: 12, color: "#d97706", fontWeight: 600, marginTop: 2 }}>{approvalCount} item{approvalCount !== 1 ? "s" : ""} pending review</div>
+                )}
+              </div>
+              <button onClick={() => setApprovalsOpen(false)} style={{ background: "#f1f5f9", border: "none", borderRadius: 9, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, color: "#64748b", fontWeight: 700 }}>
+                ✕
+              </button>
+            </div>
+            <ApprovalPage
+              user={user} tasks={localTasks} logs={localLogs} users={users}
+              onApproveTask={async (id: string) => {
+                await onApproveTask?.(id);
+                setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "approved" } : t));
+              }}
+              onRejectTask={async (id: string, note: string) => {
+                await onRejectTask?.(id, note);
+                setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "rejected", approval_note: note } : t));
+              }}
+              onApproveLog={async (id: string) => {
+                await onApproveLog?.(id);
+                setLocalLogs((p: any[]) => p.map((l: any) => l.id === id ? { ...l, approval_status: "approved" } : l));
+              }}
+              onRejectLog={async (id: string, note: string) => {
+                await onRejectLog?.(id, note);
+                setLocalLogs((p: any[]) => p.map((l: any) => l.id === id ? { ...l, approval_status: "rejected", approval_note: note } : l));
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
