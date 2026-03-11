@@ -10,6 +10,18 @@ const fmt2=(n:number,sym:string)=>`${sym}${n.toLocaleString("en",{minimumFractio
 const todayStr=()=>new Date().toISOString().split("T")[0];
 const fmtDate=(d:string)=>{if(!d)return"";try{return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});}catch{return d;}};
 
+// ── Mobile hook ───────────────────────────────────────────────────────────
+function useIsMobile(){
+  const [mob,setMob]=useState(false);
+  useEffect(()=>{
+    const chk=()=>setMob(window.innerWidth<640);
+    chk();
+    window.addEventListener("resize",chk);
+    return()=>window.removeEventListener("resize",chk);
+  },[]);
+  return mob;
+}
+
 interface LineItem{id:string;desc:string;qty:string;price:string;}
 interface Invoice{id:string;number:string;date:string;dueDate:string;status:"unpaid"|"paid";bizName:string;bizPhone:string;bizEmail:string;bizAddress:string;bizBank:string;clientName:string;clientPhone:string;clientEmail:string;clientAddress:string;items:LineItem[];taxRate:string;notes:string;sym:string;createdAt:string;}
 interface Profile{name:string;phone:string;email:string;address:string;bank:string;country:string;}
@@ -31,6 +43,115 @@ const card:React.CSSProperties={background:W,borderRadius:14,padding:"20px 22px"
 const TH:React.CSSProperties={background:B,color:W,padding:"9px 12px",fontWeight:700,fontSize:12,textAlign:"left",whiteSpace:"nowrap"};
 const TD=(a:boolean):React.CSSProperties=>({padding:"7px 10px",fontSize:13,color:DARK,background:a?LGRAY:W,borderBottom:`1px solid ${LGRAY}`});
 
+// ── Print Invoice ─────────────────────────────────────────────────────────
+function printInvoice(inv:Invoice){
+  const sym=inv.sym||"₦";
+  const sub=subTotal(inv.items);
+  const tax=sub*(num(inv.taxRate)/100);
+  const total=sub+tax;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Invoice ${inv.number}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a1a;background:#fff;padding:48px 52px;}
+  .wrap{max-width:720px;margin:0 auto;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;padding-bottom:24px;border-bottom:3px solid #507c80;}
+  .biz-name{font-size:24px;font-weight:800;color:#507c80;margin-bottom:5px;}
+  .biz-info{font-size:12px;color:#555;line-height:1.9;}
+  .inv-right{text-align:right;}
+  .inv-label{font-size:30px;font-weight:800;color:#507c80;letter-spacing:-1px;}
+  .inv-meta{font-size:12px;color:#555;text-align:right;line-height:1.9;margin-top:4px;}
+  .status-badge{display:inline-block;padding:4px 13px;border-radius:99px;font-size:11px;font-weight:700;margin-top:8px;
+    background:${inv.status==="paid"?"#e8f5e9":"#fff7ed"};
+    color:${inv.status==="paid"?"#2e7d32":"#c2410c"};
+    border:1px solid ${inv.status==="paid"?"#a5d6a7":"#fed7aa"};}
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:30px;padding:18px 20px;background:#f7fafa;border-radius:10px;}
+  .party-label{font-size:10px;font-weight:700;color:#507c80;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+  .party-name{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:3px;}
+  .party-info{font-size:12px;color:#555;line-height:1.8;}
+  table{width:100%;border-collapse:collapse;margin-bottom:22px;}
+  thead tr{background:#507c80;}
+  thead th{color:#fff;padding:10px 13px;font-size:12px;font-weight:700;text-align:left;}
+  thead th.r{text-align:right;}
+  thead th.c{text-align:center;}
+  tbody tr:nth-child(even){background:#f7fafa;}
+  tbody td{padding:9px 13px;font-size:13px;color:#1a1a1a;border-bottom:1px solid #edf1f1;}
+  tbody td.r{text-align:right;}
+  tbody td.c{text-align:center;}
+  .totals{display:flex;justify-content:flex-end;margin-bottom:24px;}
+  .totals-box{width:270px;background:#f7fafa;border-radius:10px;padding:16px 18px;}
+  .totals-row{display:flex;justify-content:space-between;font-size:13px;color:#555;margin-bottom:7px;}
+  .totals-row span:last-child{font-weight:600;color:#3a5c60;}
+  .totals-total{display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#1a1a1a;border-top:2px solid #507c80;padding-top:11px;margin-top:8px;}
+  .totals-total span:last-child{color:#507c80;}
+  .bank-section{margin-bottom:18px;padding:14px 16px;background:#f7fafa;border-radius:10px;border-left:4px solid #507c80;}
+  .bank-label{font-size:10px;font-weight:700;color:#507c80;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .bank-val{font-size:13px;color:#1a1a1a;font-weight:600;}
+  .notes-section{font-size:12px;color:#555;line-height:1.8;padding:12px 16px;background:#fffbf0;border-radius:10px;border-left:4px solid #f0c060;margin-bottom:18px;}
+  .footer{text-align:center;margin-top:36px;padding-top:20px;border-top:1px solid #e0e8e8;font-size:12px;color:#507c80;font-weight:700;letter-spacing:.5px;}
+  @media print{body{padding:24px;} @page{margin:1cm;}}
+</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="biz-name">${inv.bizName||"Your Business"}</div>
+      <div class="biz-info">
+        ${inv.bizPhone?`${inv.bizPhone}<br/>`:""}
+        ${inv.bizEmail?`${inv.bizEmail}<br/>`:""}
+        ${inv.bizAddress||""}
+      </div>
+    </div>
+    <div class="inv-right">
+      <div class="inv-label">INVOICE</div>
+      <div class="inv-meta">
+        <strong>${inv.number}</strong><br/>
+        Date: ${fmtDate(inv.date)}<br/>
+        ${inv.dueDate?`Due: ${fmtDate(inv.dueDate)}<br/>`:""}
+      </div>
+      <div><span class="status-badge">${inv.status==="paid"?"PAID":"UNPAID"}</span></div>
+    </div>
+  </div>
+  <div class="parties">
+    <div>
+      <div class="party-label">From</div>
+      <div class="party-name">${inv.bizName||""}</div>
+      <div class="party-info">${[inv.bizPhone,inv.bizEmail,inv.bizAddress].filter(Boolean).join("<br/>")}</div>
+    </div>
+    <div>
+      <div class="party-label">Bill To</div>
+      <div class="party-name">${inv.clientName}</div>
+      <div class="party-info">${[inv.clientPhone,inv.clientEmail,inv.clientAddress].filter(Boolean).join("<br/>")}</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Description</th><th class="c">Qty</th><th class="r">Unit Price</th><th class="r">Total</th>
+    </tr></thead>
+    <tbody>
+      ${inv.items.map(i=>`<tr>
+        <td>${i.desc||"-"}</td>
+        <td class="c">${i.qty}</td>
+        <td class="r">${fmt2(num(i.price),sym)}</td>
+        <td class="r">${fmt2(num(i.qty)*num(i.price),sym)}</td>
+      </tr>`).join("")}
+    </tbody>
+  </table>
+  <div class="totals"><div class="totals-box">
+    <div class="totals-row"><span>Subtotal</span><span>${fmt2(sub,sym)}</span></div>
+    ${num(inv.taxRate)>0?`<div class="totals-row"><span>Tax (${inv.taxRate}%)</span><span>${fmt2(tax,sym)}</span></div>`:""}
+    <div class="totals-total"><span>TOTAL DUE</span><span>${fmt2(total,sym)}</span></div>
+  </div></div>
+  ${inv.bizBank?`<div class="bank-section"><div class="bank-label">Payment Details</div><div class="bank-val">${inv.bizBank}</div></div>`:""}
+  ${inv.notes?`<div class="notes-section">${inv.notes}</div>`:""}
+  <div class="footer">Thank you for your business &mdash; ${inv.bizName||"Prowess Digital Solutions"}</div>
+</div>
+<script>window.onload=function(){window.print();}</script>
+</body></html>`;
+  const w=window.open("","_blank");
+  if(w){w.document.write(html);w.document.close();}
+}
+
+// ── Form Input ────────────────────────────────────────────────────────────
 function FI({label,val,set,ph="",type="text",right=false}:{label?:string,val:unknown,set:(v:string)=>void,ph?:string,type?:string,right?:boolean}){
   const [f,sf]=useState(false);
   return <div style={{marginBottom:12}}>
@@ -39,6 +160,7 @@ function FI({label,val,set,ph="",type="text",right=false}:{label?:string,val:unk
       style={{padding:"9px 12px",border:`1.5px solid ${f?B:MGRAY}`,borderRadius:9,fontSize:14,width:"100%",outline:"none",boxSizing:"border-box",textAlign:right?"right":"left",background:W,color:DARK}}/>
   </div>;
 }
+
 function FSel({label,val,set}:{label?:string,val:string,set:(v:string)=>void}){
   return <div style={{marginBottom:12}}>
     {label&&<label style={{fontSize:11,fontWeight:700,color:B,display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:.5}}>{label}</label>}
@@ -47,6 +169,7 @@ function FSel({label,val,set}:{label?:string,val:string,set:(v:string)=>void}){
     </select>
   </div>;
 }
+
 function KPI({label,val,sub,accent,warn,green}:{label:string,val:string,sub?:string,accent?:boolean,warn?:boolean,green?:boolean}){
   const bg=warn?"#fdecea":green?"#e8f5e9":accent?B:LITE,tc=warn?"#c0392b":green?"#2e7d32":accent?W:DARK,sc=warn?"#c0392b":green?"#388e3c":accent?"rgba(255,255,255,.7)":MID;
   return <div style={{background:bg,borderRadius:12,padding:"14px 16px",border:`1px solid ${warn?"#f5c6cb":green?"#a5d6a7":accent?DARK:MGRAY}`}}>
@@ -56,16 +179,16 @@ function KPI({label,val,sub,accent,warn,green}:{label:string,val:string,sub?:str
   </div>;
 }
 
-// ── Profile Tab ──────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// ── Profile Tab ───────────────────────────────────────────────────────────
 function ProfileTab({p,sp,onSave}:{p:Profile,sp:(x:Profile)=>void,onSave:()=>void}){
+  const mob=useIsMobile();
   const u=(f:keyof Profile,v:string)=>sp({...p,[f]:v});
   return <div style={card}>
     <div style={{fontWeight:800,fontSize:15,color:DARK,marginBottom:16,paddingBottom:10,borderBottom:`1.5px solid ${LGRAY}`}}>Your Business Profile</div>
     <p style={{fontSize:13,color:MID,marginBottom:16,lineHeight:1.6}}>This information fills every new invoice automatically. Set it once.</p>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+    <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:14}}>
       <FI label="Business Name" val={p.name} set={v=>u("name",v)} ph="e.g. Adunola Fabrics"/>
-      <FI label="Phone Number" val={p.phone} set={v=>u("phone",v)} ph="e.g. 08012345678" type="tel"/>
+      <FI label="Phone Number" val={p.phone} set={v=>u("phone",v)} ph="+234 801 234 5678 (with country code)" type="tel"/>
       <FI label="Email Address" val={p.email} set={v=>u("email",v)} ph="e.g. hello@yourbiz.com" type="email"/>
       <FI label="Business Address" val={p.address} set={v=>u("address",v)} ph="e.g. 12 Lagos Island"/>
     </div>
@@ -76,8 +199,8 @@ function ProfileTab({p,sp,onSave}:{p:Profile,sp:(x:Profile)=>void,onSave:()=>voi
 }
 
 // ── Create Invoice ────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CreateTab({profile,invoices,onSave,onCancel}:{profile:Profile,invoices:Invoice[],onSave:(inv:Invoice)=>void,onCancel:()=>void}){
+  const mob=useIsMobile();
   const [inv,setInv]=useState<Invoice>(()=>blankInvoice(profile,invoices.length));
   const u=(f:keyof Invoice,v:string)=>setInv(p=>({...p,[f]:v}));
   const uItem=(id:string,f:keyof LineItem,v:string)=>setInv(p=>({...p,items:p.items.map(i=>i.id===id?{...i,[f]:v}:i)}));
@@ -93,23 +216,28 @@ function CreateTab({profile,invoices,onSave,onCancel}:{profile:Profile,invoices:
     onSave(inv);
   };
   return <div>
+    {/* Header bar */}
     <div style={{...card,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
       <div><div style={{fontSize:15,fontWeight:800,color:DARK}}>New Invoice</div><div style={{fontSize:12,color:MID,marginTop:2}}>{inv.number}</div></div>
       <button onClick={onCancel} style={{padding:"7px 14px",background:LGRAY,border:`1.5px solid ${MGRAY}`,borderRadius:8,color:MID,fontSize:13,fontWeight:700,cursor:"pointer"}}>Cancel</button>
     </div>
+
+    {/* Invoice Details */}
     <div style={card}>
       <div style={{fontSize:13,fontWeight:800,color:DARK,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>Invoice Details</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr 1fr",gap:14}}>
         <FI label="Invoice Number" val={inv.number} set={v=>u("number",v)}/>
         <FI label="Invoice Date" val={inv.date} set={v=>u("date",v)} type="date"/>
         <FI label="Due Date" val={inv.dueDate} set={v=>u("dueDate",v)} type="date"/>
       </div>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+
+    {/* From / To — stacks on mobile */}
+    <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:14}}>
       <div style={card}>
         <div style={{fontSize:13,fontWeight:800,color:DARK,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>From; Your Business</div>
         <FI label="Business Name" val={inv.bizName} set={v=>u("bizName",v)}/>
-        <FI label="Phone" val={inv.bizPhone} set={v=>u("bizPhone",v)} type="tel"/>
+        <FI label="Phone" val={inv.bizPhone} set={v=>u("bizPhone",v)} ph="+234 801 234 5678 (with country code)" type="tel"/>
         <FI label="Email" val={inv.bizEmail} set={v=>u("bizEmail",v)} type="email"/>
         <FI label="Address" val={inv.bizAddress} set={v=>u("bizAddress",v)}/>
         <FI label="Bank / Payment Details" val={inv.bizBank} set={v=>u("bizBank",v)} ph="Bank name + account number"/>
@@ -117,11 +245,13 @@ function CreateTab({profile,invoices,onSave,onCancel}:{profile:Profile,invoices:
       <div style={card}>
         <div style={{fontSize:13,fontWeight:800,color:DARK,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>To; Your Client</div>
         <FI label="Client Name *" val={inv.clientName} set={v=>u("clientName",v)} ph="Person or business name"/>
-        <FI label="Phone Number" val={inv.clientPhone} set={v=>u("clientPhone",v)} type="tel"/>
+        <FI label="Phone Number" val={inv.clientPhone} set={v=>u("clientPhone",v)} ph="+234 801 234 5678 (with country code)" type="tel"/>
         <FI label="Email Address" val={inv.clientEmail} set={v=>u("clientEmail",v)} type="email"/>
         <FI label="Address (optional)" val={inv.clientAddress} set={v=>u("clientAddress",v)}/>
       </div>
     </div>
+
+    {/* Items / Services */}
     <div style={card}>
       <div style={{fontSize:13,fontWeight:800,color:DARK,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>Items / Services</div>
       <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:520}}>
@@ -137,12 +267,12 @@ function CreateTab({profile,invoices,onSave,onCancel}:{profile:Profile,invoices:
           <td style={TD(i%2===1)}><input type="number" value={item.qty} onChange={e=>uItem(item.id,"qty",e.target.value)} style={{padding:"7px 6px",border:`1.5px solid ${MGRAY}`,borderRadius:7,fontSize:13,width:"100%",outline:"none",textAlign:"center"}}/></td>
           <td style={TD(i%2===1)}><input type="number" value={item.price} onChange={e=>uItem(item.id,"price",e.target.value)} placeholder="0.00" style={{padding:"7px 9px",border:`1.5px solid ${MGRAY}`,borderRadius:7,fontSize:13,width:"100%",outline:"none",textAlign:"right"}}/></td>
           <td style={{...TD(i%2===1),textAlign:"right",fontWeight:700,color:B}}>{fmt2(num(item.qty)*num(item.price),sym)}</td>
-          <td style={TD(i%2===1)}><button onClick={()=>delItem(item.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#e74c3c",fontSize:17,padding:"0 4px"}}>×</button></td>
+          <td style={TD(i%2===1)}><button onClick={()=>delItem(item.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#e74c3c",fontSize:17,padding:"0 4px"}}>x</button></td>
         </tr>)}</tbody>
       </table></div>
       <button onClick={addItem} style={{marginTop:10,padding:"7px 14px",background:"transparent",border:`1.5px dashed ${MID}`,borderRadius:8,color:MID,fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Add Item</button>
       <div style={{display:"flex",justifyContent:"flex-end",marginTop:16}}>
-        <div style={{width:280,background:LGRAY,borderRadius:12,padding:"14px 16px"}}>
+        <div style={{width:mob?"100%":"280px",background:LGRAY,borderRadius:12,padding:"14px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:DARK,marginBottom:8}}><span>Subtotal</span><span>{fmt2(sub,sym)}</span></div>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
             <span style={{fontSize:13,color:DARK,flexShrink:0}}>Tax %</span>
@@ -154,14 +284,17 @@ function CreateTab({profile,invoices,onSave,onCancel}:{profile:Profile,invoices:
         </div>
       </div>
     </div>
+
+    {/* Notes */}
     <div style={card}>
       <div style={{fontSize:13,fontWeight:800,color:DARK,marginBottom:10,textTransform:"uppercase",letterSpacing:.5}}>Notes / Terms (optional)</div>
       <textarea value={inv.notes} onChange={e=>u("notes",e.target.value)} placeholder="e.g. Payment due within 7 days. Thank you for your business." rows={3}
         style={{padding:"10px 12px",border:`1.5px solid ${MGRAY}`,borderRadius:9,fontSize:13,width:"100%",outline:"none",resize:"vertical",fontFamily:"inherit",boxSizing:"border-box"}}/>
     </div>
-    <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginBottom:32}}>
+
+    <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginBottom:32,flexWrap:"wrap"}}>
       <button onClick={onCancel} style={{padding:"10px 20px",background:W,border:`1.5px solid ${MGRAY}`,borderRadius:9,color:MID,fontSize:14,fontWeight:700,cursor:"pointer"}}>Cancel</button>
-      <button onClick={save} style={{padding:"10px 22px",background:B,border:"none",borderRadius:9,color:W,fontSize:14,fontWeight:800,cursor:"pointer"}}>Save Invoice →</button>
+      <button onClick={save} style={{padding:"10px 22px",background:B,border:"none",borderRadius:9,color:W,fontSize:14,fontWeight:800,cursor:"pointer"}}>Save Invoice</button>
     </div>
   </div>;
 }
@@ -169,6 +302,7 @@ function CreateTab({profile,invoices,onSave,onCancel}:{profile:Profile,invoices:
 // ── Invoice Card ──────────────────────────────────────────────────────────
 function InvCard({inv,onMarkPaid,onDelete}:{inv:Invoice,onMarkPaid:(id:string)=>void,onDelete:(id:string)=>void}){
   const [open,setOpen]=useState(false);
+  const mob=useIsMobile();
   const overdue=isOverdue(inv);
   const total=invTotal(inv);
   const sym=inv.sym||"₦";
@@ -177,7 +311,9 @@ function InvCard({inv,onMarkPaid,onDelete}:{inv:Invoice,onMarkPaid:(id:string)=>
   const reminderMsg=`Hello ${inv.clientName}, this is a reminder that Invoice ${inv.number} for ${fmt2(total,sym)} from ${inv.bizName} is${overdue?" overdue; it was":" due"} on ${fmtDate(inv.dueDate)||"the agreed date"}. Please make payment at your earliest convenience.\n\n${inv.bizBank?`Payment: ${inv.bizBank}\n\n`:""}Thank you.\n${inv.bizName}`;
   const waLink=inv.clientPhone?`https://wa.me/${inv.clientPhone.replace(/\D/g,"")}?text=${encodeURIComponent(reminderMsg)}`:"";
   const mailLink=inv.clientEmail?`mailto:${inv.clientEmail}?subject=${encodeURIComponent(`Payment Reminder: Invoice ${inv.number}`)}&body=${encodeURIComponent(reminderMsg)}`:"";
+
   return <div style={{...card,cursor:"pointer",marginBottom:10}} onClick={()=>setOpen(o=>!o)}>
+    {/* Summary row */}
     <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
@@ -192,14 +328,28 @@ function InvCard({inv,onMarkPaid,onDelete}:{inv:Invoice,onMarkPaid:(id:string)=>
         <div style={{fontSize:12,color:MID,marginTop:2}}>{inv.items.length} item{inv.items.length!==1?"s":""} · {open?"▲":"▼"}</div>
       </div>
     </div>
+
+    {/* Expanded panel */}
     {open&&<div onClick={e=>e.stopPropagation()} style={{marginTop:14}}>
-      <div style={{background:LGRAY,borderRadius:10,padding:14,marginBottom:12}}>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-          <div><div style={{fontSize:10,fontWeight:700,color:B,textTransform:"uppercase",marginBottom:4}}>From</div><div style={{fontSize:13,fontWeight:700,color:DARK}}>{inv.bizName}</div>{inv.bizPhone&&<div style={{fontSize:12,color:MID}}>{inv.bizPhone}</div>}{inv.bizEmail&&<div style={{fontSize:12,color:MID}}>{inv.bizEmail}</div>}</div>
-          <div><div style={{fontSize:10,fontWeight:700,color:B,textTransform:"uppercase",marginBottom:4}}>To</div><div style={{fontSize:13,fontWeight:700,color:DARK}}>{inv.clientName}</div>{inv.clientPhone&&<div style={{fontSize:12,color:MID}}>{inv.clientPhone}</div>}{inv.clientEmail&&<div style={{fontSize:12,color:MID}}>{inv.clientEmail}</div>}</div>
+
+      {/* Details summary */}
+      <div style={{background:LGRAY,borderRadius:10,padding:14,marginBottom:14}}>
+        <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:12,marginBottom:12}}>
+          <div>
+            <div style={{fontSize:10,fontWeight:700,color:B,textTransform:"uppercase",marginBottom:4}}>From</div>
+            <div style={{fontSize:13,fontWeight:700,color:DARK}}>{inv.bizName}</div>
+            {inv.bizPhone&&<div style={{fontSize:12,color:MID}}>{inv.bizPhone}</div>}
+            {inv.bizEmail&&<div style={{fontSize:12,color:MID}}>{inv.bizEmail}</div>}
+          </div>
+          <div>
+            <div style={{fontSize:10,fontWeight:700,color:B,textTransform:"uppercase",marginBottom:4}}>To</div>
+            <div style={{fontSize:13,fontWeight:700,color:DARK}}>{inv.clientName}</div>
+            {inv.clientPhone&&<div style={{fontSize:12,color:MID}}>{inv.clientPhone}</div>}
+            {inv.clientEmail&&<div style={{fontSize:12,color:MID}}>{inv.clientEmail}</div>}
+          </div>
         </div>
         {inv.items.map(item=><div key={item.id} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:`1px solid ${MGRAY}`,fontSize:13,gap:8}}>
-          <span style={{color:DARK}}>{item.desc} <span style={{color:MID}}>×{item.qty}</span></span>
+          <span style={{color:DARK}}>{item.desc} <span style={{color:MID}}>x{item.qty}</span></span>
           <span style={{fontWeight:700,color:B}}>{fmt2(num(item.qty)*num(item.price),sym)}</span>
         </div>)}
         <div style={{textAlign:"right",marginTop:10}}>
@@ -210,11 +360,44 @@ function InvCard({inv,onMarkPaid,onDelete}:{inv:Invoice,onMarkPaid:(id:string)=>
         {inv.bizBank&&<div style={{marginTop:10,padding:"8px 10px",background:W,borderRadius:7,fontSize:12,color:DARK,border:`1px solid ${MGRAY}`}}><b style={{color:B}}>Payment:</b> {inv.bizBank}</div>}
         {inv.notes&&<div style={{marginTop:8,fontSize:12,color:MID,lineHeight:1.6}}>{inv.notes}</div>}
       </div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-        {inv.status==="unpaid"&&<button onClick={()=>onMarkPaid(inv.id)} style={{padding:"7px 14px",background:"#e8f5e9",border:"1.5px solid #a5d6a7",borderRadius:8,color:"#2e7d32",fontSize:13,fontWeight:700,cursor:"pointer"}}>✓ Mark Paid</button>}
-        {waLink&&<a href={waLink} target="_blank" rel="noopener" style={{padding:"7px 14px",background:"#25d366",borderRadius:8,color:W,fontSize:13,fontWeight:700,textDecoration:"none"}}>💬 WhatsApp Reminder</a>}
-        {mailLink&&<a href={mailLink} style={{padding:"7px 14px",background:W,border:`1.5px solid ${MGRAY}`,borderRadius:8,color:B,fontSize:13,fontWeight:700,textDecoration:"none"}}>✉ Email Reminder</a>}
-        <button onClick={()=>{if(window.confirm("Delete this invoice?"))onDelete(inv.id);}} style={{padding:"7px 14px",background:"#fdecea",border:"1.5px solid #f5c6cb",borderRadius:8,color:"#c0392b",fontSize:13,fontWeight:700,cursor:"pointer",marginLeft:"auto"}}>Delete</button>
+
+      {/* ── Action buttons: two labelled groups ── */}
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+
+        {/* Group 1: Remind client */}
+        {(waLink||mailLink)&&<div>
+          <div style={{fontSize:10,fontWeight:700,color:MID,textTransform:"uppercase",letterSpacing:.9,marginBottom:7}}>Remind Client</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {waLink&&<a href={waLink} target="_blank" rel="noopener"
+              style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:"#25d366",borderRadius:9,color:W,fontSize:13,fontWeight:700,textDecoration:"none"}}>
+              <span>💬</span><span>WhatsApp</span>
+            </a>}
+            {mailLink&&<a href={mailLink}
+              style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:W,border:`1.5px solid ${MGRAY}`,borderRadius:9,color:DARK,fontSize:13,fontWeight:700,textDecoration:"none"}}>
+              <span>✉</span><span>Email</span>
+            </a>}
+          </div>
+        </div>}
+
+        {/* Group 2: Manage */}
+        <div>
+          <div style={{fontSize:10,fontWeight:700,color:MID,textTransform:"uppercase",letterSpacing:.9,marginBottom:7}}>Manage Invoice</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+            {inv.status==="unpaid"&&<button onClick={()=>onMarkPaid(inv.id)}
+              style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:"#e8f5e9",border:"1.5px solid #a5d6a7",borderRadius:9,color:"#2e7d32",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              <span>✓</span><span>Mark as Paid</span>
+            </button>}
+            <button onClick={()=>printInvoice(inv)}
+              style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:LITE,border:`1.5px solid ${MGRAY}`,borderRadius:9,color:DARK,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              <span>🖨</span><span>Print Invoice</span>
+            </button>
+            <button onClick={()=>{if(window.confirm("Delete this invoice? This cannot be undone."))onDelete(inv.id);}}
+              style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:"#fdecea",border:"1.5px solid #f5c6cb",borderRadius:9,color:"#c0392b",fontSize:13,fontWeight:700,cursor:"pointer",marginLeft:"auto"}}>
+              <span>🗑</span><span>Delete</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>}
   </div>;
@@ -297,7 +480,7 @@ function InvoiceTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
     </div>
     <div style={{background:B,padding:"9px 22px",display:"flex",alignItems:"center",flexWrap:"wrap",gap:8}}>
       <div style={{marginLeft:"auto",display:"flex",gap:8}}>
-        <a href="/tools" style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,textDecoration:"none"}}>← Tools</a>
+        <a href="/tools" style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,textDecoration:"none"}}>{"<-"} Tools</a>
         <button onClick={onSignOut} style={{padding:"6px 14px",background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",borderRadius:7,color:W,fontSize:12,fontWeight:700,cursor:"pointer"}}>Sign Out</button>
       </div>
     </div>
@@ -396,7 +579,7 @@ export default function InvoicePage(){
       .g-body-txt{font-size:16px;color:rgba(255,255,255,.42);line-height:1.75;margin-bottom:32px;max-width:420px}
       .g-pills{display:flex;flex-direction:column;gap:12px}
       .g-pill{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);animation:gPillIn .5s cubic-bezier(.22,.68,0,1.2) both}
-      .g-pill:nth-child(1){animation-delay:.15s}.g-pill:nth-child(2){animation-delay:.25s}.g-pill:nth-child(3){animation-delay:.35s}.g-pill:nth-child(4){animation-delay:.45s}
+      .g-pill:nth-child(1){animation-delay:.15s}.g-pill:nth-child(2){animation-delay:.25s}.g-pill:nth-child(3){animation-delay:.35s}.g-pill:nth-child(4){animation-delay:.45s}.g-pill:nth-child(5){animation-delay:.55s}
       @keyframes gPillIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
       .g-pill-icon{width:36px;height:36px;border-radius:10px;background:rgba(80,124,128,.15);border:1px solid rgba(80,124,128,.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
       .g-pill-text{display:flex;flex-direction:column}
@@ -432,7 +615,7 @@ export default function InvoicePage(){
       <div className="g-dot g-dot-1"/><div className="g-dot g-dot-2"/><div className="g-dot g-dot-3"/><div className="g-dot g-dot-4"/><div className="g-dot g-dot-5"/>
       <nav className="g-nav">
         <a href="/" className="g-nav-brand"><div className="g-nav-dot"/><span className="g-nav-label">Prowess Digital Solutions</span></a>
-        <a href="/tools" className="g-nav-back">← All Tools</a>
+        <a href="/tools" className="g-nav-back">{"<-"} All Tools</a>
       </nav>
       <div className="g-body">
         <div className="g-split">
@@ -441,7 +624,7 @@ export default function InvoicePage(){
             <h1 className="g-headline">Get paid faster.<br/><span className="hi">Track every invoice.</span></h1>
             <p className="g-body-txt">Stop chasing payments with no paper trail. Create professional invoices, see who has paid and who has not, and send reminders in one tap.</p>
             <div className="g-pills">
-              {[{icon:"🧾",title:"Professional Invoices",sub:"Create and send in under 2 minutes"},{icon:"💰",title:"Payment Status",sub:"Paid, unpaid, and overdue at a glance"},{icon:"💬",title:"WhatsApp Reminder",sub:"One tap sends the reminder to the client"},{icon:"✉",title:"Email Reminder",sub:"Opens email ready to send"}].map((f,i)=>(
+              {[{icon:"🧾",title:"Professional Invoices",sub:"Create and send in under 2 minutes"},{icon:"💰",title:"Payment Status",sub:"Paid, unpaid, and overdue at a glance"},{icon:"💬",title:"WhatsApp Reminder",sub:"One tap sends the reminder to the client"},{icon:"✉",title:"Email Reminder",sub:"Opens email ready to send"},{icon:"🖨",title:"Print-Ready Invoices",sub:"Beautiful printed invoice to share with clients"}].map((f,i)=>(
                 <div key={i} className="g-pill"><div className="g-pill-icon">{f.icon}</div><div className="g-pill-text"><span className="g-pill-title">{f.title}</span><span className="g-pill-sub">{f.sub}</span></div></div>
               ))}
             </div>
@@ -455,7 +638,7 @@ export default function InvoicePage(){
               <span className="g-code-label">Your access code</span>
               <input value={code} placeholder="PDS-XXXX-XXXX" onChange={e=>{setCode(e.target.value.toUpperCase());setStatus("idle");}} onKeyDown={e=>e.key==="Enter"&&verify()} disabled={status==="checking"} autoComplete="off" className={`g-code-input${status==="denied"?" err":""}`}/>
               <div className="g-err-txt">{status==="denied"?(REASON_MSG[reason]??REASON_MSG.invalid):""}</div>
-              <button onClick={verify} disabled={status==="checking"||!code.trim()} className="g-submit">{status==="checking"?"Verifying your code...":"Unlock Invoice Manager →"}</button>
+              <button onClick={verify} disabled={status==="checking"||!code.trim()} className="g-submit">{status==="checking"?"Verifying your code...":"Unlock Invoice Manager"}</button>
               <p className="g-hint">Your access code was provided when you engaged with Prowess Digital Solutions.</p>
               <div className="g-sep"/>
               <div className="g-no-code">No code yet? <a href="/contact">Get in touch</a> to become a client.</div>
