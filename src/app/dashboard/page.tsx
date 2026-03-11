@@ -201,14 +201,15 @@ export default function DashboardPage() {
     }
   }
 
-  async function updateTaskStatus(taskId: string, status: string, submissionLinks?: any[] | null) {
+  async function updateTaskStatus(taskId: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null) {
     const updates: any = { status };
     if (status === "completed") {
-      updates.completed_at = new Date().toISOString();
+      updates.completed_at    = new Date().toISOString();
       updates.approval_status = "needs-review";
-      updates.approval_note = null;
+      updates.approval_note   = null;
     }
     if (submissionLinks && submissionLinks.length > 0) updates.submission_links = submissionLinks;
+    if (resubmitNote) updates.approval_note = resubmitNote;
     await supabase.from("tasks").update(updates).eq("id", taskId);
     setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, ...updates } : t) }));
   }
@@ -329,18 +330,25 @@ export default function DashboardPage() {
     setState((p: any) => ({ ...p, logs: p.logs.map((l: any) => l.id === id ? { ...l, approval_status: "rejected", approval_note: note } : l) }));
   }
 
-  async function resubmitLog(id: string, links: any[]) {
+  async function resubmitLog(id: string, fields: any) {
     await supabase.from("activity_logs").update({
-      approval_status: "needs-review",
-      approval_note: null,
-      approved_by: null,
-      approved_at: null,
-      links: links.length ? links : null,
+      approval_status:   "needs-review",
+      approval_note:     null,
+      approved_by:       null,
+      approved_at:       null,
+      description:       fields.description,
+      project:           fields.project || null,
+      time_spent:        fields.time_spent || 0,
+      completion_status: fields.completion_status,
+      links:             fields.links?.length ? fields.links : null,
     }).eq("id", id);
     setState((p: any) => ({
       ...p,
       logs: p.logs.map((l: any) => l.id === id
-        ? { ...l, approval_status: "needs-review", approval_note: null, links }
+        ? { ...l, approval_status: "needs-review", approval_note: null,
+            description: fields.description, project: fields.project,
+            time_spent: fields.time_spent, completion_status: fields.completion_status,
+            links: fields.links }
         : l
       ),
     }));
