@@ -390,14 +390,46 @@ const NAV = [
   { id: "activity",    label: "Activity Log", icon: "📝" },
   { id: "kpi",         label: "KPIs",         icon: "🎯" },
   { id: "leaderboard", label: "Leaderboard",  icon: "🏆" },
+  { id: "commission",  label: "Commission",   icon: "💰", commissionOnly: true },
   { id: "reports",     label: "Reports",      icon: "📊", privileged: true },
   { id: "team",        label: "Team",         icon: "👥", privileged: true },
   { id: "settings",    label: "Settings",     icon: "⚙️" },
 ];
 
+// --- Currency helpers ---------------------------------------------------------
+const CURRENCIES = [
+  { country: "Nigeria",        code: "NGN", symbol: "₦"    },
+  { country: "Ghana",          code: "GHS", symbol: "GH₵"  },
+  { country: "Kenya",          code: "KES", symbol: "KSh"  },
+  { country: "South Africa",   code: "ZAR", symbol: "R"    },
+  { country: "Uganda",         code: "UGX", symbol: "USh"  },
+  { country: "Tanzania",       code: "TZS", symbol: "TSh"  },
+  { country: "Rwanda",         code: "RWF", symbol: "FRw"  },
+  { country: "Senegal",        code: "XOF", symbol: "CFA"  },
+  { country: "Cameroon",       code: "XAF", symbol: "FCFA" },
+  { country: "Ethiopia",       code: "ETB", symbol: "Br"   },
+  { country: "Egypt",          code: "EGP", symbol: "E£"   },
+  { country: "United Kingdom", code: "GBP", symbol: "£"    },
+  { country: "United States",  code: "USD", symbol: "$"    },
+  { country: "European Union", code: "EUR", symbol: "€"    },
+];
+
+function getCurrencyForCountry(country: string) {
+  return CURRENCIES.find(c => c.country.toLowerCase() === (country || "").toLowerCase())
+    ?? { code: "USD", symbol: "$" };
+}
+
+function fmtMoney(amount: number, symbol: string) {
+  return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 // --- Mobile drawer (slides in from left) --------------------------------------
 function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCount = 0, setApprovalsOpen }: any) {
-  const items = NAV.filter(n => !n.privileged || isPrivileged(user));
+  const items = NAV.filter(n => {
+    if (n.privileged && !isPrivileged(user)) return false;
+    if ((n as any).commissionOnly && !isPrivileged(user) && !user.earns_commission) return false;
+    return true;
+  });
   return (
     <>
       {/* Backdrop */}
@@ -541,7 +573,11 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
       </div>
 
       <nav style={{ flex: 1, padding: "10px 8px", overflowY: "auto", overflowX: "hidden" }}>
-        {NAV.filter(n => !n.privileged || isPrivileged(user)).map(n => {
+        {NAV.filter(n => {
+          if (n.privileged && !isPrivileged(user)) return false;
+          if ((n as any).commissionOnly && !isPrivileged(user) && !user.earns_commission) return false;
+          return true;
+        }).map(n => {
           const on = page === n.id;
           return (
             <button key={n.id} onClick={() => setPage(n.id)} title={n.label} style={{
@@ -2652,13 +2688,406 @@ function ReportsPage({ tasks, logs, users, user }: any) {
   );
 }
 
-function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: any) {
-  const [modal,        setModal]        = useState(false);
-  const [selectedMember, setSelectedMember] = useState<any>(null);
+// --- Commission Badges --------------------------------------------------------
+function CommBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string; label: string }> = {
+    pending:   { bg: "#fef9c3", color: "#854d0e", label: "Pending"   },
+    confirmed: { bg: "#dcfce7", color: "#166534", label: "Confirmed" },
+    rejected:  { bg: "#fee2e2", color: "#991b1b", label: "Rejected"  },
+    paid:      { bg: "#d1fae5", color: "#065f46", label: "Paid"      },
+    unpaid:    { bg: "#f1f5f9", color: "#475569", label: "Unpaid"    },
+  };
+  const s = map[status] || map.pending;
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: s.bg, color: s.color }}>
+      {s.label}
+    </span>
+  );
+}
+
+// --- Log Sale Modal -----------------------------------------------------------
+function LogSaleModal({ user, users, onClose, onSubmit }: any) {
+  const isAdmin = user.role === "admin";
+  const commissionMembers = users.filter((u: any) => u.earns_commission);
+  const [form, setForm] = useState({
+    member_id: isAdmin ? "" : user.id,
+    client_name: "", product_service: "", sale_amount: "",
+    sale_date: new Date().toISOString().split("T")[0], notes: "",
+  });
   const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState("");
-  const [done,   setDone]   = useState(false);
-  const [form,   setForm]   = useState({ fullName: "", email: "", password: "", jobTitle: "", role: "member", managedBy: "" });
+  const [err, setErr] = useState("");
+
+  const selectedMember = users.find((u: any) => u.id === form.member_id);
+  const currency = getCurrencyForCountry(selectedMember?.country || user.country || "");
+
+  async function submit() {
+    if (!form.member_id || !form.client_name || !form.product_service || !form.sale_amount || !form.sale_date) {
+      setErr("Please fill in all required fields."); return;
+    }
+    setSaving(true); setErr("");
+    try {
+      await onSubmit({ ...form, currency_code: currency.code, currency_symbol: currency.symbol });
+      onClose();
+    } catch (e: any) { setErr(e.message || "Failed to log sale."); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Log a Sale</div>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {isAdmin && (
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Sales Rep *</label>
+              <select value={form.member_id} onChange={e => setForm(f => ({ ...f, member_id: e.target.value }))}
+                style={{ ...SEL, width: "100%" }}>
+                <option value="">Select member...</option>
+                {commissionMembers.map((u: any) => (
+                  <option key={u.id} value={u.id}>{normUser(u).name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {[
+            ["Client Name *", "client_name", "text", "e.g. Acme Ltd"],
+            ["Product / Service *", "product_service", "text", "e.g. Business Strategy Course"],
+          ].map(([label, key, type, ph]) => (
+            <div key={key}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>{label}</label>
+              <input type={type} placeholder={ph} value={(form as any)[key]}
+                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+            </div>
+          ))}
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>
+              Sale Amount * {currency.code && <span style={{ fontWeight: 400, color: "#94a3b8" }}>({currency.code} {currency.symbol})</span>}
+            </label>
+            <input type="number" placeholder="0.00" value={form.sale_amount}
+              onChange={e => setForm(f => ({ ...f, sale_amount: e.target.value }))}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Sale Date *</label>
+            <input type="date" value={form.sale_date}
+              onChange={e => setForm(f => ({ ...f, sale_date: e.target.value }))}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Notes <span style={{ fontWeight: 400, color: "#94a3b8" }}>(optional)</span></label>
+            <textarea placeholder="Any extra context..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              rows={3} style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none", resize: "vertical" }} />
+          </div>
+          {err && <div style={{ fontSize: 13, color: "#ef4444", background: "#fef2f2", padding: "10px 14px", borderRadius: 8 }}>{err}</div>}
+          <button onClick={submit} disabled={saving}
+            style={{ padding: "12px", borderRadius: 10, background: saving ? "#94a3b8" : B, color: "white", border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 15, fontWeight: 700 }}>
+            {saving ? "Saving..." : "Log Sale"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Sale Detail Modal --------------------------------------------------------
+function SaleDetailModal({ sale, users, user, onClose, onConfirm, onReject, onMarkPaid, onMarkUnpaid }: any) {
+  const [rejectNote, setRejectNote] = useState("");
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const member   = users.find((u: any) => u.id === sale.member_id);
+  const isAdmin  = user.role === "admin";
+  const isLeader = user.role === "leader";
+  const canTogglePayout = isAdmin || (isLeader && sale.member_id !== user.id);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Sale Details</div>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
+          {[
+            ["Sales Rep", normUser(member)?.name || "—"],
+            ["Client", sale.client_name],
+            ["Product / Service", sale.product_service],
+            ["Sale Date", new Date(sale.sale_date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })],
+          ].map(([label, value]) => (
+            <div key={label}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{value}</div>
+            </div>
+          ))}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 3 }}>Sale Amount</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>{fmtMoney(Number(sale.sale_amount), sale.currency_symbol)}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 3 }}>Commission (1%)</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#16a34a" }}>{fmtMoney(Number(sale.commission_amount), sale.currency_symbol)}</div>
+          </div>
+          {sale.notes && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 3 }}>Notes</div>
+              <div style={{ fontSize: 13, color: "#374151" }}>{sale.notes}</div>
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 4 }}>Approval</div>
+              <CommBadge status={sale.status} />
+            </div>
+            {sale.status === "confirmed" && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 4 }}>Payout</div>
+                <CommBadge status={sale.payout_status} />
+              </div>
+            )}
+          </div>
+          {sale.rejection_note && (
+            <div style={{ background: "#fef2f2", borderRadius: 9, padding: "12px 14px", fontSize: 13, color: "#991b1b" }}>
+              <strong>Rejection note:</strong> {sale.rejection_note}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {isAdmin && sale.status === "pending" && !rejectOpen && (
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => { onConfirm(sale.id); onClose(); }}
+                style={{ flex: 1, padding: "11px", borderRadius: 9, border: "none", background: "#10b981", color: "white", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>
+                ✓ Confirm Sale
+              </button>
+              <button onClick={() => setRejectOpen(true)}
+                style={{ flex: 1, padding: "11px", borderRadius: 9, border: "none", background: "#ef4444", color: "white", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>
+                ✕ Reject
+              </button>
+            </div>
+          )}
+          {isAdmin && sale.status === "pending" && rejectOpen && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <textarea placeholder="Reason for rejection (optional)..." value={rejectNote} onChange={e => setRejectNote(e.target.value)}
+                rows={3} style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none", resize: "vertical" }} />
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => setRejectOpen(false)} style={{ flex: 1, padding: "11px", borderRadius: 9, border: "1px solid #e2e8f0", background: "white", cursor: "pointer", fontSize: 14, fontWeight: 600, color: "#374151" }}>Cancel</button>
+                <button onClick={() => { onReject(sale.id, rejectNote); onClose(); }}
+                  style={{ flex: 1, padding: "11px", borderRadius: 9, border: "none", background: "#ef4444", color: "white", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>
+                  Confirm Reject
+                </button>
+              </div>
+            </div>
+          )}
+          {canTogglePayout && sale.status === "confirmed" && (
+            sale.payout_status === "unpaid"
+              ? <button onClick={() => { onMarkPaid(sale.id); onClose(); }}
+                  style={{ padding: "11px", borderRadius: 9, border: "none", background: B, color: "white", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>
+                  Mark as Paid
+                </button>
+              : <button onClick={() => { onMarkUnpaid(sale.id); onClose(); }}
+                  style={{ padding: "11px", borderRadius: 9, border: "1px solid #e2e8f0", background: "white", color: "#374151", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
+                  Mark as Unpaid
+                </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Commission Page ----------------------------------------------------------
+function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onRejectSale, onMarkPaid, onMarkUnpaid }: any) {
+  const [logOpen,      setLogOpen]      = useState(false);
+  const [detail,       setDetail]       = useState<any>(null);
+  const [filter,       setFilter]       = useState("all");
+  const [payFilter,    setPayFilter]    = useState("all");
+  const [memberFilter, setMemberFilter] = useState("all");
+  const [commPage,     setCommPage]     = useState(1);
+  const COMM_PER_PAGE = 10;
+
+  const isAdmin  = user.role === "admin";
+  const isLeader = user.role === "leader";
+
+  const visibleSales = useMemo(() => {
+    if (isAdmin) return sales;
+    if (isLeader) {
+      const myTeamIds = new Set(users.filter((u: any) => u.managed_by === user.id).map((u: any) => u.id));
+      return sales.filter((s: any) => s.member_id === user.id || myTeamIds.has(s.member_id));
+    }
+    return sales.filter((s: any) => s.member_id === user.id);
+  }, [sales, user, users, isAdmin, isLeader]);
+
+  const filtered = useMemo(() => visibleSales.filter((s: any) => {
+    if (filter !== "all"       && s.status        !== filter)       return false;
+    if (payFilter !== "all"    && s.payout_status  !== payFilter)    return false;
+    if (memberFilter !== "all" && s.member_id      !== memberFilter) return false;
+    return true;
+  }), [visibleSales, filter, payFilter, memberFilter]);
+
+  const commTotalPages = Math.ceil(filtered.length / COMM_PER_PAGE);
+  const pagedSales     = filtered.slice((commPage - 1) * COMM_PER_PAGE, commPage * COMM_PER_PAGE);
+
+  const confirmedSales = visibleSales.filter((s: any) => s.status === "confirmed");
+  const pendingCount   = visibleSales.filter((s: any) => s.status === "pending").length;
+
+  const earningsByCurrency = useMemo(() => {
+    const map: Record<string, { symbol: string; total: number; unpaid: number }> = {};
+    confirmedSales.forEach((s: any) => {
+      if (!map[s.currency_code]) map[s.currency_code] = { symbol: s.currency_symbol, total: 0, unpaid: 0 };
+      map[s.currency_code].total += Number(s.commission_amount);
+      if (s.payout_status === "unpaid") map[s.currency_code].unpaid += Number(s.commission_amount);
+    });
+    return Object.entries(map);
+  }, [confirmedSales]);
+
+  const teamMembers = isAdmin
+    ? users.filter((u: any) => u.earns_commission)
+    : users.filter((u: any) => u.managed_by === user.id && u.earns_commission);
+
+  const filterBtn = (val: string, cur: string, set: (v: string) => void, dark?: boolean) => (
+    <button key={val} onClick={() => { set(val); setCommPage(1); }} style={{
+      padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
+      border: cur === val ? "none" : "1px solid #e2e8f0",
+      background: cur === val ? (dark ? "#0f172a" : B) : "white",
+      color: cur === val ? "white" : "#374151",
+    }}>
+      {val.charAt(0).toUpperCase() + val.slice(1)}
+    </button>
+  );
+
+  return (
+    <div className="prowess-page-pad" style={{ padding: "24px 28px", maxWidth: 960, margin: "0 auto" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>💰 Commission</div>
+          <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>
+            {isAdmin ? "Manage all team sales and payouts" : isLeader ? "Your earnings and your team's payouts" : "Your sales and commission earnings"}
+          </div>
+        </div>
+        {(isAdmin || user.earns_commission) && (
+          <button onClick={() => setLogOpen(true)}
+            style={{ padding: "11px 22px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>
+            + Log a Sale
+          </button>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="prowess-stat-row" style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+        {earningsByCurrency.length === 0
+          ? <Card style={{ padding: "18px 20px", flex: 1 }}><div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Total Earnings</div><div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>—</div><div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>No confirmed sales yet</div></Card>
+          : earningsByCurrency.map(([code, data]) => (
+            <Card key={code} style={{ padding: "18px 20px", flex: 1, minWidth: 140 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Total Earned ({code})</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#16a34a" }}>{fmtMoney(data.total, data.symbol)}</div>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>{fmtMoney(data.unpaid, data.symbol)} unpaid</div>
+            </Card>
+          ))
+        }
+        <Card style={{ padding: "18px 20px", flex: 1, minWidth: 140 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Pending Review</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: pendingCount > 0 ? "#d97706" : "#0f172a" }}>{pendingCount}</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>awaiting confirmation</div>
+        </Card>
+        <Card style={{ padding: "18px 20px", flex: 1, minWidth: 140 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Confirmed Sales</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>{confirmedSales.length}</div>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div style={{ background: "white", borderRadius: 12, padding: "14px 18px", border: "1px solid #e2e8f0", marginBottom: 16, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {["all", "pending", "confirmed", "rejected"].map(f => filterBtn(f, filter, setFilter))}
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {["all", "paid", "unpaid"].map(f => filterBtn(f, payFilter, setPayFilter, true))}
+        </div>
+        {(isAdmin || isLeader) && teamMembers.length > 0 && (
+          <select value={memberFilter} onChange={e => setMemberFilter(e.target.value)}
+            style={{ ...SEL, fontSize: 13 }}>
+            <option value="all">All members</option>
+            {teamMembers.map((u: any) => (
+              <option key={u.id} value={u.id}>{normUser(u).name}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Table */}
+      <Card style={{ overflow: "hidden" }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: "48px 24px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
+            No sales found for the selected filters.
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                  {(isAdmin || isLeader) && <th style={{ padding: "11px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>Member</th>}
+                  {["Client", "Product/Service", "Sale Amount", "Commission", "Date", "Status", "Payout"].map(h => (
+                    <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pagedSales.map((sale: any, i: number) => {
+                  const member = users.find((u: any) => u.id === sale.member_id);
+                  return (
+                    <tr key={sale.id} onClick={() => setDetail(sale)}
+                      style={{ borderBottom: i < pagedSales.length - 1 ? "1px solid #f1f5f9" : "none", cursor: "pointer" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#f8fafc")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "white")}>
+                      {(isAdmin || isLeader) && <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>{normUser(member)?.name || "—"}</td>}
+                      <td style={{ padding: "13px 16px", fontSize: 13, color: "#0f172a", whiteSpace: "nowrap" }}>{sale.client_name}</td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, color: "#64748b", whiteSpace: "nowrap" }}>{sale.product_service}</td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>{fmtMoney(Number(sale.sale_amount), sale.currency_symbol)}</td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 700, color: "#16a34a", whiteSpace: "nowrap" }}>{fmtMoney(Number(sale.commission_amount), sale.currency_symbol)}</td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, color: "#64748b", whiteSpace: "nowrap" }}>{new Date(sale.sale_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
+                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}><CommBadge status={sale.status} /></td>
+                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>{sale.status === "confirmed" ? <CommBadge status={sale.payout_status} /> : <span style={{ color: "#cbd5e1", fontSize: 12 }}>—</span>}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <div style={{ padding: "0 16px 8px" }}>
+              <Pagination page={commPage} total={commTotalPages} onChange={setCommPage} />
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {logOpen && <LogSaleModal user={user} users={users} onClose={() => setLogOpen(false)} onSubmit={onLogSale} />}
+      {detail && (
+        <SaleDetailModal
+          sale={detail} users={users} user={user}
+          onClose={() => setDetail(null)}
+          onConfirm={onConfirmSale} onReject={onRejectSale}
+          onMarkPaid={onMarkPaid} onMarkUnpaid={onMarkUnpaid}
+        />
+      )}
+    </div>
+  );
+}
+
+function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, onToggleCommission }: any) {
+  const [modal,          setModal]          = useState(false);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [saving,         setSaving]         = useState(false);
+  const [error,          setError]          = useState("");
+  const [done,           setDone]           = useState(false);
+  const [form,           setForm]           = useState({ fullName: "", email: "", password: "", jobTitle: "", role: "member", managedBy: "", country: "", earnsCommission: false });
+  const [teamPage,       setTeamPage]       = useState(1);
+  const TEAM_PER_PAGE = 12;
+
+  const teamTotalPages = Math.ceil(users.length / TEAM_PER_PAGE);
+  const pagedUsers     = users.slice((teamPage - 1) * TEAM_PER_PAGE, teamPage * TEAM_PER_PAGE);
 
   async function add() {
     if (!form.fullName || !form.email || !form.password) {
@@ -2668,9 +3097,9 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
     setSaving(true);
     setError("");
     try {
-      await onCreateMember({ ...form, managed_by: form.managedBy || null });
+      await onCreateMember({ ...form, managed_by: form.managedBy || null, earns_commission: form.earnsCommission });
       setDone(true);
-      setTimeout(() => { setDone(false); setModal(false); setForm({ fullName: "", email: "", password: "", jobTitle: "", role: "member", managedBy: "" }); }, 1500);
+      setTimeout(() => { setDone(false); setModal(false); setForm({ fullName: "", email: "", password: "", jobTitle: "", role: "member", managedBy: "", country: "", earnsCommission: false }); }, 1500);
     } catch (e: any) {
       setError(e.message || "Something went wrong. Please try again.");
     }
@@ -2690,7 +3119,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px,1fr))", gap: 14 }}>
-        {users.map((u: any) => {
+        {pagedUsers.map((u: any) => {
           const nu = normUser(u);
           const leaders = users.filter((x: any) => x.role === "leader" || x.role === "admin");
           const assignedLeader = u.managed_by ? normUser(users.find((x: any) => x.id === u.managed_by)) : null;
@@ -2715,6 +3144,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
           );
         })}
       </div>
+      <Pagination page={teamPage} total={teamTotalPages} onChange={setTeamPage} />
 
       {/* Member detail modal */}
       {selectedMember && (() => {
@@ -2830,6 +3260,32 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
                 </div>
               )}
 
+              {/* Commission toggle -- admin only */}
+              {user.role === "admin" && selectedMember.role !== "admin" && (
+                <div style={{ marginTop: 16, padding: "14px 16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Earns Commission</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                      {selectedMember.country
+                        ? `${selectedMember.country} · ${getCurrencyForCountry(selectedMember.country).code} ${getCurrencyForCountry(selectedMember.country).symbol}`
+                        : "No country set"}
+                      {" · "}1% per confirmed sale
+                    </div>
+                  </div>
+                  <button type="button"
+                    onClick={() => {
+                      const newVal = !selectedMember.earns_commission;
+                      onToggleCommission?.(selectedMember.id, newVal);
+                      setSelectedMember((prev: any) => ({ ...prev, earns_commission: newVal }));
+                    }}
+                    style={{ width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", position: "relative",
+                      background: selectedMember.earns_commission ? B : "#e2e8f0", transition: "background 0.2s" }}>
+                    <span style={{ position: "absolute", top: 2, left: selectedMember.earns_commission ? 22 : 2, width: 20, height: 20,
+                      borderRadius: "50%", background: "white", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+                  </button>
+                </div>
+              )}
+
             </Card>
             </div>
           </div>
@@ -2876,7 +3332,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
                 </div>
 
                 {form.role !== "admin" && (
-                  <div style={{ marginBottom: 20 }}>
+                  <div style={{ marginBottom: 14 }}>
                     <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Assign to Leader <span style={{ fontWeight: 400, color: "#94a3b8" }}>(optional)</span></label>
                     <select value={form.managedBy} onChange={e => setForm(f => ({ ...f, managedBy: e.target.value }))} style={{ ...SEL, width: "100%" }}>
                       <option value="">-- No leader assigned --</option>
@@ -2889,6 +3345,30 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader }: 
                     )}
                   </div>
                 )}
+
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Country <span style={{ fontWeight: 400, color: "#94a3b8" }}>(sets currency)</span></label>
+                  <select value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))} style={{ ...SEL, width: "100%" }}>
+                    <option value="">-- Select country --</option>
+                    {CURRENCIES.map(c => (
+                      <option key={c.code} value={c.country}>{c.country} ({c.code} {c.symbol})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: 20, padding: "14px 16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Earns Commission</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Member earns 2% on referred sales</div>
+                  </div>
+                  <button type="button" onClick={() => setForm(f => ({ ...f, earnsCommission: !f.earnsCommission }))}
+                    style={{ width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", position: "relative",
+                      background: form.earnsCommission ? B : "#e2e8f0", transition: "background 0.2s" }}>
+                    <span style={{ position: "absolute", top: 2, left: form.earnsCommission ? 22 : 2, width: 20, height: 20,
+                      borderRadius: "50%", background: "white", transition: "left 0.2s",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+                  </button>
+                </div>
 
                 {error && (
                   <div style={{ fontSize: 13, color: "#ef4444", padding: "10px 14px", background: "#fef2f2", borderRadius: 8, marginBottom: 16 }}>
@@ -3524,6 +4004,7 @@ export default function ProwessDashboard({
   kpiAssignments = [],
   kpiLogs = [],
   weeklyWinners = [],
+  sales = [],
   onCreateAssignment,
   onLogKPI,
   onSetVerdict,
@@ -3543,6 +4024,12 @@ export default function ProwessDashboard({
   onApproveLog,
   onRejectLog,
   onCloseWeek,
+  onLogSale,
+  onConfirmSale,
+  onRejectSale,
+  onMarkCommissionPaid,
+  onMarkCommissionUnpaid,
+  onToggleCommission,
 }: {
   currentUser: any;
   users?: any[];
@@ -3551,6 +4038,7 @@ export default function ProwessDashboard({
   kpiAssignments?: any[];
   kpiLogs?: any[];
   weeklyWinners?: any[];
+  sales?: any[];
   onCreateAssignment?: (form: any) => Promise<void>;
   onLogKPI?: (form: any) => Promise<void>;
   onSetVerdict?: (form: any) => Promise<void>;
@@ -3570,6 +4058,12 @@ export default function ProwessDashboard({
   onApproveLog?: (id: string) => Promise<void>;
   onRejectLog?: (id: string, note: string) => Promise<void>;
   onCloseWeek?: (weekStart: string, weekEnd: string, scores: any[]) => Promise<void>;
+  onLogSale?: (form: any) => Promise<void>;
+  onConfirmSale?: (id: string) => Promise<void>;
+  onRejectSale?: (id: string, note: string) => Promise<void>;
+  onMarkCommissionPaid?: (id: string) => Promise<void>;
+  onMarkCommissionUnpaid?: (id: string) => Promise<void>;
+  onToggleCommission?: (memberId: string, value: boolean) => Promise<void>;
 }) {
   const [page,        setPage]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -3580,6 +4074,7 @@ export default function ProwessDashboard({
   const [localKpiA,    setLocalKpiA]    = useState(kpiAssignments);
   const [localKpiL,    setLocalKpiL]    = useState(kpiLogs);
   const [localWinners, setLocalWinners] = useState(weeklyWinners);
+  const [localSales,   setLocalSales]   = useState(sales);
   const isMobile = useIsMobile();
 
   useEffect(() => setLocalTasks(tasks),          [tasks]);
@@ -3587,6 +4082,7 @@ export default function ProwessDashboard({
   useEffect(() => setLocalKpiA(kpiAssignments),  [kpiAssignments]);
   useEffect(() => setLocalKpiL(kpiLogs),         [kpiLogs]);
   useEffect(() => setLocalWinners(weeklyWinners),[weeklyWinners]);
+  useEffect(() => setLocalSales(sales),          [sales]);
 
   const user = normUser(currentUser);
 
@@ -3632,6 +4128,37 @@ export default function ProwessDashboard({
             setLocalKpiA((prev: any) => (prev || []).filter((a: any) => a.id !== id));
           }}
         />;
+      case "commission":
+        return <CommissionPage
+          user={user} users={users} sales={localSales}
+          onLogSale={async (form: any) => {
+            await onLogSale?.(form);
+            const temp = {
+              id: "tmp-" + Date.now(), ...form,
+              status: (user.role === "admin" && form.member_id !== user.id) ? "confirmed" : "pending",
+              payout_status: "unpaid",
+              commission_amount: (parseFloat(form.sale_amount) * 0.01).toFixed(2),
+              created_at: new Date().toISOString(),
+            };
+            setLocalSales((prev: any) => [temp, ...prev]);
+          }}
+          onConfirmSale={async (id: string) => {
+            await onConfirmSale?.(id);
+            setLocalSales((prev: any) => prev.map((s: any) => s.id === id ? { ...s, status: "confirmed" } : s));
+          }}
+          onRejectSale={async (id: string, note: string) => {
+            await onRejectSale?.(id, note);
+            setLocalSales((prev: any) => prev.map((s: any) => s.id === id ? { ...s, status: "rejected", rejection_note: note } : s));
+          }}
+          onMarkPaid={async (id: string) => {
+            await onMarkCommissionPaid?.(id);
+            setLocalSales((prev: any) => prev.map((s: any) => s.id === id ? { ...s, payout_status: "paid" } : s));
+          }}
+          onMarkUnpaid={async (id: string) => {
+            await onMarkCommissionUnpaid?.(id);
+            setLocalSales((prev: any) => prev.map((s: any) => s.id === id ? { ...s, payout_status: "unpaid" } : s));
+          }}
+        />;
       case "tasks":
         return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} onApproveTask={onApproveTask} onRejectTask={onRejectTask} />;
       case "activity":
@@ -3642,7 +4169,7 @@ export default function ProwessDashboard({
 
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
       case "team":
-        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} /> : null;
+        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} onToggleCommission={onToggleCommission} /> : null;
       case "settings":
         return <SettingsPage user={user} onUpdateProfile={onUpdateProfile} />;
       default:

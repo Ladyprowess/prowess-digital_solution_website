@@ -65,6 +65,7 @@ export default function DashboardPage() {
         { data: kpiAssignments, error: kpiAErr },
         { data: kpiLogs,  error: kpiLErr    },
         { data: weeklyWinners               },
+        { data: sales                       },
       ] = await Promise.all([
         supabase.from("tasks").select("*").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
@@ -72,6 +73,7 @@ export default function DashboardPage() {
         supabase.from("kpi_assignments").select("*").order("created_at", { ascending: false }),
         supabase.from("kpi_logs").select("*").order("created_at", { ascending: false }),
         supabase.from("weekly_winners").select("*").order("week_end", { ascending: false }),
+        supabase.from("commission_sales").select("*").order("sale_date", { ascending: false }),
       ]);
 
       if (tasksErr) throw new Error(`Tasks failed to load: ${tasksErr.message}`);
@@ -82,6 +84,7 @@ export default function DashboardPage() {
         profile, tasks: tasks || [], logs: logs || [], users: users || [],
         kpiAssignments: kpiAssignments || [], kpiLogs: kpiLogs || [],
         weeklyWinners: weeklyWinners || [],
+        sales: sales || [],
       });
 
     } catch (err: any) {
@@ -354,6 +357,76 @@ export default function DashboardPage() {
     }));
   }
 
+  async function logSale(form: any) {
+    const loggedByAdmin = state.profile.role === "admin" && form.member_id !== state.profile.id;
+    const { data, error } = await supabase.from("commission_sales").insert({
+      member_id:       form.member_id,
+      logged_by:       state.profile.id,
+      client_name:     form.client_name,
+      product_service: form.product_service,
+      sale_amount:     parseFloat(form.sale_amount),
+      currency_code:   form.currency_code,
+      currency_symbol: form.currency_symbol,
+      sale_date:       form.sale_date,
+      notes:           form.notes || null,
+      status:          loggedByAdmin ? "confirmed" : "pending",
+      ...(loggedByAdmin ? { confirmed_by: state.profile.id, confirmed_at: new Date().toISOString() } : {}),
+    }).select().single();
+    if (!error && data) setState((p: any) => ({ ...p, sales: [data, ...p.sales] }));
+  }
+
+  async function confirmSale(id: string) {
+    await supabase.from("commission_sales").update({
+      status: "confirmed", confirmed_by: state.profile.id,
+      confirmed_at: new Date().toISOString(),
+    }).eq("id", id);
+    setState((p: any) => ({ ...p, sales: p.sales.map((s: any) => s.id === id ? { ...s, status: "confirmed" } : s) }));
+  }
+
+  async function rejectSale(id: string, note: string) {
+    await supabase.from("commission_sales").update({
+      status: "rejected", rejection_note: note,
+      confirmed_by: state.profile.id, confirmed_at: new Date().toISOString(),
+    }).eq("id", id);
+    setState((p: any) => ({ ...p, sales: p.sales.map((s: any) => s.id === id ? { ...s, status: "rejected", rejection_note: note } : s) }));
+  }
+
+  async function markCommissionPaid(id: string) {
+    await supabase.from("commission_sales").update({
+      payout_status: "paid", payout_marked_by: state.profile.id,
+      payout_marked_at: new Date().toISOString(),
+    }).eq("id", id);
+    setState((p: any) => ({ ...p, sales: p.sales.map((s: any) => s.id === id ? { ...s, payout_status: "paid" } : s) }));
+    const sale = state.sales.find((s: any) => s.id === id);
+    const member = sale && state.users.find((u: any) => u.id === sale.member_id);
+    if (member?.email) {
+      const month = new Date(sale.sale_date).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      fetch("/api/notify-commission", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "commission-paid", to: member.email,
+          recipientName: member.full_name,
+          totalPaid: sale.commission_amount, currencySymbol: sale.currency_symbol, month,
+        }),
+      }).catch(() => {});
+    }
+  }
+
+  async function markCommissionUnpaid(id: string) {
+    await supabase.from("commission_sales").update({
+      payout_status: "unpaid", payout_marked_by: null, payout_marked_at: null,
+    }).eq("id", id);
+    setState((p: any) => ({ ...p, sales: p.sales.map((s: any) => s.id === id ? { ...s, payout_status: "unpaid" } : s) }));
+  }
+
+  async function toggleCommission(memberId: string, value: boolean) {
+    await supabase.from("profiles").update({ earns_commission: value }).eq("id", memberId);
+    setState((p: any) => ({
+      ...p,
+      users: p.users.map((u: any) => u.id === memberId ? { ...u, earns_commission: value } : u),
+    }));
+  }
+
   async function closeWeek(weekStart: string, weekEnd: string, scores: any[]) {
     const winner = scores[0];
     if (!winner) return;
@@ -383,6 +456,7 @@ export default function DashboardPage() {
       kpiAssignments={state.kpiAssignments}
       kpiLogs={state.kpiLogs}
       weeklyWinners={state.weeklyWinners || []}
+      sales={state.sales || []}
       onCreateAssignment={createAssignment}
       onLogKPI={logKPI}
       onSetVerdict={setVerdict}
@@ -402,6 +476,12 @@ export default function DashboardPage() {
       onApproveLog={approveLog}
       onRejectLog={rejectLog}
       onCloseWeek={closeWeek}
+      onLogSale={logSale}
+      onConfirmSale={confirmSale}
+      onRejectSale={rejectSale}
+      onMarkCommissionPaid={markCommissionPaid}
+      onMarkCommissionUnpaid={markCommissionUnpaid}
+      onToggleCommission={toggleCommission}
     />
   );
 }
