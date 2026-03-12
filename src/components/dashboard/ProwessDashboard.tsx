@@ -391,6 +391,8 @@ const NAV = [
   { id: "kpi",         label: "KPIs",         icon: "🎯" },
   { id: "leaderboard", label: "Leaderboard",  icon: "🏆" },
   { id: "commission",  label: "Commission",   icon: "💰", commissionOnly: true },
+  { id: "payroll",     label: "Payroll",      icon: "💳", privileged: true },
+  { id: "finance",     label: "Finance",      icon: "📈", adminOnly: true },
   { id: "reports",     label: "Reports",      icon: "📊", privileged: true },
   { id: "team",        label: "Team",         icon: "👥", privileged: true },
   { id: "settings",    label: "Settings",     icon: "⚙️" },
@@ -416,7 +418,7 @@ const CURRENCIES = [
 
 function getCurrencyForCountry(country: string) {
   return CURRENCIES.find(c => c.country.toLowerCase() === (country || "").toLowerCase())
-    ?? { code: "USD", symbol: "$" };
+    ?? { code: "", symbol: "" };
 }
 
 function fmtMoney(amount: number, symbol: string) {
@@ -428,6 +430,7 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCo
   const items = NAV.filter(n => {
     if (n.privileged && !isPrivileged(user)) return false;
     if ((n as any).commissionOnly && !isPrivileged(user) && !user.earns_commission) return false;
+    if ((n as any).adminOnly && user.role !== "admin") return false;
     return true;
   });
   return (
@@ -576,6 +579,7 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
         {NAV.filter(n => {
           if (n.privileged && !isPrivileged(user)) return false;
           if ((n as any).commissionOnly && !isPrivileged(user) && !user.earns_commission) return false;
+    if ((n as any).adminOnly && user.role !== "admin") return false;
           return true;
         }).map(n => {
           const on = page === n.id;
@@ -2268,7 +2272,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek 
 // -------------------------------------------------------------------
 // APPROVAL PAGE -- Admin only
 // -------------------------------------------------------------------
-function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, onApproveLog, onRejectLog }: any) {
+function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, onApproveLog, onRejectLog, onMarkTaskAsArticle }: any) {
   const [tab,         setTab]         = useState<"tasks" | "logs">("tasks");
   const [selected,    setSelected]    = useState<any>(null);
   const [selectedType,setSelectedType]= useState<"task" | "log">("task");
@@ -2521,6 +2525,23 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
               );
             })()}
 
+            {/* Count as Article toggle (tasks only, admin only) */}
+            {selectedType === "task" && user.role === "admin" && selected.status === "completed" && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0", marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>📰 Count as Article</div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Marks this task for per-article pay calculation</div>
+                </div>
+                <button type="button"
+                  onClick={() => onMarkTaskAsArticle?.(selected.id, !selected.is_article)}
+                  style={{ position: "relative", width: 44, height: 24, borderRadius: 99, border: "none", cursor: "pointer",
+                    background: selected.is_article ? B : "#e2e8f0", transition: "background 0.2s", flexShrink: 0 }}>
+                  <span style={{ position: "absolute", top: 2, left: selected.is_article ? 22 : 2, width: 20, height: 20,
+                    borderRadius: "50%", background: "white", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+                </button>
+              </div>
+            )}
+
             {/* Reject reason input - shown when reject is tapped */}
             {rejectMode && (
               <div style={{ marginBottom: 16 }}>
@@ -2684,6 +2705,891 @@ function ReportsPage({ tasks, logs, users, user }: any) {
           </tbody>
         </table>
       </Card>
+    </div>
+  );
+}
+
+// --- Birthday Banner ----------------------------------------------------------
+function BirthdayBanner({ users }: { users: any[] }) {
+  const [dismissed, setDismissed] = useState(false);
+  const today = new Date();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  const celebrants = users.filter((u: any) => {
+    if (!u.date_of_birth) return false;
+    const dob = u.date_of_birth; // "YYYY-MM-DD"
+    return dob.slice(5) === `${mm}-${dd}`;
+  });
+  if (celebrants.length === 0 || dismissed) return null;
+  return (
+    <div style={{ background: "linear-gradient(135deg,#fdf4ff,#fce7f3)", border: "1px solid #f0abfc", borderRadius: 14, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+      <span style={{ fontSize: 32, flexShrink: 0 }}>🎂</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 800, color: "#7e22ce", marginBottom: 2 }}>
+          {celebrants.length === 1
+            ? `Today is ${normUser(celebrants[0])?.name}'s birthday!`
+            : `Today is ${celebrants.map((u: any) => normUser(u)?.name).join(" & ")}'s birthday!`}
+        </div>
+        <div style={{ fontSize: 12, color: "#a855f7" }}>
+          Send them a message or wish them happy birthday in person! 🥳
+        </div>
+      </div>
+      <button onClick={() => setDismissed(true)}
+        style={{ background: "#f3e8ff", border: "none", borderRadius: 8, width: 30, height: 30, cursor: "pointer", color: "#7e22ce", fontSize: 16, fontWeight: 700, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        ✕
+      </button>
+    </div>
+  );
+}
+
+// --- Payroll ------------------------------------------------------------------
+function PayrollBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string; label: string }> = {
+    pending:   { bg: "#fef9c3", color: "#854d0e", label: "Pending"   },
+    approved:  { bg: "#dcfce7", color: "#166534", label: "Approved"  },
+    withheld:  { bg: "#fee2e2", color: "#991b1b", label: "Withheld"  },
+    unpaid:    { bg: "#f1f5f9", color: "#475569", label: "Unpaid"    },
+    paid:      { bg: "#dcfce7", color: "#166534", label: "Paid"      },
+  };
+  const s = map[status] || { bg: "#f1f5f9", color: "#475569", label: status };
+  return <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: s.bg, color: s.color }}>{s.label}</span>;
+}
+
+function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const [memberId, setMemberId] = useState(user.role === "admin" ? "" : user.id);
+  const [month,    setMonth]    = useState(thisMonth);
+  const [adjustment,     setAdjustment]     = useState("0");
+  const [adjustmentNote, setAdjustmentNote] = useState("");
+  const [notes,    setNotes]    = useState("");
+  const [saving,   setSaving]   = useState(false);
+  const [err,      setErr]      = useState("");
+
+  const payableMembers = user.role === "admin"
+    ? users.filter((u: any) => u.role !== "admin")
+    : [];
+
+  const selectedMember = users.find((u: any) => u.id === (memberId || user.id));
+  const currency    = getCurrencyForCountry(selectedMember?.country || "");
+  const payType     = selectedMember?.pay_type || "monthly";
+  const monthlyRate = parseFloat(selectedMember?.monthly_rate) || 0;
+  const articleRate = parseFloat(selectedMember?.article_rate) || 0;
+
+  // For per_article: count approved article tasks in the selected month
+  const articleCount = useMemo(() => {
+    if (payType !== "per_article" || !selectedMember) return 0;
+    return tasks.filter((t: any) =>
+      t.assigned_to === selectedMember.id &&
+      t.is_article === true &&
+      t.approval_status === "approved" &&
+      t.completed_at && t.completed_at.slice(0, 7) === month
+    ).length;
+  }, [tasks, selectedMember, month, payType]);
+
+  const adj         = parseFloat(adjustment) || 0;
+  const baseAmount  = payType === "per_article" ? articleCount * articleRate : monthlyRate;
+  const finalAmount = baseAmount + adj;
+
+  async function submit() {
+    const mid = memberId || user.id;
+    if (!mid || !month) { setErr("Please select a member and month."); return; }
+    if (payType === "monthly" && monthlyRate <= 0) {
+      setErr("This member has no monthly rate set. Go to their Team profile and set it first.");
+      return;
+    }
+    setSaving(true); setErr("");
+    try {
+      await onSubmit({
+        member_id:       mid,
+        month,
+        pay_type:        payType,
+        base_amount:     baseAmount,
+        adjustment:      adj,
+        adjustment_note: adjustmentNote || null,
+        article_count:   payType === "per_article" ? articleCount : null,
+        currency_code:   currency.code,
+        currency_symbol: currency.symbol,
+        notes:           notes || null,
+      });
+      onClose();
+    } catch (e: any) { setErr(e.message || "Failed to log payroll."); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Log Payroll Entry</div>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Member selector */}
+          {user.role === "admin" && (
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Team Member *</label>
+              <select value={memberId} onChange={e => setMemberId(e.target.value)} style={{ ...SEL, width: "100%" }}>
+                <option value="">Select member...</option>
+                {payableMembers.map((u: any) => (
+                  <option key={u.id} value={u.id}>{normUser(u)?.name} — {u.pay_type === "per_article" ? "Per Article" : "Monthly"}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Month */}
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Month *</label>
+            <input type="month" value={month} onChange={e => setMonth(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+
+          {/* Pay summary card */}
+          {selectedMember && (
+            <div style={{ background: "#f8fafc", borderRadius: 12, padding: 16, border: "1px solid #e2e8f0" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10 }}>
+                Pay Type: <span style={{ color: B }}>{payType === "per_article" ? "Per Article" : "Monthly Salary"}</span>
+              </div>
+
+              {payType === "monthly" && (
+                <div style={{ fontSize: 14, color: "#374151" }}>
+                  {monthlyRate > 0
+                    ? <>Monthly rate: <strong>{fmtMoney(monthlyRate, currency.symbol)}</strong></>
+                    : <span style={{ color: "#ef4444" }}>⚠️ No monthly rate set — go to Team → member profile to set it.</span>
+                  }
+                </div>
+              )}
+
+              {payType === "per_article" && (
+                <>
+                  <div style={{ fontSize: 13, color: "#374151", marginBottom: 4 }}>
+                    Approved articles this month: <strong>{articleCount}</strong>
+                  </div>
+                  <div style={{ fontSize: 13, color: "#374151", marginBottom: 4 }}>
+                    Rate per article: <strong>{fmtMoney(articleRate, currency.symbol)}</strong>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: B, marginTop: 8 }}>
+                    Base Pay: {fmtMoney(baseAmount, currency.symbol)}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Adjustment */}
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>
+              Adjustment <span style={{ fontWeight: 400, color: "#94a3b8" }}>({currency.code}) — optional</span>
+            </label>
+            <input type="number" placeholder="e.g. -5000 for deduction, +10000 for bonus"
+              value={adjustment} onChange={e => setAdjustment(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+
+          {adj !== 0 && (
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Adjustment Note</label>
+              <input type="text" placeholder="e.g. Deduction for 2 days lateness"
+                value={adjustmentNote} onChange={e => setAdjustmentNote(e.target.value)}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+            </div>
+          )}
+
+          {/* Final amount preview */}
+          {selectedMember && baseAmount > 0 && (
+            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "12px 16px", fontSize: 14, fontWeight: 700, color: "#166534" }}>
+              Final Amount: {fmtMoney(finalAmount, currency.symbol)}
+              {adj !== 0 && <span style={{ fontSize: 12, fontWeight: 400, color: "#4ade80", marginLeft: 8 }}>({fmtMoney(baseAmount, currency.symbol)} {adj > 0 ? "+" : ""}{fmtMoney(adj, currency.symbol)})</span>}
+            </div>
+          )}
+
+          {/* Notes */}
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Notes (optional)</label>
+            <textarea placeholder="Any additional notes..." value={notes} onChange={e => setNotes(e.target.value)}
+              rows={2} style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+          </div>
+
+          {err && <div style={{ color: "#ef4444", fontSize: 13, fontWeight: 600 }}>{err}</div>}
+
+          <button onClick={submit} disabled={saving}
+            style={{ padding: "13px", borderRadius: 12, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 15, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+            {saving ? "Logging..." : "Log Payroll Entry"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PayrollDetailModal({ entry, users, user, onClose, onApprove, onWithhold, onAdjust, onMarkPaid, onMarkUnpaid }: any) {
+  const member = users.find((u: any) => u.id === entry.member_id);
+  const mn = normUser(member);
+  const [adjMode, setAdjMode] = useState(false);
+  const [adjVal, setAdjVal] = useState(String(entry.adjustment || "0"));
+  const [adjNote, setAdjNote] = useState(entry.adjustment_note || "");
+  const [saving, setSaving] = useState(false);
+  const isAdmin = user.role === "admin";
+  const baseAmount = parseFloat(entry.base_amount) || 0;
+  const adjustment = parseFloat(entry.adjustment) || 0;
+  const finalAmount = entry.final_amount ?? (baseAmount + adjustment);
+  const monthLabel = entry.month ? new Date(entry.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : entry.month;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Payroll Detail</div>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+        </div>
+
+        {mn && (
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, padding: "14px 16px", background: "#f8fafc", borderRadius: 12 }}>
+            <Av user={member} size={40} />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{mn.name}</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>{mn.title} · {entry.pay_type === "per_article" ? "Per Article" : "Monthly"}</div>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+          {[
+            ["Month", monthLabel],
+            entry.pay_type === "per_article" && ["Articles Counted", `${entry.article_count || 0} articles`],
+            entry.pay_type === "per_article" && ["Base Pay", fmtMoney(baseAmount, entry.currency_symbol)],
+            ["Adjustment", `${adjustment >= 0 ? "+" : ""}${fmtMoney(adjustment, entry.currency_symbol)}`],
+            entry.adjustment_note && ["Adjustment Note", entry.adjustment_note],
+            entry.notes && ["Notes", entry.notes],
+          ].filter(Boolean).map(([label, value]: any) => (
+            <div key={label} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+              <span style={{ color: "#94a3b8", fontWeight: 600 }}>{label}</span>
+              <span style={{ color: "#0f172a", fontWeight: 600 }}>{value}</span>
+            </div>
+          ))}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 800, color: B, borderTop: "1px solid #e2e8f0", paddingTop: 10, marginTop: 4 }}>
+            <span>Final Amount</span>
+            <span>{fmtMoney(finalAmount, entry.currency_symbol)}</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          <PayrollBadge status={entry.status} />
+          {entry.status === "approved" && <PayrollBadge status={entry.payout_status} />}
+        </div>
+
+        {isAdmin && !adjMode && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {entry.status === "pending" && (
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={async () => { setSaving(true); await onApprove(entry.id); setSaving(false); onClose(); }}
+                  style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#22c55e", border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                  Approve
+                </button>
+                <button onClick={async () => { setSaving(true); await onWithhold(entry.id); setSaving(false); onClose(); }}
+                  style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#fee2e2", border: "none", color: "#dc2626", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                  Withhold
+                </button>
+              </div>
+            )}
+            {entry.status === "approved" && entry.payout_status === "unpaid" && (
+              <button onClick={async () => { setSaving(true); await onMarkPaid(entry.id); setSaving(false); onClose(); }}
+                style={{ padding: "12px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                Mark as Paid
+              </button>
+            )}
+            {entry.status === "approved" && entry.payout_status === "paid" && (
+              <button onClick={async () => { setSaving(true); await onMarkUnpaid(entry.id); setSaving(false); onClose(); }}
+                style={{ padding: "12px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                Mark as Unpaid
+              </button>
+            )}
+            <button onClick={() => setAdjMode(true)}
+              style={{ padding: "10px", borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#374151", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+              Edit Adjustment
+            </button>
+          </div>
+        )}
+
+        {isAdmin && adjMode && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Adjustment ({entry.currency_symbol})</label>
+              <input type="number" value={adjVal} onChange={e => setAdjVal(e.target.value)}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Note</label>
+              <input type="text" value={adjNote} onChange={e => setAdjNote(e.target.value)}
+                placeholder="Reason for adjustment..."
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={async () => { setSaving(true); await onAdjust(entry.id, parseFloat(adjVal) || 0, adjNote); setSaving(false); setAdjMode(false); onClose(); }}
+                style={{ flex: 1, padding: "12px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                Save
+              </button>
+              <button onClick={() => setAdjMode(false)}
+                style={{ padding: "12px 18px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PayrollPage({ user, users, tasks, payroll, onLogPayroll, onApprovePayroll, onWithholdPayroll, onAdjustPayroll, onMarkPayrollPaid, onMarkPayrollUnpaid }: any) {
+  const [logOpen, setLogOpen] = useState(false);
+  const [detail, setDetail] = useState<any>(null);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPayout, setFilterPayout] = useState("all");
+  const [filterMember, setFilterMember] = useState("all");
+  const [filterMonth, setFilterMonth] = useState("");
+  const [payPage, setPayPage] = useState(1);
+  const PAY_PER_PAGE = 10;
+
+  const isAdmin = user.role === "admin";
+
+  const visible = useMemo(() => {
+    let list = isAdmin ? payroll : payroll.filter((e: any) => e.member_id === user.id);
+    if (filterStatus !== "all") list = list.filter((e: any) => e.status === filterStatus);
+    if (filterPayout !== "all") list = list.filter((e: any) => e.payout_status === filterPayout);
+    if (filterMember !== "all") list = list.filter((e: any) => e.member_id === filterMember);
+    if (filterMonth) list = list.filter((e: any) => e.month === filterMonth);
+    return list;
+  }, [payroll, user, isAdmin, filterStatus, filterPayout, filterMember, filterMonth]);
+
+  const payTotalPages = Math.ceil(visible.length / PAY_PER_PAGE);
+  const pagedPayroll = visible.slice((payPage - 1) * PAY_PER_PAGE, payPage * PAY_PER_PAGE);
+
+  const totalApproved = useMemo(() => {
+    const base = isAdmin ? payroll : payroll.filter((e: any) => e.member_id === user.id);
+    return base.filter((e: any) => e.status === "approved" && e.payout_status === "unpaid")
+      .reduce((sum: number, e: any) => sum + parseFloat(e.final_amount ?? (parseFloat(e.base_amount) + parseFloat(e.adjustment || "0"))), 0);
+  }, [payroll, user, isAdmin]);
+
+  const staffMembers = users.filter((u: any) => u.role !== "admin");
+
+  return (
+    <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>💳 Payroll</div>
+        {isAdmin && (
+          <button onClick={() => setLogOpen(true)}
+            style={{ padding: "10px 18px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+            + Log Payroll Entry
+          </button>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+        <Stat icon="⏳" label="Pending" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "pending").length} color="#f59e0b" />
+        <Stat icon="✅" label="Approved" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "approved").length} color="#22c55e" />
+        <Stat icon="🚫" label="Withheld" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "withheld").length} color="#ef4444" />
+        <Stat icon="💰" label="Unpaid (Approved)" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "approved" && e.payout_status === "unpaid").length} color={B} />
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16, alignItems: "center" }}>
+        <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPayPage(1); }} style={SEL}>
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="withheld">Withheld</option>
+        </select>
+        <select value={filterPayout} onChange={e => { setFilterPayout(e.target.value); setPayPage(1); }} style={SEL}>
+          <option value="all">All Payout</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="paid">Paid</option>
+        </select>
+        {isAdmin && (
+          <select value={filterMember} onChange={e => { setFilterMember(e.target.value); setPayPage(1); }} style={SEL}>
+            <option value="all">All Members</option>
+            {staffMembers.map((u: any) => <option key={u.id} value={u.id}>{normUser(u)?.name}</option>)}
+          </select>
+        )}
+        <input type="month" value={filterMonth} onChange={e => { setFilterMonth(e.target.value); setPayPage(1); }}
+          style={{ ...SEL, fontSize: 14 }} />
+        {filterMonth && <button onClick={() => setFilterMonth("")} style={{ fontSize: 12, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}>Clear</button>}
+        <span style={{ fontSize: 13, color: "#94a3b8", marginLeft: "auto" }}>{visible.length} entries</span>
+      </div>
+
+      {/* Table */}
+      <Card>
+        {visible.length === 0 ? (
+          <div style={{ padding: "48px 24px", textAlign: "center", color: "#94a3b8" }}>No payroll entries found.</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                  {isAdmin && <th style={{ padding: "11px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Member</th>}
+                  {["Month", "Type", "Amount", "Adjustment", "Final", "Status", "Payout"].map(h => (
+                    <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pagedPayroll.map((entry: any, i: number) => {
+                  const m = users.find((u: any) => u.id === entry.member_id);
+                  const adj = parseFloat(entry.adjustment) || 0;
+                  const finalAmt = entry.final_amount ?? (parseFloat(entry.base_amount) + adj);
+                  return (
+                    <tr key={entry.id} onClick={() => setDetail(entry)}
+                      style={{ borderBottom: i < pagedPayroll.length - 1 ? "1px solid #f1f5f9" : "none", cursor: "pointer" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#f8fafc")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "white")}>
+                      {isAdmin && <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>{normUser(m)?.name || "—"}</td>}
+                      <td style={{ padding: "13px 16px", fontSize: 13, color: "#0f172a", whiteSpace: "nowrap" }}>
+                        {new Date(entry.month + "-01").toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
+                      </td>
+                      <td style={{ padding: "13px 16px", fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}>
+                        {entry.pay_type === "per_article" ? `Per Article (${entry.article_count || 0})` : "Monthly"}
+                      </td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>
+                        {entry.pay_type === "per_article" ? fmtMoney(parseFloat(entry.base_amount) || 0, entry.currency_symbol) : "—"}
+                      </td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, color: adj >= 0 ? "#22c55e" : "#ef4444", fontWeight: 600, whiteSpace: "nowrap" }}>
+                        {adj !== 0 ? `${adj >= 0 ? "+" : ""}${fmtMoney(adj, entry.currency_symbol)}` : "—"}
+                      </td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 800, color: B, whiteSpace: "nowrap" }}>{fmtMoney(finalAmt, entry.currency_symbol)}</td>
+                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}><PayrollBadge status={entry.status} /></td>
+                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
+                        {entry.status === "approved" ? <PayrollBadge status={entry.payout_status} /> : <span style={{ color: "#cbd5e1", fontSize: 12 }}>—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <div style={{ padding: "0 16px 8px" }}>
+              <Pagination page={payPage} total={payTotalPages} onChange={setPayPage} />
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {logOpen && <LogPayrollModal user={user} users={users} tasks={tasks} onClose={() => setLogOpen(false)} onSubmit={onLogPayroll} />}
+      {detail && (
+        <PayrollDetailModal entry={detail} users={users} user={user} onClose={() => setDetail(null)}
+          onApprove={onApprovePayroll} onWithhold={onWithholdPayroll}
+          onAdjust={onAdjustPayroll} onMarkPaid={onMarkPayrollPaid} onMarkUnpaid={onMarkPayrollUnpaid}
+        />
+      )}
+    </div>
+  );
+}
+
+function OutgoingModal({ currency, onClose, onSubmit }: any) {
+  const [form, setForm] = useState({
+    description: "", amount: "", category: "", notes: "",
+    currency_code: currency.code, currency_symbol: currency.symbol,
+    payment_date: new Date().toISOString().slice(0, 10),
+  });
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (!form.description || !form.amount || !form.payment_date) return;
+    setSaving(true);
+    await onSubmit(form);
+    setSaving(false);
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 440, padding: 28 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Log Offline Outgoing</div>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Description *</label>
+            <input type="text" placeholder="e.g. Office supplies, Software subscription"
+              value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Category</label>
+            <input type="text" placeholder="e.g. Operations, Tools, Marketing"
+              value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Amount *</label>
+            <input type="number" placeholder="0.00"
+              value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Currency</label>
+            <select value={form.currency_code}
+              onChange={e => {
+                const c = CURRENCIES.find(c => c.code === e.target.value);
+                setForm(f => ({ ...f, currency_code: e.target.value, currency_symbol: c?.symbol || "" }));
+              }}
+              style={{ ...SEL, width: "100%" }}>
+              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code} ({c.symbol}) — {c.country}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Date *</label>
+            <input type="date" value={form.payment_date}
+              onChange={e => setForm(f => ({ ...f, payment_date: e.target.value }))}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Notes (optional)</label>
+            <textarea placeholder="Any additional notes..." value={form.notes}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              rows={2} style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+          </div>
+          <button onClick={submit} disabled={saving || !form.description || !form.amount || !form.payment_date}
+            style={{ padding: "13px", borderRadius: 12, background: "#ef4444", border: "none", color: "white", fontWeight: 700, fontSize: 15,
+              cursor: saving || !form.description || !form.amount ? "not-allowed" : "pointer",
+              opacity: !form.description || !form.amount ? 0.6 : 1 }}>
+            {saving ? "Saving..." : "Log Outgoing Payment"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Finance Dashboard --------------------------------------------------------
+function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoing, onLogOfflineIncome, onDeleteOfflineIncome, onLogOfflineOutgoing, onDeleteOfflineOutgoing }: any) {
+  const [period, setPeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedQuarter, setSelectedQuarter] = useState(`${new Date().getFullYear()}-Q${Math.ceil((new Date().getMonth() + 1) / 3)}`);
+  const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
+  const [incomeOpen, setIncomeOpen] = useState(false);
+  const [outgoingOpen, setOutgoingOpen] = useState(false);
+  const [incPage, setIncPage] = useState(1);
+  const [outPage, setOutPage] = useState(1);
+  const FIN_PER_PAGE = 10;
+
+  const currency = getCurrencyForCountry(user.country || "Nigeria");
+
+  // Filter helpers
+  function inPeriod(dateStr: string) {
+    if (!dateStr) return false;
+    const d = dateStr.slice(0, 10);
+    if (period === "monthly") return d.slice(0, 7) === selectedMonth;
+    if (period === "yearly")  return d.slice(0, 4) === selectedYear;
+    if (period === "quarterly") {
+      const [yr, q] = selectedQuarter.split("-Q");
+      const qMonth = (parseInt(q) - 1) * 3;
+      const dDate = new Date(d);
+      return dDate.getFullYear() === parseInt(yr) && Math.floor(dDate.getMonth() / 3) === parseInt(q) - 1;
+    }
+    return false;
+  }
+
+  // Income: commission payouts IN (confirmed sales) + offline income
+  const commissionIncome = sales.filter((s: any) => s.status === "confirmed" && inPeriod(s.sale_date));
+  const offlineFiltered  = offlineIncome.filter((e: any) => inPeriod(e.income_date));
+  const totalCommIncome  = commissionIncome.reduce((sum: number, s: any) => sum + parseFloat(s.sale_amount), 0);
+  const totalOfflineIncome = offlineFiltered.reduce((sum: number, e: any) => sum + parseFloat(e.amount), 0);
+  const totalIncome = totalCommIncome + totalOfflineIncome;
+
+  // Outgoings: commission payouts + payroll payouts
+  const commPaid   = sales.filter((s: any) => s.payout_status === "paid" && inPeriod(s.sale_date));
+  const payrollPaid = payroll.filter((e: any) => e.payout_status === "paid" && inPeriod(e.month + "-01"));
+  const totalCommOut   = commPaid.reduce((sum: number, s: any) => sum + parseFloat(s.commission_amount), 0);
+  const totalPayrollOut = payrollPaid.reduce((sum: number, e: any) => {
+    const adj = parseFloat(e.adjustment) || 0;
+    const final = e.final_amount ?? (parseFloat(e.base_amount) + adj);
+    return sum + (e.pay_type === "monthly" ? adj : parseFloat(final));
+  }, 0);
+  const offlineOutFiltered = (offlineOutgoing || []).filter((e: any) => inPeriod(e.payment_date));
+  const totalOfflineOut = offlineOutFiltered.reduce((sum: number, e: any) => sum + parseFloat(e.amount), 0);
+  const totalOut = totalCommOut + totalPayrollOut + totalOfflineOut;
+  const netBalance = totalIncome - totalOut;
+
+  // All outgoings merged for table
+  const allOutgoings = [
+    ...commPaid.map((s: any) => ({
+      id: s.id, date: s.sale_date, description: `Commission — ${s.client_name}`,
+      amount: parseFloat(s.commission_amount), symbol: s.currency_symbol, type: "Commission",
+    })),
+    ...payrollPaid.map((e: any) => {
+      const adj = parseFloat(e.adjustment) || 0;
+      const final = e.final_amount ?? (parseFloat(e.base_amount) + adj);
+      const m = users.find((u: any) => u.id === e.member_id);
+      return {
+        id: e.id, date: e.month + "-01", description: `Payroll — ${normUser(m)?.name || ""}`,
+        amount: e.pay_type === "monthly" ? adj : parseFloat(final), symbol: e.currency_symbol, type: e.pay_type === "per_article" ? "Per-Article Pay" : "Monthly Pay",
+      };
+    }),
+    ...offlineOutFiltered.map((e: any) => ({
+      id: e.id, date: e.payment_date, description: e.description,
+      amount: parseFloat(e.amount), symbol: e.currency_symbol, type: e.category || "Offline Payment",
+      deletable: true,
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+
+  const allIncome = [
+    ...commissionIncome.map((s: any) => ({
+      id: s.id, date: s.sale_date, description: `Sale — ${s.client_name} (${s.product_service})`,
+      amount: parseFloat(s.sale_amount), symbol: s.currency_symbol, type: "Commission Sale",
+    })),
+    ...offlineFiltered.map((e: any) => ({
+      id: e.id, date: e.income_date, description: e.description,
+      amount: parseFloat(e.amount), symbol: e.currency_symbol, type: e.category || "Offline Income",
+      deletable: true,
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+
+  const incTotalPages = Math.ceil(allIncome.length / FIN_PER_PAGE);
+  const outTotalPages = Math.ceil(allOutgoings.length / FIN_PER_PAGE);
+  const pagedIncome   = allIncome.slice((incPage - 1) * FIN_PER_PAGE, incPage * FIN_PER_PAGE);
+  const pagedOutgoing = allOutgoings.slice((outPage - 1) * FIN_PER_PAGE, outPage * FIN_PER_PAGE);
+
+  const years = Array.from(new Set([
+    ...sales.map((s: any) => s.sale_date?.slice(0, 4)),
+    ...offlineIncome.map((e: any) => e.income_date?.slice(0, 4)),
+    String(new Date().getFullYear()),
+  ])).filter(Boolean).sort().reverse();
+
+  const quarters = ["Q1", "Q2", "Q3", "Q4"].map(q => `${selectedYear}-${q}`);
+
+  // Log income modal
+  const [incForm, setIncForm] = useState({ description: "", amount: "", currency_code: currency.code, currency_symbol: currency.symbol, income_date: new Date().toISOString().slice(0, 10), category: "", notes: "" });
+  const [incSaving, setIncSaving] = useState(false);
+
+  return (
+    <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>📈 Finance Dashboard</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={() => setOutgoingOpen(true)}
+            style={{ padding: "10px 18px", borderRadius: 10, background: "#ef4444", color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+            + Log Outgoing
+          </button>
+          <button onClick={() => setIncomeOpen(true)}
+            style={{ padding: "10px 18px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+            + Log Income
+          </button>
+        </div>
+      </div>
+
+      {/* Period selector */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        {(["monthly", "quarterly", "yearly"] as const).map(p => (
+          <button key={p} onClick={() => setPeriod(p)}
+            style={{ padding: "7px 16px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13,
+              background: period === p ? B : "#f1f5f9", color: period === p ? "white" : "#64748b" }}>
+            {p.charAt(0).toUpperCase() + p.slice(1)}
+          </button>
+        ))}
+        <div style={{ display: "flex", gap: 8, marginLeft: 8, flexWrap: "wrap" }}>
+          {period === "monthly" && (
+            <input type="month" value={selectedMonth} onChange={e => { setSelectedMonth(e.target.value); setIncPage(1); setOutPage(1); }}
+              style={{ ...SEL, fontSize: 14 }} />
+          )}
+          {period === "quarterly" && (
+            <>
+              <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} style={SEL}>
+                {years.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <select value={selectedQuarter} onChange={e => { setSelectedQuarter(e.target.value); setIncPage(1); setOutPage(1); }} style={SEL}>
+                {quarters.map(q => <option key={q} value={q}>{q}</option>)}
+              </select>
+            </>
+          )}
+          {period === "yearly" && (
+            <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setIncPage(1); setOutPage(1); }} style={SEL}>
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          )}
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+        <Card style={{ padding: 24, flex: 1, minWidth: 160, borderLeft: "4px solid #22c55e" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 8 }}>Total Income</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: "#22c55e" }}>{fmtMoney(totalIncome, currency.symbol)}</div>
+          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>Sales + Offline</div>
+        </Card>
+        <Card style={{ padding: 24, flex: 1, minWidth: 160, borderLeft: "4px solid #ef4444" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 8 }}>Total Outgoings</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: "#ef4444" }}>{fmtMoney(totalOut, currency.symbol)}</div>
+          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>Commission + Payroll paid</div>
+        </Card>
+        <Card style={{ padding: 24, flex: 1, minWidth: 160, borderLeft: `4px solid ${netBalance >= 0 ? B : "#f59e0b"}` }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: 8 }}>Net Balance</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: netBalance >= 0 ? B : "#f59e0b" }}>{fmtMoney(netBalance, currency.symbol)}</div>
+          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>Income − Outgoings</div>
+        </Card>
+      </div>
+
+      {/* Income table */}
+      <Card style={{ marginBottom: 20 }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+          💚 Income ({allIncome.length})
+        </div>
+        {allIncome.length === 0 ? (
+          <div style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>No income recorded for this period.</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc" }}>
+                  {["Date", "Description", "Type", "Amount", ""].map(h => (
+                    <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pagedIncome.map((row: any, i: number) => (
+                  <tr key={row.id} style={{ borderBottom: i < pagedIncome.length - 1 ? "1px solid #f1f5f9" : "none" }}>
+                    <td style={{ padding: "12px 16px", fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap" }}>{new Date(row.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
+                    <td style={{ padding: "12px 16px", fontSize: 13, color: "#0f172a" }}>{row.description}</td>
+                    <td style={{ padding: "12px 16px", fontSize: 12 }}>
+                      <span style={{ background: "#f0fdf4", color: "#166534", padding: "2px 8px", borderRadius: 20, fontWeight: 600, fontSize: 11 }}>{row.type}</span>
+                    </td>
+                    <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 800, color: "#22c55e", whiteSpace: "nowrap" }}>{fmtMoney(row.amount, row.symbol)}</td>
+                    <td style={{ padding: "12px 16px" }}>
+                      {row.deletable && (
+                        <button onClick={() => onDeleteOfflineIncome(row.id)}
+                          style={{ background: "#fef2f2", border: "none", borderRadius: 6, padding: "4px 10px", color: "#ef4444", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{ padding: "0 16px 8px" }}>
+              <Pagination page={incPage} total={incTotalPages} onChange={setIncPage} />
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Outgoings table */}
+      <Card>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+          🔴 Outgoings ({allOutgoings.length})
+        </div>
+        {allOutgoings.length === 0 ? (
+          <div style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>No outgoings recorded for this period.</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc" }}>
+                  {["Date", "Description", "Type", "Amount", ""].map(h => (
+                    <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pagedOutgoing.map((row: any, i: number) => (
+                  <tr key={row.id + row.type} style={{ borderBottom: i < pagedOutgoing.length - 1 ? "1px solid #f1f5f9" : "none" }}>
+                    <td style={{ padding: "12px 16px", fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap" }}>{new Date(row.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
+                    <td style={{ padding: "12px 16px", fontSize: 13, color: "#0f172a" }}>{row.description}</td>
+                    <td style={{ padding: "12px 16px", fontSize: 12 }}>
+                      <span style={{ background: "#fef2f2", color: "#991b1b", padding: "2px 8px", borderRadius: 20, fontWeight: 600, fontSize: 11 }}>{row.type}</span>
+                    </td>
+                    <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 800, color: "#ef4444", whiteSpace: "nowrap" }}>{fmtMoney(row.amount, row.symbol)}</td>
+                    <td style={{ padding: "12px 16px" }}>
+                      {row.deletable && (
+                        <button onClick={() => onDeleteOfflineOutgoing?.(row.id)}
+                          style={{ background: "#fef2f2", border: "none", borderRadius: 6, padding: "4px 10px", color: "#ef4444", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{ padding: "0 16px 8px" }}>
+              <Pagination page={outPage} total={outTotalPages} onChange={setOutPage} />
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Log Income Modal */}
+      {incomeOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 440, padding: 28 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Log Offline Income</div>
+              <button onClick={() => setIncomeOpen(false)} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                ["Description *", "description", "text", "e.g. Client retainer payment"],
+                ["Category", "category", "text", "e.g. Consulting, Retainer, Training"],
+              ].map(([label, key, type, ph]) => (
+                <div key={key}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>{label}</label>
+                  <input type={type} placeholder={ph} value={(incForm as any)[key]}
+                    onChange={e => setIncForm(f => ({ ...f, [key]: e.target.value }))}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+                </div>
+              ))}
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Amount *</label>
+                <input type="number" placeholder="0.00" value={incForm.amount}
+                  onChange={e => setIncForm(f => ({ ...f, amount: e.target.value }))}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Currency</label>
+                <select value={incForm.currency_code}
+                  onChange={e => {
+                    const c = CURRENCIES.find(c => c.code === e.target.value);
+                    setIncForm(f => ({ ...f, currency_code: e.target.value, currency_symbol: c?.symbol || "" }));
+                  }}
+                  style={{ ...SEL, width: "100%" }}>
+                  {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code} ({c.symbol}) — {c.country}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Date *</label>
+                <input type="date" value={incForm.income_date}
+                  onChange={e => setIncForm(f => ({ ...f, income_date: e.target.value }))}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
+              </div>
+              <button onClick={async () => {
+                if (!incForm.description || !incForm.amount || !incForm.income_date) return;
+                setIncSaving(true);
+                await onLogOfflineIncome(incForm);
+                setIncSaving(false);
+                setIncomeOpen(false);
+                setIncForm({ description: "", amount: "", currency_code: currency.code, currency_symbol: currency.symbol, income_date: new Date().toISOString().slice(0, 10), category: "", notes: "" });
+              }} disabled={incSaving}
+                style={{ padding: "13px", borderRadius: 12, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 15, cursor: incSaving ? "not-allowed" : "pointer", opacity: incSaving ? 0.7 : 1 }}>
+                {incSaving ? "Saving..." : "Log Income"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Log Outgoing Modal */}
+      {outgoingOpen && (
+        <OutgoingModal
+          currency={currency}
+          onClose={() => setOutgoingOpen(false)}
+          onSubmit={async (form: any) => {
+            await onLogOfflineOutgoing?.(form);
+            setOutgoingOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -2899,13 +3805,15 @@ function SaleDetailModal({ sale, users, user, onClose, onConfirm, onReject, onMa
 }
 
 // --- Commission Page ----------------------------------------------------------
-function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onRejectSale, onMarkPaid, onMarkUnpaid }: any) {
+function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onRejectSale, onMarkPaid, onMarkUnpaid, onBulkMarkPaid }: any) {
   const [logOpen,      setLogOpen]      = useState(false);
   const [detail,       setDetail]       = useState<any>(null);
   const [filter,       setFilter]       = useState("all");
   const [payFilter,    setPayFilter]    = useState("all");
   const [memberFilter, setMemberFilter] = useState("all");
   const [commPage,     setCommPage]     = useState(1);
+  const [bulkMonth,    setBulkMonth]    = useState(new Date().toISOString().slice(0, 7));
+  const [bulkPaying,   setBulkPaying]   = useState<string | null>(null);
   const COMM_PER_PAGE = 10;
 
   const isAdmin  = user.role === "admin";
@@ -2999,6 +3907,79 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
         </Card>
       </div>
 
+      {/* Bulk Payout — admin only */}
+      {isAdmin && (() => {
+        const unpaidByMember = users
+          .filter((u: any) => u.earns_commission && u.role !== "admin")
+          .map((u: any) => {
+            const unpaidSales = sales.filter((s: any) =>
+              s.member_id === u.id && s.status === "confirmed" &&
+              s.payout_status === "unpaid" && s.sale_date.slice(0, 7) === bulkMonth
+            );
+            const total = unpaidSales.reduce((sum: number, s: any) => sum + parseFloat(s.commission_amount), 0);
+            return { user: u, sales: unpaidSales, total };
+          })
+          .filter((row: any) => row.sales.length > 0);
+
+        return (
+          <Card style={{ padding: "18px 20px", marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: unpaidByMember.length > 0 ? 16 : 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a" }}>💳 Bulk Payout</div>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <input type="month" value={bulkMonth} onChange={e => setBulkMonth(e.target.value)}
+                  style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, outline: "none" }} />
+                {unpaidByMember.length > 0 && (
+                  <button disabled={!!bulkPaying}
+                    onClick={async () => {
+                      setBulkPaying("all");
+                      await onBulkMarkPaid?.(unpaidByMember.map((r: any) => r.user.id), bulkMonth);
+                      setBulkPaying(null);
+                    }}
+                    style={{ padding: "7px 18px", borderRadius: 8, background: "#0f172a", color: "white", border: "none", fontSize: 13, fontWeight: 700, cursor: bulkPaying ? "not-allowed" : "pointer", opacity: bulkPaying ? 0.6 : 1 }}>
+                    {bulkPaying === "all" ? "Paying..." : "Pay All"}
+                  </button>
+                )}
+              </div>
+            </div>
+            {unpaidByMember.length === 0 ? (
+              <div style={{ fontSize: 13, color: "#94a3b8" }}>
+                No unpaid confirmed commissions for {new Date(bulkMonth + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" })}.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {unpaidByMember.map((row: any) => {
+                  const mu = normUser(row.user);
+                  const sym = row.sales[0]?.currency_symbol || "";
+                  return (
+                    <div key={row.user.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", borderRadius: 10, padding: "12px 16px", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <Av user={row.user} size={32} />
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{mu.name}</div>
+                          <div style={{ fontSize: 11, color: "#64748b" }}>{row.sales.length} sale{row.sales.length !== 1 ? "s" : ""}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ fontSize: 15, fontWeight: 800, color: "#16a34a" }}>{fmtMoney(row.total, sym)}</div>
+                        <button disabled={!!bulkPaying}
+                          onClick={async () => {
+                            setBulkPaying(row.user.id);
+                            await onBulkMarkPaid?.([row.user.id], bulkMonth);
+                            setBulkPaying(null);
+                          }}
+                          style={{ padding: "6px 16px", borderRadius: 8, background: B, color: "white", border: "none", fontSize: 12, fontWeight: 700, cursor: bulkPaying ? "not-allowed" : "pointer", opacity: bulkPaying ? 0.6 : 1 }}>
+                          {bulkPaying === row.user.id ? "Paying..." : "Mark Paid"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        );
+      })()}
+
       {/* Filters */}
       <div style={{ background: "white", borderRadius: 12, padding: "14px 18px", border: "1px solid #e2e8f0", marginBottom: 16, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -3076,7 +4057,7 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
   );
 }
 
-function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, onToggleCommission }: any) {
+function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, onToggleCommission, onUpdateMemberPaySettings }: any) {
   const [modal,          setModal]          = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [saving,         setSaving]         = useState(false);
@@ -3153,15 +4134,21 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
         const assignedLeader = selectedMember.managed_by ? normUser(users.find((x: any) => x.id === selectedMember.managed_by)) : null;
         const memberTasks = (tasks || []).map(normTask).filter((t: any) => t.assignedTo === selectedMember.id);
         const memberLogs  = (logs  || []).map(normLog) .filter((l: any) => l.userId   === selectedMember.id);
-        const completed   = memberTasks.filter((t: any) => t.status === "completed").length;
+        const approvedTasks = memberTasks.filter((t: any) => t.approvalStatus === "approved");
+        const approvedLogs  = memberLogs.filter((l: any) => l.approvalStatus === "approved");
+        const completed   = approvedTasks.filter((t: any) => t.status === "completed").length;
         const inProgress  = memberTasks.filter((t: any) => t.status === "in-progress").length;
         const overdue     = memberTasks.filter((t: any) => t.status !== "completed" && t.deadline && t.deadline < fmt(today)).length;
         let pts = 0;
-        memberTasks.forEach((t: any) => {
-          if (t.status === "completed") { pts += 10; if (t.completedAt && t.deadline && t.completedAt <= t.deadline) pts += 5; }
-          else if (t.deadline && t.deadline < fmt(today)) pts -= 3;
+        approvedTasks.forEach((t: any) => {
+          if (t.status === "completed") {
+            pts += 10;
+            if (t.priority === "high") pts += 5;
+            if (t.completedAt && t.deadline && t.completedAt <= t.deadline) pts += 5;
+            else if (t.completedAt && t.deadline && t.completedAt > t.deadline) pts -= 5;
+          }
         });
-        pts = Math.max(0, pts + memberLogs.length * 2);
+        pts = Math.max(0, pts + approvedLogs.length * 3);
         const joinDate = selectedMember.created_at
           ? new Date(selectedMember.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
           : null;
@@ -3210,12 +4197,12 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
               {/* Stats */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
                 {[
-                  { label: "Tasks Assigned", value: memberTasks.length, color: "#6366f1" },
-                  { label: "Completed",       value: completed,          color: "#22c55e" },
-                  { label: "In Progress",     value: inProgress,         color: B },
-                  { label: "Overdue",         value: overdue,            color: overdue > 0 ? "#ef4444" : "#94a3b8" },
-                  { label: "Activity Logs",   value: memberLogs.length,  color: "#6366f1" },
-                  { label: "Score",           value: `${pts}pt`,         color: "#f59e0b" },
+                  { label: "Tasks Assigned", value: memberTasks.length,   color: "#6366f1" },
+                  { label: "Completed",      value: completed,             color: "#22c55e" },
+                  { label: "In Progress",    value: inProgress,            color: B },
+                  { label: "Overdue",        value: overdue,               color: overdue > 0 ? "#ef4444" : "#94a3b8" },
+                  { label: "Activity Logs",  value: approvedLogs.length,   color: "#6366f1" },
+                  { label: "Score",          value: `${pts}pt`,            color: "#f59e0b" },
                 ].map(s => (
                   <div key={s.label} style={{ background: "#f8fafc", borderRadius: 10, padding: "12px 14px" }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4 }}>{s.label}</div>
@@ -3283,6 +4270,68 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
                     <span style={{ position: "absolute", top: 2, left: selectedMember.earns_commission ? 22 : 2, width: 20, height: 20,
                       borderRadius: "50%", background: "white", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
                   </button>
+                </div>
+              )}
+
+              {/* Pay Settings -- admin only */}
+              {user.role === "admin" && selectedMember.role !== "admin" && (
+                <div style={{ marginTop: 16, padding: "16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 12 }}>💳 Pay Settings</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Pay Type</label>
+                      <select value={selectedMember.pay_type || "monthly"}
+                        onChange={e => {
+                          onUpdateMemberPaySettings?.(selectedMember.id, { pay_type: e.target.value });
+                          setSelectedMember((prev: any) => ({ ...prev, pay_type: e.target.value }));
+                        }}
+                        style={{ ...SEL, width: "100%", fontSize: 13 }}>
+                        <option value="monthly">Monthly Salary</option>
+                        <option value="per_article">Per Article</option>
+                      </select>
+                    </div>
+                    {(selectedMember.pay_type === "per_article") && (
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>
+                          Rate per Article ({getCurrencyForCountry(selectedMember.country || "").symbol})
+                        </label>
+                        <input type="number" placeholder="e.g. 5000"
+                          defaultValue={selectedMember.article_rate || ""}
+                          onBlur={e => {
+                            const val = parseFloat(e.target.value) || null;
+                            onUpdateMemberPaySettings?.(selectedMember.id, { article_rate: val });
+                            setSelectedMember((prev: any) => ({ ...prev, article_rate: val }));
+                          }}
+                          style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }} />
+                      </div>
+                    )}
+                    {(!selectedMember.pay_type || selectedMember.pay_type === "monthly") && (
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>
+                          Monthly Salary ({getCurrencyForCountry(selectedMember.country || "").symbol})
+                        </label>
+                        <input type="number" placeholder="e.g. 150000"
+                          defaultValue={selectedMember.monthly_rate || ""}
+                          onBlur={e => {
+                            const val = parseFloat(e.target.value) || null;
+                            onUpdateMemberPaySettings?.(selectedMember.id, { monthly_rate: val });
+                            setSelectedMember((prev: any) => ({ ...prev, monthly_rate: val }));
+                          }}
+                          style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }} />
+                      </div>
+                    )}
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Date of Birth</label>
+                      <input type="date"
+                        defaultValue={selectedMember.date_of_birth || ""}
+                        onBlur={e => {
+                          const val = e.target.value || null;
+                          onUpdateMemberPaySettings?.(selectedMember.id, { date_of_birth: val });
+                          setSelectedMember((prev: any) => ({ ...prev, date_of_birth: val }));
+                        }}
+                        style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", outline: "none" }} />
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -3359,7 +4408,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
                 <div style={{ marginBottom: 20, padding: "14px 16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Earns Commission</div>
-                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Member earns 2% on referred sales</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Member earns 1% on referred sales</div>
                   </div>
                   <button type="button" onClick={() => setForm(f => ({ ...f, earnsCommission: !f.earnsCommission }))}
                     style={{ width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", position: "relative",
@@ -4005,6 +5054,9 @@ export default function ProwessDashboard({
   kpiLogs = [],
   weeklyWinners = [],
   sales = [],
+  payroll = [],
+  offlineIncome = [],
+  offlineOutgoing = [],
   onCreateAssignment,
   onLogKPI,
   onSetVerdict,
@@ -4030,6 +5082,19 @@ export default function ProwessDashboard({
   onMarkCommissionPaid,
   onMarkCommissionUnpaid,
   onToggleCommission,
+  onBulkMarkCommissionPaid,
+  onMarkTaskAsArticle,
+  onUpdateMemberPaySettings,
+  onLogPayroll,
+  onApprovePayroll,
+  onWithholdPayroll,
+  onAdjustPayroll,
+  onMarkPayrollPaid,
+  onMarkPayrollUnpaid,
+  onLogOfflineIncome,
+  onDeleteOfflineIncome,
+  onLogOfflineOutgoing,
+  onDeleteOfflineOutgoing,
 }: {
   currentUser: any;
   users?: any[];
@@ -4064,6 +5129,22 @@ export default function ProwessDashboard({
   onMarkCommissionPaid?: (id: string) => Promise<void>;
   onMarkCommissionUnpaid?: (id: string) => Promise<void>;
   onToggleCommission?: (memberId: string, value: boolean) => Promise<void>;
+  onBulkMarkCommissionPaid?: (memberIds: string[], month: string) => Promise<void>;
+  onMarkTaskAsArticle?: (taskId: string, value: boolean) => Promise<void>;
+  onUpdateMemberPaySettings?: (memberId: string, updates: any) => Promise<void>;
+  onLogPayroll?: (form: any) => Promise<void>;
+  onApprovePayroll?: (id: string) => Promise<void>;
+  onWithholdPayroll?: (id: string) => Promise<void>;
+  onAdjustPayroll?: (id: string, adjustment: number, note: string) => Promise<void>;
+  onMarkPayrollPaid?: (id: string) => Promise<void>;
+  onMarkPayrollUnpaid?: (id: string) => Promise<void>;
+  onLogOfflineIncome?: (form: any) => Promise<void>;
+  onDeleteOfflineIncome?: (id: string) => Promise<void>;
+  onLogOfflineOutgoing?: (form: any) => Promise<void>;
+  onDeleteOfflineOutgoing?: (id: string) => Promise<void>;
+  payroll?: any[];
+  offlineIncome?: any[];
+  offlineOutgoing?: any[];
 }) {
   const [page,        setPage]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -4075,6 +5156,9 @@ export default function ProwessDashboard({
   const [localKpiL,    setLocalKpiL]    = useState(kpiLogs);
   const [localWinners, setLocalWinners] = useState(weeklyWinners);
   const [localSales,   setLocalSales]   = useState(sales);
+  const [localPayroll, setLocalPayroll] = useState(payroll);
+  const [localIncome,  setLocalIncome]  = useState(offlineIncome);
+  const [localOutgoing, setLocalOutgoing] = useState(offlineOutgoing);
   const isMobile = useIsMobile();
 
   useEffect(() => setLocalTasks(tasks),          [tasks]);
@@ -4083,6 +5167,9 @@ export default function ProwessDashboard({
   useEffect(() => setLocalKpiL(kpiLogs),         [kpiLogs]);
   useEffect(() => setLocalWinners(weeklyWinners),[weeklyWinners]);
   useEffect(() => setLocalSales(sales),          [sales]);
+  useEffect(() => setLocalPayroll(payroll),       [payroll]);
+  useEffect(() => setLocalIncome(offlineIncome),  [offlineIncome]);
+  useEffect(() => setLocalOutgoing(offlineOutgoing), [offlineOutgoing]);
 
   const user = normUser(currentUser);
 
@@ -4103,8 +5190,8 @@ export default function ProwessDashboard({
     switch (page) {
       case "dashboard":
         return isPrivileged(user)
-          ? <AdminDashboard tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} setPage={setPage} />
-          : <MemberDashboard user={user} tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} setPage={setPage} />;
+          ? <><BirthdayBanner users={users} /><AdminDashboard tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} setPage={setPage} /></>
+          : <><BirthdayBanner users={users} /><MemberDashboard user={user} tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} setPage={setPage} /></>;
       case "kpi":
         return <KPIPage
           user={user} users={users}
@@ -4158,8 +5245,67 @@ export default function ProwessDashboard({
             await onMarkCommissionUnpaid?.(id);
             setLocalSales((prev: any) => prev.map((s: any) => s.id === id ? { ...s, payout_status: "unpaid" } : s));
           }}
+          onBulkMarkPaid={async (memberIds: string[], month: string) => {
+            await onBulkMarkCommissionPaid?.(memberIds, month);
+            setLocalSales((prev: any) => prev.map((s: any) =>
+              memberIds.includes(s.member_id) && s.status === "confirmed" && s.payout_status === "unpaid" && s.sale_date.slice(0, 7) === month
+                ? { ...s, payout_status: "paid" } : s
+            ));
+          }}
         />;
-      case "tasks":
+      case "payroll":
+        return <PayrollPage
+          user={user} users={users} tasks={localTasks} payroll={localPayroll}
+          onLogPayroll={async (form: any) => {
+            await onLogPayroll?.(form);
+            const tmp = { id: "tmp-" + Date.now(), ...form, status: "pending", payout_status: "unpaid", created_at: new Date().toISOString() };
+            setLocalPayroll((p: any) => [tmp, ...p]);
+          }}
+          onApprovePayroll={async (id: string) => {
+            await onApprovePayroll?.(id);
+            setLocalPayroll((p: any) => p.map((e: any) => e.id === id ? { ...e, status: "approved" } : e));
+          }}
+          onWithholdPayroll={async (id: string) => {
+            await onWithholdPayroll?.(id);
+            setLocalPayroll((p: any) => p.map((e: any) => e.id === id ? { ...e, status: "withheld" } : e));
+          }}
+          onAdjustPayroll={async (id: string, adj: number, note: string) => {
+            await onAdjustPayroll?.(id, adj, note);
+            setLocalPayroll((p: any) => p.map((e: any) => e.id === id ? { ...e, adjustment: adj, adjustment_note: note } : e));
+          }}
+          onMarkPayrollPaid={async (id: string) => {
+            await onMarkPayrollPaid?.(id);
+            setLocalPayroll((p: any) => p.map((e: any) => e.id === id ? { ...e, payout_status: "paid" } : e));
+          }}
+          onMarkPayrollUnpaid={async (id: string) => {
+            await onMarkPayrollUnpaid?.(id);
+            setLocalPayroll((p: any) => p.map((e: any) => e.id === id ? { ...e, payout_status: "unpaid" } : e));
+          }}
+        />;
+      case "finance":
+        return user.role === "admin" ? <FinancePage
+          user={user} users={users} sales={localSales}
+          payroll={localPayroll} offlineIncome={localIncome}
+          offlineOutgoing={localOutgoing}
+          onLogOfflineIncome={async (form: any) => {
+            await onLogOfflineIncome?.(form);
+            const tmp = { id: "tmp-" + Date.now(), ...form, created_at: new Date().toISOString() };
+            setLocalIncome((p: any) => [tmp, ...p]);
+          }}
+          onDeleteOfflineIncome={async (id: string) => {
+            await onDeleteOfflineIncome?.(id);
+            setLocalIncome((p: any) => p.filter((e: any) => e.id !== id));
+          }}
+          onLogOfflineOutgoing={async (form: any) => {
+            await onLogOfflineOutgoing?.(form);
+            const tmp = { id: "tmp-" + Date.now(), ...form, created_at: new Date().toISOString() };
+            setLocalOutgoing((p: any) => [tmp, ...p]);
+          }}
+          onDeleteOfflineOutgoing={async (id: string) => {
+            await onDeleteOfflineOutgoing?.(id);
+            setLocalOutgoing((p: any) => p.filter((e: any) => e.id !== id));
+          }}
+        /> : null;
         return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} onApproveTask={onApproveTask} onRejectTask={onRejectTask} />;
       case "activity":
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} onResubmitLog={onResubmitLog} />;
@@ -4169,7 +5315,7 @@ export default function ProwessDashboard({
 
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
       case "team":
-        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} onToggleCommission={onToggleCommission} /> : null;
+        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} onToggleCommission={onToggleCommission} onUpdateMemberPaySettings={onUpdateMemberPaySettings} /> : null;
       case "settings":
         return <SettingsPage user={user} onUpdateProfile={onUpdateProfile} />;
       default:
@@ -4228,6 +5374,10 @@ export default function ProwessDashboard({
             </div>
             <ApprovalPage
               user={user} tasks={localTasks} logs={localLogs} users={users}
+              onMarkTaskAsArticle={async (taskId: string, value: boolean) => {
+                await onMarkTaskAsArticle?.(taskId, value);
+                setLocalTasks((p: any[]) => p.map((t: any) => t.id === taskId ? { ...t, is_article: value } : t));
+              }}
               onApproveTask={async (id: string) => {
                 await onApproveTask?.(id);
                 setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "approved" } : t));

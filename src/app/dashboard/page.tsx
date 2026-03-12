@@ -66,6 +66,9 @@ export default function DashboardPage() {
         { data: kpiLogs,  error: kpiLErr    },
         { data: weeklyWinners               },
         { data: sales                       },
+        { data: payroll                     },
+        { data: offlineIncome               },
+        { data: offlineOutgoing             },
       ] = await Promise.all([
         supabase.from("tasks").select("*").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
@@ -74,6 +77,9 @@ export default function DashboardPage() {
         supabase.from("kpi_logs").select("*").order("created_at", { ascending: false }),
         supabase.from("weekly_winners").select("*").order("week_end", { ascending: false }),
         supabase.from("commission_sales").select("*").order("sale_date", { ascending: false }),
+        supabase.from("payroll_entries").select("*").order("created_at", { ascending: false }),
+        supabase.from("offline_income").select("*").order("income_date", { ascending: false }),
+        supabase.from("offline_outgoing").select("*").order("payment_date", { ascending: false }),
       ]);
 
       if (tasksErr) throw new Error(`Tasks failed to load: ${tasksErr.message}`);
@@ -85,6 +91,9 @@ export default function DashboardPage() {
         kpiAssignments: kpiAssignments || [], kpiLogs: kpiLogs || [],
         weeklyWinners: weeklyWinners || [],
         sales: sales || [],
+        payroll: payroll || [],
+        offlineIncome: offlineIncome || [],
+        offlineOutgoing: offlineOutgoing || [],
       });
 
     } catch (err: any) {
@@ -412,6 +421,35 @@ export default function DashboardPage() {
     }
   }
 
+
+  async function bulkMarkCommissionPaid(memberIds: string[], month: string) {
+    const salesToPay = state.sales.filter((s: any) =>
+      memberIds.includes(s.member_id) && s.status === "confirmed" &&
+      s.payout_status === "unpaid" && s.sale_date.slice(0, 7) === month
+    );
+    if (!salesToPay.length) return;
+    const ids = salesToPay.map((s: any) => s.id);
+    await supabase.from("commission_sales").update({
+      payout_status: "paid", payout_marked_by: state.profile.id,
+      payout_marked_at: new Date().toISOString(),
+    }).in("id", ids);
+    setState((p: any) => ({
+      ...p,
+      sales: p.sales.map((s: any) => ids.includes(s.id) ? { ...s, payout_status: "paid" } : s),
+    }));
+    const byMember: Record<string, any[]> = {};
+    salesToPay.forEach((s: any) => { if (!byMember[s.member_id]) byMember[s.member_id] = []; byMember[s.member_id].push(s); });
+    const monthLabel = new Date(month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    Object.entries(byMember).forEach(([memberId, memberSales]) => {
+      const member = state.users.find((u: any) => u.id === memberId);
+      if (!member?.email) return;
+      const totalPaid = memberSales.reduce((sum: number, s: any) => sum + parseFloat(s.commission_amount), 0);
+      fetch("/api/notify-commission", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "commission-paid", to: member.email, recipientName: member.full_name, totalPaid, currencySymbol: memberSales[0].currency_symbol, month: monthLabel, saleCount: memberSales.length }),
+      }).catch(() => {});
+    });
+  }
   async function markCommissionUnpaid(id: string) {
     await supabase.from("commission_sales").update({
       payout_status: "unpaid", payout_marked_by: null, payout_marked_at: null,
@@ -425,6 +463,129 @@ export default function DashboardPage() {
       ...p,
       users: p.users.map((u: any) => u.id === memberId ? { ...u, earns_commission: value } : u),
     }));
+  }
+
+  async function markTaskAsArticle(taskId: string, value: boolean) {
+    await supabase.from("tasks").update({ is_article: value }).eq("id", taskId);
+    setState((p: any) => ({
+      ...p,
+      tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, is_article: value } : t),
+    }));
+  }
+
+  async function updateMemberPaySettings(memberId: string, updates: { pay_type?: string; article_rate?: number | null; date_of_birth?: string | null }) {
+    await supabase.from("profiles").update(updates).eq("id", memberId);
+    setState((p: any) => ({
+      ...p,
+      users: p.users.map((u: any) => u.id === memberId ? { ...u, ...updates } : u),
+    }));
+  }
+
+  async function logPayroll(form: any) {
+    const { data, error } = await supabase.from("payroll_entries").insert({
+      member_id:       form.member_id,
+      logged_by:       state.profile.id,
+      pay_type:        form.pay_type,
+      month:           form.month,
+      base_amount:     parseFloat(form.base_amount),
+      adjustment:      parseFloat(form.adjustment || "0"),
+      adjustment_note: form.adjustment_note || null,
+      article_count:   form.article_count ? parseInt(form.article_count) : null,
+      currency_code:   form.currency_code,
+      currency_symbol: form.currency_symbol,
+      status:          "pending",
+      notes:           form.notes || null,
+    }).select().single();
+    if (!error && data) setState((p: any) => ({ ...p, payroll: [data, ...p.payroll] }));
+  }
+
+  async function approvePayroll(id: string) {
+    await supabase.from("payroll_entries").update({
+      status: "approved", approved_by: state.profile.id,
+      approved_at: new Date().toISOString(),
+    }).eq("id", id);
+    setState((p: any) => ({ ...p, payroll: p.payroll.map((e: any) => e.id === id ? { ...e, status: "approved" } : e) }));
+  }
+
+  async function withholdPayroll(id: string) {
+    await supabase.from("payroll_entries").update({ status: "withheld" }).eq("id", id);
+    setState((p: any) => ({ ...p, payroll: p.payroll.map((e: any) => e.id === id ? { ...e, status: "withheld" } : e) }));
+  }
+
+  async function adjustPayroll(id: string, adjustment: number, note: string) {
+    await supabase.from("payroll_entries").update({ adjustment, adjustment_note: note }).eq("id", id);
+    setState((p: any) => ({ ...p, payroll: p.payroll.map((e: any) => e.id === id ? { ...e, adjustment, adjustment_note: note } : e) }));
+  }
+
+  async function markPayrollPaid(id: string) {
+    await supabase.from("payroll_entries").update({
+      payout_status: "paid", payout_marked_by: state.profile.id,
+      payout_marked_at: new Date().toISOString(),
+    }).eq("id", id);
+    setState((p: any) => ({ ...p, payroll: p.payroll.map((e: any) => e.id === id ? { ...e, payout_status: "paid" } : e) }));
+    const entry = state.payroll.find((e: any) => e.id === id);
+    const member = entry && state.users.find((u: any) => u.id === entry.member_id);
+    if (member?.email && entry) {
+      const monthLabel = new Date(entry.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      fetch("/api/notify-payroll", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: member.email,
+          recipientName: member.full_name,
+          month: monthLabel,
+          finalAmount: entry.final_amount ?? (parseFloat(entry.base_amount) + parseFloat(entry.adjustment || "0")),
+          currencySymbol: entry.currency_symbol,
+          payType: entry.pay_type,
+          articleCount: entry.article_count,
+          adjustmentNote: entry.adjustment_note,
+        }),
+      }).catch(() => {});
+    }
+  }
+
+  async function markPayrollUnpaid(id: string) {
+    await supabase.from("payroll_entries").update({
+      payout_status: "unpaid", payout_marked_by: null, payout_marked_at: null,
+    }).eq("id", id);
+    setState((p: any) => ({ ...p, payroll: p.payroll.map((e: any) => e.id === id ? { ...e, payout_status: "unpaid" } : e) }));
+  }
+
+  async function logOfflineIncome(form: any) {
+    const { data, error } = await supabase.from("offline_income").insert({
+      logged_by:       state.profile.id,
+      description:     form.description,
+      amount:          parseFloat(form.amount),
+      currency_code:   form.currency_code,
+      currency_symbol: form.currency_symbol,
+      income_date:     form.income_date,
+      category:        form.category || null,
+      notes:           form.notes || null,
+    }).select().single();
+    if (!error && data) setState((p: any) => ({ ...p, offlineIncome: [data, ...p.offlineIncome] }));
+  }
+
+  async function deleteOfflineIncome(id: string) {
+    await supabase.from("offline_income").delete().eq("id", id);
+    setState((p: any) => ({ ...p, offlineIncome: p.offlineIncome.filter((e: any) => e.id !== id) }));
+  }
+
+  async function logOfflineOutgoing(form: any) {
+    const { data, error } = await supabase.from("offline_outgoing").insert({
+      logged_by:       state.profile.id,
+      description:     form.description,
+      amount:          parseFloat(form.amount),
+      currency_code:   form.currency_code,
+      currency_symbol: form.currency_symbol,
+      payment_date:    form.payment_date,
+      category:        form.category || null,
+      notes:           form.notes || null,
+    }).select().single();
+    if (!error && data) setState((p: any) => ({ ...p, offlineOutgoing: [data, ...p.offlineOutgoing] }));
+  }
+
+  async function deleteOfflineOutgoing(id: string) {
+    await supabase.from("offline_outgoing").delete().eq("id", id);
+    setState((p: any) => ({ ...p, offlineOutgoing: p.offlineOutgoing.filter((e: any) => e.id !== id) }));
   }
 
   async function closeWeek(weekStart: string, weekEnd: string, scores: any[]) {
@@ -457,6 +618,9 @@ export default function DashboardPage() {
       kpiLogs={state.kpiLogs}
       weeklyWinners={state.weeklyWinners || []}
       sales={state.sales || []}
+      payroll={state.payroll || []}
+      offlineIncome={state.offlineIncome || []}
+      offlineOutgoing={state.offlineOutgoing || []}
       onCreateAssignment={createAssignment}
       onLogKPI={logKPI}
       onSetVerdict={setVerdict}
@@ -481,7 +645,20 @@ export default function DashboardPage() {
       onRejectSale={rejectSale}
       onMarkCommissionPaid={markCommissionPaid}
       onMarkCommissionUnpaid={markCommissionUnpaid}
+      onBulkMarkCommissionPaid={bulkMarkCommissionPaid}
       onToggleCommission={toggleCommission}
+      onMarkTaskAsArticle={markTaskAsArticle}
+      onUpdateMemberPaySettings={updateMemberPaySettings}
+      onLogPayroll={logPayroll}
+      onApprovePayroll={approvePayroll}
+      onWithholdPayroll={withholdPayroll}
+      onAdjustPayroll={adjustPayroll}
+      onMarkPayrollPaid={markPayrollPaid}
+      onMarkPayrollUnpaid={markPayrollUnpaid}
+      onLogOfflineIncome={logOfflineIncome}
+      onLogOfflineOutgoing={logOfflineOutgoing}
+      onDeleteOfflineIncome={deleteOfflineIncome}
+      onDeleteOfflineOutgoing={deleteOfflineOutgoing}
     />
   );
 }
