@@ -723,7 +723,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
     { name: "In Progress", value: inProg,                          color: "#3b82f6" },
     { name: "Pending",     value: total - completed - inProg,      color: "#cbd5e1" },
   ];
-  const recent = [...logs].map(normLog).sort((a: any, b: any) => b.date.localeCompare(a.date)).slice(0, 5);
+  const recent = [...logs].map(normLog).sort((a: any, b: any) => b.date.localeCompare(a.date)).slice(0, 3);
 
   // -- KPI health for this month ----------------------------------------------
   const thisMonth = fmt(today).slice(0, 7);
