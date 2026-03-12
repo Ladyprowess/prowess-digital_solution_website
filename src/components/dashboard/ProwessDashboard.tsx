@@ -2832,7 +2832,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
               <select value={memberId} onChange={e => setMemberId(e.target.value)} style={{ ...SEL, width: "100%" }}>
                 <option value="">Select member...</option>
                 {payableMembers.map((u: any) => (
-                  <option key={u.id} value={u.id}>{normUser(u)?.name} — {u.pay_type === "per_article" ? "Per Article" : "Monthly"}</option>
+                  <option key={u.id} value={u.id}>{normUser(u)?.name} - {u.pay_type === "per_article" ? "Per Article" : "Monthly"}</option>
                 ))}
               </select>
             </div>
@@ -2856,7 +2856,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
                 <div style={{ fontSize: 14, color: "#374151" }}>
                   {monthlyRate > 0
                     ? <>Monthly rate: <strong>{fmtMoney(monthlyRate, currency.symbol)}</strong></>
-                    : <span style={{ color: "#ef4444" }}>⚠️ No monthly rate set — go to Team → member profile to set it.</span>
+                    : <span style={{ color: "#ef4444" }}>⚠️ No monthly rate set - go to Team → member profile to set it.</span>
                   }
                 </div>
               )}
@@ -2880,7 +2880,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
           {/* Adjustment */}
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>
-              Adjustment <span style={{ fontWeight: 400, color: "#94a3b8" }}>({currency.code}) — optional</span>
+              Adjustment <span style={{ fontWeight: 400, color: "#94a3b8" }}>({currency.code}) - optional</span>
             </label>
             <input type="number" placeholder="e.g. -5000 for deduction, +10000 for bonus"
               value={adjustment} onChange={e => setAdjustment(e.target.value)}
@@ -3145,7 +3145,7 @@ function PayrollPage({ user, users, tasks, payroll, onLogPayroll, onApprovePayro
                       style={{ borderBottom: i < pagedPayroll.length - 1 ? "1px solid #f1f5f9" : "none", cursor: "pointer" }}
                       onMouseEnter={e => (e.currentTarget.style.background = "#f8fafc")}
                       onMouseLeave={e => (e.currentTarget.style.background = "white")}>
-                      {isAdmin && <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>{normUser(m)?.name || "—"}</td>}
+                      {isAdmin && <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>{normUser(m)?.name || "-"}</td>}
                       <td style={{ padding: "13px 16px", fontSize: 13, color: "#0f172a", whiteSpace: "nowrap" }}>
                         {new Date(entry.month + "-01").toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
                       </td>
@@ -3153,15 +3153,15 @@ function PayrollPage({ user, users, tasks, payroll, onLogPayroll, onApprovePayro
                         {entry.pay_type === "per_article" ? `Per Article (${entry.article_count || 0})` : "Monthly"}
                       </td>
                       <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>
-                        {entry.pay_type === "per_article" ? fmtMoney(parseFloat(entry.base_amount) || 0, entry.currency_symbol) : "—"}
+                        {entry.pay_type === "per_article" ? fmtMoney(parseFloat(entry.base_amount) || 0, entry.currency_symbol) : "-"}
                       </td>
                       <td style={{ padding: "13px 16px", fontSize: 13, color: adj >= 0 ? "#22c55e" : "#ef4444", fontWeight: 600, whiteSpace: "nowrap" }}>
-                        {adj !== 0 ? `${adj >= 0 ? "+" : ""}${fmtMoney(adj, entry.currency_symbol)}` : "—"}
+                        {adj !== 0 ? `${adj >= 0 ? "+" : ""}${fmtMoney(adj, entry.currency_symbol)}` : "-"}
                       </td>
                       <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 800, color: B, whiteSpace: "nowrap" }}>{fmtMoney(finalAmt, entry.currency_symbol)}</td>
                       <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}><PayrollBadge status={entry.status} /></td>
                       <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
-                        {entry.status === "approved" ? <PayrollBadge status={entry.payout_status} /> : <span style={{ color: "#cbd5e1", fontSize: 12 }}>—</span>}
+                        {entry.status === "approved" ? <PayrollBadge status={entry.payout_status} /> : <span style={{ color: "#cbd5e1", fontSize: 12 }}>-</span>}
                       </td>
                     </tr>
                   );
@@ -3235,7 +3235,7 @@ function OutgoingModal({ currency, onClose, onSubmit }: any) {
                 setForm(f => ({ ...f, currency_code: e.target.value, currency_symbol: c?.symbol || "" }));
               }}
               style={{ ...SEL, width: "100%" }}>
-              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code} ({c.symbol}) — {c.country}</option>)}
+              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code} ({c.symbol}) - {c.country}</option>)}
             </select>
           </div>
           <div>
@@ -3315,7 +3315,7 @@ function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoi
   // All outgoings merged for table
   const allOutgoings = [
     ...commPaid.map((s: any) => ({
-      id: s.id, date: s.sale_date, description: `Commission — ${s.client_name}`,
+      id: s.id, date: s.sale_date, description: `Commission - ${s.client_name}`,
       amount: parseFloat(s.commission_amount), symbol: s.currency_symbol, type: "Commission",
     })),
     ...payrollPaid.map((e: any) => {
@@ -3323,7 +3323,7 @@ function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoi
       const final = e.final_amount ?? (parseFloat(e.base_amount) + adj);
       const m = users.find((u: any) => u.id === e.member_id);
       return {
-        id: e.id, date: e.month + "-01", description: `Payroll — ${normUser(m)?.name || ""}`,
+        id: e.id, date: e.month + "-01", description: `Payroll - ${normUser(m)?.name || ""}`,
         amount: e.pay_type === "monthly" ? adj : parseFloat(final), symbol: e.currency_symbol, type: e.pay_type === "per_article" ? "Per-Article Pay" : "Monthly Pay",
       };
     }),
@@ -3336,7 +3336,7 @@ function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoi
 
   const allIncome = [
     ...commissionIncome.map((s: any) => ({
-      id: s.id, date: s.sale_date, description: `Sale — ${s.client_name} (${s.product_service})`,
+      id: s.id, date: s.sale_date, description: `Sale - ${s.client_name} (${s.product_service})`,
       amount: parseFloat(s.sale_amount), symbol: s.currency_symbol, type: "Commission Sale",
     })),
     ...offlineFiltered.map((e: any) => ({
@@ -3554,7 +3554,7 @@ function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoi
                     setIncForm(f => ({ ...f, currency_code: e.target.value, currency_symbol: c?.symbol || "" }));
                   }}
                   style={{ ...SEL, width: "100%" }}>
-                  {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code} ({c.symbol}) — {c.country}</option>)}
+                  {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code} ({c.symbol}) - {c.country}</option>)}
                 </select>
               </div>
               <div>
@@ -3718,7 +3718,7 @@ function SaleDetailModal({ sale, users, user, onClose, onConfirm, onReject, onMa
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
           {[
-            ["Sales Rep", normUser(member)?.name || "—"],
+            ["Sales Rep", normUser(member)?.name || "-"],
             ["Client", sale.client_name],
             ["Product / Service", sale.product_service],
             ["Sale Date", new Date(sale.sale_date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })],
@@ -3887,7 +3887,7 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
       {/* Stats */}
       <div className="prowess-stat-row" style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
         {earningsByCurrency.length === 0
-          ? <Card style={{ padding: "18px 20px", flex: 1 }}><div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Total Earnings</div><div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>—</div><div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>No confirmed sales yet</div></Card>
+          ? <Card style={{ padding: "18px 20px", flex: 1 }}><div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Total Earnings</div><div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>-</div><div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>No confirmed sales yet</div></Card>
           : earningsByCurrency.map(([code, data]) => (
             <Card key={code} style={{ padding: "18px 20px", flex: 1, minWidth: 140 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Total Earned ({code})</div>
@@ -3907,7 +3907,7 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
         </Card>
       </div>
 
-      {/* Bulk Payout — admin only */}
+      {/* Bulk Payout - admin only */}
       {isAdmin && (() => {
         const unpaidByMember = users
           .filter((u: any) => u.earns_commission && u.role !== "admin")
@@ -4024,14 +4024,14 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
                       style={{ borderBottom: i < pagedSales.length - 1 ? "1px solid #f1f5f9" : "none", cursor: "pointer" }}
                       onMouseEnter={e => (e.currentTarget.style.background = "#f8fafc")}
                       onMouseLeave={e => (e.currentTarget.style.background = "white")}>
-                      {(isAdmin || isLeader) && <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>{normUser(member)?.name || "—"}</td>}
+                      {(isAdmin || isLeader) && <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>{normUser(member)?.name || "-"}</td>}
                       <td style={{ padding: "13px 16px", fontSize: 13, color: "#0f172a", whiteSpace: "nowrap" }}>{sale.client_name}</td>
                       <td style={{ padding: "13px 16px", fontSize: 13, color: "#64748b", whiteSpace: "nowrap" }}>{sale.product_service}</td>
                       <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>{fmtMoney(Number(sale.sale_amount), sale.currency_symbol)}</td>
                       <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 700, color: "#16a34a", whiteSpace: "nowrap" }}>{fmtMoney(Number(sale.commission_amount), sale.currency_symbol)}</td>
                       <td style={{ padding: "13px 16px", fontSize: 13, color: "#64748b", whiteSpace: "nowrap" }}>{new Date(sale.sale_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
                       <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}><CommBadge status={sale.status} /></td>
-                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>{sale.status === "confirmed" ? <CommBadge status={sale.payout_status} /> : <span style={{ color: "#cbd5e1", fontSize: 12 }}>—</span>}</td>
+                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>{sale.status === "confirmed" ? <CommBadge status={sale.payout_status} /> : <span style={{ color: "#cbd5e1", fontSize: 12 }}>-</span>}</td>
                     </tr>
                   );
                 })}
