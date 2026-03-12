@@ -5305,9 +5305,10 @@ export default function ProwessDashboard({
             await onDeleteOfflineOutgoing?.(id);
             setLocalOutgoing((p: any) => p.filter((e: any) => e.id !== id));
           }}
-        /> : null;
-        return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} onApproveTask={onApproveTask} onRejectTask={onRejectTask} />;
-      case "activity":
+          /> : null;
+          case "tasks":
+            return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} onApproveTask={onApproveTask} onRejectTask={onRejectTask} />;
+          case "activity":
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} onResubmitLog={onResubmitLog} />;
       case "leaderboard":
         return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); const winner = sc[0]; setLocalWinners((prev: any) => [{ id: Date.now().toString(), week_start: ws, week_end: we, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} />;
