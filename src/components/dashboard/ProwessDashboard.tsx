@@ -95,16 +95,21 @@ function expandTasksPerAssignee(tasks: any[]): any[] {
     }
     for (const uid of assignees) {
       const assignment = (t.task_assignments ?? []).find((a: any) => a.user_id === uid);
+      // Only use assignment-level values when they've been explicitly updated
+      // (i.e. not still the column default of 'pending').
+      // This ensures tasks created before the migration still show correctly.
+      const aStatus = assignment?.status;
+      const aApproval = assignment?.approval_status;
       result.push({
         ...t,
         assignees: [uid],
         _singleAssignee: uid,
         _expandedId: assignees.length > 1 ? `${t.id}::${uid}` : t.id,
-        status: assignment?.status ?? t.status,
+        status:          (aStatus   && aStatus   !== 'pending') ? aStatus   : t.status,
         submission_links: assignment?.submission_links ?? t.submission_links ?? [],
-        approvalStatus: assignment?.approval_status ?? t.approvalStatus,
-        approvalNote: assignment?.approval_note ?? t.approvalNote,
-        completedAt: assignment?.completed_at ?? t.completedAt,
+        approvalStatus:  (aApproval && aApproval !== 'pending') ? aApproval : t.approvalStatus,
+        approvalNote:    assignment?.approval_note ?? t.approvalNote,
+        completedAt:     assignment?.completed_at  ?? t.completedAt,
       });
     }
   }
