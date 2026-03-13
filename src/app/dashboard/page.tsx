@@ -70,7 +70,7 @@ export default function DashboardPage() {
         { data: offlineIncome               },
         { data: offlineOutgoing             },
       ] = await Promise.all([
-        supabase.from("tasks").select("*, task_assignments(user_id, assigned_by)").order("created_at", { ascending: false }),
+        supabase.from("tasks").select("*, task_assignments(user_id, assigned_by, status, submission_links, completed_at, approval_status, approval_note, approved_by, approved_at)").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
         supabase.from("profiles").select("*").order("full_name"),
         supabase.from("kpi_assignments").select("*").order("created_at", { ascending: false }),
@@ -231,7 +231,30 @@ export default function DashboardPage() {
     }
   }
 
-  async function updateTaskStatus(taskId: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null) {
+  async function updateTaskStatus(taskId: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null, assigneeId?: string | null) {
+    if (assigneeId) {
+      const assignmentUpdates: any = { status };
+      if (status === "completed") {
+        assignmentUpdates.completed_at = new Date().toISOString();
+        assignmentUpdates.approval_status = "needs-review";
+        assignmentUpdates.approval_note = null;
+      }
+      if (submissionLinks && submissionLinks.length > 0) assignmentUpdates.submission_links = submissionLinks;
+      if (resubmitNote) assignmentUpdates.approval_note = resubmitNote;
+      await supabase.from("task_assignments")
+        .update(assignmentUpdates)
+        .eq("task_id", taskId)
+        .eq("user_id", assigneeId);
+      setState((p: any) => ({
+        ...p,
+        tasks: p.tasks.map((t: any) => t.id === taskId ? {
+          ...t,
+          task_assignments: (t.task_assignments || []).map((a: any) =>
+            a.user_id === assigneeId ? { ...a, ...assignmentUpdates } : a
+          ),
+        } : t),
+      }));
+    }
     const updates: any = { status };
     if (status === "completed") {
       updates.completed_at    = new Date().toISOString();
@@ -241,7 +264,9 @@ export default function DashboardPage() {
     if (submissionLinks && submissionLinks.length > 0) updates.submission_links = submissionLinks;
     if (resubmitNote) updates.approval_note = resubmitNote;
     await supabase.from("tasks").update(updates).eq("id", taskId);
-    setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, ...updates } : t) }));
+    if (!assigneeId) {
+      setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, ...updates } : t) }));
+    }
   }
 
   async function deleteTask(taskId: string) {
@@ -383,14 +408,44 @@ export default function DashboardPage() {
     setState((p: any) => ({ ...p, kpiAssignments: (p.kpiAssignments || []).filter((a: any) => a.id !== id) }));
   }
 
-  async function approveTask(id: string) {
-    await supabase.from("tasks").update({ approval_status: "approved", approved_by: state.profile.id, approved_at: new Date().toISOString(), approval_note: null }).eq("id", id);
-    setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === id ? { ...t, approval_status: "approved", approved_by: state.profile.id, approval_note: null } : t) }));
+  async function approveTask(id: string, assigneeId?: string | null) {
+    if (assigneeId) {
+      await supabase.from("task_assignments").update({
+        approval_status: "approved", approved_by: state.profile.id, approved_at: new Date().toISOString(), approval_note: null
+      }).eq("task_id", id).eq("user_id", assigneeId);
+      setState((p: any) => ({
+        ...p,
+        tasks: p.tasks.map((t: any) => t.id === id ? {
+          ...t,
+          task_assignments: (t.task_assignments || []).map((a: any) =>
+            a.user_id === assigneeId ? { ...a, approval_status: "approved", approved_by: state.profile.id, approval_note: null } : a
+          ),
+        } : t),
+      }));
+    } else {
+      await supabase.from("tasks").update({ approval_status: "approved", approved_by: state.profile.id, approved_at: new Date().toISOString(), approval_note: null }).eq("id", id);
+      setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === id ? { ...t, approval_status: "approved", approved_by: state.profile.id, approval_note: null } : t) }));
+    }
   }
 
-  async function rejectTask(id: string, note: string) {
-    await supabase.from("tasks").update({ approval_status: "rejected", approval_note: note, approved_by: state.profile.id, approved_at: new Date().toISOString() }).eq("id", id);
-    setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === id ? { ...t, approval_status: "rejected", approval_note: note } : t) }));
+  async function rejectTask(id: string, note: string, assigneeId?: string | null) {
+    if (assigneeId) {
+      await supabase.from("task_assignments").update({
+        approval_status: "rejected", approval_note: note, approved_by: state.profile.id, approved_at: new Date().toISOString()
+      }).eq("task_id", id).eq("user_id", assigneeId);
+      setState((p: any) => ({
+        ...p,
+        tasks: p.tasks.map((t: any) => t.id === id ? {
+          ...t,
+          task_assignments: (t.task_assignments || []).map((a: any) =>
+            a.user_id === assigneeId ? { ...a, approval_status: "rejected", approval_note: note, approved_by: state.profile.id } : a
+          ),
+        } : t),
+      }));
+    } else {
+      await supabase.from("tasks").update({ approval_status: "rejected", approval_note: note, approved_by: state.profile.id, approved_at: new Date().toISOString() }).eq("id", id);
+      setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === id ? { ...t, approval_status: "rejected", approval_note: note } : t) }));
+    }
   }
 
   async function approveLog(id: string) {

@@ -85,6 +85,32 @@ const normTask = (t: any) => {
   };
 };
 
+function expandTasksPerAssignee(tasks: any[]): any[] {
+  const result: any[] = [];
+  for (const t of tasks) {
+    const assignees: string[] = t.assignees ?? [];
+    if (assignees.length === 0) {
+      result.push({ ...t, _singleAssignee: null, _expandedId: t.id });
+      continue;
+    }
+    for (const uid of assignees) {
+      const assignment = (t.task_assignments ?? []).find((a: any) => a.user_id === uid);
+      result.push({
+        ...t,
+        assignees: [uid],
+        _singleAssignee: uid,
+        _expandedId: assignees.length > 1 ? `${t.id}::${uid}` : t.id,
+        status: assignment?.status ?? t.status,
+        submission_links: assignment?.submission_links ?? t.submission_links ?? [],
+        approvalStatus: assignment?.approval_status ?? t.approvalStatus,
+        approvalNote: assignment?.approval_note ?? t.approvalNote,
+        completedAt: assignment?.completed_at ?? t.completedAt,
+      });
+    }
+  }
+  return result;
+}
+
 const normLog = (l: any) => l ? ({
   ...l,
   userId:         l.user_id        ?? l.userId        ?? "",
@@ -1253,14 +1279,14 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
 
   async function handleApprove() {
     setApproveSaving(true);
-    await onApproveTask?.(task.id);
+    await onApproveTask?.(task.id, task._singleAssignee ?? null);
     setApproveSaving(false);
     onClose();
   }
   async function handleReject() {
     if (!rejectNote.trim()) return;
     setApproveSaving(true);
-    await onRejectTask?.(task.id, rejectNote.trim());
+    await onRejectTask?.(task.id, rejectNote.trim(), task._singleAssignee ?? null);
     setApproveSaving(false);
     onClose();
   }
@@ -1270,7 +1296,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
 
   const handleStatusUpdate = (s: string) => {
     const validLinks = subLinks.filter(l => l.url.trim());
-    onUpdate(task.id, s, validLinks.length ? validLinks : null, resubmitNote.trim() || null);
+    onUpdate(task.id, s, validLinks.length ? validLinks : null, resubmitNote.trim() || null, task._singleAssignee ?? null);
     onClose();
   };
 
@@ -1514,22 +1540,22 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   const [fPri,       setFPri]       = useState("all");
   const [fPeriod,    setFPeriod]    = useState("all");
   const [taskPage,   setTaskPage]   = useState(1);
-  const TASKS_PER_PAGE = 10;
+  const TASKS_PER_PAGE = 5;
   const [form,       setForm]       = useState({ title: "", description: "", assigneeIds: [] as string[], priority: "medium", project: "", deadline: "" });
   const [links,      setLinks]      = useState<{ label: string; url: string }[]>([]);
 
   const normTasks = tasks.map(normTask);
+  const expandedTasks = expandTasksPerAssignee(normTasks);
   const base = user.role === "admin"
-    ? normTasks
+    ? expandedTasks
     : user.role === "leader"
-      ? normTasks.filter((t: any) =>
-          t.assignees.includes(user.id) ||
-          t.assignees.some((uid: string) => {
-            const m = users.find((u: any) => u.id === uid);
-            return m && m.managed_by === user.id;
-          })
-        )
-      : normTasks.filter((t: any) => t.assignees.includes(user.id));
+      ? expandedTasks.filter((t: any) => {
+          if (!t._singleAssignee) return false;
+          if (t._singleAssignee === user.id) return true;
+          const m = users.find((u: any) => u.id === t._singleAssignee);
+          return m && m.managed_by === user.id;
+        })
+      : expandedTasks.filter((t: any) => t._singleAssignee === user.id);
   const filtered  = base.filter((t: any) => {
     if (fStat !== "all" && t.status !== fStat) return false;
     if (fPri  !== "all" && t.priority !== fPri) return false;
@@ -1548,12 +1574,19 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   const taskTotalPages = Math.ceil(filtered.length / TASKS_PER_PAGE);
   const pagedTasks = filtered.slice((taskPage - 1) * TASKS_PER_PAGE, taskPage * TASKS_PER_PAGE);
 
-  const upd = (id: string, s: string, submissionLinks?: any[] | null, resubmitNote?: string | null) => {
-    if (onUpdateTaskStatus) onUpdateTaskStatus(id, s, submissionLinks, resubmitNote);
+  const upd = (id: string, s: string, submissionLinks?: any[] | null, resubmitNote?: string | null, assigneeId?: string | null) => {
+    if (onUpdateTaskStatus) onUpdateTaskStatus(id, s, submissionLinks, resubmitNote, assigneeId);
     else setTasks((p: any[]) => p.map(t => t.id === id ? {
       ...t, status: s,
       approval_status: s === "completed" ? "needs-review" : t.approval_status,
-      ...(submissionLinks ? { submission_links: submissionLinks } : {})
+      ...(submissionLinks ? { submission_links: submissionLinks } : {}),
+      task_assignments: (t.task_assignments ?? []).map((a: any) =>
+        a.user_id === assigneeId ? {
+          ...a, status: s,
+          approval_status: s === "completed" ? "needs-review" : a.approval_status,
+          ...(submissionLinks ? { submission_links: submissionLinks } : {}),
+        } : a
+      ),
     } : t));
   };
   const del = (id: string) => {
@@ -1620,7 +1653,7 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
             .filter(Boolean);
           const late = task.deadline < fmt(today) && task.status !== "completed";
           return (
-            <Card key={task.id}
+            <Card key={task._expandedId}
               onClick={() => setDetailTask(task)}
               style={{ padding: "16px 20px", cursor: "pointer", transition: "box-shadow 0.15s" }}
               onMouseEnter={(e: any) => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
@@ -1645,17 +1678,15 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                     )}
                     <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {task.project}</span>
                     <span style={{ fontSize: 12, color: late ? "#ef4444" : "#94a3b8" }}>📅 {task.deadline}</span>
-                    {assigneeUsers.length > 0 && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                        {assigneeUsers.slice(0, 3).map((a: any) => <Av key={a.id} user={a} size={18} />)}
-                        {assigneeUsers.length > 3 && (
-                          <span style={{ fontSize: 11, color: "#94a3b8" }}>+{assigneeUsers.length - 3}</span>
-                        )}
-                        {assigneeUsers.length === 1 && (
-                          <span style={{ fontSize: 12, color: "#64748b" }}>{assigneeUsers[0].name}</span>
-                        )}
-                      </div>
-                    )}
+                    {task._singleAssignee && (() => {
+                      const au = normUser(users.find((u: any) => u.id === task._singleAssignee));
+                      return au ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <Av user={au} size={18} />
+                          <span style={{ fontSize: 12, color: "#64748b" }}>{au.name}</span>
+                        </div>
+                      ) : null;
+                    })()}
                     {task.links?.length > 0 && (
                       <span style={{ fontSize: 11, fontWeight: 600, color: B, background: B + "12", padding: "2px 8px", borderRadius: 20 }}>
                         🔗 {task.links.length} link{task.links.length > 1 ? "s" : ""}
@@ -1955,7 +1986,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
   const [fPeriod,   setFPeriod]   = useState("all");
   const [fUser,     setFUser]     = useState("all");
   const [logPage,   setLogPage]   = useState(1);
-  const LOGS_PER_PAGE = 15;
+  const LOGS_PER_PAGE = 5;
   const normLogs = logs.map(normLog);
   const visible = user.role === "admin"
     ? normLogs
@@ -2421,8 +2452,10 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
     return new Set();
   })();
 
-  const pendingTasks = tasks.map(normTask).filter((t: any) =>
-    t.approvalStatus === "needs-review" && t.assignees.some((uid: string) => approvableIds.has(uid))
+  const expandedForApprovals = expandTasksPerAssignee(tasks.map(normTask));
+  const pendingTasks = expandedForApprovals.filter((t: any) =>
+    t.approvalStatus === "needs-review" &&
+    t._singleAssignee && approvableIds.has(t._singleAssignee)
   );
   const pendingLogs = logs.map(normLog).filter((l: any) =>
     l.approvalStatus === "needs-review" && approvableIds.has(l.userId)
@@ -2444,7 +2477,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
   async function handleApprove() {
     if (!selected) return;
     setSaving(true);
-    if (selectedType === "task") await onApproveTask?.(selected.id);
+    if (selectedType === "task") await onApproveTask?.(selected.id, selected._singleAssignee ?? null);
     else await onApproveLog?.(selected.id);
     setSaving(false);
     closeDetail();
@@ -2453,7 +2486,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
   async function handleReject() {
     if (!selected || !rejectNote.trim()) return;
     setSaving(true);
-    if (selectedType === "task") await onRejectTask?.(selected.id, rejectNote.trim());
+    if (selectedType === "task") await onRejectTask?.(selected.id, rejectNote.trim(), selected._singleAssignee ?? null);
     else await onRejectLog?.(selected.id, rejectNote.trim());
     setSaving(false);
     closeDetail();
@@ -2489,7 +2522,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
               .map((uid: string) => normUser(users.find((u: any) => u.id === uid)))
               .filter(Boolean);
             return (
-              <div key={task.id} onClick={() => openDetail(task, "task")}
+              <div key={task._expandedId} onClick={() => openDetail(task, "task")}
                 style={{ background: "white", borderRadius: 14, border: "1px solid #e2e8f0", padding: "14px 16px", cursor: "pointer", transition: "box-shadow 0.15s" }}
                 onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)")}
                 onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
@@ -5249,7 +5282,7 @@ export default function ProwessDashboard({
   onSetVerdict?: (form: any) => Promise<void>;
   onDeleteAssignment?: (id: string) => Promise<void>;
   onCreateTask?: (form: any) => Promise<void>;
-  onUpdateTaskStatus?: (id: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null) => Promise<void>;
+  onUpdateTaskStatus?: (id: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null, assigneeId?: string | null) => Promise<void>;
   onDeleteTask?: (id: string) => Promise<void>;
   onReassignTask?: (taskId: string, assigneeIds: string[]) => Promise<void>;
   onAddLog?: (form: any) => Promise<void>;
@@ -5259,8 +5292,8 @@ export default function ProwessDashboard({
   onAssignLeader?: (memberId: string, leaderId: string | null) => Promise<void>;
   onCreateMember?: (form: any) => Promise<void>;
   onSignOut?: () => void;
-  onApproveTask?: (id: string) => Promise<void>;
-  onRejectTask?: (id: string, note: string) => Promise<void>;
+  onApproveTask?: (id: string, assigneeId?: string | null) => Promise<void>;
+  onRejectTask?: (id: string, note: string, assigneeId?: string | null) => Promise<void>;
   onApproveLog?: (id: string) => Promise<void>;
   onRejectLog?: (id: string, note: string) => Promise<void>;
   onCloseWeek?: (weekStart: string, weekEnd: string, scores: any[]) => Promise<void>;
@@ -5520,13 +5553,25 @@ export default function ProwessDashboard({
                 await onMarkTaskAsArticle?.(taskId, value);
                 setLocalTasks((p: any[]) => p.map((t: any) => t.id === taskId ? { ...t, is_article: value } : t));
               }}
-              onApproveTask={async (id: string) => {
-                await onApproveTask?.(id);
-                setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "approved" } : t));
+              onApproveTask={async (id: string, assigneeId?: string | null) => {
+                await onApproveTask?.(id, assigneeId);
+                setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? {
+                  ...t,
+                  ...(assigneeId ? {} : { approval_status: "approved" }),
+                  task_assignments: (t.task_assignments || []).map((a: any) =>
+                    a.user_id === assigneeId ? { ...a, approval_status: "approved", approval_note: null } : a
+                  ),
+                } : t));
               }}
-              onRejectTask={async (id: string, note: string) => {
-                await onRejectTask?.(id, note);
-                setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? { ...t, approval_status: "rejected", approval_note: note } : t));
+              onRejectTask={async (id: string, note: string, assigneeId?: string | null) => {
+                await onRejectTask?.(id, note, assigneeId);
+                setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? {
+                  ...t,
+                  ...(assigneeId ? {} : { approval_status: "rejected", approval_note: note }),
+                  task_assignments: (t.task_assignments || []).map((a: any) =>
+                    a.user_id === assigneeId ? { ...a, approval_status: "rejected", approval_note: note } : a
+                  ),
+                } : t));
               }}
               onApproveLog={async (id: string) => {
                 await onApproveLog?.(id);
