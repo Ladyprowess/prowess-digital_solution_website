@@ -65,6 +65,7 @@ export default function DashboardPage() {
         { data: kpiAssignments, error: kpiAErr },
         { data: kpiLogs,  error: kpiLErr    },
         { data: weeklyWinners               },
+        { data: monthlyWinners              },
         { data: sales                       },
         { data: payroll                     },
         { data: offlineIncome               },
@@ -76,6 +77,7 @@ export default function DashboardPage() {
         supabase.from("kpi_assignments").select("*").order("created_at", { ascending: false }),
         supabase.from("kpi_logs").select("*").order("created_at", { ascending: false }),
         supabase.from("weekly_winners").select("*").order("week_end", { ascending: false }),
+        supabase.from("monthly_winners").select("*").order("month", { ascending: false }),
         supabase.from("commission_sales").select("*").order("sale_date", { ascending: false }),
         supabase.from("payroll_entries").select("*").order("created_at", { ascending: false }),
         supabase.from("offline_income").select("*").order("income_date", { ascending: false }),
@@ -90,6 +92,7 @@ export default function DashboardPage() {
         profile, tasks: tasks || [], logs: logs || [], users: users || [],
         kpiAssignments: kpiAssignments || [], kpiLogs: kpiLogs || [],
         weeklyWinners: weeklyWinners || [],
+        monthlyWinners: monthlyWinners || [],
         sales: sales || [],
         payroll: payroll || [],
         offlineIncome: offlineIncome || [],
@@ -254,6 +257,7 @@ export default function DashboardPage() {
           ),
         } : t),
       }));
+      return; // don't touch the tasks row — other assignees must not be affected
     }
     const updates: any = { status };
     if (status === "completed") {
@@ -269,9 +273,31 @@ export default function DashboardPage() {
     }
   }
 
-  async function deleteTask(taskId: string) {
-    await supabase.from("tasks").delete().eq("id", taskId);
-    setState((p: any) => ({ ...p, tasks: p.tasks.filter((t: any) => t.id !== taskId) }));
+  async function deleteTask(taskId: string, assigneeId?: string | null) {
+    if (assigneeId) {
+      // Remove only this person's assignment
+      await supabase.from("task_assignments").delete().eq("task_id", taskId).eq("user_id", assigneeId);
+      // Check remaining assignments before updating state
+      const remaining = (state.tasks.find((t: any) => t.id === taskId)?.task_assignments ?? [])
+        .filter((a: any) => a.user_id !== assigneeId);
+      if (remaining.length === 0) {
+        // Last assignee removed — delete the whole task
+        await supabase.from("tasks").delete().eq("id", taskId);
+        setState((p: any) => ({ ...p, tasks: p.tasks.filter((t: any) => t.id !== taskId) }));
+      } else {
+        setState((p: any) => ({
+          ...p,
+          tasks: p.tasks.map((t: any) => t.id === taskId ? {
+            ...t,
+            task_assignments: remaining,
+            assigned_to: t.assigned_to === assigneeId ? (remaining[0]?.user_id ?? null) : t.assigned_to,
+          } : t),
+        }));
+      }
+    } else {
+      await supabase.from("tasks").delete().eq("id", taskId);
+      setState((p: any) => ({ ...p, tasks: p.tasks.filter((t: any) => t.id !== taskId) }));
+    }
   }
 
   async function reassignTask(taskId: string, assigneeIds: string[]) {
@@ -724,6 +750,64 @@ export default function DashboardPage() {
     }
   }
 
+  async function closeMonth(month: string, scores: any[]) {
+    const winner = scores[0];
+    if (!winner) return;
+    const { data: winnerRow } = await supabase.from("monthly_winners").insert({
+      month,
+      winner_id: winner.userId,
+      winner_name: winner.name,
+      total_points: winner.score,
+      tasks_completed: winner.tasksCompleted,
+      logs_submitted: winner.logsCount,
+      created_by: state.profile.id,
+    }).select().single();
+    if (winnerRow) {
+      setState((p: any) => ({ ...p, monthlyWinners: [winnerRow, ...(p.monthlyWinners || [])] }));
+    }
+    // Notify winner
+    if (winner) {
+      const winnerUser = state.users.find((u: any) => u.id === winner.userId);
+      const monthLabel = new Date(month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      if (winnerUser?.email) {
+        fetch("/api/notify-month-winner", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: winnerUser.email,
+            winnerName: winner.name,
+            month: monthLabel,
+            totalPoints: winner.score,
+            tasksCompleted: winner.tasksCompleted,
+            logsSubmitted: winner.logsCount,
+            isWinner: true,
+            teamSize: scores.length,
+          }),
+        }).catch(() => {});
+      }
+      // Notify rest of team
+      for (const s of scores.slice(1)) {
+        const u = state.users.find((usr: any) => usr.id === s.userId);
+        if (u?.email) {
+          fetch("/api/notify-month-winner", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: u.email,
+              winnerName: winner.name,
+              month: monthLabel,
+              totalPoints: winner.score,
+              tasksCompleted: winner.tasksCompleted,
+              logsSubmitted: winner.logsCount,
+              isWinner: false,
+              teamSize: scores.length,
+            }),
+          }).catch(() => {});
+        }
+      }
+    }
+  }
+
   return (
     <ProwessDashboard
       currentUser={state.profile}
@@ -733,6 +817,7 @@ export default function DashboardPage() {
       kpiAssignments={state.kpiAssignments}
       kpiLogs={state.kpiLogs}
       weeklyWinners={state.weeklyWinners || []}
+      monthlyWinners={state.monthlyWinners || []}
       sales={state.sales || []}
       payroll={state.payroll || []}
       offlineIncome={state.offlineIncome || []}
@@ -757,6 +842,7 @@ export default function DashboardPage() {
       onApproveLog={approveLog}
       onRejectLog={rejectLog}
       onCloseWeek={closeWeek}
+      onCloseMonth={closeMonth}
       onLogSale={logSale}
       onConfirmSale={confirmSale}
       onRejectSale={rejectSale}

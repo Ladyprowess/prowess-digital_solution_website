@@ -89,28 +89,48 @@ function expandTasksPerAssignee(tasks: any[]): any[] {
   const result: any[] = [];
   for (const t of tasks) {
     const assignees: string[] = t.assignees ?? [];
+    const allAssignments: any[] = t.task_assignments ?? [];
+    const isMulti = allAssignments.length > 1;
+
     if (assignees.length === 0) {
       result.push({ ...t, _singleAssignee: null, _expandedId: t.id });
       continue;
     }
     for (const uid of assignees) {
-      const assignment = (t.task_assignments ?? []).find((a: any) => a.user_id === uid);
-      // Only use assignment-level values when they've been explicitly updated
-      // (i.e. not still the column default of 'pending').
-      // This ensures tasks created before the migration still show correctly.
-      const aStatus = assignment?.status;
-      const aApproval = assignment?.approval_status;
-      result.push({
-        ...t,
-        assignees: [uid],
-        _singleAssignee: uid,
-        _expandedId: assignees.length > 1 ? `${t.id}::${uid}` : t.id,
-        status:          (aStatus   && aStatus   !== 'pending') ? aStatus   : t.status,
-        submission_links: assignment?.submission_links ?? t.submission_links ?? [],
-        approvalStatus:  (aApproval && aApproval !== 'pending') ? aApproval : t.approvalStatus,
-        approvalNote:    assignment?.approval_note ?? t.approvalNote,
-        completedAt:     assignment?.completed_at  ?? t.completedAt,
-      });
+      const assignment = allAssignments.find((a: any) => a.user_id === uid);
+
+      if (isMulti) {
+        // Multi-assignee: each person is fully independent.
+        // Never inherit from the shared tasks row — that would bleed one
+        // person's submission status onto everyone else.
+        result.push({
+          ...t,
+          assignees: [uid],
+          _singleAssignee: uid,
+          _expandedId: `${t.id}::${uid}`,
+          status:           assignment?.status           ?? 'pending',
+          submission_links: assignment?.submission_links ?? [],
+          approvalStatus:   assignment?.approval_status  ?? 'pending',
+          approvalNote:     assignment?.approval_note    ?? '',
+          completedAt:      assignment?.completed_at     ?? null,
+        });
+      } else {
+        // Single-assignee: fall back to tasks row for backward compat
+        // (pre-migration rows don't have assignment-level status yet).
+        const aStatus   = assignment?.status;
+        const aApproval = assignment?.approval_status;
+        result.push({
+          ...t,
+          assignees: [uid],
+          _singleAssignee: uid,
+          _expandedId: t.id,
+          status:           (aStatus   && aStatus   !== 'pending') ? aStatus   : t.status,
+          submission_links: assignment?.submission_links ?? t.submission_links ?? [],
+          approvalStatus:   (aApproval && aApproval !== 'pending') ? aApproval : t.approvalStatus,
+          approvalNote:     assignment?.approval_note ?? t.approvalNote,
+          completedAt:      assignment?.completed_at  ?? t.completedAt,
+        });
+      }
     }
   }
   return result;
@@ -307,6 +327,41 @@ function computeWeeklyScores(tasks: any[], logs: any[], users: any[]) {
       };
     })
     .sort((a, b) => b.score - a.score);
+}
+
+// This-month scores (approved items completed/logged this calendar month only)
+function computeMonthlyScores(tasks: any[], logs: any[], users: any[]) {
+  const thisMonth = fmt(new Date()).slice(0, 7);
+  return users
+    .filter((u: any) => isStaff(u))
+    .map((u: any) => {
+      const nu = normUser(u);
+      let pts = 0;
+      const ut = tasks.map(normTask).filter((t: any) =>
+        t.assignees.includes(u.id) && t.approvalStatus === "approved" &&
+        (t.completedAt || "").slice(0, 7) === thisMonth
+      );
+      ut.forEach((t: any) => {
+        if (t.status === "completed") {
+          pts += 10;
+          if (t.priority === "high") pts += 5;
+          if (t.completedAt && t.deadline && t.completedAt <= t.deadline) pts += 5;
+          else if (t.completedAt && t.deadline && t.completedAt > t.deadline) pts -= 5;
+        }
+      });
+      const ul = logs.map(normLog).filter((l: any) =>
+        l.userId === u.id && l.approvalStatus === "approved" && l.date.slice(0, 7) === thisMonth
+      );
+      pts += ul.length * 3;
+      return {
+        userId: u.id, name: nu.name, avatar: nu.avatar, title: nu.title,
+        score: Math.max(0, pts),
+        tasksCompleted: ut.filter((t: any) => t.status === "completed").length,
+        tasksTotal: ut.length,
+        logsCount: ul.length,
+      };
+    })
+    .sort((a: any, b: any) => b.score - a.score);
 }
 
 // Small avatar circle
@@ -750,7 +805,7 @@ function TopBar({ user, page, isMobile, onMenuOpen }: { user: any; page: string;
   );
 }
 
-function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, setPage }: any) {
+function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, monthlyWinners, setPage }: any) {
   const scores  = useMemo(() => computeScores(tasks, logs, users), [tasks, logs, users]);
   const total     = tasks.length;
   const completed = tasks.filter((t: any) => t.status === "completed").length;
@@ -781,8 +836,9 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
   }).length;
   const kpiTotal = monthKpis.length;
 
-  const pendingApprovals = tasks.map(normTask).filter((t: any) => t.approvalStatus === "needs-review").length
-    + logs.map(normLog).filter((l: any) => l.approvalStatus === "needs-review").length;
+  const pendingApprovals = expandTasksPerAssignee(tasks.map(normTask)).filter((t: any) =>
+    t.approvalStatus === "needs-review" && t._singleAssignee
+  ).length + logs.map(normLog).filter((l: any) => l.approvalStatus === "needs-review").length;
   const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
 
   return (
@@ -800,6 +856,26 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
           </div>
         </div>
       )}
+      {/* Team Member of the Month banner */}
+      {(() => {
+        const thisMonth = fmt(today).slice(0, 7);
+        const monthWinner = (monthlyWinners || []).find((w: any) => w.month === thisMonth)
+          || (monthlyWinners || [])[0];
+        if (!monthWinner) return null;
+        const monthLabel = new Date(monthWinner.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fdf4ff,#fae8ff)", border: "1px solid #e879f9", borderRadius: 14, padding: "14px 20px" }}>
+            <span style={{ fontSize: 32 }}>🌟</span>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#86198f", textTransform: "uppercase", letterSpacing: "0.5px" }}>Team Member of the Month — {monthLabel}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{monthWinner.winner_name}</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>
+                {monthWinner.total_points}pts · {monthWinner.tasks_completed} tasks · {monthWinner.logs_submitted} logs
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
         <Stat icon="📋" label="Total Tasks"  value={total}     sub="This month"   color="#6366f1" trend={12} />
         <Stat icon="✅" label="Completed"    value={completed} sub={`${total ? Math.round(completed / total * 100) : 0}% rate`} color="#22c55e" trend={8} />
@@ -967,7 +1043,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
   );
 }
 
-function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, setPage }: any) {
+function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, monthlyWinners, setPage }: any) {
   const myT  = tasks.map(normTask).filter((t: any) => t.assignees.includes(user.id));
   const myL  = logs.map(normLog).filter((l: any) => l.userId === user.id);
   const done = myT.filter((t: any) => t.status === "completed").length;
@@ -1062,6 +1138,38 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
           </div>
         </div>
       )}
+      {/* Team Member of the Month banner */}
+      {(() => {
+        const thisMonth = fmt(today).slice(0, 7);
+        const mw = (monthlyWinners || []).find((w: any) => w.month === thisMonth) || (monthlyWinners || [])[0];
+        if (!mw) return null;
+        const monthLabel = new Date(mw.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+        const isMonthWinner = mw.winner_id === user.id;
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: 14,
+            background: isMonthWinner ? "linear-gradient(135deg,#fdf4ff,#fae8ff)" : "linear-gradient(135deg,#f8fafc,#f1f5f9)",
+            border: isMonthWinner ? "2px solid #e879f9" : "1px solid #e2e8f0",
+            borderRadius: 16, padding: "16px 20px" }}>
+            <span style={{ fontSize: isMonthWinner ? 40 : 28 }}>{isMonthWinner ? "🌟" : "🏆"}</span>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: isMonthWinner ? "#86198f" : "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Team Member of the Month — {monthLabel}
+              </div>
+              {isMonthWinner ? (
+                <>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>Congratulations, {user.name}! 🎉</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{mw.total_points}pts · {mw.tasks_completed} tasks · {mw.logs_submitted} logs</div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{mw.winner_name}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{mw.total_points}pts · {mw.tasks_completed} tasks · {mw.logs_submitted} logs</div>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
         <Stat icon="📋" label="Assigned Tasks" value={myT.length}       color="#6366f1" />
@@ -1528,11 +1636,16 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
           </div>
         )}
 
-        {user.role === "admin" && (
-          <button onClick={() => { onDelete(task.id); onClose(); }} style={{ width: "100%", padding: "11px", borderRadius: 10, background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
-            Delete Task
-          </button>
-        )}
+        {user.role === "admin" && (() => {
+          const isMulti = (task.task_assignments ?? []).length > 1;
+          return (
+            <button
+              onClick={() => { onDelete(task.id, isMulti ? task._singleAssignee : null); onClose(); }}
+              style={{ width: "100%", padding: "11px", borderRadius: 10, background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
+              {isMulti ? "Remove This Assignee" : "Delete Task"}
+            </button>
+          );
+        })()}
       </Card>
     </div>
   );
@@ -1594,9 +1707,18 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
       ),
     } : t));
   };
-  const del = (id: string) => {
-    if (onDeleteTask) onDeleteTask(id);
-    else setTasks((p: any[]) => p.filter(t => t.id !== id));
+  const del = (id: string, assigneeId?: string | null) => {
+    if (onDeleteTask) onDeleteTask(id, assigneeId);
+    else {
+      if (assigneeId) {
+        setTasks((p: any[]) => p.map((t: any) => t.id !== id ? t : {
+          ...t,
+          task_assignments: (t.task_assignments ?? []).filter((a: any) => a.user_id !== assigneeId),
+        }).filter((t: any) => (t.task_assignments ?? []).length > 0 || t.id !== id));
+      } else {
+        setTasks((p: any[]) => p.filter(t => t.id !== id));
+      }
+    }
   };
   const create = async () => {
     if (!form.title || form.assigneeIds.length === 0) return;
@@ -2238,22 +2360,27 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
   );
 }
 
-function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek }: any) {
-  const [lbTab,      setLbTab]      = useState<"week" | "alltime" | "history">("week");
-  const [lbPage,     setLbPage]     = useState(1);
-  const [closeModal, setCloseModal] = useState(false);
-  const [closing,    setClosing]    = useState(false);
+function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek, monthlyWinners, onCloseMonth }: any) {
+  const [lbTab,           setLbTab]           = useState<"week" | "alltime" | "history">("week");
+  const [lbPage,          setLbPage]          = useState(1);
+  const [closeModal,      setCloseModal]      = useState(false);
+  const [closing,         setClosing]         = useState(false);
+  const [closeMonthModal, setCloseMonthModal] = useState(false);
+  const [closingMonth,    setClosingMonth]    = useState(false);
   const LB_PER_PAGE = 10;
   const { start: weekStart, end: weekEnd } = getWeekBounds();
 
   const weeklySc   = useMemo(() => computeWeeklyScores(tasks, logs, users), [tasks, logs, users]);
   const alltimeSc  = useMemo(() => computeScores(tasks, logs, users),       [tasks, logs, users]);
+  const monthlySc  = useMemo(() => computeMonthlyScores(tasks, logs, users), [tasks, logs, users]);
   const sc         = lbTab === "week" ? weeklySc : alltimeSc;
   const [top, ...rest] = sc;
   const medals     = ["🥇", "🥈", "🥉"];
   const lbTotalPages = Math.ceil(rest.length / LB_PER_PAGE);
   const pagedRest  = rest.slice((lbPage - 1) * LB_PER_PAGE, lbPage * LB_PER_PAGE);
   const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
+  const thisMonth = fmt(new Date()).slice(0, 7);
+  const lastMonthWinner = (monthlyWinners || []).length > 0 ? monthlyWinners[0] : null;
 
   async function handleCloseWeek() {
     if (!weeklySc.length) return;
@@ -2263,10 +2390,18 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek 
     setCloseModal(false);
   }
 
+  async function handleCloseMonth() {
+    if (!monthlySc.length) return;
+    setClosingMonth(true);
+    await onCloseMonth?.(thisMonth, monthlySc);
+    setClosingMonth(false);
+    setCloseMonthModal(false);
+  }
+
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
 
-      {/* Tab bar + Close Week button */}
+      {/* Tab bar + Close Week / Close Month buttons */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <div style={{ display: "flex", gap: 8 }}>
           {(["week", "alltime", "history"] as const).map(t => (
@@ -2277,40 +2412,87 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek 
             </button>
           ))}
         </div>
-        {user?.role === "admin" && lbTab !== "history" && (
-          <button onClick={() => setCloseModal(true)}
-            style={{ padding: "9px 18px", borderRadius: 11, background: "#f59e0b", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-            🏁 Close Week
-          </button>
-        )}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {user?.role === "admin" && lbTab !== "history" && (
+            <button onClick={() => setCloseModal(true)}
+              style={{ padding: "9px 18px", borderRadius: 11, background: "#f59e0b", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              🏁 Close Week
+            </button>
+          )}
+          {user?.role === "admin" && (
+            <button onClick={() => setCloseMonthModal(true)}
+              style={{ padding: "9px 18px", borderRadius: 11, background: "#9333ea", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              🌟 Close Month
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Past Winners tab */}
       {lbTab === "history" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {(!weeklyWinners || weeklyWinners.length === 0) ? (
-            <Card style={{ padding: 40, textAlign: "center" }}>
-              <div style={{ fontSize: 30, marginBottom: 8 }}>🏆</div>
-              <div style={{ color: "#94a3b8" }}>No weekly winners recorded yet. Close the first week to start the history.</div>
-            </Card>
-          ) : weeklyWinners.map((w: any, i: number) => (
-            <Card key={w.id} style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ fontSize: 28 }}>{i === 0 ? "🏆" : "🥈"}</div>
-              <Av user={users.find((u: any) => u.id === w.winner_id)} size={44} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{w.winner_name}</div>
-                <div style={{ fontSize: 12, color: "#64748b" }}>Week of {w.week_start} to {w.week_end}</div>
-              </div>
-              <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-                {[["Points", w.total_points, "#f59e0b"], ["Tasks", w.tasks_completed, "#22c55e"], ["Logs", w.logs_submitted, "#6366f1"]].map(([l, v, clr]) => (
-                  <div key={String(l)} style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: String(clr) }}>{v}</div>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{l}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Monthly Winners section */}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+              <span>🌟</span> Team Member of the Month — History
+            </div>
+            {(!monthlyWinners || monthlyWinners.length === 0) ? (
+              <Card style={{ padding: 32, textAlign: "center" }}>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🌟</div>
+                <div style={{ color: "#94a3b8" }}>No monthly winners recorded yet. Close the first month to start the history.</div>
+              </Card>
+            ) : monthlyWinners.map((w: any, i: number) => {
+              const monthLabel = new Date(w.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+              return (
+                <Card key={w.id} style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 10, background: i === 0 ? "linear-gradient(135deg,#fdf4ff,#fae8ff)" : "white", borderColor: i === 0 ? "#e879f9" : "#e2e8f0" }}>
+                  <div style={{ fontSize: 28 }}>{i === 0 ? "🌟" : "⭐"}</div>
+                  <Av user={users.find((u: any) => u.id === w.winner_id)} size={44} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{w.winner_name}</div>
+                    <div style={{ fontSize: 12, color: "#64748b" }}>{monthLabel}</div>
                   </div>
-                ))}
-              </div>
-            </Card>
-          ))}
+                  <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                    {[["Points", w.total_points, "#9333ea"], ["Tasks", w.tasks_completed, "#22c55e"], ["Logs", w.logs_submitted, "#6366f1"]].map(([l, v, clr]) => (
+                      <div key={String(l)} style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: String(clr) }}>{v}</div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Weekly Winners section */}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+              <span>🏆</span> Team Member of the Week — History
+            </div>
+            {(!weeklyWinners || weeklyWinners.length === 0) ? (
+              <Card style={{ padding: 40, textAlign: "center" }}>
+                <div style={{ fontSize: 30, marginBottom: 8 }}>🏆</div>
+                <div style={{ color: "#94a3b8" }}>No weekly winners recorded yet. Close the first week to start the history.</div>
+              </Card>
+            ) : weeklyWinners.map((w: any, i: number) => (
+              <Card key={w.id} style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
+                <div style={{ fontSize: 28 }}>{i === 0 ? "🏆" : "🥈"}</div>
+                <Av user={users.find((u: any) => u.id === w.winner_id)} size={44} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{w.winner_name}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>Week of {w.week_start} to {w.week_end}</div>
+                </div>
+                <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                  {[["Points", w.total_points, "#f59e0b"], ["Tasks", w.tasks_completed, "#22c55e"], ["Logs", w.logs_submitted, "#6366f1"]].map(([l, v, clr]) => (
+                    <div key={String(l)} style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: String(clr) }}>{v}</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 
@@ -2421,6 +2603,47 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek 
                 {closing ? "Saving..." : "Confirm Close Week"}
               </button>
               <button onClick={() => setCloseModal(false)}
+                style={{ padding: "12px 20px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                Cancel
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Close Month confirmation modal */}
+      {closeMonthModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <Card style={{ padding: 32, width: 460, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>🌟 Close Month</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
+              This will record {monthlySc[0]?.name || "the top scorer"} as Team Member of the Month for{" "}
+              {new Date(thisMonth + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" })} and notify the whole team.
+            </div>
+            {monthlySc.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+                {monthlySc.map((s: any, i: number) => (
+                  <div key={s.userId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10,
+                    background: i === 0 ? "linear-gradient(135deg,#fdf4ff,#fae8ff)" : "#f8fafc",
+                    border: i === 0 ? "1px solid #e879f9" : "1px solid #f1f5f9" }}>
+                    <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{i === 0 ? "🌟" : `#${i + 1}`}</span>
+                    <Av user={users.find((u: any) => u.id === s.userId)} size={30} />
+                    <span style={{ fontSize: 13, fontWeight: i === 0 ? 700 : 400, flex: 1, color: "#0f172a" }}>{s.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? "#9333ea" : "#64748b" }}>{s.score}pt</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ padding: "14px", background: "#fef2f2", borderRadius: 10, marginBottom: 20, fontSize: 13, color: "#dc2626" }}>
+                No approved activity this month yet. Close anyway?
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={handleCloseMonth} disabled={closingMonth}
+                style={{ flex: 1, padding: "12px", borderRadius: 10, background: "#9333ea", border: "none", color: "white", fontWeight: 700, fontSize: 14, cursor: closingMonth ? "not-allowed" : "pointer", opacity: closingMonth ? 0.7 : 1 }}>
+                {closingMonth ? "Saving..." : "Confirm Close Month"}
+              </button>
+              <button onClick={() => setCloseMonthModal(false)}
                 style={{ padding: "12px 20px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
                 Cancel
               </button>
@@ -5230,6 +5453,7 @@ export default function ProwessDashboard({
   kpiAssignments = [],
   kpiLogs = [],
   weeklyWinners = [],
+  monthlyWinners = [],
   sales = [],
   payroll = [],
   offlineIncome = [],
@@ -5254,6 +5478,7 @@ export default function ProwessDashboard({
   onApproveLog,
   onRejectLog,
   onCloseWeek,
+  onCloseMonth,
   onLogSale,
   onConfirmSale,
   onRejectSale,
@@ -5281,6 +5506,7 @@ export default function ProwessDashboard({
   kpiAssignments?: any[];
   kpiLogs?: any[];
   weeklyWinners?: any[];
+  monthlyWinners?: any[];
   sales?: any[];
   onCreateAssignment?: (form: any) => Promise<void>;
   onLogKPI?: (form: any) => Promise<void>;
@@ -5288,7 +5514,7 @@ export default function ProwessDashboard({
   onDeleteAssignment?: (id: string) => Promise<void>;
   onCreateTask?: (form: any) => Promise<void>;
   onUpdateTaskStatus?: (id: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null, assigneeId?: string | null) => Promise<void>;
-  onDeleteTask?: (id: string) => Promise<void>;
+  onDeleteTask?: (id: string, assigneeId?: string | null) => Promise<void>;
   onReassignTask?: (taskId: string, assigneeIds: string[]) => Promise<void>;
   onAddLog?: (form: any) => Promise<void>;
   onDeleteLog?: (id: string) => Promise<void>;
@@ -5302,6 +5528,7 @@ export default function ProwessDashboard({
   onApproveLog?: (id: string) => Promise<void>;
   onRejectLog?: (id: string, note: string) => Promise<void>;
   onCloseWeek?: (weekStart: string, weekEnd: string, scores: any[]) => Promise<void>;
+  onCloseMonth?: (month: string, scores: any[]) => Promise<void>;
   onLogSale?: (form: any) => Promise<void>;
   onConfirmSale?: (id: string) => Promise<void>;
   onRejectSale?: (id: string, note: string) => Promise<void>;
@@ -5334,6 +5561,7 @@ export default function ProwessDashboard({
   const [localKpiA,    setLocalKpiA]    = useState(kpiAssignments);
   const [localKpiL,    setLocalKpiL]    = useState(kpiLogs);
   const [localWinners, setLocalWinners] = useState(weeklyWinners);
+  const [localMonthlyWinners, setLocalMonthlyWinners] = useState(monthlyWinners);
   const [localSales,   setLocalSales]   = useState(sales);
   const [localPayroll, setLocalPayroll] = useState(payroll);
   const [localIncome,  setLocalIncome]  = useState(offlineIncome);
@@ -5345,6 +5573,7 @@ export default function ProwessDashboard({
   useEffect(() => setLocalKpiA(kpiAssignments),  [kpiAssignments]);
   useEffect(() => setLocalKpiL(kpiLogs),         [kpiLogs]);
   useEffect(() => setLocalWinners(weeklyWinners),[weeklyWinners]);
+  useEffect(() => setLocalMonthlyWinners(monthlyWinners), [monthlyWinners]);
   useEffect(() => setLocalSales(sales),          [sales]);
   useEffect(() => setLocalPayroll(payroll),       [payroll]);
   useEffect(() => setLocalIncome(offlineIncome),  [offlineIncome]);
@@ -5354,13 +5583,22 @@ export default function ProwessDashboard({
 
   const approvalCount = (() => {
     if (!user) return 0;
-    const pendingTasks = localTasks.map(normTask).filter((t: any) => t.approvalStatus === "needs-review");
-    const pendingLogs  = localLogs.map(normLog).filter((l: any)  => l.approvalStatus === "needs-review");
-    if (user.role === "admin") return pendingTasks.length + pendingLogs.length;
+    // Use expandTasksPerAssignee so the count matches what the approvals panel shows
+    const expandedTasks = expandTasksPerAssignee(localTasks.map(normTask));
+    const pendingLogs   = localLogs.map(normLog).filter((l: any) => l.approvalStatus === "needs-review");
+    if (user.role === "admin") {
+      const approvableIds = new Set(users.filter((u: any) => u.role !== "admin").map((u: any) => u.id));
+      const pendingTasks = expandedTasks.filter((t: any) =>
+        t.approvalStatus === "needs-review" && t._singleAssignee && approvableIds.has(t._singleAssignee)
+      );
+      return pendingTasks.length + pendingLogs.length;
+    }
     if (user.role === "leader") {
       const myTeamIds = new Set(users.filter((u: any) => u.managed_by === user.id).map((u: any) => u.id));
-      return pendingTasks.filter((t: any) => t.assignees.some((uid: string) => myTeamIds.has(uid))).length
-           + pendingLogs.filter((l: any)  => myTeamIds.has(l.userId)).length;
+      const pendingTasks = expandedTasks.filter((t: any) =>
+        t.approvalStatus === "needs-review" && t._singleAssignee && myTeamIds.has(t._singleAssignee)
+      );
+      return pendingTasks.length + pendingLogs.filter((l: any) => myTeamIds.has(l.userId)).length;
     }
     return 0;
   })();
@@ -5369,8 +5607,8 @@ export default function ProwessDashboard({
     switch (page) {
       case "dashboard":
         return isPrivileged(user)
-          ? <><BirthdayBanner users={users} /><AdminDashboard tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} setPage={setPage} /></>
-          : <><BirthdayBanner users={users} /><MemberDashboard user={user} tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} setPage={setPage} /></>;
+          ? <><BirthdayBanner users={users} /><AdminDashboard tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} monthlyWinners={localMonthlyWinners} setPage={setPage} /></>
+          : <><BirthdayBanner users={users} /><MemberDashboard user={user} tasks={localTasks} logs={localLogs} users={users} kpiAssignments={localKpiA} kpiLogs={localKpiL} weeklyWinners={localWinners} monthlyWinners={localMonthlyWinners} setPage={setPage} /></>;
       case "kpi":
         return <KPIPage
           user={user} users={users}
@@ -5490,7 +5728,7 @@ export default function ProwessDashboard({
           case "activity":
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} onResubmitLog={onResubmitLog} />;
       case "leaderboard":
-        return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); const winner = sc[0]; setLocalWinners((prev: any) => [{ id: Date.now().toString(), week_start: ws, week_end: we, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} />;
+        return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} monthlyWinners={localMonthlyWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); const winner = sc[0]; setLocalWinners((prev: any) => [{ id: Date.now().toString(), week_start: ws, week_end: we, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} onCloseMonth={async (month: string, sc: any[]) => { await onCloseMonth?.(month, sc); const winner = sc[0]; setLocalMonthlyWinners((prev: any) => [{ id: Date.now().toString(), month, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} />;
       case "reports":
 
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
