@@ -74,6 +74,9 @@ const makeDefault = ():any => ({
     {id:mkid(),item:"Transport per job",cpj:""},
     {id:mkid(),item:"Other per-job cost",cpj:""},
   ],
+  // monthlyVolume: expected total number of jobs or sales per month.
+  // Used to spread fixed costs (overhead) correctly across the Pricing tab.
+  monthlyVolume:"20",
   price:"",targetMargin:"25",
   items:[{id:mkid(),type:"service",name:"",mats:"",hrs:"",rate:"",svcOther:"",margin:"25",costPrice:"",packaging:"",transport:"",powerSupply:"",other:"",qty:"1",sellPrice:""}],
   funding:[
@@ -127,9 +130,21 @@ function TabBreakEven({d,sd,sym}:{d:any,sd:any,sym:string}){
   const updV=(id:string,f:string,v:string)=>sd((x:any)=>({...x,variable:x.variable.map((r:any)=>r.id===id?{...r,[f]:v}:r)}));
   const TF=d.fixed.reduce((a:number,r:any)=>a+num(r.amt),0);
   const TV=d.variable.reduce((a:number,r:any)=>a+num(r.cpj),0);
-  const P=num(d.price),M=num(d.targetMargin)/100,CM=P-TV;
-  const beJobs=CM>0?Math.ceil(TF/CM):null,beRev=beJobs?beJobs*P:null;
-  const tgtRev=beRev&&M<1?beRev/(1-M):null,tgtJobs=tgtRev&&P>0?Math.ceil(tgtRev/P):null;
+  const P=num(d.price);
+  const M=num(d.targetMargin)/100;
+  const CM=P-TV; // contribution margin per job/sale
+
+  // Break-even: minimum jobs to cover all fixed costs
+  const beJobs=CM>0?Math.ceil(TF/CM):null;
+  const beRev=beJobs?beJobs*P:null;
+
+  // Target jobs for desired profit margin:
+  // Profit Margin = (Revenue - Variable Costs - Fixed Costs) / Revenue
+  // Solving: jobs = TF / (P*(1-M) - TV) = TF / (CM - M*P)
+  const CM_adj=CM-M*P;
+  const tgtJobs=CM_adj>0?Math.ceil(TF/CM_adj):null;
+  const tgtRev=tgtJobs?tgtJobs*P:null;
+
   return <div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
       <div style={card}>
@@ -142,26 +157,37 @@ function TabBreakEven({d,sd,sym}:{d:any,sd:any,sym:string}){
         <div style={{marginTop:12,background:B,color:W,borderRadius:8,padding:"11px 14px",fontWeight:700,fontSize:13,display:"flex",justifyContent:"space-between"}}><span>TOTAL FIXED</span><span>{sym}{fmt(TF)}/month</span></div>
       </div>
       <div style={card}>
-        <h3 style={{margin:"0 0 12px",color:DARK,fontSize:15}}>Variable Costs per Job/Sale</h3>
+        <h3 style={{margin:"0 0 12px",color:DARK,fontSize:15}}>Variable Costs per Job / Sale</h3>
         <table style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr><th style={TH}>Cost Item</th><th style={{...TH,textAlign:"right" as const,width:"38%"}}>{`Per Job (${sym})`}</th><th style={{...TH,width:36}}></th></tr></thead>
           <tbody>{d.variable.map((r:any,i:number)=><tr key={r.id}><td style={TD(i%2===1)}><Inp val={r.item} set={v=>updV(r.id,"item",v)} ph="e.g. Materials per job"/></td><td style={TD(i%2===1)}><Inp val={r.cpj} set={v=>updV(r.id,"cpj",v)} type="number" right ph="0"/></td><td style={TD(i%2===1)}><Del fn={()=>sd((x:any)=>({...x,variable:x.variable.filter((c:any)=>c.id!==r.id)}))}/></td></tr>)}</tbody>
         </table>
         <AddRow fn={()=>sd((x:any)=>({...x,variable:[...x.variable,{id:mkid(),item:"",cpj:""}]}))}/>
-        <div style={{marginTop:12,background:B,color:W,borderRadius:8,padding:"11px 14px",fontWeight:700,fontSize:13,display:"flex",justifyContent:"space-between"}}><span>TOTAL VARIABLE/JOB</span><span>{sym}{fmt(TV)}</span></div>
+        <div style={{marginTop:12,background:B,color:W,borderRadius:8,padding:"11px 14px",fontWeight:700,fontSize:13,display:"flex",justifyContent:"space-between"}}><span>TOTAL VARIABLE / JOB</span><span>{sym}{fmt(TV)}</span></div>
       </div>
     </div>
     <div style={card}>
       <h3 style={{margin:"0 0 14px",color:DARK,fontSize:15}}>Break-Even Calculation</h3>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
-        <div><label style={{fontSize:13,fontWeight:700,color:DARK,display:"block",marginBottom:6}}>{`Average price per job or sale (${sym})`}</label><Inp val={d.price} set={v=>sd((x:any)=>({...x,price:v}))} type="number" ph="How much do you charge?"/></div>
-        <div><label style={{fontSize:13,fontWeight:700,color:DARK,display:"block",marginBottom:6}}>Target profit margin (%)</label><Inp val={d.targetMargin} set={v=>sd((x:any)=>({...x,targetMargin:v}))} type="number" ph="e.g. 25"/></div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14,marginBottom:18}}>
+        <div>
+          <label style={{fontSize:13,fontWeight:700,color:DARK,display:"block",marginBottom:6}}>{`Average price per job or sale (${sym})`}</label>
+          <Inp val={d.price} set={v=>sd((x:any)=>({...x,price:v}))} type="number" ph="How much do you charge?"/>
+        </div>
+        <div>
+          <label style={{fontSize:13,fontWeight:700,color:DARK,display:"block",marginBottom:6}}>Target profit margin (%)</label>
+          <Inp val={d.targetMargin} set={v=>sd((x:any)=>({...x,targetMargin:v}))} type="number" ph="e.g. 25"/>
+        </div>
+        <div>
+          <label style={{fontSize:13,fontWeight:700,color:DARK,display:"block",marginBottom:6}}>Expected monthly volume (jobs / units)</label>
+          <Inp val={d.monthlyVolume} set={v=>sd((x:any)=>({...x,monthlyVolume:v}))} type="number" ph="e.g. 20"/>
+          <p style={{fontSize:11,color:MID,margin:"5px 0 0",lineHeight:1.5}}>Used to calculate the overhead cost per job in the Pricing tab.</p>
+        </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12}}>
-        <KPI label="Contribution Margin" val={num(d.price)?`${sym}${fmt(CM)}`:" "} warn={CM<=0&&num(d.price)>0} sub={num(d.price)?`${pct(CM/num(d.price))} of price`:"Enter price above"}/>
-        <KPI accent label="Break-Even Jobs/Month" val={beJobs?`${beJobs} jobs`:" "} sub="minimum to cover all costs"/>
+        <KPI label="Contribution Margin" val={P>0?`${sym}${fmt(CM)}`:" "} warn={CM<=0&&P>0} sub={P>0?`${pct(CM/P)} of price`:"Enter price above"}/>
+        <KPI accent label="Break-Even Jobs / Month" val={beJobs?`${beJobs} jobs`:" "} sub="minimum to cover all costs"/>
         <KPI label="Break-Even Revenue" val={beRev?`${sym}${fmt(beRev)}`:" "} sub="minimum monthly income"/>
-        <KPI label={`Jobs for ${d.targetMargin}% Profit`} val={tgtJobs?`${tgtJobs} jobs`:" "} sub="your monthly target"/>
+        <KPI label={`Jobs for ${d.targetMargin}% Profit`} val={tgtJobs?`${tgtJobs} jobs`:" "} sub={tgtRev?`${sym}${fmt(tgtRev)} revenue target`:CM_adj<=0&&P>0?"Margin too high for this price":" "}/>
       </div>
     </div>
   </div>;
@@ -169,17 +195,28 @@ function TabBreakEven({d,sd,sym}:{d:any,sd:any,sym:string}){
 
 // ── Tab: Pricing ───────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function PricingItem({sv,idx,TF,upd,del,sym}:{sv:any,idx:number,TF:number,upd:(f:string,v:string)=>void,del:()=>void,sym:string}){
+function PricingItem({sv,idx,overheadPerUnit,upd,del,sym}:{sv:any,idx:number,overheadPerUnit:number,upd:(f:string,v:string)=>void,del:()=>void,sym:string}){
   const type=sv.type||"service";
-  const overhead=TF>0?TF/20:0;
+
+  // ── Service calculations ──
   const timeCost=num(sv.hrs)*num(sv.rate);
-  const svcCost=num(sv.mats)+timeCost+num(sv.svcOther)+overhead;
-  const svcMin=num(sv.margin)<100&&svcCost>0?svcCost/(1-num(sv.margin)/100):svcCost;
-  const unitCost=num(sv.costPrice)+num(sv.packaging)+num(sv.transport)+num(sv.powerSupply)+num(sv.other);
-  const prodTotal=unitCost+(overhead/Math.max(num(sv.qty)||1,1));
-  const prodMin=num(sv.margin)<100&&prodTotal>0?prodTotal/(1-num(sv.margin)/100):prodTotal;
-  const markupPct=unitCost>0?((num(sv.sellPrice)-unitCost)/unitCost)*100:0;
-  const underpriced=num(sv.sellPrice)>0&&num(sv.sellPrice)<prodTotal;
+  const svcCost=num(sv.mats)+timeCost+num(sv.svcOther)+overheadPerUnit;
+  // Minimum price to cover all costs and hit target margin:
+  // Price = Cost / (1 - margin%)
+  const svcMargin=Math.min(Math.max(num(sv.margin),0),99.9);
+  const svcMinPrice=svcCost>0?svcCost/(1-svcMargin/100):0;
+
+  // ── Product calculations ──
+  const unitVariableCost=num(sv.costPrice)+num(sv.packaging)+num(sv.transport)+num(sv.powerSupply)+num(sv.other);
+  const unitTotalCost=unitVariableCost+overheadPerUnit;
+  // Minimum selling price to cover total cost per unit and hit target margin:
+  const prodMargin=Math.min(Math.max(num(sv.margin),0),99.9);
+  const prodMinPrice=unitTotalCost>0?unitTotalCost/(1-prodMargin/100):0;
+
+  const sellPrice=num(sv.sellPrice);
+  const markupPct=unitVariableCost>0?((sellPrice-unitVariableCost)/unitVariableCost)*100:0;
+  const underpriced=sellPrice>0&&sellPrice<unitTotalCost;
+
   return <div style={{...card,marginBottom:16}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,flexWrap:"wrap",gap:10}}>
       <div style={{flex:1}}>
@@ -192,23 +229,33 @@ function PricingItem({sv,idx,TF,upd,del,sym}:{sv:any,idx:number,TF:number,upd:(f
         <Del fn={del}/>
       </div>
     </div>
+
     {(type==="service"||type==="both")&&<div style={{marginBottom:type==="both"?20:0}}>
       {type==="both"&&<div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:"uppercase",marginBottom:10,paddingBottom:6,borderBottom:`1px solid ${MGRAY}`}}>Service Pricing</div>}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:14}}>
-        {([[`Materials / Ingredients (${sym})`,"mats"],[`Time Required (hours)`,"hrs"],[`Your Hourly Rate (${sym})`,"rate"],[`Other Service Costs (${sym})`,"svcOther"],["Target Margin (%)","margin"]] as [string,string][]).map(([l,f])=>
+        {([[`Materials / Ingredients (${sym})`,"mats"],[`Time Required (hours)`,"hrs"],[`Your Hourly Rate (${sym})`,"rate"],[`Other Direct Costs (${sym})`,"svcOther"],["Target Margin (%)","margin"]] as [string,string][]).map(([l,f])=>
           <div key={f}><label style={{fontSize:11,fontWeight:700,color:MID,display:"block",marginBottom:4,textTransform:"uppercase"}}>{l}</label><Inp val={sv[f]} set={v=>upd(f,v)} type="number"/></div>)}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10}}>
-        {([["Time Cost",`${sym}${fmt(timeCost)}`,LGRAY,DARK],["Overhead",`${sym}${fmt(overhead)}`,LGRAY,DARK],["Total Cost",`${sym}${fmt(svcCost)}`,LGRAY,DARK],["Min Price",`${sym}${fmt(svcMin)}`,B,W],["Recommended",`${sym}${fmt(svcMin*1.1)}`,DARK,W]] as [string,string,string,string][]).map(([l,v,bg,tc])=>
-          <div key={l} style={{background:bg,borderRadius:8,padding:"10px 12px"}}><div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:tc===W?"rgba(255,255,255,.7)":MID,marginBottom:3}}>{l}</div><div style={{fontSize:17,fontWeight:800,color:tc}}>{v}</div></div>)}
+        {([
+          ["Time Cost",`${sym}${fmt(timeCost)}`,LGRAY,DARK],
+          ["Overhead / Job",`${sym}${fmt(overheadPerUnit)}`,LGRAY,DARK],
+          ["Total Cost / Job",`${sym}${fmt(svcCost)}`,LGRAY,DARK],
+          [`Min Price (${sv.margin||0}% margin)`,`${sym}${fmt(svcMinPrice)}`,B,W],
+        ] as [string,string,string,string][]).map(([l,v,bg,tc])=>
+          <div key={l} style={{background:bg,borderRadius:8,padding:"10px 12px"}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:tc===W?"rgba(255,255,255,.7)":MID,marginBottom:3}}>{l}</div>
+            <div style={{fontSize:17,fontWeight:800,color:tc}}>{v}</div>
+          </div>)}
       </div>
     </div>}
+
     {(type==="product"||type==="both")&&<div>
       {type==="both"&&<div style={{fontSize:12,fontWeight:700,color:DARK,textTransform:"uppercase",marginBottom:10,marginTop:4,paddingBottom:6,borderBottom:`1px solid ${MGRAY}`}}>Product Pricing</div>}
       <div style={{...card,background:LITE,border:`1px solid ${MID}`,padding:"12px 16px",marginBottom:14}}>
         <div style={{fontSize:12,fontWeight:700,color:DARK,marginBottom:10}}>Cost per Unit</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12}}>
-          {([[`Cost Price/Unit (${sym})`,"costPrice","What you pay to make or buy it"],["Packaging/Unit (₦)","packaging","Bag, box, label etc."],["Transport/Unit (₦)","transport","Delivery or getting stock"],["Power Supply/Unit (₦)","powerSupply","Fuel cost spread per unit"],["Other Variable Cost (₦)","other","Any other cost per unit"],["Units per Month","qty","How many do you expect to sell?"]] as [string,string,string][]).map(([l,f,h])=>
+          {([[`Cost Price / Unit (${sym})`,"costPrice","What you pay to make or buy it"],[`Packaging / Unit (${sym})`,"packaging","Bag, box, label etc."],[`Transport / Unit (${sym})`,"transport","Delivery or getting stock"],[`Power Supply / Unit (${sym})`,"powerSupply","Fuel cost spread per unit"],["Other Variable Cost (₦)","other","Any other cost per unit"],["Units per Month","qty","How many do you expect to sell?"]] as [string,string,string][]).map(([l,f,h])=>
             <div key={f}><label style={{fontSize:11,fontWeight:700,color:DARK,display:"block",marginBottom:4}}>{l}</label><Inp val={sv[f]} set={v=>upd(f,v)} type="number" ph={h}/></div>)}
         </div>
       </div>
@@ -217,29 +264,57 @@ function PricingItem({sv,idx,TF,upd,del,sym}:{sv:any,idx:number,TF:number,upd:(f
         <div><label style={{fontSize:13,fontWeight:700,color:DARK,display:"block",marginBottom:6}}>Target Profit Margin (%)</label><Inp val={sv.margin} set={v=>upd("margin",v)} type="number" ph="e.g. 35"/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10}}>
-        {([["Unit Variable Cost",`${sym}${fmt(unitCost)}`,LGRAY,DARK],["Overhead/Unit",`${sym}${fmt(overhead/Math.max(num(sv.qty)||1,1))}`,LGRAY,DARK],["Total Cost/Unit",`${sym}${fmt(prodTotal)}`,LGRAY,DARK],["Min Selling Price",`${sym}${fmt(prodMin)}`,B,W]] as [string,string,string,string][]).map(([l,v,bg,tc])=>
-          <div key={l} style={{background:bg,borderRadius:8,padding:"10px 12px"}}><div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:tc===W?"rgba(255,255,255,.7)":MID,marginBottom:3}}>{l}</div><div style={{fontSize:17,fontWeight:800,color:tc}}>{v}</div></div>)}
-        {num(sv.sellPrice)>0&&<div style={{background:markupPct>=30?"#e8f5e9":"#fdecea",borderRadius:8,padding:"10px 12px"}}>
-          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:markupPct>=30?"#388e3c":"#c0392b",marginBottom:3}}>Markup on Cost</div>
+        {([
+          ["Variable Cost / Unit",`${sym}${fmt(unitVariableCost)}`,LGRAY,DARK],
+          ["Overhead / Unit",`${sym}${fmt(overheadPerUnit)}`,LGRAY,DARK],
+          ["Total Cost / Unit",`${sym}${fmt(unitTotalCost)}`,LGRAY,DARK],
+          [`Min Price (${sv.margin||0}% margin)`,`${sym}${fmt(prodMinPrice)}`,B,W],
+        ] as [string,string,string,string][]).map(([l,v,bg,tc])=>
+          <div key={l} style={{background:bg,borderRadius:8,padding:"10px 12px"}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:tc===W?"rgba(255,255,255,.7)":MID,marginBottom:3}}>{l}</div>
+            <div style={{fontSize:17,fontWeight:800,color:tc}}>{v}</div>
+          </div>)}
+        {sellPrice>0&&<div style={{background:markupPct>=30?"#e8f5e9":"#fdecea",borderRadius:8,padding:"10px 12px"}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",color:markupPct>=30?"#388e3c":"#c0392b",marginBottom:3}}>Markup on Variable Cost</div>
           <div style={{fontSize:17,fontWeight:800,color:markupPct>=30?"#2e7d32":"#c0392b"}}>{Math.round(markupPct)}%</div>
         </div>}
       </div>
       {underpriced&&<div style={{marginTop:12,background:"#fdecea",borderRadius:8,padding:"10px 14px",fontSize:13,fontWeight:700,color:"#c0392b"}}>
-        ⚠ Your selling price of {sym}{fmt(sv.sellPrice)} is below your total cost of {sym}{fmt(prodTotal)}. You are selling at a loss. Raise your price to at least {sym}{fmt(prodMin)}.
+        ⚠ Your selling price of {sym}{fmt(sellPrice)} is below your total cost of {sym}{fmt(unitTotalCost)}. You are selling at a loss. Raise your price to at least {sym}{fmt(prodMinPrice)}.
       </div>}
     </div>}
   </div>;
 }
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function TabPricing({d,sd,sym}:{d:any,sd:any,sym:string}){
   const TF=d.fixed.reduce((a:number,r:any)=>a+num(r.amt),0);
+  const monthlyVol=Math.max(num(d.monthlyVolume)||1,1);
+
+  // Overhead per unit/job = total fixed costs divided by expected monthly volume.
+  // This spreads fixed costs accurately regardless of how many items or services you have.
+  const overheadPerUnit=TF>0?TF/monthlyVol:0;
+
   const upd=(id:string,f:string,v:string)=>sd((x:any)=>({...x,items:x.items.map((s:any)=>s.id===id?{...s,[f]:v}:s)}));
   const add=()=>sd((x:any)=>({...x,items:[...(x.items||[]),{id:mkid(),type:"service",name:"",mats:"",hrs:"",rate:"",svcOther:"",margin:"25",costPrice:"",packaging:"",transport:"",powerSupply:"",other:"",qty:"1",sellPrice:""}]}));
+
   return <div>
     <div style={{...card,background:LITE,border:`1.5px solid ${B}`,padding:"16px 20px"}}>
-      <p style={{margin:0,fontSize:13,color:DARK,lineHeight:1.7}}>Select <b>Service</b>, <b>Product</b>, or <b>Both</b>. For products, enter every cost per unit including transport and power supply. Never price below the minimum.</p>
+      <p style={{margin:0,fontSize:13,color:DARK,lineHeight:1.7}}>
+        Select <b>Service</b>, <b>Product</b>, or <b>Both</b>. Overhead ({sym}{fmt(overheadPerUnit)} per job) is your total monthly fixed costs divided by your expected monthly volume. Set monthly volume in the <b>Break-Even</b> tab. Never price below the minimum shown.
+      </p>
     </div>
-    {(d.items||[]).map((sv:any,idx:number)=><PricingItem key={sv.id} sv={sv} idx={idx} TF={TF} upd={(f,v)=>upd(sv.id,f,v)} sym={sym} del={()=>sd((x:any)=>({...x,items:x.items.filter((s:any)=>s.id!==sv.id)}))}/>)}
+    {(d.items||[]).map((sv:any,idx:number)=>
+      <PricingItem
+        key={sv.id}
+        sv={sv}
+        idx={idx}
+        overheadPerUnit={overheadPerUnit}
+        upd={(f,v)=>upd(sv.id,f,v)}
+        sym={sym}
+        del={()=>sd((x:any)=>({...x,items:x.items.filter((s:any)=>s.id!==sv.id)}))}
+      />
+    )}
     {(d.items||[]).length<8&&<AddRow fn={add} lbl="+ Add Another Item"/>}
   </div>;
 }
@@ -295,9 +370,22 @@ function CalculatorTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
     async function load(){
       try{
         const res=await fetch(`/api/tools-data?code=${encodeURIComponent(code)}&tool=calculator`);
-        if(res.ok){const j=await res.json();if(j.data){sd(j.data);return;}}
+        if(res.ok){const j=await res.json();if(j.data){
+          // Migrate old data that may be missing monthlyVolume
+          if(!j.data.monthlyVolume) j.data.monthlyVolume="20";
+          sd(j.data);return;
+        }}
       }catch{}
-      try{const s=localStorage.getItem("pds-calc-data");if(s){const p=JSON.parse(s);if(!p.items&&p.services)p.items=p.services;if(!p.items)p.items=makeDefault().items;sd(p);return;}}catch{}
+      try{
+        const s=localStorage.getItem("pds-calc-data");
+        if(s){
+          const p=JSON.parse(s);
+          if(!p.items&&p.services)p.items=p.services;
+          if(!p.items)p.items=makeDefault().items;
+          if(!p.monthlyVolume)p.monthlyVolume="20";
+          sd(p);return;
+        }
+      }catch{}
       sd(makeDefault());
     }
     load();
@@ -368,7 +456,7 @@ const REASON_MSG:Record<string,string>={
 export default function CalculatorPage(){
   const [code,setCode]=useState("");
   const [grantedCode,setGrantedCode]=useState<string|null>(null);
-  const [status,setStatus]=useState<"idle"|"checking"|"granted"|"denied">("idle");
+  const [status,setStatus]=useState<"idle"|"checking"|"denied">("idle");
   const [reason,setReason]=useState("");
 
   useEffect(()=>{
@@ -406,8 +494,6 @@ export default function CalculatorPage(){
     setCode("");
     setStatus("idle");
   }
-
-
 
   if(grantedCode) return <CalculatorTool code={grantedCode} onSignOut={signOut}/>;
 
@@ -498,7 +584,6 @@ export default function CalculatorPage(){
         .g-code-input::placeholder{color:rgba(255,255,255,.2);letter-spacing:2px;font-weight:500;font-size:14px}
         .g-code-input:focus{border-color:rgba(80,124,128,.8);background:rgba(80,124,128,.07);box-shadow:0 0 0 4px rgba(80,124,128,.12)}
         .g-code-input.err{border-color:rgba(255,120,100,.6);box-shadow:0 0 0 4px rgba(255,120,100,.08)}
-        .g-code-input.ok{border-color:rgba(46,160,67,.6);box-shadow:0 0 0 4px rgba(46,160,67,.08)}
 
         .g-err-txt{font-size:12px;font-weight:700;color:#ff8a80;text-align:center;min-height:20px;margin:8px 0 0;animation:errShake .3s cubic-bezier(.36,.07,.19,.97)}
         @keyframes errShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
@@ -570,7 +655,7 @@ export default function CalculatorPage(){
                     onKeyDown={e=>e.key==="Enter"&&verify()}
                     disabled={status==="checking"}
                     autoComplete="off"
-                    className={`g-code-input${status==="denied"?" err":status==="granted"?" ok":""}`}
+                    className={`g-code-input${status==="denied"?" err":""}`}
                   />
                 </div>
                 <div className="g-err-txt">{status==="denied"?(REASON_MSG[reason]??REASON_MSG.invalid):""}</div>
@@ -591,4 +676,3 @@ export default function CalculatorPage(){
     </>
   );
 }
-

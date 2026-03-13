@@ -63,15 +63,27 @@ const normUser = (u: any) => u ? ({
   title:  u.job_title       ?? u.title  ?? "",
 }) : null;
 
-const normTask = (t: any) => t ? ({
-  ...t,
-  assignedTo:      t.assigned_to      ?? t.assignedTo      ?? null,
-  completedAt:     t.completed_at     ?? t.completedAt     ?? null,
-  links:           t.links            ?? [],
-  submission_links: t.submission_links ?? [],
-  approvalStatus:  t.approval_status  ?? t.approvalStatus  ?? "approved",
-  approvalNote:    t.approval_note    ?? t.approvalNote    ?? "",
-}) : null;
+const normTask = (t: any) => {
+  if (!t) return null;
+  const assignedTo = t.assigned_to ?? t.assignedTo ?? null;
+  // task_assignments is the joined array from Supabase; fall back to legacy single assignee
+  const assignees: string[] =
+    Array.isArray(t.task_assignments) && t.task_assignments.length > 0
+      ? t.task_assignments.map((a: any) => a.user_id)
+      : (Array.isArray(t.assignees) && t.assignees.length > 0
+          ? t.assignees
+          : (assignedTo ? [assignedTo] : []));
+  return {
+    ...t,
+    assignedTo,
+    assignees,
+    completedAt:     t.completed_at     ?? t.completedAt     ?? null,
+    links:           t.links            ?? [],
+    submission_links: t.submission_links ?? [],
+    approvalStatus:  t.approval_status  ?? t.approvalStatus  ?? "approved",
+    approvalNote:    t.approval_note    ?? t.approvalNote    ?? "",
+  };
+};
 
 const normLog = (l: any) => l ? ({
   ...l,
@@ -208,7 +220,7 @@ function computeScores(tasks: any[], logs: any[], users: any[]) {
     .map(u => {
       const nu = normUser(u);
       let pts = 0;
-      const ut = tasks.map(normTask).filter(t => t.assignedTo === u.id && t.approvalStatus === "approved");
+      const ut = tasks.map(normTask).filter(t => t.assignees.includes(u.id) && t.approvalStatus === "approved");
       ut.forEach(t => {
         if (t.status === "completed") {
           pts += 10;
@@ -239,7 +251,7 @@ function computeWeeklyScores(tasks: any[], logs: any[], users: any[]) {
       const nu = normUser(u);
       let pts = 0;
       const ut = tasks.map(normTask).filter(t =>
-        t.assignedTo === u.id &&
+        t.assignees.includes(u.id) &&
         t.approvalStatus === "approved" &&
         t.status === "completed" &&
         t.completedAt && t.completedAt >= ws
@@ -925,7 +937,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
 }
 
 function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, setPage }: any) {
-  const myT  = tasks.map(normTask).filter((t: any) => t.assignedTo === user.id);
+  const myT  = tasks.map(normTask).filter((t: any) => t.assignees.includes(user.id));
   const myL  = logs.map(normLog).filter((l: any) => l.userId === user.id);
   const done = myT.filter((t: any) => t.status === "completed").length;
   const od   = myT.filter((t: any) => t.deadline && t.deadline < fmt(today) && t.status !== "completed").length;
@@ -1205,23 +1217,37 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
   );
 }
 
-function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApproveTask, onRejectTask }: any) {
-  const asgn = normUser(users.find((u: any) => u.id === task.assignedTo));
+function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApproveTask, onRejectTask, onReassign }: any) {
+  const assigneeUsers = task.assignees
+    .map((uid: string) => normUser(users.find((u: any) => u.id === uid)))
+    .filter(Boolean);
   const late = task.deadline < fmt(today) && task.status !== "completed";
-  const [subLinks,     setSubLinks]     = useState<{ label: string; url: string }[]>(
+  const [subLinks,       setSubLinks]       = useState<{ label: string; url: string }[]>(
     task.approvalStatus === "rejected" && task.submission_links ? task.submission_links : []
   );
-  const [resubmitNote, setResubmitNote] = useState("");
-  const [rejectMode,   setRejectMode]   = useState(false);
-  const [rejectNote,   setRejectNote]   = useState("");
-  const [approveSaving, setApproveSaving] = useState(false);
+  const [resubmitNote,   setResubmitNote]   = useState("");
+  const [rejectMode,     setRejectMode]     = useState(false);
+  const [rejectNote,     setRejectNote]     = useState("");
+  const [approveSaving,  setApproveSaving]  = useState(false);
+  const [reassignMode,   setReassignMode]   = useState(false);
+  const [newAssigneeIds, setNewAssigneeIds] = useState<string[]>(task.assignees ?? []);
+  const [reassignSaving, setReassignSaving] = useState(false);
+
+  async function handleReassign() {
+    if (newAssigneeIds.length === 0) return;
+    setReassignSaving(true);
+    await onReassign?.(task.id, newAssigneeIds);
+    setReassignSaving(false);
+    setReassignMode(false);
+    onClose();
+  }
 
   // Can this user approve? Admin approves all non-admins. Leader approves their team members.
-  const assigneeUser = users.find((u: any) => u.id === task.assignedTo);
   const canApprove = (() => {
     if (task.approvalStatus !== "needs-review") return false;
-    if (user.role === "admin") return assigneeUser?.role !== "admin";
-    if (user.role === "leader") return assigneeUser?.managed_by === user.id && assigneeUser?.role !== "admin";
+    const rawAssigneeUsers = task.assignees.map((uid: string) => users.find((u: any) => u.id === uid)).filter(Boolean);
+    if (user.role === "admin") return rawAssigneeUsers.some((a: any) => a.role !== "admin");
+    if (user.role === "leader") return rawAssigneeUsers.some((a: any) => a.managed_by === user.id && a.role !== "admin");
     return false;
   })();
 
@@ -1285,7 +1311,15 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
             ["Status",     <Pill type="status" value={task.status} />],
             ["Project",    <span style={{ fontSize: 13, color: "#374151" }}>📁 {task.project || "None"}</span>],
             ["Deadline",   <span style={{ fontSize: 13, color: late ? "#ef4444" : "#374151" }}>📅 {task.deadline || "No deadline"}</span>],
-            ["Assigned To", asgn ? <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Av user={asgn} size={20} /><span style={{ fontSize: 13 }}>{asgn.name}</span></div> : <span style={{ fontSize: 13, color: "#94a3b8" }}>Unassigned</span>],
+            ["Assigned To", assigneeUsers.length > 0
+              ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {assigneeUsers.map((a: any) => (
+                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Av user={a} size={18} /><span style={{ fontSize: 12 }}>{a.name}</span>
+                    </div>
+                  ))}
+                </div>
+              : <span style={{ fontSize: 13, color: "#94a3b8" }}>Unassigned</span>],
             ["Created",    <span style={{ fontSize: 13, color: "#374151" }}>{task.created_at ? task.created_at.slice(0, 10) : ""}</span>],
           ].map(([label, val]) => (
             <div key={label as string} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: 10 }}>
@@ -1313,8 +1347,8 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
           </div>
         )}
 
-        {/* Submission links - show when task is not yet approved, only for assignee */}
-        {(task.status !== "completed" || task.approvalStatus === "rejected") && user.id === task.assignedTo && (
+        {/* Submission links - show when task is not yet approved, only for assignees */}
+        {(task.status !== "completed" || task.approvalStatus === "rejected") && task.assignees.includes(user.id) && (
           <div style={{ marginBottom: 16, padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 12 }}>
               📎 Attach work links <span style={{ fontWeight: 400, color: "#94a3b8" }}>- add before or when marking complete</span>
@@ -1354,7 +1388,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
                   </button>
                 ))}
               </div>
-              {task.approvalStatus === "rejected" && task.status === "completed" && user.id === task.assignedTo && (
+              {task.approvalStatus === "rejected" && task.status === "completed" && task.assignees.includes(user.id) && (
                 <>
                   <div style={{ marginTop: 12, marginBottom: 4 }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>
@@ -1415,6 +1449,54 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
           </div>
         )}
 
+        {/* ── Reassign Task ── privileged users only */}
+        {isPrivileged(user) && (
+          <div style={{ marginBottom: 14 }}>
+            {!reassignMode ? (
+              <button onClick={() => setReassignMode(true)}
+                style={{ width: "100%", padding: "10px", borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#374151", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                👥 Reassign Task
+              </button>
+            ) : (
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 10 }}>Reassign to</div>
+                <div style={{ maxHeight: 180, overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: 10, padding: "6px 10px", background: "white", marginBottom: 12 }}>
+                  {users.filter((u: any) => isStaff(u)).map((u: any) => {
+                    const nu = normUser(u);
+                    const checked = newAssigneeIds.includes(u.id);
+                    return (
+                      <label key={u.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 4px", cursor: "pointer", borderRadius: 8, background: checked ? B + "10" : "transparent" }}>
+                        <input type="checkbox" checked={checked}
+                          onChange={e => setNewAssigneeIds(p =>
+                            e.target.checked ? [...p, u.id] : p.filter((id: string) => id !== u.id)
+                          )}
+                          style={{ width: 15, height: 15, accentColor: B, cursor: "pointer" }} />
+                        <Av user={nu} size={20} />
+                        <span style={{ fontSize: 13, color: "#374151" }}>{nu.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {newAssigneeIds.length > 0 && (
+                  <div style={{ fontSize: 11, color: B, marginBottom: 10 }}>
+                    {newAssigneeIds.length} member{newAssigneeIds.length > 1 ? "s" : ""} selected
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={handleReassign} disabled={reassignSaving || newAssigneeIds.length === 0}
+                    style={{ flex: 1, padding: "10px", borderRadius: 10, background: B, border: "none", color: "white", fontWeight: 700, fontSize: 13, cursor: newAssigneeIds.length === 0 ? "not-allowed" : "pointer", opacity: newAssigneeIds.length === 0 ? 0.5 : 1 }}>
+                    {reassignSaving ? "Saving..." : "Save Reassignment"}
+                  </button>
+                  <button onClick={() => { setReassignMode(false); setNewAssigneeIds(task.assignees ?? []); }}
+                    style={{ padding: "10px 16px", borderRadius: 10, background: "#f1f5f9", border: "none", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {user.role === "admin" && (
           <button onClick={() => { onDelete(task.id); onClose(); }} style={{ width: "100%", padding: "11px", borderRadius: 10, background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>
             Delete Task
@@ -1425,7 +1507,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
   );
 }
 
-function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskStatus, onDeleteTask, onApproveTask, onRejectTask }: any) {
+function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskStatus, onDeleteTask, onApproveTask, onRejectTask, onReassignTask }: any) {
   const [modal,      setModal]      = useState(false);
   const [detailTask, setDetailTask] = useState<any>(null);
   const [fStat,      setFStat]      = useState("all");
@@ -1433,18 +1515,21 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
   const [fPeriod,    setFPeriod]    = useState("all");
   const [taskPage,   setTaskPage]   = useState(1);
   const TASKS_PER_PAGE = 10;
-  const [form,       setForm]       = useState({ title: "", description: "", assignedTo: "", priority: "medium", project: "", deadline: "" });
+  const [form,       setForm]       = useState({ title: "", description: "", assigneeIds: [] as string[], priority: "medium", project: "", deadline: "" });
   const [links,      setLinks]      = useState<{ label: string; url: string }[]>([]);
 
   const normTasks = tasks.map(normTask);
   const base = user.role === "admin"
     ? normTasks
     : user.role === "leader"
-      ? normTasks.filter((t: any) => {
-          const assignee = users.find((u: any) => u.id === t.assignedTo);
-          return t.assignedTo === user.id || (assignee && assignee.managed_by === user.id);
-        })
-      : normTasks.filter((t: any) => t.assignedTo === user.id);
+      ? normTasks.filter((t: any) =>
+          t.assignees.includes(user.id) ||
+          t.assignees.some((uid: string) => {
+            const m = users.find((u: any) => u.id === uid);
+            return m && m.managed_by === user.id;
+          })
+        )
+      : normTasks.filter((t: any) => t.assignees.includes(user.id));
   const filtered  = base.filter((t: any) => {
     if (fStat !== "all" && t.status !== fStat) return false;
     if (fPri  !== "all" && t.priority !== fPri) return false;
@@ -1476,11 +1561,16 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
     else setTasks((p: any[]) => p.filter(t => t.id !== id));
   };
   const create = async () => {
-    if (!form.title || !form.assignedTo) return;
+    if (!form.title || form.assigneeIds.length === 0) return;
     const validLinks = links.filter(l => l.url.trim());
     if (onCreateTask) await onCreateTask({ ...form, links: validLinks });
-    else setTasks((p: any[]) => [...p, { id: "t" + Date.now(), ...form, links: validLinks, assigned_to: form.assignedTo, status: "pending", created_at: fmt(today) }]);
-    setForm({ title: "", description: "", assignedTo: "", priority: "medium", project: "", deadline: "" });
+    else setTasks((p: any[]) => [...p, {
+      id: "t" + Date.now(), ...form, links: validLinks,
+      assigned_to: form.assigneeIds[0],
+      assignees: form.assigneeIds,
+      status: "pending", created_at: fmt(today),
+    }]);
+    setForm({ title: "", description: "", assigneeIds: [], priority: "medium", project: "", deadline: "" });
     setLinks([]);
     setModal(false);
   };
@@ -1525,7 +1615,9 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
           </Card>
         )}
         {pagedTasks.map((task: any) => {
-          const asgn = normUser(users.find((u: any) => u.id === task.assignedTo));
+          const assigneeUsers = task.assignees
+            .map((uid: string) => normUser(users.find((u: any) => u.id === uid)))
+            .filter(Boolean);
           const late = task.deadline < fmt(today) && task.status !== "completed";
           return (
             <Card key={task.id}
@@ -1553,10 +1645,15 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                     )}
                     <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {task.project}</span>
                     <span style={{ fontSize: 12, color: late ? "#ef4444" : "#94a3b8" }}>📅 {task.deadline}</span>
-                    {asgn && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <Av user={asgn} size={18} />
-                        <span style={{ fontSize: 12, color: "#64748b" }}>{asgn.name}</span>
+                    {assigneeUsers.length > 0 && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                        {assigneeUsers.slice(0, 3).map((a: any) => <Av key={a.id} user={a} size={18} />)}
+                        {assigneeUsers.length > 3 && (
+                          <span style={{ fontSize: 11, color: "#94a3b8" }}>+{assigneeUsers.length - 3}</span>
+                        )}
+                        {assigneeUsers.length === 1 && (
+                          <span style={{ fontSize: 12, color: "#64748b" }}>{assigneeUsers[0].name}</span>
+                        )}
                       </div>
                     )}
                     {task.links?.length > 0 && (
@@ -1592,6 +1689,15 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
           onDelete={del}
           onApproveTask={onApproveTask}
           onRejectTask={onRejectTask}
+          onReassign={async (taskId: string, newIds: string[]) => {
+            if (onReassignTask) await onReassignTask(taskId, newIds);
+            else setTasks((p: any[]) => p.map((t: any) => t.id === taskId ? {
+              ...t,
+              assigned_to: newIds[0] ?? null,
+              assignees: newIds,
+              task_assignments: newIds.map((uid: string) => ({ user_id: uid })),
+            } : t));
+          }}
         />
       )}
 
@@ -1630,25 +1736,46 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
               </div>
             </div>
 
-            {/* Assign + Priority side by side */}
-            <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Assign To</label>
-                <select value={form.assignedTo} onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))} style={{ ...SEL, width: "100%" }}>
-                  <option value="">Select member</option>
-                  {users.filter((u: any) => isStaff(u)).map((u: any) => (
-                    <option key={u.id} value={u.id}>{u.full_name ?? u.name}</option>
-                  ))}
-                </select>
+            {/* Assign To - multi-select checkboxes */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>
+                Assign To <span style={{ fontWeight: 400, color: "#94a3b8" }}>(select one or more)</span>
+              </label>
+              <div style={{ maxHeight: 160, overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: 10, padding: "6px 10px", background: "#fafafa" }}>
+                {users.filter((u: any) => isStaff(u)).map((u: any) => {
+                  const nu = normUser(u);
+                  const checked = form.assigneeIds.includes(u.id);
+                  return (
+                    <label key={u.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 4px", cursor: "pointer", borderRadius: 8, background: checked ? B + "10" : "transparent" }}>
+                      <input type="checkbox" checked={checked}
+                        onChange={e => setForm(f => ({
+                          ...f,
+                          assigneeIds: e.target.checked
+                            ? [...f.assigneeIds, u.id]
+                            : f.assigneeIds.filter((id: string) => id !== u.id),
+                        }))}
+                        style={{ width: 15, height: 15, accentColor: B, cursor: "pointer" }} />
+                      <Av user={nu} size={20} />
+                      <span style={{ fontSize: 13, color: "#374151" }}>{nu.name}</span>
+                    </label>
+                  );
+                })}
               </div>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Priority</label>
-                <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={{ ...SEL, width: "100%" }}>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
-              </div>
+              {form.assigneeIds.length > 0 && (
+                <div style={{ fontSize: 11, color: B, marginTop: 5 }}>
+                  {form.assigneeIds.length} member{form.assigneeIds.length > 1 ? "s" : ""} selected
+                </div>
+              )}
+            </div>
+
+            {/* Priority */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Priority</label>
+              <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={{ ...SEL, width: "100%" }}>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
             </div>
 
             <LinkAttacher links={links} onChange={setLinks} />
@@ -2295,7 +2422,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
   })();
 
   const pendingTasks = tasks.map(normTask).filter((t: any) =>
-    t.approvalStatus === "needs-review" && approvableIds.has(t.assignedTo)
+    t.approvalStatus === "needs-review" && t.assignees.some((uid: string) => approvableIds.has(uid))
   );
   const pendingLogs = logs.map(normLog).filter((l: any) =>
     l.approvalStatus === "needs-review" && approvableIds.has(l.userId)
@@ -2358,7 +2485,9 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
               No tasks pending approval
             </div>
           ) : pendingTasks.map((task: any) => {
-            const assignee = normUser(users.find((u: any) => u.id === task.assignedTo));
+            const taskAssignees = task.assignees
+              .map((uid: string) => normUser(users.find((u: any) => u.id === uid)))
+              .filter(Boolean);
             return (
               <div key={task.id} onClick={() => openDetail(task, "task")}
                 style={{ background: "white", borderRadius: 14, border: "1px solid #e2e8f0", padding: "14px 16px", cursor: "pointer", transition: "box-shadow 0.15s" }}
@@ -2366,10 +2495,14 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
                 onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>{task.title}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  {assignee && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <Av user={assignee} size={20} />
-                      <span style={{ fontSize: 12, color: "#64748b" }}>{assignee.name}</span>
+                  {taskAssignees.length > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      {taskAssignees.slice(0, 3).map((a: any) => <Av key={a.id} user={a} size={20} />)}
+                      {taskAssignees.length === 1
+                        ? <span style={{ fontSize: 12, color: "#64748b" }}>{taskAssignees[0].name}</span>
+                        : taskAssignees.length > 3
+                          ? <span style={{ fontSize: 11, color: "#94a3b8" }}>+{taskAssignees.length - 3}</span>
+                          : null}
                     </div>
                   )}
                   <Pill type="priority" value={task.priority} />
@@ -2446,16 +2579,22 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
 
             {/* Task detail fields */}
             {selectedType === "task" && (() => {
-              const assignee = normUser(users.find((u: any) => u.id === selected.assignedTo));
+              const selAssignees = selected.assignees
+                .map((uid: string) => normUser(users.find((u: any) => u.id === uid)))
+                .filter(Boolean);
               return (
                 <>
-                  {assignee && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                      <Av user={assignee} size={28} />
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{assignee.name}</div>
-                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{assignee.title}</div>
-                      </div>
+                  {selAssignees.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+                      {selAssignees.map((a: any) => (
+                        <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <Av user={a} size={26} />
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{a.name}</div>
+                            <div style={{ fontSize: 11, color: "#94a3b8" }}>{a.title}</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
@@ -2602,8 +2741,8 @@ function ReportsPage({ tasks, logs, users, user }: any) {
     const nu = normUser(u);
     return {
       name:      nu.name.split(" ")[0],
-      completed: normT.filter((t: any) => t.assignedTo === u.id && t.status === "completed").length,
-      total:     normT.filter((t: any) => t.assignedTo === u.id).length,
+      completed: normT.filter((t: any) => t.assignees.includes(u.id) && t.status === "completed").length,
+      total:     normT.filter((t: any) => t.assignees.includes(u.id)).length,
     };
   });
 
@@ -5064,6 +5203,7 @@ export default function ProwessDashboard({
   onCreateTask,
   onUpdateTaskStatus,
   onDeleteTask,
+  onReassignTask,
   onAddLog,
   onDeleteLog,
   onResubmitLog,
@@ -5111,6 +5251,7 @@ export default function ProwessDashboard({
   onCreateTask?: (form: any) => Promise<void>;
   onUpdateTaskStatus?: (id: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null) => Promise<void>;
   onDeleteTask?: (id: string) => Promise<void>;
+  onReassignTask?: (taskId: string, assigneeIds: string[]) => Promise<void>;
   onAddLog?: (form: any) => Promise<void>;
   onDeleteLog?: (id: string) => Promise<void>;
   onResubmitLog?: (id: string, links: any[]) => Promise<void>;
@@ -5180,7 +5321,7 @@ export default function ProwessDashboard({
     if (user.role === "admin") return pendingTasks.length + pendingLogs.length;
     if (user.role === "leader") {
       const myTeamIds = new Set(users.filter((u: any) => u.managed_by === user.id).map((u: any) => u.id));
-      return pendingTasks.filter((t: any) => myTeamIds.has(t.assignedTo)).length
+      return pendingTasks.filter((t: any) => t.assignees.some((uid: string) => myTeamIds.has(uid))).length
            + pendingLogs.filter((l: any)  => myTeamIds.has(l.userId)).length;
     }
     return 0;
@@ -5307,7 +5448,7 @@ export default function ProwessDashboard({
           }}
           /> : null;
           case "tasks":
-            return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} onApproveTask={onApproveTask} onRejectTask={onRejectTask} />;
+            return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} onApproveTask={onApproveTask} onRejectTask={onRejectTask} onReassignTask={async (taskId: string, newIds: string[]) => { await onReassignTask?.(taskId, newIds); setLocalTasks((p: any[]) => p.map((t: any) => t.id === taskId ? { ...t, assigned_to: newIds[0] ?? null, assignees: newIds, task_assignments: newIds.map((uid: string) => ({ user_id: uid })) } : t)); }} />;
           case "activity":
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} onResubmitLog={onResubmitLog} />;
       case "leaderboard":

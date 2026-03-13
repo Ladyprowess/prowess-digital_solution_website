@@ -70,7 +70,7 @@ export default function DashboardPage() {
         { data: offlineIncome               },
         { data: offlineOutgoing             },
       ] = await Promise.all([
-        supabase.from("tasks").select("*").order("created_at", { ascending: false }),
+        supabase.from("tasks").select("*, task_assignments(user_id, assigned_by)").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
         supabase.from("profiles").select("*").order("full_name"),
         supabase.from("kpi_assignments").select("*").order("created_at", { ascending: false }),
@@ -181,18 +181,36 @@ export default function DashboardPage() {
   );
 
   async function createTask(form: any) {
+    const assigneeIds: string[] = form.assigneeIds ?? (form.assignedTo ? [form.assignedTo] : []);
+    const primaryAssignee = assigneeIds[0] ?? null;
     const { data, error } = await supabase.from("tasks").insert({
       title: form.title, description: form.description,
-      assigned_to: form.assignedTo || null, created_by: state.profile.id,
+      assigned_to: primaryAssignee, created_by: state.profile.id,
       priority: form.priority, project: form.project,
       deadline: form.deadline || null,
       links: form.links?.length ? form.links : null,
       approval_status: "pending",
     }).select().single();
     if (!error && data) {
-      setState((p: any) => ({ ...p, tasks: [data, ...p.tasks] }));
-      if (form.assignedTo) {
-        const assignee = state.users.find((u: any) => u.id === form.assignedTo);
+      // Insert all assignees into task_assignments
+      if (assigneeIds.length > 0) {
+        await supabase.from("task_assignments").insert(
+          assigneeIds.map((uid: string) => ({
+            task_id: data.id,
+            user_id: uid,
+            assigned_by: state.profile.id,
+          }))
+        );
+      }
+      // Attach task_assignments to local state so normTask can read them
+      const taskWithAssignments = {
+        ...data,
+        task_assignments: assigneeIds.map((uid: string) => ({ user_id: uid, assigned_by: state.profile.id })),
+      };
+      setState((p: any) => ({ ...p, tasks: [taskWithAssignments, ...p.tasks] }));
+      // Notify each assignee
+      for (const uid of assigneeIds) {
+        const assignee = state.users.find((u: any) => u.id === uid);
         if (assignee?.email) {
           fetch("/api/notify-task", {
             method: "POST",
@@ -229,6 +247,49 @@ export default function DashboardPage() {
   async function deleteTask(taskId: string) {
     await supabase.from("tasks").delete().eq("id", taskId);
     setState((p: any) => ({ ...p, tasks: p.tasks.filter((t: any) => t.id !== taskId) }));
+  }
+
+  async function reassignTask(taskId: string, assigneeIds: string[]) {
+    await supabase.from("task_assignments").delete().eq("task_id", taskId);
+    if (assigneeIds.length > 0) {
+      await supabase.from("task_assignments").insert(
+        assigneeIds.map((uid: string) => ({
+          task_id: taskId,
+          user_id: uid,
+          assigned_by: state.profile.id,
+        }))
+      );
+    }
+    await supabase.from("tasks").update({ assigned_to: assigneeIds[0] ?? null }).eq("id", taskId);
+    setState((p: any) => ({
+      ...p,
+      tasks: p.tasks.map((t: any) => t.id === taskId ? {
+        ...t,
+        assigned_to: assigneeIds[0] ?? null,
+        task_assignments: assigneeIds.map((uid: string) => ({ user_id: uid, assigned_by: state.profile.id })),
+      } : t),
+    }));
+    // Notify reassigned members
+    const task = state.tasks.find((t: any) => t.id === taskId);
+    for (const uid of assigneeIds) {
+      const assignee = state.users.find((u: any) => u.id === uid);
+      if (assignee?.email) {
+        fetch("/api/notify-task", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: assignee.email,
+            assigneeName: assignee.full_name || assignee.email,
+            assignerName: state.profile.full_name || "Your manager",
+            taskTitle: task?.title || "",
+            taskDescription: task?.description || "",
+            priority: task?.priority || "medium",
+            deadline: task?.deadline || null,
+            project: task?.project || "",
+          }),
+        }).catch(() => {});
+      }
+    }
   }
 
   async function addLog(form: any) {
@@ -628,6 +689,7 @@ export default function DashboardPage() {
       onCreateTask={createTask}
       onUpdateTaskStatus={updateTaskStatus}
       onDeleteTask={deleteTask}
+      onReassignTask={reassignTask}
       onAddLog={addLog}
       onDeleteLog={deleteLog}
       onResubmitLog={resubmitLog}
