@@ -344,39 +344,54 @@ export default function EventsPage() {
   return (
     <div className="pb-16">
       {/* HERO */}
-      <section className="py-14 sm:py-20">
+      <section className="relative overflow-hidden bg-[#0c1a1b] py-24 sm:py-32">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(80,124,128,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(80,124,128,.07) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+            maskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-20"
+          style={{
+            background: "radial-gradient(circle, #507c80 0%, transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
         <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50">
-              <span aria-hidden>🗓️</span>
+          <div className="relative mx-auto max-w-4xl text-center">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#507c80]/30 bg-[#507c80]/10 px-4 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#507c80]" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-[#6a9ea3]">
+                Events & Training
+              </span>
             </div>
-
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-6xl">
-              Business Events & Training
+            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Business Events
+              <span className="block text-[#507c80]">& Training</span>
             </h1>
-
-            <p className="mx-auto mt-5 max-w-3xl text-base text-slate-600 sm:text-lg">
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
               Practical sessions that help you build structure, make better decisions, and run your business properly.
             </p>
-          </div>
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <div className="mb-4 text-slate-700">🎓</div>
-              <h3 className="text-lg font-semibold text-slate-900">Educational first</h3>
-              <p className="mt-2 text-sm text-slate-600">We teach clearly and keep it practical.</p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <div className="mb-4 text-slate-700">👥</div>
-              <h3 className="text-lg font-semibold text-slate-900">Community</h3>
-              <p className="mt-2 text-sm text-slate-600">Meet people who value structure and growth.</p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <div className="mb-4 text-slate-700">💡</div>
-              <h3 className="text-lg font-semibold text-slate-900">Action steps</h3>
-              <p className="mt-2 text-sm text-slate-600">Leave with steps you can apply immediately.</p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a
+                href="#upcoming-events"
+                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-8 py-3.5 font-semibold text-white transition hover:bg-[#3a5c60]"
+              >
+                See Upcoming Events
+              </a>
+              <a
+                href="#subscribe"
+                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-8 py-3.5 font-semibold text-white transition hover:bg-white/10"
+              >
+                Get Event Updates
+              </a>
             </div>
           </div>
         </Container>

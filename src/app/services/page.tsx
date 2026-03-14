@@ -251,12 +251,12 @@ export default function ServicesPage() {
                   Premium Business Tools
                 </p>
                 <h3 className="text-2xl font-bold leading-snug text-white sm:text-3xl">
-                  Tools built for African businesses. Yours to use.
+                  Tools built for African businesses.
                 </h3>
                 <p className="mt-5 text-sm leading-relaxed text-white/60">
                   We built these tools ourselves; specifically for how African entrepreneurs
                   run their businesses. We give our clients access to them as part of our service.
-                  You do not hire us to build you tools. You use the tools we have already built
+                  You use the tools we have already built
                   so you can run your business with better information and less guesswork.
                 </p>
                 <Link
