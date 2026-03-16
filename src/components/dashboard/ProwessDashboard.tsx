@@ -1694,7 +1694,7 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
 
   const upd = (id: string, s: string, submissionLinks?: any[] | null, resubmitNote?: string | null, assigneeId?: string | null) => {
     if (onUpdateTaskStatus) onUpdateTaskStatus(id, s, submissionLinks, resubmitNote, assigneeId);
-    else setTasks((p: any[]) => p.map(t => t.id === id ? {
+    setTasks((p: any[]) => p.map(t => t.id === id ? {
       ...t, status: s,
       approval_status: s === "completed" ? "needs-review" : t.approval_status,
       ...(submissionLinks ? { submission_links: submissionLinks } : {}),
