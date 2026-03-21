@@ -810,10 +810,20 @@ function TopBar({ user, page, isMobile, onMenuOpen }: { user: any; page: string;
 
 function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, monthlyWinners, setPage }: any) {
   const scores  = useMemo(() => computeScores(tasks, logs, users), [tasks, logs, users]);
+
+  // Derive effective status per task — assignment-level status takes priority over task-level
+  const effectiveStatus = (t: any) => {
+    const assignments: any[] = t.task_assignments || [];
+    if (assignments.length === 0) return t.status || "pending";
+    if (assignments.every((a: any) => a.status === "completed")) return "completed";
+    if (assignments.some((a: any) => a.status === "in-progress" || a.status === "completed")) return "in-progress";
+    return t.status || "pending";
+  };
+
   const total     = tasks.length;
-  const completed = tasks.filter((t: any) => t.status === "completed").length;
-  const inProg    = tasks.filter((t: any) => t.status === "in-progress").length;
-  const overdue   = tasks.filter((t: any) => t.deadline && t.deadline < fmt(today) && t.status !== "completed").length;
+  const completed = tasks.filter((t: any) => effectiveStatus(t) === "completed").length;
+  const inProg    = tasks.filter((t: any) => effectiveStatus(t) === "in-progress").length;
+  const overdue   = tasks.filter((t: any) => t.deadline && t.deadline < fmt(today) && effectiveStatus(t) !== "completed").length;
 
   const weekBar = [
     { day: "Mon", tasks: 3 }, { day: "Tue", tasks: 5 }, { day: "Wed", tasks: 4 },
