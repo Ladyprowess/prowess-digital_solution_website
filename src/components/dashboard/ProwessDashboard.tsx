@@ -820,15 +820,25 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
     return t.status || "pending";
   };
 
-  const total     = tasks.length;
-  const completed = tasks.filter((t: any) => effectiveStatus(t) === "completed").length;
-  const inProg    = tasks.filter((t: any) => effectiveStatus(t) === "in-progress").length;
+  const thisMonthStr = fmt(today).slice(0, 7); // reused below as thisMonth
+  const monthTasks = tasks.filter((t: any) => (t.created_at || "").slice(0, 7) === thisMonthStr);
+  const total     = monthTasks.length;
+  const completed = monthTasks.filter((t: any) => effectiveStatus(t) === "completed").length;
+  const inProg    = monthTasks.filter((t: any) => effectiveStatus(t) === "in-progress").length;
   const overdue   = tasks.filter((t: any) => t.deadline && t.deadline < fmt(today) && effectiveStatus(t) !== "completed").length;
 
-  const weekBar = [
-    { day: "Mon", tasks: 3 }, { day: "Tue", tasks: 5 }, { day: "Wed", tasks: 4 },
-    { day: "Thu", tasks: 7 }, { day: "Fri", tasks: 6 }, { day: "Sat", tasks: 2 }, { day: "Sun", tasks: 1 },
-  ];
+  const { start: weekBarStart } = getWeekBounds();
+  const weekBarDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekBar = weekBarDays.map((day, i) => {
+    const d = new Date(weekBarStart);
+    d.setDate(d.getDate() + i);
+    const dateStr = fmt(d);
+    const count = tasks.filter((t: any) => {
+      const ca = (t.completed_at ?? t.completedAt ?? "");
+      return effectiveStatus(t) === "completed" && ca.slice(0, 10) === dateStr;
+    }).length;
+    return { day, tasks: count };
+  });
   const pie = [
     { name: "Completed",   value: completed,                       color: "#22c55e" },
     { name: "In Progress", value: inProg,                          color: "#3b82f6" },
@@ -890,10 +900,10 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
         );
       })()}
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-        <Stat icon="📋" label="Total Tasks"  value={total}     sub="This month"   color="#6366f1" trend={12} />
-        <Stat icon="✅" label="Completed"    value={completed} sub={`${total ? Math.round(completed / total * 100) : 0}% rate`} color="#22c55e" trend={8} />
+        <Stat icon="📋" label="Total Tasks"  value={total}     sub="This month"   color="#6366f1" />
+        <Stat icon="✅" label="Completed"    value={completed} sub={`${total ? Math.round(completed / total * 100) : 0}% rate`} color="#22c55e" />
         <Stat icon="🔄" label="In Progress"  value={inProg}    sub="Active now"   color="#3b82f6" />
-        <Stat icon="⚠️" label="Overdue"      value={overdue}   sub="Need attention" color="#ef4444" trend={-5} />
+        <Stat icon="⚠️" label="Overdue"      value={overdue}   sub="Need attention" color="#ef4444" />
         {pendingApprovals > 0 && (
           <Stat icon="🔍" label="Need Approval" value={pendingApprovals} sub="Tasks and logs" color="#d97706" />
         )}
