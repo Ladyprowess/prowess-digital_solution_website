@@ -266,12 +266,13 @@ function getWeekBounds(): { start: string; end: string } {
 
 // All-time scores (approved items only, new point values)
 function computeScores(tasks: any[], logs: any[], users: any[]) {
+  const expanded = expandTasksPerAssignee(tasks.map(normTask));
   return users
     .filter(u => isStaff(u))
     .map(u => {
       const nu = normUser(u);
       let pts = 0;
-      const ut = tasks.map(normTask).filter(t => t.assignees.includes(u.id) && t.approvalStatus === "approved");
+      const ut = expanded.filter(t => t.assignees.includes(u.id) && t.approvalStatus === "approved");
       ut.forEach(t => {
         if (t.status === "completed") {
           pts += 10;
@@ -296,12 +297,13 @@ function computeScores(tasks: any[], logs: any[], users: any[]) {
 // This-week scores (approved items completed/logged this week only)
 function computeWeeklyScores(tasks: any[], logs: any[], users: any[]) {
   const { start: ws } = getWeekBounds();
+  const expanded = expandTasksPerAssignee(tasks.map(normTask));
   return users
     .filter(u => isStaff(u))
     .map(u => {
       const nu = normUser(u);
       let pts = 0;
-      const ut = tasks.map(normTask).filter(t =>
+      const ut = expanded.filter(t =>
         t.assignees.includes(u.id) &&
         t.approvalStatus === "approved" &&
         t.status === "completed" &&
@@ -332,12 +334,13 @@ function computeWeeklyScores(tasks: any[], logs: any[], users: any[]) {
 // This-month scores (approved items completed/logged this calendar month only)
 function computeMonthlyScores(tasks: any[], logs: any[], users: any[]) {
   const thisMonth = fmt(new Date()).slice(0, 7);
+  const expanded = expandTasksPerAssignee(tasks.map(normTask));
   return users
     .filter((u: any) => isStaff(u))
     .map((u: any) => {
       const nu = normUser(u);
       let pts = 0;
-      const ut = tasks.map(normTask).filter((t: any) =>
+      const ut = expanded.filter((t: any) =>
         t.assignees.includes(u.id) && t.approvalStatus === "approved" &&
         (t.completedAt || "").slice(0, 7) === thisMonth
       );
