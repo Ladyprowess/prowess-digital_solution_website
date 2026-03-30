@@ -273,6 +273,12 @@ function computeScores(tasks: any[], logs: any[], users: any[]) {
       const nu = normUser(u);
       let pts = 0;
       const ut = expanded.filter(t => t.assignees.includes(u.id) && t.approvalStatus === "approved");
+      const overdueTasks = expanded.filter(t =>
+        t.assignees.includes(u.id) &&
+        t.deadline &&
+        t.deadline < fmt(today) &&
+        t.status !== "completed"
+      );
       ut.forEach(t => {
         if (t.status === "completed") {
           pts += 10;
@@ -281,6 +287,7 @@ function computeScores(tasks: any[], logs: any[], users: any[]) {
           else if (t.completedAt && t.deadline && t.completedAt > t.deadline) pts -= 5;
         }
       });
+      pts -= overdueTasks.length * 3;
       const ul = logs.map(normLog).filter(l => l.userId === u.id && l.approvalStatus === "approved");
       pts += ul.length * 3;
       return {
@@ -309,12 +316,20 @@ function computeWeeklyScores(tasks: any[], logs: any[], users: any[]) {
         t.status === "completed" &&
         t.completedAt && t.completedAt >= ws
       );
+      const overdueTasks = expanded.filter(t =>
+        t.assignees.includes(u.id) &&
+        t.deadline &&
+        t.deadline >= ws &&
+        t.deadline < fmt(today) &&
+        t.status !== "completed"
+      );
       ut.forEach(t => {
         pts += 10;
         if (t.priority === "high") pts += 5;
         if (t.completedAt && t.deadline && t.completedAt <= t.deadline) pts += 5;
         else if (t.completedAt && t.deadline && t.completedAt > t.deadline) pts -= 5;
       });
+      pts -= overdueTasks.length * 3;
       const ul = logs.map(normLog).filter(l =>
         l.userId === u.id &&
         l.approvalStatus === "approved" &&
@@ -344,6 +359,13 @@ function computeMonthlyScores(tasks: any[], logs: any[], users: any[]) {
         t.assignees.includes(u.id) && t.approvalStatus === "approved" &&
         (t.completedAt || "").slice(0, 7) === thisMonth
       );
+      const overdueTasks = expanded.filter((t: any) =>
+        t.assignees.includes(u.id) &&
+        t.deadline &&
+        t.deadline.slice(0, 7) === thisMonth &&
+        t.deadline < fmt(today) &&
+        t.status !== "completed"
+      );
       ut.forEach((t: any) => {
         if (t.status === "completed") {
           pts += 10;
@@ -352,6 +374,7 @@ function computeMonthlyScores(tasks: any[], logs: any[], users: any[]) {
           else if (t.completedAt && t.deadline && t.completedAt > t.deadline) pts -= 5;
         }
       });
+      pts -= overdueTasks.length * 3;
       const ul = logs.map(normLog).filter((l: any) =>
         l.userId === u.id && l.approvalStatus === "approved" && l.date.slice(0, 7) === thisMonth
       );
@@ -5751,7 +5774,7 @@ export default function ProwessDashboard({
           case "activity":
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} onResubmitLog={onResubmitLog} />;
       case "leaderboard":
-        return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} monthlyWinners={localMonthlyWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); const winner = sc[0]; setLocalWinners((prev: any) => [{ id: Date.now().toString(), week_start: ws, week_end: we, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} onCloseMonth={async (month: string, sc: any[]) => { await onCloseMonth?.(month, sc); const winner = sc[0]; setLocalMonthlyWinners((prev: any) => [{ id: Date.now().toString(), month, winner_id: winner?.userId, winner_name: winner?.name || '', total_points: winner?.score || 0, tasks_completed: winner?.tasksCompleted || 0, logs_submitted: winner?.logsCount || 0 }, ...prev]); }} />;
+        return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} monthlyWinners={localMonthlyWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); }} onCloseMonth={async (month: string, sc: any[]) => { await onCloseMonth?.(month, sc); }} />;
       case "reports":
 
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;

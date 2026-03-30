@@ -183,6 +183,30 @@ export default function DashboardPage() {
     </div>
   );
 
+  function getAdminRecipients() {
+    const seen = new Set<string>();
+    return (state.users || []).filter((u: { email?: string | null; role?: string }) => {
+      const email = String(u?.email || "").trim().toLowerCase();
+      if (u?.role !== "admin" || !email || seen.has(email)) return false;
+      seen.add(email);
+      return true;
+    });
+  }
+
+  async function notifyAdmins(payload: Record<string, unknown>) {
+    const admins = getAdminRecipients();
+    if (!admins.length) return;
+    await Promise.allSettled(
+      admins.map((admin: { email?: string | null }) =>
+        fetch("/api/notify-dashboard-admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, to: admin.email }),
+        })
+      )
+    );
+  }
+
   async function createTask(form: any) {
     const assigneeIds: string[] = form.assigneeIds ?? (form.assignedTo ? [form.assignedTo] : []);
     const primaryAssignee = assigneeIds[0] ?? null;
@@ -235,6 +259,7 @@ export default function DashboardPage() {
   }
 
   async function updateTaskStatus(taskId: string, status: string, submissionLinks?: any[] | null, resubmitNote?: string | null, assigneeId?: string | null) {
+    const task = state.tasks.find((t: any) => t.id === taskId);
     if (assigneeId) {
       const assignmentUpdates: any = { status };
       if (status === "completed") {
@@ -257,6 +282,15 @@ export default function DashboardPage() {
           ),
         } : t),
       }));
+      if (status === "completed") {
+        const submitter = state.users.find((u: any) => u.id === assigneeId) || state.profile;
+        await notifyAdmins({
+          type: "task-submitted",
+          submitterName: submitter?.full_name || submitter?.email || "A team member",
+          taskTitle: task?.title || "Untitled task",
+          project: task?.project || "",
+        });
+      }
       return; // don't touch the tasks row — other assignees must not be affected
     }
     const updates: any = { status };
@@ -270,6 +304,14 @@ export default function DashboardPage() {
     await supabase.from("tasks").update(updates).eq("id", taskId);
     if (!assigneeId) {
       setState((p: any) => ({ ...p, tasks: p.tasks.map((t: any) => t.id === taskId ? { ...t, ...updates } : t) }));
+    }
+    if (status === "completed") {
+      await notifyAdmins({
+        type: "task-submitted",
+        submitterName: state.profile.full_name || state.profile.email || "A team member",
+        taskTitle: task?.title || "Untitled task",
+        project: task?.project || "",
+      });
     }
   }
 
@@ -353,7 +395,15 @@ export default function DashboardPage() {
       log_date: new Date().toISOString().split("T")[0],
       approval_status: "needs-review",
     }).select().single();
-    if (!error && data) setState((p: any) => ({ ...p, logs: [data, ...p.logs] }));
+    if (!error && data) {
+      setState((p: any) => ({ ...p, logs: [data, ...p.logs] }));
+      await notifyAdmins({
+        type: "activity-submitted",
+        submitterName: state.profile.full_name || state.profile.email || "A team member",
+        taskTitle: form.taskTitle || "New activity log",
+        project: form.project || "",
+      });
+    }
   }
 
   async function deleteLog(logId: string) {
@@ -805,6 +855,14 @@ export default function DashboardPage() {
           }).catch(() => {});
         }
       }
+      await notifyAdmins({
+        type: "month-marked",
+        month: monthLabel,
+        winnerName: winner.name,
+        totalPoints: winner.score,
+        tasksCompleted: winner.tasksCompleted,
+        logsSubmitted: winner.logsCount,
+      });
     }
   }
 
