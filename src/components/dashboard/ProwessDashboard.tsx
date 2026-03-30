@@ -4503,7 +4503,7 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
   );
 }
 
-function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, onToggleCommission, onUpdateMemberPaySettings }: any) {
+function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, onDisableMember, onToggleCommission, onUpdateMemberPaySettings }: any) {
   const [modal,          setModal]          = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [saving,         setSaving]         = useState(false);
@@ -4512,6 +4512,8 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
   const [form,           setForm]           = useState({ fullName: "", email: "", password: "", jobTitle: "", role: "member", managedBy: "", country: "", earnsCommission: false });
   const [teamPage,       setTeamPage]       = useState(1);
   const TEAM_PER_PAGE = 12;
+  const activeCount = users.filter((u: any) => u.role !== "disabled").length;
+  const disabledCount = users.filter((u: any) => u.role === "disabled").length;
 
   const teamTotalPages = Math.ceil(users.length / TEAM_PER_PAGE);
   const pagedUsers     = users.slice((teamPage - 1) * TEAM_PER_PAGE, teamPage * TEAM_PER_PAGE);
@@ -4536,7 +4538,10 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-        <div style={{ fontSize: 13, color: "#64748b" }}>{users.length} members total</div>
+        <div style={{ fontSize: 13, color: "#64748b" }}>
+          {activeCount} active member{activeCount !== 1 ? "s" : ""}
+          {disabledCount > 0 ? ` · ${disabledCount} disabled` : ""}
+        </div>
         {user?.role === "admin" && (
           <button onClick={() => { setModal(true); setError(""); setDone(false); }}
             style={{ padding: "10px 18px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
@@ -4551,15 +4556,15 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
           const leaders = users.filter((x: any) => x.role === "leader" || x.role === "admin");
           const assignedLeader = u.managed_by ? normUser(users.find((x: any) => x.id === u.managed_by)) : null;
           return (
-            <Card key={u.id} style={{ padding: 24, textAlign: "center", cursor: "pointer", transition: "box-shadow 0.2s" }}
+            <Card key={u.id} style={{ padding: 24, textAlign: "center", cursor: "pointer", transition: "box-shadow 0.2s", opacity: u.role === "disabled" ? 0.62 : 1, borderColor: u.role === "disabled" ? "#fecaca" : "#e2e8f0" }}
               onClick={() => setSelectedMember(u)}>
               <Av user={u} size={54} />
               <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 12 }}>{nu.name}</div>
-              <div style={{ fontSize: 13, color: "#64748b" }}>{nu.title || (u.role === "admin" ? "Administrator" : u.role === "leader" ? "Team Leader" : "Team Member")}</div>
+              <div style={{ fontSize: 13, color: "#64748b" }}>{nu.title || (u.role === "admin" ? "Administrator" : u.role === "leader" ? "Team Leader" : u.role === "disabled" ? "Disabled Profile" : "Team Member")}</div>
               <span style={{ display: "inline-block", marginTop: 8, fontSize: 11, fontWeight: 600, padding: "3px 12px", borderRadius: 20,
-                background: u.role === "admin" ? B + "18" : u.role === "leader" ? "#fef9c3" : "#f1f5f9",
-                color: u.role === "admin" ? B : u.role === "leader" ? "#b45309" : "#64748b" }}>
-                {u.role === "admin" ? "Admin" : u.role === "leader" ? "Leader" : "Member"}
+                background: u.role === "admin" ? B + "18" : u.role === "leader" ? "#fef9c3" : u.role === "disabled" ? "#fef2f2" : "#f1f5f9",
+                color: u.role === "admin" ? B : u.role === "leader" ? "#b45309" : u.role === "disabled" ? "#dc2626" : "#64748b" }}>
+                {u.role === "admin" ? "Admin" : u.role === "leader" ? "Leader" : u.role === "disabled" ? "Disabled" : "Member"}
               </span>
               <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 8 }}>{u.email}</div>
               {assignedLeader && (
@@ -4613,9 +4618,9 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
                     <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>{mu.name}</div>
                     <div style={{ fontSize: 13, color: "#64748b" }}>{mu.title || "No job title"}</div>
                     <span style={{ display: "inline-block", marginTop: 4, fontSize: 11, fontWeight: 600, padding: "2px 10px", borderRadius: 20,
-                      background: selectedMember.role === "admin" ? B + "18" : selectedMember.role === "leader" ? "#fef9c3" : "#f1f5f9",
-                      color: selectedMember.role === "admin" ? B : selectedMember.role === "leader" ? "#b45309" : "#64748b" }}>
-                      {selectedMember.role === "admin" ? "Admin" : selectedMember.role === "leader" ? "Leader" : "Member"}
+                      background: selectedMember.role === "admin" ? B + "18" : selectedMember.role === "leader" ? "#fef9c3" : selectedMember.role === "disabled" ? "#fef2f2" : "#f1f5f9",
+                      color: selectedMember.role === "admin" ? B : selectedMember.role === "leader" ? "#b45309" : selectedMember.role === "disabled" ? "#dc2626" : "#64748b" }}>
+                      {selectedMember.role === "admin" ? "Admin" : selectedMember.role === "leader" ? "Leader" : selectedMember.role === "disabled" ? "Disabled" : "Member"}
                     </span>
                   </div>
                 </div>
@@ -4657,6 +4662,39 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
                 ))}
               </div>
 
+              {user.role === "admin" && selectedMember.role !== "admin" && selectedMember.role !== "disabled" && (
+                <div style={{ marginBottom: 20, padding: "14px 16px", background: "#fef2f2", borderRadius: 12, border: "1px solid #fecaca" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 4 }}>Disable profile</div>
+                  <div style={{ fontSize: 12, color: "#b91c1c", lineHeight: 1.6, marginBottom: 12 }}>
+                    Use this when a team member resigns. They will be marked as disabled and blocked from logging in.
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const ok = window.confirm(`Disable ${mu.name}'s profile? They will no longer be able to log in.`);
+                      if (!ok) return;
+                      try {
+                        await onDisableMember?.(selectedMember.id);
+                        setSelectedMember((prev: any) => prev ? { ...prev, role: "disabled", managed_by: null, earns_commission: false } : prev);
+                      } catch (e: any) {
+                        window.alert(e?.message || "Failed to disable profile.");
+                      }
+                    }}
+                    style={{ padding: "10px 14px", borderRadius: 10, background: "#dc2626", color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700 }}
+                  >
+                    Disable Profile
+                  </button>
+                </div>
+              )}
+
+              {selectedMember.role === "disabled" && (
+                <div style={{ marginBottom: 20, padding: "14px 16px", background: "#fef2f2", borderRadius: 12, border: "1px solid #fecaca" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 4 }}>Profile disabled</div>
+                  <div style={{ fontSize: 12, color: "#b91c1c", lineHeight: 1.6 }}>
+                    This team member has been disabled and should no longer have access to the dashboard.
+                  </div>
+                </div>
+              )}
+
               {/* Recent tasks */}
               {memberTasks.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
@@ -4673,7 +4711,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
               )}
 
               {/* Assign leader -- admin only */}
-              {user.role === "admin" && selectedMember.role !== "admin" && (
+              {user.role === "admin" && selectedMember.role !== "admin" && selectedMember.role !== "disabled" && (
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: 8 }}>Assign Team Leader</label>
                   <select
@@ -4694,7 +4732,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
               )}
 
               {/* Commission toggle -- admin only */}
-              {user.role === "admin" && selectedMember.role !== "admin" && (
+              {user.role === "admin" && selectedMember.role !== "admin" && selectedMember.role !== "disabled" && (
                 <div style={{ marginTop: 16, padding: "14px 16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Earns Commission</div>
@@ -4720,7 +4758,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
               )}
 
               {/* Pay Settings -- admin only */}
-              {user.role === "admin" && selectedMember.role !== "admin" && (
+              {user.role === "admin" && selectedMember.role !== "admin" && selectedMember.role !== "disabled" && (
                 <div style={{ marginTop: 16, padding: "16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0" }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 12 }}>💳 Pay Settings</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -5517,6 +5555,7 @@ export default function ProwessDashboard({
   onResubmitLog,
   onUpdateProfile,
   onAssignLeader,
+  onDisableMember,
   onCreateMember,
   onSignOut,
   onApproveTask,
@@ -5567,6 +5606,7 @@ export default function ProwessDashboard({
   onResubmitLog?: (id: string, links: any[]) => Promise<void>;
   onUpdateProfile?: (updates: { full_name: string; job_title: string }) => Promise<void>;
   onAssignLeader?: (memberId: string, leaderId: string | null) => Promise<void>;
+  onDisableMember?: (memberId: string) => Promise<void>;
   onCreateMember?: (form: any) => Promise<void>;
   onSignOut?: () => void;
   onApproveTask?: (id: string, assigneeId?: string | null) => Promise<void>;
@@ -5779,7 +5819,7 @@ export default function ProwessDashboard({
 
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
       case "team":
-        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} onToggleCommission={onToggleCommission} onUpdateMemberPaySettings={onUpdateMemberPaySettings} /> : null;
+        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} onDisableMember={onDisableMember} onToggleCommission={onToggleCommission} onUpdateMemberPaySettings={onUpdateMemberPaySettings} /> : null;
       case "settings":
         return <SettingsPage user={user} onUpdateProfile={onUpdateProfile} />;
       default:

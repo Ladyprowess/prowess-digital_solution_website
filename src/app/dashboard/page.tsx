@@ -435,6 +435,24 @@ export default function DashboardPage() {
     }));
   }
 
+  async function disableMember(memberId: string) {
+    const res = await fetch("/api/disable-member", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: memberId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to disable profile.");
+    setState((p: any) => ({
+      ...p,
+      users: p.users.map((u: any) =>
+        u.id === memberId
+          ? { ...u, role: "disabled", managed_by: null, earns_commission: false }
+          : u
+      ),
+    }));
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     router.push("/login");
@@ -893,6 +911,7 @@ export default function DashboardPage() {
       onResubmitLog={resubmitLog}
       onUpdateProfile={updateProfile}
       onAssignLeader={assignLeader}
+      onDisableMember={disableMember}
       onCreateMember={createMember}
       onSignOut={signOut}
       onApproveTask={approveTask}
