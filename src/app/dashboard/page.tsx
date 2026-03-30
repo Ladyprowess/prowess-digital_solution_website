@@ -207,8 +207,21 @@ export default function DashboardPage() {
     );
   }
 
+  function getAssignableUserIds() {
+    return new Set(
+      (state.users || [])
+        .filter((u: any) => u.role === "member" || u.role === "leader")
+        .map((u: any) => u.id)
+    );
+  }
+
   async function createTask(form: any) {
-    const assigneeIds: string[] = form.assigneeIds ?? (form.assignedTo ? [form.assignedTo] : []);
+    const assignableUserIds = getAssignableUserIds();
+    const assigneeIds: string[] = (form.assigneeIds ?? (form.assignedTo ? [form.assignedTo] : []))
+      .filter((uid: string) => assignableUserIds.has(uid));
+    if (assigneeIds.length === 0) {
+      throw new Error("Only active team members can be assigned tasks.");
+    }
     const primaryAssignee = assigneeIds[0] ?? null;
     const { data, error } = await supabase.from("tasks").insert({
       title: form.title, description: form.description,
@@ -343,28 +356,30 @@ export default function DashboardPage() {
   }
 
   async function reassignTask(taskId: string, assigneeIds: string[]) {
+    const assignableUserIds = getAssignableUserIds();
+    const validAssigneeIds = assigneeIds.filter((uid: string) => assignableUserIds.has(uid));
     await supabase.from("task_assignments").delete().eq("task_id", taskId);
-    if (assigneeIds.length > 0) {
+    if (validAssigneeIds.length > 0) {
       await supabase.from("task_assignments").insert(
-        assigneeIds.map((uid: string) => ({
+        validAssigneeIds.map((uid: string) => ({
           task_id: taskId,
           user_id: uid,
           assigned_by: state.profile.id,
         }))
       );
     }
-    await supabase.from("tasks").update({ assigned_to: assigneeIds[0] ?? null }).eq("id", taskId);
+    await supabase.from("tasks").update({ assigned_to: validAssigneeIds[0] ?? null }).eq("id", taskId);
     setState((p: any) => ({
       ...p,
       tasks: p.tasks.map((t: any) => t.id === taskId ? {
         ...t,
-        assigned_to: assigneeIds[0] ?? null,
-        task_assignments: assigneeIds.map((uid: string) => ({ user_id: uid, assigned_by: state.profile.id })),
+        assigned_to: validAssigneeIds[0] ?? null,
+        task_assignments: validAssigneeIds.map((uid: string) => ({ user_id: uid, assigned_by: state.profile.id })),
       } : t),
     }));
     // Notify reassigned members
     const task = state.tasks.find((t: any) => t.id === taskId);
-    for (const uid of assigneeIds) {
+    for (const uid of validAssigneeIds) {
       const assignee = state.users.find((u: any) => u.id === uid);
       if (assignee?.email) {
         fetch("/api/notify-task", {

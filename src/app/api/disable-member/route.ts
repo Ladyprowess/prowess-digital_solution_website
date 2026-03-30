@@ -50,6 +50,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
 
+    const { error: assignmentDeleteError } = await supabase
+      .from("task_assignments")
+      .delete()
+      .eq("user_id", userId);
+
+    if (assignmentDeleteError) {
+      return NextResponse.json({ error: assignmentDeleteError.message }, { status: 400 });
+    }
+
+    const { error: taskUpdateError } = await supabase
+      .from("tasks")
+      .update({ assigned_to: null })
+      .eq("assigned_to", userId);
+
+    if (taskUpdateError) {
+      return NextResponse.json({ error: taskUpdateError.message }, { status: 400 });
+    }
+
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to disable profile.";
