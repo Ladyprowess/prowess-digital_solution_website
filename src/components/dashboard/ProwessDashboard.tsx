@@ -3277,8 +3277,8 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
   async function submit() {
     const mid = memberId || user.id;
     if (!mid || !month) { setErr("Please select a member and month."); return; }
-    if (payType === "monthly" && monthlyRate <= 0) {
-      setErr("This member has no monthly rate set. Go to their Team profile and set it first.");
+    if (payType === "monthly" && monthlyRate <= 0 && adj === 0) {
+      setErr("This member has no monthly rate set. Add a reward/deduction in Adjustment, or set a monthly rate first.");
       return;
     }
     setSaving(true); setErr("");
@@ -3340,7 +3340,11 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
                 <div style={{ fontSize: 14, color: "#374151" }}>
                   {monthlyRate > 0
                     ? <>Monthly rate: <strong>{fmtMoney(monthlyRate, currency.symbol)}</strong></>
-                    : <span style={{ color: "#ef4444" }}>⚠️ No monthly rate set - go to Team → member profile to set it.</span>
+                    : <span style={{ color: adj !== 0 ? "#166534" : "#ef4444" }}>
+                        {adj !== 0
+                          ? "Bonus-only / adjustment-only payment will be logged with base pay set to 0."
+                          : "⚠️ No monthly rate set - go to Team → member profile to set it, or enter a reward in Adjustment."}
+                      </span>
                   }
                 </div>
               )}
@@ -3381,7 +3385,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
           )}
 
           {/* Final amount preview */}
-          {selectedMember && baseAmount > 0 && (
+          {selectedMember && (baseAmount > 0 || adj !== 0) && (
             <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "12px 16px", fontSize: 14, fontWeight: 700, color: "#166534" }}>
               Final Amount: {fmtMoney(finalAmount, currency.symbol)}
               {adj !== 0 && <span style={{ fontSize: 12, fontWeight: 400, color: "#4ade80", marginLeft: 8 }}>({fmtMoney(baseAmount, currency.symbol)} {adj > 0 ? "+" : ""}{fmtMoney(adj, currency.symbol)})</span>}
