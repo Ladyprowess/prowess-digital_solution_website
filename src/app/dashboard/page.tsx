@@ -772,18 +772,32 @@ export default function DashboardPage() {
     const member = entry && state.users.find((u: any) => u.id === entry.member_id);
     if (member?.email && entry) {
       const monthLabel = new Date(entry.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      const finalAmount = entry.final_amount ?? (parseFloat(entry.base_amount) + parseFloat(entry.adjustment || "0"));
       fetch("/api/notify-payroll", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: member.email,
           recipientName: member.full_name,
           month: monthLabel,
-          finalAmount: entry.final_amount ?? (parseFloat(entry.base_amount) + parseFloat(entry.adjustment || "0")),
+          finalAmount,
           currencySymbol: entry.currency_symbol,
           payType: entry.pay_type,
           articleCount: entry.article_count,
+          baseAmount: entry.base_amount,
+          adjustmentAmount: entry.adjustment,
           adjustmentNote: entry.adjustment_note,
+          notes: entry.notes,
         }),
+      }).catch(() => {});
+      notifyAdmins({
+        type: "payment-made",
+        recipientName: member.full_name,
+        month: monthLabel,
+        finalAmount,
+        currencySymbol: entry.currency_symbol,
+        payType: entry.pay_type,
+        articleCount: entry.article_count,
+        notes: entry.notes || entry.adjustment_note,
       }).catch(() => {});
     }
   }

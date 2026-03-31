@@ -3239,6 +3239,11 @@ function PayrollBadge({ status }: { status: string }) {
   return <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: s.bg, color: s.color }}>{s.label}</span>;
 }
 
+function payrollTypeLabel(member: any, payType?: string | null) {
+  const base = payType === "per_article" ? "Per Article" : "Monthly Salary";
+  return member?.earns_commission ? `${base} + Commission` : base;
+}
+
 function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
   const thisMonth = new Date().toISOString().slice(0, 7);
   const [memberId, setMemberId] = useState(user.role === "admin" ? "" : user.id);
@@ -3316,7 +3321,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
               <select value={memberId} onChange={e => setMemberId(e.target.value)} style={{ ...SEL, width: "100%" }}>
                 <option value="">Select member...</option>
                 {payableMembers.map((u: any) => (
-                  <option key={u.id} value={u.id}>{normUser(u)?.name} - {u.pay_type === "per_article" ? "Per Article" : "Monthly"}</option>
+                  <option key={u.id} value={u.id}>{normUser(u)?.name} - {payrollTypeLabel(u, u.pay_type)}</option>
                 ))}
               </select>
             </div>
@@ -3333,7 +3338,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
           {selectedMember && (
             <div style={{ background: "#f8fafc", borderRadius: 12, padding: 16, border: "1px solid #e2e8f0" }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10 }}>
-                Pay Type: <span style={{ color: B }}>{payType === "per_article" ? "Per Article" : "Monthly Salary"}</span>
+                Pay Type: <span style={{ color: B }}>{payrollTypeLabel(selectedMember, payType)}</span>
               </div>
 
               {payType === "monthly" && (
@@ -3438,7 +3443,7 @@ function PayrollDetailModal({ entry, users, user, onClose, onApprove, onWithhold
             <Av user={member} size={40} />
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{mn.name}</div>
-              <div style={{ fontSize: 12, color: "#64748b" }}>{mn.title} · {entry.pay_type === "per_article" ? "Per Article" : "Monthly"}</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>{mn.title} · {payrollTypeLabel(member, entry.pay_type)}</div>
             </div>
           </div>
         )}
@@ -3447,10 +3452,9 @@ function PayrollDetailModal({ entry, users, user, onClose, onApprove, onWithhold
           {[
             ["Month", monthLabel],
             entry.pay_type === "per_article" && ["Articles Counted", `${entry.article_count || 0} articles`],
-            entry.pay_type === "per_article" && ["Base Pay", fmtMoney(baseAmount, entry.currency_symbol)],
-            ["Adjustment", `${adjustment >= 0 ? "+" : ""}${fmtMoney(adjustment, entry.currency_symbol)}`],
-            entry.adjustment_note && ["Adjustment Note", entry.adjustment_note],
-            entry.notes && ["Notes", entry.notes],
+            ["Base Pay", fmtMoney(baseAmount, entry.currency_symbol)],
+            ["Payment Made", `${adjustment >= 0 ? "+" : ""}${fmtMoney(adjustment, entry.currency_symbol)}`],
+            (entry.notes || entry.adjustment_note) && ["Reason for Payment", entry.notes || entry.adjustment_note],
           ].filter(Boolean).map(([label, value]: any) => (
             <div key={label} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
               <span style={{ color: "#94a3b8", fontWeight: 600 }}>{label}</span>
@@ -3638,7 +3642,9 @@ function PayrollPage({ user, users, tasks, payroll, onLogPayroll, onApprovePayro
                         {new Date(entry.month + "-01").toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
                       </td>
                       <td style={{ padding: "13px 16px", fontSize: 12, color: "#64748b", whiteSpace: "nowrap" }}>
-                        {entry.pay_type === "per_article" ? `Per Article (${entry.article_count || 0})` : "Monthly"}
+                        {entry.pay_type === "per_article"
+                          ? `${payrollTypeLabel(m, entry.pay_type)} (${entry.article_count || 0})`
+                          : payrollTypeLabel(m, entry.pay_type)}
                       </td>
                       <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>
                         {entry.pay_type === "per_article" ? fmtMoney(parseFloat(entry.base_amount) || 0, entry.currency_symbol) : "-"}

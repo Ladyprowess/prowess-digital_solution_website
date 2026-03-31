@@ -57,6 +57,12 @@ export async function POST(req: NextRequest) {
       totalPoints,
       tasksCompleted,
       logsSubmitted,
+      recipientName,
+      finalAmount,
+      currencySymbol,
+      payType,
+      articleCount,
+      notes,
     } = await req.json();
 
     if (!to || !type) {
@@ -103,6 +109,20 @@ export async function POST(req: NextRequest) {
           <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Winner</div>
           <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px;">${winnerName || "Unknown"}</div>
           <div style="font-size:13px;color:#64748b;margin-top:8px;">${totalPoints ?? 0} points • ${tasksCompleted ?? 0} tasks • ${logsSubmitted ?? 0} logs</div>
+        </div>
+      `);
+    } else if (type === "payment-made") {
+      subject = `Payment Made: ${recipientName || "Team member"}`;
+      html = wrapEmail(subject, `
+        <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:10px;">Payment has been marked as paid</div>
+        <div style="font-size:14px;color:#64748b;line-height:1.7;margin-bottom:22px;">
+          You just made a payment to <strong style="color:#0f172a;">${recipientName || "a team member"}</strong>.
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;">
+          <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Payment Details</div>
+          <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px;">${currencySymbol || ""}${Number(finalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div style="font-size:13px;color:#64748b;margin-top:8px;">${month || "This month"} • ${payType === "per_article" ? `Per Article${articleCount !== undefined ? ` • ${articleCount} article${articleCount === 1 ? "" : "s"}` : ""}` : "Monthly Salary"}</div>
+          ${notes ? `<div style="font-size:13px;color:#64748b;margin-top:8px;">Reason for payment: ${notes}</div>` : ""}
         </div>
       `);
     } else {

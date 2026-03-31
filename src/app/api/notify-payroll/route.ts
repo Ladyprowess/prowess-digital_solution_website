@@ -12,14 +12,20 @@ export async function POST(req: NextRequest) {
     const {
       to, recipientName, month,
       finalAmount, currencySymbol,
-      payType, articleCount, adjustmentNote,
+      payType, articleCount, baseAmount,
+      adjustmentAmount, adjustmentNote, notes,
     } = await req.json();
 
     if (!to || !finalAmount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const articleLine = payType === "per_article" && articleCount
+    const fmtMoney = (value: number | string | null | undefined) =>
+      `${currencySymbol}${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const payTypeLabel = payType === "per_article" ? "Per Article" : "Monthly Salary";
+
+    const articleLine = payType === "per_article" && articleCount !== null && articleCount !== undefined
       ? `<tr>
            <td style="padding-bottom:12px;">
              <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Articles Counted</span><br/>
@@ -28,11 +34,25 @@ export async function POST(req: NextRequest) {
          </tr>`
       : "";
 
-    const adjLine = adjustmentNote
+    const basePayLine = `<tr>
+           <td style="padding-bottom:12px;">
+             <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Base Pay</span><br/>
+             <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${fmtMoney(baseAmount)}</span>
+           </td>
+         </tr>`;
+
+    const paymentMadeLine = `<tr>
+           <td style="padding-bottom:12px;">
+             <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Payment Made</span><br/>
+             <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${fmtMoney(adjustmentAmount)}</span>
+           </td>
+         </tr>`;
+
+    const reasonLine = (notes || adjustmentNote)
       ? `<tr>
            <td style="padding-bottom:12px;">
-             <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Adjustment Note</span><br/>
-             <span style="font-size:13px;color:#64748b;margin-top:4px;display:block;">${adjustmentNote}</span>
+             <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Reason for Payment</span><br/>
+             <span style="font-size:13px;color:#64748b;margin-top:4px;display:block;">${notes || adjustmentNote}</span>
            </td>
          </tr>`
       : "";
@@ -57,22 +77,24 @@ export async function POST(req: NextRequest) {
           <td style="padding:36px 40px;">
             <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
             <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">Your payment has been sent! 💸</div>
-            <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Your ${payType === "per_article" ? "article-based" : "monthly"} pay for ${month} has been marked as paid.</div>
+            <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Your ${payType === "per_article" ? "article-based" : "monthly"} payment for ${month} has been marked as paid.</div>
 
             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:28px;margin-bottom:28px;text-align:center;">
               <div style="font-size:13px;color:#16a34a;font-weight:600;margin-bottom:6px;">Amount Paid</div>
-              <div style="font-size:40px;font-weight:800;color:#16a34a;">${currencySymbol}${Number(finalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <div style="font-size:40px;font-weight:800;color:#16a34a;">${fmtMoney(finalAmount)}</div>
               <div style="font-size:12px;color:#94a3b8;margin-top:6px;">${month}</div>
             </div>
 
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:28px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 ${articleLine}
-                ${adjLine}
+                ${basePayLine}
+                ${paymentMadeLine}
+                ${reasonLine}
                 <tr>
                   <td>
                     <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Pay Type</span><br/>
-                    <span style="font-size:13px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${payType === "per_article" ? "Per Article" : "Monthly Salary"}</span>
+                    <span style="font-size:13px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${payTypeLabel}</span>
                   </td>
                 </tr>
               </table>
