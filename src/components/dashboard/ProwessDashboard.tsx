@@ -1124,6 +1124,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
   const leader = weeklyScores[0];
   const toFirst = leader && leader.userId !== user.id ? Math.max(0, leader.score - weeklyPts + 1) : 0;
   const pctToFirst = leader && leader.score > 0 ? Math.min(100, Math.round((weeklyPts / leader.score) * 100)) : (weeklyPts > 0 ? 100 : 0);
+  const thisMonth   = fmt(today).slice(0, 7);
 
   const computedMonthLeader = computeMonthlyScores(tasks, logs, users)[0] || null;
   const monthWinner =
@@ -1156,7 +1157,6 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
   const prog = myT.length ? Math.round(done / myT.length * 100) : 0;
 
   // -- KPI snapshot ----------------------------------------------------------
-  const thisMonth   = fmt(today).slice(0, 7);
   const myKpis      = (kpiAssignments || []).filter((a: any) => a.assigned_to === user.id && a.month === thisMonth);
   const kpiOnTrack  = myKpis.filter((a: any) => kpiPct(kpiCurrentValue(a, kpiLogs || []), a.target_value) >= 50).length;
   const kpiUnlogged = myKpis.filter((a: any) => !(kpiLogs || []).some((l: any) => l.assignment_id === a.id)).length;
