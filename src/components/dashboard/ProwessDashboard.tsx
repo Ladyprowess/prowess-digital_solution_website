@@ -885,7 +885,8 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
   const pendingApprovals = expandTasksPerAssignee(tasks.map(normTask)).filter((t: any) =>
     t.approvalStatus === "needs-review" && t._singleAssignee
   ).length + logs.map(normLog).filter((l: any) => l.approvalStatus === "needs-review").length;
-  const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
+  const monthWinner = (monthlyWinners || []).find((w: any) => w.month === thisMonth) || (monthlyWinners || [])[0] || null;
+  const lastWinner = !monthWinner && weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
 
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -904,16 +905,13 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
       )}
       {/* Team Member of the Month banner */}
       {(() => {
-        const thisMonth = fmt(today).slice(0, 7);
-        const monthWinner = (monthlyWinners || []).find((w: any) => w.month === thisMonth)
-          || (monthlyWinners || [])[0];
         if (!monthWinner) return null;
         const monthLabel = new Date(monthWinner.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
         return (
           <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fdf4ff,#fae8ff)", border: "1px solid #e879f9", borderRadius: 14, padding: "14px 20px" }}>
             <span style={{ fontSize: 32 }}>🌟</span>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#86198f", textTransform: "uppercase", letterSpacing: "0.5px" }}>Team Member of the Month — {monthLabel}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#86198f", textTransform: "uppercase", letterSpacing: "0.5px" }}>Employee of the Month — {monthLabel}</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{monthWinner.winner_name}</div>
               <div style={{ fontSize: 12, color: "#64748b" }}>
                 {monthWinner.total_points}pts · {monthWinner.tasks_completed} tasks · {monthWinner.logs_submitted} logs
@@ -1104,8 +1102,10 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
   const toFirst = leader && leader.userId !== user.id ? Math.max(0, leader.score - weeklyPts + 1) : 0;
   const pctToFirst = leader && leader.score > 0 ? Math.min(100, Math.round((weeklyPts / leader.score) * 100)) : (weeklyPts > 0 ? 100 : 0);
 
+  const monthWinner = (monthlyWinners || []).find((w: any) => w.month === thisMonth) || (monthlyWinners || [])[0] || null;
+
   // Last winner from DB
-  const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
+  const lastWinner = !monthWinner && weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
   const isTMOTW = lastWinner && lastWinner.winner_id === user.id;
   const isCurrentLeader = weeklyScores.length > 0 && weeklyScores[0].userId === user.id && weeklyPts > 0;
 
@@ -1186,11 +1186,9 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
       )}
       {/* Team Member of the Month banner */}
       {(() => {
-        const thisMonth = fmt(today).slice(0, 7);
-        const mw = (monthlyWinners || []).find((w: any) => w.month === thisMonth) || (monthlyWinners || [])[0];
-        if (!mw) return null;
-        const monthLabel = new Date(mw.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-        const isMonthWinner = mw.winner_id === user.id;
+        if (!monthWinner) return null;
+        const monthLabel = new Date(monthWinner.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+        const isMonthWinner = monthWinner.winner_id === user.id;
         return (
           <div style={{ display: "flex", alignItems: "center", gap: 14,
             background: isMonthWinner ? "linear-gradient(135deg,#fdf4ff,#fae8ff)" : "linear-gradient(135deg,#f8fafc,#f1f5f9)",
@@ -1199,17 +1197,17 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
             <span style={{ fontSize: isMonthWinner ? 40 : 28 }}>{isMonthWinner ? "🌟" : "🏆"}</span>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: isMonthWinner ? "#86198f" : "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Team Member of the Month — {monthLabel}
+                Employee of the Month — {monthLabel}
               </div>
               {isMonthWinner ? (
                 <>
                   <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>Congratulations, {user.name}! 🎉</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{mw.total_points}pts · {mw.tasks_completed} tasks · {mw.logs_submitted} logs</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{monthWinner.total_points}pts · {monthWinner.tasks_completed} tasks · {monthWinner.logs_submitted} logs</div>
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{mw.winner_name}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{mw.total_points}pts · {mw.tasks_completed} tasks · {mw.logs_submitted} logs</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{monthWinner.winner_name}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{monthWinner.total_points}pts · {monthWinner.tasks_completed} tasks · {monthWinner.logs_submitted} logs</div>
                 </>
               )}
             </div>
@@ -2427,6 +2425,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
   const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
   const thisMonth = fmt(new Date()).slice(0, 7);
   const lastMonthWinner = (monthlyWinners || []).length > 0 ? monthlyWinners[0] : null;
+  const isCurrentMonthClosed = (monthlyWinners || []).some((w: any) => w.month === thisMonth);
 
   async function handleCloseWeek() {
     if (!weeklySc.length) return;
@@ -2437,11 +2436,16 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
   }
 
   async function handleCloseMonth() {
-    if (!monthlySc.length) return;
+    if (!monthlySc.length || isCurrentMonthClosed) return;
     setClosingMonth(true);
-    await onCloseMonth?.(thisMonth, monthlySc);
-    setClosingMonth(false);
-    setCloseMonthModal(false);
+    try {
+      await onCloseMonth?.(thisMonth, monthlySc);
+      setCloseMonthModal(false);
+    } catch (e: any) {
+      window.alert(e?.message || "Failed to close this month.");
+    } finally {
+      setClosingMonth(false);
+    }
   }
 
   return (
@@ -2466,9 +2470,9 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
             </button>
           )}
           {user?.role === "admin" && (
-            <button onClick={() => setCloseMonthModal(true)}
-              style={{ padding: "9px 18px", borderRadius: 11, background: "#9333ea", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-              🌟 Close Month
+            <button onClick={() => !isCurrentMonthClosed && setCloseMonthModal(true)}
+              style={{ padding: "9px 18px", borderRadius: 11, background: isCurrentMonthClosed ? "#c4b5fd" : "#9333ea", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: isCurrentMonthClosed ? "not-allowed" : "pointer" }}>
+              {isCurrentMonthClosed ? "🌟 Month Closed" : "🌟 Close Month"}
             </button>
           )}
         </div>
@@ -4503,10 +4507,12 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
   );
 }
 
-function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, onDisableMember, onToggleCommission, onUpdateMemberPaySettings }: any) {
+function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, onDisableMember, onEnableMember, onToggleCommission, onUpdateMemberPaySettings }: any) {
   const [modal,          setModal]          = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [saving,         setSaving]         = useState(false);
+  const [statusReason,   setStatusReason]   = useState("");
+  const [statusSaving,   setStatusSaving]   = useState(false);
   const [error,          setError]          = useState("");
   const [done,           setDone]           = useState(false);
   const [form,           setForm]           = useState({ fullName: "", email: "", password: "", jobTitle: "", role: "member", managedBy: "", country: "", earnsCommission: false });
@@ -4557,7 +4563,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
           const assignedLeader = u.managed_by ? normUser(users.find((x: any) => x.id === u.managed_by)) : null;
           return (
             <Card key={u.id} style={{ padding: 24, textAlign: "center", cursor: "pointer", transition: "box-shadow 0.2s", opacity: u.role === "disabled" ? 0.62 : 1, borderColor: u.role === "disabled" ? "#fecaca" : "#e2e8f0" }}
-              onClick={() => setSelectedMember(u)}>
+              onClick={() => { setSelectedMember(u); setStatusReason(""); }}>
               <Av user={u} size={54} />
               <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 12 }}>{nu.name}</div>
               <div style={{ fontSize: 13, color: "#64748b" }}>{nu.title || (u.role === "admin" ? "Administrator" : u.role === "leader" ? "Team Leader" : u.role === "disabled" ? "Disabled Profile" : "Team Member")}</div>
@@ -4668,20 +4674,36 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
                   <div style={{ fontSize: 12, color: "#b91c1c", lineHeight: 1.6, marginBottom: 12 }}>
                     Use this when a team member resigns. They will be marked as disabled and blocked from logging in.
                   </div>
+                  <textarea
+                    value={statusReason}
+                    onChange={e => setStatusReason(e.target.value)}
+                    placeholder="Reason for disabling this team member"
+                    style={{ width: "100%", minHeight: 88, resize: "vertical", padding: "10px 12px", borderRadius: 10, border: "1px solid #fecaca", fontSize: 14, marginBottom: 12 }}
+                  />
                   <button
                     onClick={async () => {
+                      const reason = statusReason.trim();
+                      if (!reason) {
+                        window.alert("Please enter a reason before disabling this profile.");
+                        return;
+                      }
                       const ok = window.confirm(`Disable ${mu.name}'s profile? They will no longer be able to log in.`);
                       if (!ok) return;
                       try {
-                        await onDisableMember?.(selectedMember.id);
-                        setSelectedMember((prev: any) => prev ? { ...prev, role: "disabled", managed_by: null, earns_commission: false } : prev);
+                        setStatusSaving(true);
+                        await onDisableMember?.(selectedMember.id, reason);
+                        setSelectedMember((prev: any) => prev ? { ...prev, role: "disabled", managed_by: null, earns_commission: false, status_reason: reason } : prev);
+                        setStatusReason("");
                       } catch (e: any) {
                         window.alert(e?.message || "Failed to disable profile.");
+                      } finally {
+                        setStatusSaving(false);
                       }
                     }}
-                    style={{ padding: "10px 14px", borderRadius: 10, background: "#dc2626", color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700 }}
+                    disabled={statusSaving}
+                    style={{ padding: "10px 14px", borderRadius: 10, background: "#dc2626", color: "white", border: "none", cursor: statusSaving ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 700, opacity: statusSaving ? 0.7 : 1 }}
                   >
-                    Disable Profile
+                    {statusSaving ? "Saving..." : "Disable Profile"}
                   </button>
                 </div>
               )}
@@ -4689,9 +4711,47 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
               {selectedMember.role === "disabled" && (
                 <div style={{ marginBottom: 20, padding: "14px 16px", background: "#fef2f2", borderRadius: 12, border: "1px solid #fecaca" }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 4 }}>Profile disabled</div>
-                  <div style={{ fontSize: 12, color: "#b91c1c", lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 12, color: "#b91c1c", lineHeight: 1.6, marginBottom: 12 }}>
                     This team member has been disabled and should no longer have access to the dashboard.
                   </div>
+                  {selectedMember.status_reason && (
+                    <div style={{ fontSize: 12, color: "#7f1d1d", marginBottom: 12 }}>
+                      <strong>Latest status note:</strong> {selectedMember.status_reason}
+                    </div>
+                  )}
+                  {user.role === "admin" && (
+                    <>
+                      <textarea
+                        value={statusReason}
+                        onChange={e => setStatusReason(e.target.value)}
+                        placeholder="Reason for enabling this team member"
+                        style={{ width: "100%", minHeight: 88, resize: "vertical", padding: "10px 12px", borderRadius: 10, border: "1px solid #fecaca", fontSize: 14, marginBottom: 12, background: "white" }}
+                      />
+                      <button
+                        onClick={async () => {
+                          const reason = statusReason.trim();
+                          if (!reason) {
+                            window.alert("Please enter a reason before enabling this profile.");
+                            return;
+                          }
+                          try {
+                            setStatusSaving(true);
+                            const result = await onEnableMember?.(selectedMember.id, reason);
+                            setSelectedMember((prev: any) => prev ? { ...prev, role: result?.role || "member", status_reason: reason } : prev);
+                            setStatusReason("");
+                          } catch (e: any) {
+                            window.alert(e?.message || "Failed to enable profile.");
+                          } finally {
+                            setStatusSaving(false);
+                          }
+                        }}
+                        disabled={statusSaving}
+                        style={{ padding: "10px 14px", borderRadius: 10, background: "#16a34a", color: "white", border: "none", cursor: statusSaving ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 700, opacity: statusSaving ? 0.7 : 1 }}
+                      >
+                        {statusSaving ? "Saving..." : "Enable Profile"}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -5556,6 +5616,7 @@ export default function ProwessDashboard({
   onUpdateProfile,
   onAssignLeader,
   onDisableMember,
+  onEnableMember,
   onCreateMember,
   onSignOut,
   onApproveTask,
@@ -5606,7 +5667,8 @@ export default function ProwessDashboard({
   onResubmitLog?: (id: string, links: any[]) => Promise<void>;
   onUpdateProfile?: (updates: { full_name: string; job_title: string }) => Promise<void>;
   onAssignLeader?: (memberId: string, leaderId: string | null) => Promise<void>;
-  onDisableMember?: (memberId: string) => Promise<void>;
+  onDisableMember?: (memberId: string, reason: string) => Promise<void>;
+  onEnableMember?: (memberId: string, reason: string) => Promise<void>;
   onCreateMember?: (form: any) => Promise<void>;
   onSignOut?: () => void;
   onApproveTask?: (id: string, assigneeId?: string | null) => Promise<void>;
@@ -5819,7 +5881,7 @@ export default function ProwessDashboard({
 
         return <ReportsPage tasks={localTasks} logs={localLogs} users={users} user={user} />;
       case "team":
-        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} onDisableMember={onDisableMember} onToggleCommission={onToggleCommission} onUpdateMemberPaySettings={onUpdateMemberPaySettings} /> : null;
+        return isPrivileged(user) ? <TeamPage users={users} user={user} tasks={localTasks} logs={localLogs} onCreateMember={onCreateMember} onAssignLeader={onAssignLeader} onDisableMember={onDisableMember} onEnableMember={onEnableMember} onToggleCommission={onToggleCommission} onUpdateMemberPaySettings={onUpdateMemberPaySettings} /> : null;
       case "settings":
         return <SettingsPage user={user} onUpdateProfile={onUpdateProfile} />;
       default:

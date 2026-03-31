@@ -450,11 +450,11 @@ export default function DashboardPage() {
     }));
   }
 
-  async function disableMember(memberId: string) {
+  async function disableMember(memberId: string, reason: string) {
     const res = await fetch("/api/disable-member", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: memberId }),
+      body: JSON.stringify({ userId: memberId, reason }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to disable profile.");
@@ -462,10 +462,30 @@ export default function DashboardPage() {
       ...p,
       users: p.users.map((u: any) =>
         u.id === memberId
-          ? { ...u, role: "disabled", managed_by: null, earns_commission: false }
+          ? { ...u, role: "disabled", managed_by: null, earns_commission: false, status_reason: data.disabledReason || reason }
           : u
       ),
     }));
+    return data;
+  }
+
+  async function enableMember(memberId: string, reason: string) {
+    const res = await fetch("/api/enable-member", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: memberId, reason }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to enable profile.");
+    setState((p: any) => ({
+      ...p,
+      users: p.users.map((u: any) =>
+        u.id === memberId
+          ? { ...u, role: data.role || "member", status_reason: data.enabledReason || reason }
+          : u
+      ),
+    }));
+    return data;
   }
 
   async function signOut() {
@@ -836,6 +856,10 @@ export default function DashboardPage() {
   async function closeMonth(month: string, scores: any[]) {
     const winner = scores[0];
     if (!winner) return;
+    const existing = (state.monthlyWinners || []).find((row: any) => row.month === month);
+    if (existing) {
+      throw new Error("This month has already been closed.");
+    }
     const { data: winnerRow } = await supabase.from("monthly_winners").insert({
       month,
       winner_id: winner.userId,
@@ -927,6 +951,7 @@ export default function DashboardPage() {
       onUpdateProfile={updateProfile}
       onAssignLeader={assignLeader}
       onDisableMember={disableMember}
+      onEnableMember={enableMember}
       onCreateMember={createMember}
       onSignOut={signOut}
       onApproveTask={approveTask}
