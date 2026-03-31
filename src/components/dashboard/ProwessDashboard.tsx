@@ -897,7 +897,18 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
   const pendingApprovals = expandTasksPerAssignee(tasks.map(normTask)).filter((t: any) =>
     t.approvalStatus === "needs-review" && t._singleAssignee
   ).length + logs.map(normLog).filter((l: any) => l.approvalStatus === "needs-review").length;
-  const monthWinner = (monthlyWinners || []).find((w: any) => w.month === thisMonth) || (monthlyWinners || [])[0] || null;
+  const computedMonthLeader = computeMonthlyScores(tasks, logs, users)[0] || null;
+  const monthWinner =
+    (monthlyWinners || []).find((w: any) => w.month === thisMonth) ||
+    (monthlyWinners || [])[0] ||
+    (computedMonthLeader ? {
+      month: thisMonth,
+      winner_id: computedMonthLeader.userId,
+      winner_name: computedMonthLeader.name,
+      total_points: computedMonthLeader.score,
+      tasks_completed: computedMonthLeader.tasksCompleted,
+      logs_submitted: computedMonthLeader.logsCount,
+    } : null);
   const lastWinner = !monthWinner && weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
 
   return (
@@ -923,7 +934,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
           <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fdf4ff,#fae8ff)", border: "1px solid #e879f9", borderRadius: 14, padding: "14px 20px" }}>
             <span style={{ fontSize: 32 }}>🌟</span>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#86198f", textTransform: "uppercase", letterSpacing: "0.5px" }}>Employee of the Month — {monthLabel}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#86198f", textTransform: "uppercase", letterSpacing: "0.5px" }}>{(monthlyWinners || []).length > 0 ? "Employee of the Month" : "Current Employee of the Month"} — {monthLabel}</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{monthWinner.winner_name}</div>
               <div style={{ fontSize: 12, color: "#64748b" }}>
                 {monthWinner.total_points}pts · {monthWinner.tasks_completed} tasks · {monthWinner.logs_submitted} logs
@@ -1114,7 +1125,18 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
   const toFirst = leader && leader.userId !== user.id ? Math.max(0, leader.score - weeklyPts + 1) : 0;
   const pctToFirst = leader && leader.score > 0 ? Math.min(100, Math.round((weeklyPts / leader.score) * 100)) : (weeklyPts > 0 ? 100 : 0);
 
-  const monthWinner = (monthlyWinners || []).find((w: any) => w.month === thisMonth) || (monthlyWinners || [])[0] || null;
+  const computedMonthLeader = computeMonthlyScores(tasks, logs, users)[0] || null;
+  const monthWinner =
+    (monthlyWinners || []).find((w: any) => w.month === thisMonth) ||
+    (monthlyWinners || [])[0] ||
+    (computedMonthLeader ? {
+      month: thisMonth,
+      winner_id: computedMonthLeader.userId,
+      winner_name: computedMonthLeader.name,
+      total_points: computedMonthLeader.score,
+      tasks_completed: computedMonthLeader.tasksCompleted,
+      logs_submitted: computedMonthLeader.logsCount,
+    } : null);
 
   // Last winner from DB
   const lastWinner = !monthWinner && weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
@@ -1209,7 +1231,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
             <span style={{ fontSize: isMonthWinner ? 40 : 28 }}>{isMonthWinner ? "🌟" : "🏆"}</span>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: isMonthWinner ? "#86198f" : "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Employee of the Month — {monthLabel}
+                {((monthlyWinners || []).length > 0 ? "Employee of the Month" : "Current Employee of the Month")} — {monthLabel}
               </div>
               {isMonthWinner ? (
                 <>

@@ -860,7 +860,7 @@ export default function DashboardPage() {
     if (existing) {
       throw new Error("This month has already been closed.");
     }
-    const { data: winnerRow } = await supabase.from("monthly_winners").insert({
+    const { data: winnerRow, error: winnerError } = await supabase.from("monthly_winners").insert({
       month,
       winner_id: winner.userId,
       winner_name: winner.name,
@@ -869,6 +869,12 @@ export default function DashboardPage() {
       logs_submitted: winner.logsCount,
       created_by: state.profile.id,
     }).select().single();
+    if (winnerError) {
+      if (/monthly_winners/i.test(winnerError.message) && /exist|found/i.test(winnerError.message)) {
+        throw new Error("The monthly winner table is missing in Supabase. Run the SQL in supabase/monthly_winners.sql first.");
+      }
+      throw new Error(winnerError.message || "Failed to save the employee of the month.");
+    }
     if (winnerRow) {
       setState((p: any) => ({ ...p, monthlyWinners: [winnerRow, ...(p.monthlyWinners || [])] }));
     }
