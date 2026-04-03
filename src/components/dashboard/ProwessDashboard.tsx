@@ -86,7 +86,10 @@ const normTask = (t: any) => {
 };
 
 function getTaskCountedAt(t: any): string {
+  // Once a task is approved, month-based counting should follow the
+  // approval month so late approvals still show up in the current cycle.
   return (
+    (t?.approvalStatus === "approved" ? (t?.approvedAt ?? t?.approved_at) : null) ??
     t?.completedAt ??
     t?.completed_at ??
     t?.approved_at ??
