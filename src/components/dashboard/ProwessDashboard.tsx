@@ -1111,7 +1111,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
 }
 
 function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, monthlyWinners, setPage }: any) {
-  const myT  = tasks.map(normTask).filter((t: any) => t.assignees.includes(user.id));
+  const myT  = expandTasksPerAssignee(tasks.map(normTask)).filter((t: any) => t._singleAssignee === user.id);
   const myL  = logs.map(normLog).filter((l: any) => l.userId === user.id);
   const done = myT.filter((t: any) => t.status === "completed").length;
   const od   = myT.filter((t: any) => t.deadline && t.deadline < fmt(today) && t.status !== "completed").length;
@@ -2804,6 +2804,13 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
     closeDetail();
   }
 
+  async function handleToggleArticle() {
+    if (selectedType !== "task" || !selected) return;
+    const nextValue = !selected.is_article;
+    await onMarkTaskAsArticle?.(selected.id, nextValue);
+    setSelected((prev: any) => prev ? { ...prev, is_article: nextValue } : prev);
+  }
+
   return (
     <div style={{ padding: "20px 20px" }}>
 
@@ -3011,19 +3018,64 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
 
             {/* Count as Article toggle (tasks only, admin only) */}
             {selectedType === "task" && user.role === "admin" && selected.status === "completed" && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0", marginBottom: 16 }}>
-                <div>
+              <button
+                type="button"
+                onClick={handleToggleArticle}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  padding: "16px 18px",
+                  background: selected.is_article ? B + "10" : "#f8fafc",
+                  borderRadius: 14,
+                  border: `1px solid ${selected.is_article ? B + "35" : "#e2e8f0"}`,
+                  marginBottom: 16,
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>📰 Count as Article</div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Marks this task for per-article pay calculation</div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                    Marks this task for per-article pay calculation
+                  </div>
                 </div>
-                <button type="button"
-                  onClick={() => onMarkTaskAsArticle?.(selected.id, !selected.is_article)}
-                  style={{ position: "relative", width: 44, height: 24, borderRadius: 99, border: "none", cursor: "pointer",
-                    background: selected.is_article ? B : "#e2e8f0", transition: "background 0.2s", flexShrink: 0 }}>
-                  <span style={{ position: "absolute", top: 2, left: selected.is_article ? 22 : 2, width: 20, height: 20,
-                    borderRadius: "50%", background: "white", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-                </button>
-              </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: selected.is_article ? B : "#64748b",
+                    background: selected.is_article ? B + "14" : "#e2e8f0",
+                    padding: "5px 9px",
+                    borderRadius: 999,
+                  }}>
+                    {selected.is_article ? "On" : "Off"}
+                  </span>
+                  <span style={{
+                    position: "relative",
+                    width: 58,
+                    height: 34,
+                    borderRadius: 999,
+                    background: selected.is_article ? B : "#cbd5e1",
+                    transition: "background 0.2s",
+                    flexShrink: 0,
+                  }}>
+                    <span style={{
+                      position: "absolute",
+                      top: 3,
+                      left: selected.is_article ? 27 : 3,
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "white",
+                      transition: "left 0.2s",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                    }} />
+                  </span>
+                </div>
+              </button>
             )}
 
             {/* Reject reason input - shown when reject is tapped */}
@@ -3079,7 +3131,7 @@ function ReportsPage({ tasks, logs, users, user }: any) {
       ? users.filter((u: any) => isStaff(u) && (u.id === user.id || u.managed_by === user.id))
       : users.filter((u: any) => isStaff(u))
     : users.filter((u: any) => isStaff(u));
-  const normT   = tasks.map(normTask);
+  const normT   = expandTasksPerAssignee(tasks.map(normTask));
   const normL   = logs.map(normLog);
 
   const byMember = members.map((u: any) => {
@@ -3101,17 +3153,17 @@ function ReportsPage({ tasks, logs, users, user }: any) {
       weekEnd.setDate(weekStart.getDate() + 6);
       const ws = fmt(weekStart);
       const we = fmt(weekEnd);
-      const completedInWeek = tasks.filter((t: any) =>
-        t.status === "completed" && t.completed_at &&
-        t.completed_at.slice(0, 10) >= ws && t.completed_at.slice(0, 10) <= we
+      const completedInWeek = normT.filter((t: any) =>
+        t.status === "completed" && t.completedAt &&
+        t.completedAt.slice(0, 10) >= ws && t.completedAt.slice(0, 10) <= we
       ).length;
       const logsInWeek = normL.filter((l: any) => l.date >= ws && l.date <= we).length;
       weeks.push({ week: `W${6 - w}`, score: completedInWeek * 10 + logsInWeek * 2 });
     }
     return weeks;
-  }, [tasks, normL]);
+  }, [normT, normL]);
 
-  const compl  = tasks.filter((t: any) => t.status === "completed").length;
+  const compl  = normT.filter((t: any) => t.status === "completed").length;
   const totHrs = normL.reduce((s: number, l: any) => s + (l.timeSpent || 0), 0);
 
   return (
