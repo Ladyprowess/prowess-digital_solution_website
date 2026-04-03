@@ -6064,21 +6064,31 @@ export default function ProwessDashboard({
               }}
               onApproveTask={async (id: string, assigneeId?: string | null) => {
                 await onApproveTask?.(id, assigneeId);
+                const approvedAt = new Date().toISOString();
                 setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? {
                   ...t,
-                  ...((!assigneeId || (t.task_assignments || []).length <= 1) ? { approval_status: "approved", approval_note: null } : {}),
+                  ...((!assigneeId || (t.task_assignments || []).length <= 1)
+                    ? { approval_status: "approved", approval_note: null, approved_at: approvedAt }
+                    : {}),
                   task_assignments: (t.task_assignments || []).map((a: any) =>
-                    a.user_id === assigneeId ? { ...a, approval_status: "approved", approval_note: null } : a
+                    a.user_id === assigneeId
+                      ? { ...a, approval_status: "approved", approval_note: null, approved_at: approvedAt }
+                      : a
                   ),
                 } : t));
               }}
               onRejectTask={async (id: string, note: string, assigneeId?: string | null) => {
                 await onRejectTask?.(id, note, assigneeId);
+                const approvedAt = new Date().toISOString();
                 setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? {
                   ...t,
-                  ...((!assigneeId || (t.task_assignments || []).length <= 1) ? { approval_status: "rejected", approval_note: note } : {}),
+                  ...((!assigneeId || (t.task_assignments || []).length <= 1)
+                    ? { approval_status: "rejected", approval_note: note, approved_at: approvedAt }
+                    : {}),
                   task_assignments: (t.task_assignments || []).map((a: any) =>
-                    a.user_id === assigneeId ? { ...a, approval_status: "rejected", approval_note: note } : a
+                    a.user_id === assigneeId
+                      ? { ...a, approval_status: "rejected", approval_note: note, approved_at: approvedAt }
+                      : a
                   ),
                 } : t));
               }}
