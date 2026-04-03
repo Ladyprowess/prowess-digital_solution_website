@@ -3244,6 +3244,15 @@ function payrollTypeLabel(member: any, payType?: string | null) {
   return member?.earns_commission ? `${base} + Commission` : base;
 }
 
+function getApprovedArticleCount(tasks: any[], memberId: string, month: string) {
+  return expandTasksPerAssignee(tasks.map(normTask)).filter((t: any) =>
+    t._singleAssignee === memberId &&
+    t.is_article === true &&
+    t.approvalStatus === "approved" &&
+    (t.completedAt || "").slice(0, 7) === month
+  ).length;
+}
+
 function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
   const thisMonth = new Date().toISOString().slice(0, 7);
   const [memberId, setMemberId] = useState(user.role === "admin" ? "" : user.id);
@@ -3267,12 +3276,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
   // For per_article: count approved article tasks in the selected month
   const articleCount = useMemo(() => {
     if (payType !== "per_article" || !selectedMember) return 0;
-    return tasks.filter((t: any) =>
-      t.assigned_to === selectedMember.id &&
-      t.is_article === true &&
-      t.approval_status === "approved" &&
-      t.completed_at && t.completed_at.slice(0, 7) === month
-    ).length;
+    return getApprovedArticleCount(tasks, selectedMember.id, month);
   }, [tasks, selectedMember, month, payType]);
 
   const adj         = parseFloat(adjustment) || 0;
@@ -5992,7 +5996,7 @@ export default function ProwessDashboard({
                 await onApproveTask?.(id, assigneeId);
                 setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? {
                   ...t,
-                  ...(assigneeId ? {} : { approval_status: "approved" }),
+                  ...((!assigneeId || (t.task_assignments || []).length <= 1) ? { approval_status: "approved", approval_note: null } : {}),
                   task_assignments: (t.task_assignments || []).map((a: any) =>
                     a.user_id === assigneeId ? { ...a, approval_status: "approved", approval_note: null } : a
                   ),
@@ -6002,7 +6006,7 @@ export default function ProwessDashboard({
                 await onRejectTask?.(id, note, assigneeId);
                 setLocalTasks((p: any[]) => p.map((t: any) => t.id === id ? {
                   ...t,
-                  ...(assigneeId ? {} : { approval_status: "rejected", approval_note: note }),
+                  ...((!assigneeId || (t.task_assignments || []).length <= 1) ? { approval_status: "rejected", approval_note: note } : {}),
                   task_assignments: (t.task_assignments || []).map((a: any) =>
                     a.user_id === assigneeId ? { ...a, approval_status: "rejected", approval_note: note } : a
                   ),

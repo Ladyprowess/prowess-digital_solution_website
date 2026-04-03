@@ -215,6 +215,13 @@ export default function DashboardPage() {
     );
   }
 
+  function shouldMirrorAssignmentToTask(taskId: string, assigneeId?: string | null) {
+    const task = state.tasks.find((t: any) => t.id === taskId);
+    if (!task || !assigneeId) return false;
+    const assignmentCount = Array.isArray(task.task_assignments) ? task.task_assignments.length : 0;
+    return assignmentCount <= 1;
+  }
+
   async function createTask(form: any) {
     const assignableUserIds = getAssignableUserIds();
     const assigneeIds: string[] = (form.assigneeIds ?? (form.assignedTo ? [form.assignedTo] : []))
@@ -286,10 +293,14 @@ export default function DashboardPage() {
         .update(assignmentUpdates)
         .eq("task_id", taskId)
         .eq("user_id", assigneeId);
+      if (shouldMirrorAssignmentToTask(taskId, assigneeId)) {
+        await supabase.from("tasks").update(assignmentUpdates).eq("id", taskId);
+      }
       setState((p: any) => ({
         ...p,
         tasks: p.tasks.map((t: any) => t.id === taskId ? {
           ...t,
+          ...(shouldMirrorAssignmentToTask(taskId, assigneeId) ? assignmentUpdates : {}),
           task_assignments: (t.task_assignments || []).map((a: any) =>
             a.user_id === assigneeId ? { ...a, ...assignmentUpdates } : a
           ),
@@ -539,15 +550,23 @@ export default function DashboardPage() {
 
   async function approveTask(id: string, assigneeId?: string | null) {
     if (assigneeId) {
-      await supabase.from("task_assignments").update({
-        approval_status: "approved", approved_by: state.profile.id, approved_at: new Date().toISOString(), approval_note: null
-      }).eq("task_id", id).eq("user_id", assigneeId);
+      const approvalUpdates = {
+        approval_status: "approved",
+        approved_by: state.profile.id,
+        approved_at: new Date().toISOString(),
+        approval_note: null,
+      };
+      await supabase.from("task_assignments").update(approvalUpdates).eq("task_id", id).eq("user_id", assigneeId);
+      if (shouldMirrorAssignmentToTask(id, assigneeId)) {
+        await supabase.from("tasks").update(approvalUpdates).eq("id", id);
+      }
       setState((p: any) => ({
         ...p,
         tasks: p.tasks.map((t: any) => t.id === id ? {
           ...t,
+          ...(shouldMirrorAssignmentToTask(id, assigneeId) ? approvalUpdates : {}),
           task_assignments: (t.task_assignments || []).map((a: any) =>
-            a.user_id === assigneeId ? { ...a, approval_status: "approved", approved_by: state.profile.id, approval_note: null } : a
+            a.user_id === assigneeId ? { ...a, ...approvalUpdates } : a
           ),
         } : t),
       }));
@@ -559,15 +578,23 @@ export default function DashboardPage() {
 
   async function rejectTask(id: string, note: string, assigneeId?: string | null) {
     if (assigneeId) {
-      await supabase.from("task_assignments").update({
-        approval_status: "rejected", approval_note: note, approved_by: state.profile.id, approved_at: new Date().toISOString()
-      }).eq("task_id", id).eq("user_id", assigneeId);
+      const rejectionUpdates = {
+        approval_status: "rejected",
+        approval_note: note,
+        approved_by: state.profile.id,
+        approved_at: new Date().toISOString(),
+      };
+      await supabase.from("task_assignments").update(rejectionUpdates).eq("task_id", id).eq("user_id", assigneeId);
+      if (shouldMirrorAssignmentToTask(id, assigneeId)) {
+        await supabase.from("tasks").update(rejectionUpdates).eq("id", id);
+      }
       setState((p: any) => ({
         ...p,
         tasks: p.tasks.map((t: any) => t.id === id ? {
           ...t,
+          ...(shouldMirrorAssignmentToTask(id, assigneeId) ? rejectionUpdates : {}),
           task_assignments: (t.task_assignments || []).map((a: any) =>
-            a.user_id === assigneeId ? { ...a, approval_status: "rejected", approval_note: note, approved_by: state.profile.id } : a
+            a.user_id === assigneeId ? { ...a, ...rejectionUpdates } : a
           ),
         } : t),
       }));
