@@ -85,6 +85,18 @@ const normTask = (t: any) => {
   };
 };
 
+function getTaskCountedAt(t: any): string {
+  return (
+    t?.completedAt ??
+    t?.completed_at ??
+    t?.approved_at ??
+    t?.approvedAt ??
+    t?.created_at ??
+    t?.createdAt ??
+    ""
+  );
+}
+
 function expandTasksPerAssignee(tasks: any[]): any[] {
   const result: any[] = [];
   for (const t of tasks) {
@@ -112,7 +124,8 @@ function expandTasksPerAssignee(tasks: any[]): any[] {
           submission_links: assignment?.submission_links ?? [],
           approvalStatus:   assignment?.approval_status  ?? 'pending',
           approvalNote:     assignment?.approval_note    ?? '',
-          completedAt:      assignment?.completed_at     ?? null,
+          completedAt:      assignment?.completed_at     ?? t.completedAt,
+          approvedAt:       assignment?.approved_at      ?? t.approved_at ?? t.approvedAt ?? null,
         });
       } else {
         // Single-assignee: fall back to tasks row for backward compat
@@ -129,6 +142,7 @@ function expandTasksPerAssignee(tasks: any[]): any[] {
           approvalStatus:   (aApproval && aApproval !== 'pending') ? aApproval : t.approvalStatus,
           approvalNote:     assignment?.approval_note ?? t.approvalNote,
           completedAt:      assignment?.completed_at  ?? t.completedAt,
+          approvedAt:       assignment?.approved_at   ?? t.approved_at ?? t.approvedAt ?? null,
         });
       }
     }
@@ -326,7 +340,7 @@ function computeWeeklyScores(tasks: any[], logs: any[], users: any[]) {
         t.assignees.includes(u.id) &&
         t.approvalStatus === "approved" &&
         t.status === "completed" &&
-        t.completedAt && t.completedAt >= ws
+        getTaskCountedAt(t) >= ws
       );
       const overdueTasks = expanded.filter(t =>
         t.assignees.includes(u.id) &&
@@ -369,7 +383,7 @@ function computeMonthlyScores(tasks: any[], logs: any[], users: any[]) {
       let pts = 0;
       const ut = expanded.filter((t: any) =>
         t.assignees.includes(u.id) && t.approvalStatus === "approved" &&
-        (t.completedAt || "").slice(0, 7) === thisMonth
+        getTaskCountedAt(t).slice(0, 7) === thisMonth
       );
       const overdueTasks = expanded.filter((t: any) =>
         t.assignees.includes(u.id) &&
@@ -3301,7 +3315,8 @@ function getApprovedArticleCount(tasks: any[], memberId: string, month: string) 
     t._singleAssignee === memberId &&
     t.is_article === true &&
     t.approvalStatus === "approved" &&
-    (t.completedAt || "").slice(0, 7) === month
+    t.status === "completed" &&
+    getTaskCountedAt(t).slice(0, 7) === month
   ).length;
 }
 
