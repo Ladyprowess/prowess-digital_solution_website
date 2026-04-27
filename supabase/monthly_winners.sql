@@ -8,7 +8,7 @@ create table if not exists public.monthly_winners (
   logs_submitted integer not null default 0,
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()
-);
+)l;
 
 create index if not exists monthly_winners_month_idx
   on public.monthly_winners (month desc);
