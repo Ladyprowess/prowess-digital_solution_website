@@ -54,6 +54,7 @@ const CSS = `
   from { transform: scale(0); opacity:0; }
   to   { transform: scale(1); opacity:1; }
 }
+.mobile-cards-strip::-webkit-scrollbar { display: none; }
 `;
 
 function useCountUp(target: number, duration = 1400, delay = 400) {
@@ -163,10 +164,10 @@ export function HeroSection() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-16 xl:gap-20 items-center">
 
           {/* ─── LEFT ─── */}
-          <div style={{ maxWidth: 520, animation: "fadeUp 0.65s ease both" }}>
+          <div className="text-center lg:text-left" style={{ maxWidth: 520, margin: "0 auto", animation: "fadeUp 0.65s ease both" }}>
 
             {/* Badge */}
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, borderRadius: 999, padding: "5px 14px", background: TLight, border: `1px solid ${TBorder}`, marginBottom: 26 }}>
+            <div className="inline-flex" style={{ alignItems: "center", gap: 8, borderRadius: 999, padding: "5px 14px", background: TLight, border: `1px solid ${TBorder}`, marginBottom: 26 }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: T, display: "inline-block", flexShrink: 0, animation: "livePulse 2.5s ease-in-out infinite" }} />
               <span style={{ fontSize: 11, fontWeight: 700, color: "#2d5559", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 Business Guidance for Africa
@@ -180,12 +181,12 @@ export function HeroSection() {
             </h1>
 
             {/* Lead */}
-            <p style={{ fontSize: "1.05rem", lineHeight: 1.8, color: muted, marginBottom: 34, maxWidth: 460, animation: "fadeUp 0.65s ease 0.2s both" }}>
+            <p style={{ fontSize: "1.05rem", lineHeight: 1.8, color: muted, marginBottom: 34, animation: "fadeUp 0.65s ease 0.2s both" }}>
               Most business problems are not about effort. They are about clarity. We help you understand exactly what is wrong and build a simple path forward.
             </p>
 
             {/* CTAs */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 44, animation: "fadeUp 0.65s ease 0.3s both" }}>
+            <div className="justify-center lg:justify-start" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 44, animation: "fadeUp 0.65s ease 0.3s both" }}>
               <Link href="/consultation">
                 <button
                   style={{ display: "inline-flex", alignItems: "center", gap: 8, background: T, color: "#fff", fontWeight: 600, fontSize: "0.9rem", padding: "13px 24px", borderRadius: 10, border: "none", cursor: "pointer", boxShadow: `0 4px 22px rgba(80,124,128,0.32)`, transition: "background 0.15s ease" }}
@@ -210,19 +211,130 @@ export function HeroSection() {
             </div>
 
             {/* Animated stats */}
-            <div style={{ display: "flex", gap: 0, animation: "fadeUp 0.65s ease 0.4s both" }}>
-              {[
-                { val: `${bizCount}+`, label: "Businesses structured" },
-                { val: `${satisf}%`,   label: "Session satisfaction" },
-                { val: "3+",           label: "Years serving Africa" },
-              ].map((s, i) => (
-                <React.Fragment key={s.label}>
-                  {i > 0 && <div style={{ width: 1, background: border, margin: "0 20px" }} />}
-                  <div>
-                    <div style={{ fontSize: "1.7rem", fontWeight: 700, color: T, lineHeight: 1.1 }}>{s.val}</div>
-                    <div style={{ fontSize: "0.75rem", color: muted, marginTop: 3 }}>{s.label}</div>
+            <div className="flex justify-center lg:justify-start" style={{ animation: "fadeUp 0.65s ease 0.4s both" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr 1px 1fr", gap: "0 16px" }}>
+                {[
+                  { val: `${bizCount}+`, label: "Businesses structured" },
+                  null,
+                  { val: `${satisf}%`,   label: "Session satisfaction" },
+                  null,
+                  { val: "3+",           label: "Years serving Africa" },
+                ].map((s, i) =>
+                  s === null
+                    ? <div key={i} style={{ background: border, height: "100%", alignSelf: "stretch" }} />
+                    : <div key={i} className="text-center lg:text-left">
+                        <div style={{ fontSize: "clamp(1.3rem, 5vw, 1.7rem)", fontWeight: 700, color: T, lineHeight: 1.1 }}>{s.val}</div>
+                        <div style={{ fontSize: "clamp(0.65rem, 2.5vw, 0.75rem)", color: muted, marginTop: 3, lineHeight: 1.4 }}>{s.label}</div>
+                      </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ─── MOBILE CARD STRIP (hidden on lg+) ─── */}
+          <div className="lg:hidden" style={{ marginTop: -16 }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 12,
+                overflowX: "auto",
+                paddingBottom: 8,
+                paddingRight: 24,
+                scrollSnapType: "x mandatory",
+                WebkitOverflowScrolling: "touch",
+                msOverflowStyle: "none",
+                scrollbarWidth: "none",
+              }}
+            >
+              {/* Mobile Card A — Health Score */}
+              <div style={{ minWidth: 210, scrollSnapAlign: "start", background: "#fff", borderRadius: 16, border: `1px solid ${border}`, boxShadow: "0 3px 16px rgba(10,10,15,0.07)", overflow: "hidden", flexShrink: 0 }}>
+                <div style={{ padding: "14px 14px 0" }}>
+                  <Label>Business Health</Label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      <ScoreArc score={scoreVal} />
+                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: ink }}>{scoreVal}</span>
+                        <span style={{ fontSize: 7, color: muted }}>/100</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: ink, marginBottom: 3 }}>Needs Structure</div>
+                      <div style={{ fontSize: 9, color: muted, lineHeight: 1.5 }}>Clarity gaps found in your operations</div>
+                    </div>
                   </div>
-                </React.Fragment>
+                  {[{ label: "Clarity", pct: 58 }, { label: "Structure", pct: 42 }].map((r, i) => (
+                    <div key={r.label} style={{ marginBottom: 7 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: muted, marginBottom: 3 }}>
+                        <span>{r.label}</span><span style={{ color: ink, fontWeight: 600 }}>{r.pct}%</span>
+                      </div>
+                      <AnimBar pct={r.pct} delay={800 + i * 150} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: "10px 14px 13px", borderTop: `1px solid ${border}`, marginTop: 10 }}>
+                  <div style={{ fontSize: 9, color: T, fontWeight: 700 }}>→ Book a Clarity Session</div>
+                </div>
+              </div>
+
+              {/* Mobile Card B — Next Session */}
+              <div style={{ minWidth: 200, scrollSnapAlign: "start", background: "#fff", borderRadius: 16, border: `1px solid ${border}`, boxShadow: "0 3px 16px rgba(10,10,15,0.07)", overflow: "hidden", flexShrink: 0, padding: "14px" }}>
+                <Label>Next Available</Label>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: TLight, border: `1px solid ${TBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={T} strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: ink }}>Thu 29 May</div>
+                    <div style={{ fontSize: 9, color: muted }}>2:00 PM WAT</div>
+                  </div>
+                </div>
+                <div style={{ padding: "9px 10px", borderRadius: 8, background: TLight, border: `1px solid ${TBorder}`, marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: ink, marginBottom: 1 }}>Business Clarity Session</div>
+                  <div style={{ fontSize: 8.5, color: muted }}>60 min · Video call</div>
+                </div>
+                <div style={{ display: "flex", gap: 5 }}>
+                  {["10am", "2pm", "4pm"].map((t, i) => (
+                    <div key={t} style={{ flex: 1, textAlign: "center", padding: "5px 0", borderRadius: 6, border: `1px solid ${i === 1 ? T : border}`, background: i === 1 ? TLight : "transparent", fontSize: 9, fontWeight: i === 1 ? 700 : 400, color: i === 1 ? T : muted }}>
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile Card C — Client Journey */}
+              <div style={{ minWidth: 195, scrollSnapAlign: "start", background: "#fff", borderRadius: 16, border: `1px solid ${border}`, boxShadow: "0 3px 16px rgba(10,10,15,0.07)", overflow: "hidden", flexShrink: 0, padding: "14px" }}>
+                <Label>Your Journey</Label>
+                {[
+                  { step: "Discovery call",  done: true,  active: false },
+                  { step: "Clarity Session", done: true,  active: false },
+                  { step: "Business Audit",  done: false, active: true  },
+                  { step: "Structure Plan",  done: false, active: false },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: 5, background: item.done ? T : item.active ? TLight : "transparent", border: `1.5px solid ${item.done ? T : item.active ? T : border}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {item.done && <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                      {item.active && !item.done && <div style={{ width: 6, height: 6, borderRadius: "50%", background: T }} />}
+                    </div>
+                    <span style={{ fontSize: 10, color: item.done ? "#aaa" : item.active ? ink : muted, fontWeight: item.active ? 700 : 400, textDecoration: item.done ? "line-through" : "none", flex: 1 }}>
+                      {item.step}
+                    </span>
+                    {item.active && <span style={{ fontSize: 8, fontWeight: 700, color: T, background: TLight, borderRadius: 3, padding: "1px 6px" }}>Now</span>}
+                  </div>
+                ))}
+                <div style={{ marginTop: 4, padding: "9px 10px", borderRadius: 8, background: TLight, border: `1px solid ${TBorder}` }}>
+                  <div style={{ fontSize: 9.5, color: T, fontWeight: 700 }}>Next: Business Audit</div>
+                  <div style={{ fontSize: 8.5, color: muted, marginTop: 1 }}>Thu 29 May · Confirmed</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Scroll hint dots */}
+            <div style={{ display: "flex", gap: 5, justifyContent: "center", marginTop: 12 }}>
+              {[0, 1, 2].map((i) => (
+                <div key={i} style={{ width: i === 0 ? 16 : 6, height: 6, borderRadius: 3, background: i === 0 ? T : border, transition: "width 0.3s" }} />
               ))}
             </div>
           </div>
