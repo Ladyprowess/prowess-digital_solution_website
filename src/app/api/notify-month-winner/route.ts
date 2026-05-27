@@ -1,5 +1,5 @@
 // FILE: src/app/api/notify-month-winner/route.ts
-// Sends email when admin closes the month — winner gets a celebratory email,
+// Sends email when admin closes the month - winner gets a celebratory email,
 // team members get an announcement email.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       // ---------------------------------------------------------------
       // Winner email
       // ---------------------------------------------------------------
-      subject = `🏆 Team Member of the Month — ${month}`;
+      subject = `🏆 Team Member of the Month - ${month}`;
       html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:28px;">
               <div style="font-size:13px;color:#64748b;line-height:1.7;">
-                Out of ${teamSize} team member${teamSize !== 1 ? "s" : ""}, you stood out the most this month through your dedication, consistency, and hard work. The entire Prowess team is proud of you — keep shining! 🎉
+                Out of ${teamSize} team member${teamSize !== 1 ? "s" : ""}, you stood out the most this month through your dedication, consistency, and hard work. The entire Prowess team is proud of you - keep shining! 🎉
               </div>
             </div>
 
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       // ---------------------------------------------------------------
       // Team announcement email (isWinner = false)
       // ---------------------------------------------------------------
-      subject = `🏆 ${winnerName} is Team Member of the Month — ${month}`;
+      subject = `🏆 ${winnerName} is Team Member of the Month - ${month}`;
       html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="background:linear-gradient(135deg,${PURPLE},#a855f7);padding:32px 40px;">
             <div style="font-size:22px;font-weight:800;color:white;letter-spacing:-0.5px;">Prowess Digital Solutions</div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;">Team Member of the Month — ${month}</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;">Team Member of the Month - ${month}</div>
           </td>
         </tr>
 

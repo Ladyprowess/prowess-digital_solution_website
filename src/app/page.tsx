@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from "next/link";
 import { ManualGoogleReviews } from "@/components/ManualGoogleReviews";
+import { HeroSection } from "@/components/HeroSection";
 
 const values = ["Clarity", "Integrity", "Structure", "Simplicity", "Long-term thinking"];
 
@@ -29,65 +30,7 @@ export default function ModernHomePage() {
     <div className="min-h-screen bg-white">
 
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-32">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#507c80]/10 blur-3xl" />
-          <div className="absolute -bottom-24 right-0 h-[420px] w-[420px] rounded-full bg-slate-100 blur-3xl" />
-        </div>
-
-        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#507c80]/20 bg-[#507c80]/5 px-4 py-2 text-sm font-medium text-[#507c80]">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-              Business Guidance for Africa
-            </div>
-
-            <h1 className="mb-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-              Bringing Structure to{' '}
-              <span className="text-[#507c80]">Messy Businesses.</span>
-            </h1>
-
-            <p className="mb-10 text-lg leading-relaxed text-slate-600 sm:text-xl">
-              Most business problems are not about effort. They are about clarity. We help you understand exactly what is wrong and build a simple path forward.
-            </p>
-
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link href="https://prowessdigitalsolutions.com/consultation">
-                <button className="group inline-flex items-center justify-center gap-2 rounded-lg bg-[#507c80] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#507c80]/25 transition hover:bg-[#3d5f62] hover:shadow-xl hover:shadow-[#507c80]/30">
-                  Book a Clarity Session
-                  <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </button>
-              </Link>
-              <Link href="/about">
-                <button className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-slate-200 bg-white px-8 py-4 text-base font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50">
-                  Learn Our Approach
-                </button>
-              </Link>
-            </div>
-
-            {/* What happens when you book */}
-            <p className="mt-6 text-sm text-slate-500">
-              In 60 minutes, you will walk away knowing exactly what is wrong and what to fix first.
-            </p>
-
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-slate-600">
-              {["No Sales Pressure", "Structured Thinking", "Long-Term Focus"].map((item) => (
-                <div key={item} className="flex items-center gap-2">
-                  <svg className="h-5 w-5 text-[#507c80]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* PROBLEM SECTION */}
       <section className="bg-gradient-to-b from-white to-slate-50 py-20 sm:py-28">
@@ -139,7 +82,7 @@ export default function ModernHomePage() {
         </div>
       </section>
 
-      {/* BUSINESS HELPER — moved up as a lead capture tool */}
+      {/* BUSINESS HELPER - moved up as a lead capture tool */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#507c80] to-[#3d5f62] py-20 sm:py-24">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />

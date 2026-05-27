@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: email,
-      subject: "You’re on the list — Prowess Digital Solution Careers",
+      subject: "You’re on the list - Prowess Digital Solution Careers",
       template: {
         id: "careers-sub", // ✅ replace with your real Resend template ID
         variables: {},

@@ -40,7 +40,7 @@ export default function NotFound() {
             </h1>
 
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              It looks like the link is wrong, the page was moved, or it was removed. No stress — you can go back home
+              It looks like the link is wrong, the page was moved, or it was removed. No stress - you can go back home
               or choose one of the options below.
             </p>
 

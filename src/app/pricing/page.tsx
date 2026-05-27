@@ -34,7 +34,7 @@ const faqItems = [
   },
   {
     q: "What are the Premium Business Tools?",
-    a: "These are practical digital tools we built specifically for African entrepreneurs — a startup cost calculator, profit and cashflow tracker, invoice manager, inventory manager, and reach and growth planner. Clients on Foundation and above get access to all of them.",
+    a: "These are practical digital tools we built specifically for African entrepreneurs - a startup cost calculator, profit and cashflow tracker, invoice manager, inventory manager, and reach and growth planner. Clients on Foundation and above get access to all of them.",
   },
   {
     q: "Can I move from one package to another?",
@@ -69,7 +69,7 @@ function Check() {
 function Dash() {
   return (
     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-50 text-slate-400 ring-1 ring-slate-200 text-xs">
-      —
+      -
     </span>
   );
 }

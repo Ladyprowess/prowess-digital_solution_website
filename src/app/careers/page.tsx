@@ -32,10 +32,10 @@ const CHEVRON = (
 const perks = [
   { icon: "🎯", title: "Clear roles", desc: "You will always know what matters and what to do next. No confusion, no shifting targets." },
   { icon: "📈", title: "Room to grow", desc: "You will build real skills in writing, systems, and structured thinking that go beyond the job." },
-  { icon: "🤝", title: "Good communication", desc: "Clear updates, honest feedback, and decisions that are explained — not just handed down." },
+  { icon: "🤝", title: "Good communication", desc: "Clear updates, honest feedback, and decisions that are explained - not just handed down." },
   { icon: "⚙️", title: "Simple processes", desc: "We use clean tools and documented systems so work flows without friction or guesswork." },
   { icon: "🕐", title: "Flexible where possible", desc: "We focus on outcomes and good delivery, not where you sit or what time you log in." },
-  { icon: "✅", title: "Respect for quality", desc: "We prefer work that is correct, clear, and useful — and we take the time to get it right." },
+  { icon: "✅", title: "Respect for quality", desc: "We prefer work that is correct, clear, and useful - and we take the time to get it right." },
 ];
 
 export default function CareersPage() {
@@ -98,7 +98,7 @@ export default function CareersPage() {
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
               At Prowess Digital Solutions, we help African entrepreneurs build properly.
-              If you think clearly, communicate well, and take quality seriously — you will fit in here.
+              If you think clearly, communicate well, and take quality seriously - you will fit in here.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a

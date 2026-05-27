@@ -178,7 +178,7 @@ function buildReport(input: InputBody, tags: string[], score: number): Result {
 
   const label = scoreToLabel(score);
 
-  const reportTitle = `Business Diagnostic Report — ${businessType}`;
+  const reportTitle = `Business Diagnostic Report - ${businessType}`;
   const reportId = `RPT-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
 const generatedAt = new Date().toISOString();

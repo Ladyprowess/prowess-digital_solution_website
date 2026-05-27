@@ -60,7 +60,7 @@ export default function AdminConsultationsPage() {
       <Container>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Admin — Consultation Bookings</h1>
+            <h1 className="text-2xl font-semibold text-slate-900">Admin - Consultation Bookings</h1>
             <p className="mt-1 text-sm text-slate-600">View all bookings and payment status.</p>
           </div>
 
@@ -130,7 +130,7 @@ export default function AdminConsultationsPage() {
 
                 <div className="mt-3 grid gap-1 text-sm text-slate-700">
                   <div>📅 {r.scheduled_date} • {String(r.scheduled_time).slice(0,5)} ({r.timezone})</div>
-                  <div>🧾 Ref: {r.paystack_reference || "—"}</div>
+                  <div>🧾 Ref: {r.paystack_reference || "-"}</div>
                   <div className="text-xs text-slate-500">Created: {new Date(r.created_at).toLocaleString("en-GB")}</div>
                 </div>
               </div>

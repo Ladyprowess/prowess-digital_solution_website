@@ -315,7 +315,7 @@ export default function DashboardPage() {
           project: task?.project || "",
         });
       }
-      return; // don't touch the tasks row — other assignees must not be affected
+      return; // don't touch the tasks row - other assignees must not be affected
     }
     const updates: any = { status };
     if (status === "completed") {
@@ -347,7 +347,7 @@ export default function DashboardPage() {
       const remaining = (state.tasks.find((t: any) => t.id === taskId)?.task_assignments ?? [])
         .filter((a: any) => a.user_id !== assigneeId);
       if (remaining.length === 0) {
-        // Last assignee removed — delete the whole task
+        // Last assignee removed - delete the whole task
         await supabase.from("tasks").delete().eq("id", taskId);
         setState((p: any) => ({ ...p, tasks: p.tasks.filter((t: any) => t.id !== taskId) }));
       } else {

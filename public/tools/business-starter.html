@@ -646,7 +646,7 @@ function BusinessDetail({b,budget,sym="₦",country="Nigeria"}){
               <div style={{height:4,background:"#d0e8e8",borderRadius:99,overflow:"hidden"}}>
                 <div style={{height:"100%",width:Math.min(budget/max*100,100)+"%",background:budget>=min?"#507c80":"#ef4444",borderRadius:99}}/>
               </div>
-              <div style={{fontSize:11,fontWeight:700,marginTop:5,color:budget>=min?"#27ae60":"#ef4444"}}>{budget>=min?budget>=max?"Budget fully covers this":"Start lean — minimum met":"Budget may be short"}</div>
+              <div style={{fontSize:11,fontWeight:700,marginTop:5,color:budget>=min?"#27ae60":"#ef4444"}}>{budget>=min?budget>=max?"Budget fully covers this":"Start lean - minimum met":"Budget may be short"}</div>
             </div>}
           </div>
           <div style={{background:"#f8fbfb",borderRadius:14,padding:"18px",border:"1.5px solid #e2eaeb"}}>
@@ -720,7 +720,7 @@ function StarterApp(){
               <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:"rgba(255,255,255,.35)",marginBottom:8}}>Your budget</div>
               <input value={capital} onChange={e=>setCapital(e.target.value)} placeholder={"e.g. "+toLocal(200,country)}
                 style={{width:"100%",padding:"12px 16px",background:"rgba(255,255,255,.08)",border:"1.5px solid rgba(255,255,255,.15)",borderRadius:12,color:"#fff",fontSize:15,fontWeight:700,outline:"none"}}/>
-              {budget>0&&<div style={{color:"rgba(255,255,255,.4)",fontSize:12,marginTop:6,fontWeight:600}}>{toLocal(budget,country)} — showing what you can start</div>}
+              {budget>0&&<div style={{color:"rgba(255,255,255,.4)",fontSize:12,marginTop:6,fontWeight:600}}>{toLocal(budget,country)} - showing what you can start</div>}
             </div>
             <div>
               <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:"rgba(255,255,255,.35)",marginBottom:8}}>Or pick a range</div>

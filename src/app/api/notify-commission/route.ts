@@ -1,9 +1,9 @@
 // FILE: src/app/api/notify-commission/route.ts
 //
 // Sends an email notification when:
-// (a) A member logs a sale — notifies admin to confirm it
-// (b) Admin/leader confirms or rejects a sale — notifies the member
-// (c) Admin/leader marks commission as paid — notifies the member
+// (a) A member logs a sale - notifies admin to confirm it
+// (b) Admin/leader confirms or rejects a sale - notifies the member
+// (c) Admin/leader marks commission as paid - notifies the member
 
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     // ── (a) Member logged a sale → notify admin to review ──────────────────
     if (type === "sale-logged") {
       const { memberName, clientName, saleAmount, currencySymbol, productService, saleDate } = body;
-      subject = `New Sale Logged — Pending Confirmation`;
+      subject = `New Sale Logged - Pending Confirmation`;
       html = wrap(`
         <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">A sale needs your confirmation</div>
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
     // ── (c) Sale rejected → notify member ──────────────────────────────────
     if (type === "sale-rejected") {
       const { clientName, rejectionNote } = body;
-      subject = `Sale Log Rejected — Action Required`;
+      subject = `Sale Log Rejected - Action Required`;
       html = wrap(`
         <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">Your sale log was rejected</div>
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
     // ── (d) Commission paid → notify member ────────────────────────────────
     if (type === "commission-paid") {
       const { totalPaid, currencySymbol, month } = body;
-      subject = `Commission Paid — ${month}`;
+      subject = `Commission Paid - ${month}`;
       html = wrap(`
         <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">Your commission has been paid! 💸</div>

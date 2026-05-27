@@ -15,7 +15,7 @@ function genCode(): string {
   return `PDS-${p()}-${p()}`;
 }
 
-// GET — list all clients
+// GET - list all clients
 export async function GET(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(data);
 }
 
-// POST — create client
+// POST - create client
 export async function POST(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(data, { status: 201 });
 }
 
-// PATCH — update client
+// PATCH - update client
 export async function PATCH(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
@@ -88,7 +88,7 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json(data);
 }
 
-// DELETE — remove client
+// DELETE - remove client
 export async function DELETE(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 

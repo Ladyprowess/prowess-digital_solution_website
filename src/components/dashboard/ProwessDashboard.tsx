@@ -116,7 +116,7 @@ function expandTasksPerAssignee(tasks: any[]): any[] {
 
       if (isMulti) {
         // Multi-assignee: each person is fully independent.
-        // Never inherit from the shared tasks row — that would bleed one
+        // Never inherit from the shared tasks row - that would bleed one
         // person's submission status onto everyone else.
         result.push({
           ...t,
@@ -863,7 +863,7 @@ function TopBar({ user, page, isMobile, onMenuOpen }: { user: any; page: string;
 function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWinners, monthlyWinners, setPage }: any) {
   const scores  = useMemo(() => computeScores(tasks, logs, users), [tasks, logs, users]);
 
-  // Derive effective status per task — assignment-level status takes priority over task-level
+  // Derive effective status per task - assignment-level status takes priority over task-level
   const effectiveStatus = (t: any) => {
     const assignments: any[] = t.task_assignments || [];
     if (assignments.length === 0) return t.status || "pending";
@@ -951,7 +951,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
           <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fdf4ff,#fae8ff)", border: "1px solid #e879f9", borderRadius: 14, padding: "14px 20px" }}>
             <span style={{ fontSize: 32 }}>🌟</span>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#86198f", textTransform: "uppercase", letterSpacing: "0.5px" }}>{(monthlyWinners || []).length > 0 ? "Employee of the Month" : "Current Employee of the Month"} — {monthLabel}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#86198f", textTransform: "uppercase", letterSpacing: "0.5px" }}>{(monthlyWinners || []).length > 0 ? "Employee of the Month" : "Current Employee of the Month"} - {monthLabel}</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{monthWinner.winner_name}</div>
               <div style={{ fontSize: 12, color: "#64748b" }}>
                 {monthWinner.total_points}pts · {monthWinner.tasks_completed} tasks · {monthWinner.logs_submitted} logs
@@ -1248,7 +1248,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
             <span style={{ fontSize: isMonthWinner ? 40 : 28 }}>{isMonthWinner ? "🌟" : "🏆"}</span>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: isMonthWinner ? "#86198f" : "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                {((monthlyWinners || []).length > 0 ? "Employee of the Month" : "Current Employee of the Month")} — {monthLabel}
+                {((monthlyWinners || []).length > 0 ? "Employee of the Month" : "Current Employee of the Month")} - {monthLabel}
               </div>
               {isMonthWinner ? (
                 <>
@@ -2535,7 +2535,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
           {/* Monthly Winners section */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-              <span>🌟</span> Team Member of the Month — History
+              <span>🌟</span> Team Member of the Month - History
             </div>
             {(!monthlyWinners || monthlyWinners.length === 0) ? (
               <Card style={{ padding: 32, textAlign: "center" }}>
@@ -2568,7 +2568,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
           {/* Weekly Winners section */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-              <span>🏆</span> Team Member of the Week — History
+              <span>🏆</span> Team Member of the Week - History
             </div>
             {(!weeklyWinners || weeklyWinners.length === 0) ? (
               <Card style={{ padding: 40, textAlign: "center" }}>

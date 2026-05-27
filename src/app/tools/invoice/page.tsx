@@ -232,7 +232,7 @@ function CreateTab({profile,invoices,onSave,onCancel}:{profile:Profile,invoices:
       </div>
     </div>
 
-    {/* From / To — stacks on mobile */}
+    {/* From / To - stacks on mobile */}
     <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:14}}>
       <div style={card}>
         <div style={{fontSize:13,fontWeight:800,color:DARK,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>From; Your Business</div>

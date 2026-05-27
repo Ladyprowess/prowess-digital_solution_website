@@ -180,7 +180,7 @@ export default function ConsultationPage() {
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name} — {s.price_ngn > 0 ? fmtPrice(s.price_ngn) : "Free"}
+                      {s.name} - {s.price_ngn > 0 ? fmtPrice(s.price_ngn) : "Free"}
                     </option>
                   ))}
                 </select>

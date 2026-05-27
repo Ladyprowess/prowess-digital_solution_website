@@ -247,12 +247,12 @@ export const services: Service[] = [
     icon: "tools",
     title: "Premium Business Tools",
     short:
-      "A suite of practical digital tools built specifically for African entrepreneurs — giving you real numbers and operational clarity so you can run your business with confidence.",
+      "A suite of practical digital tools built specifically for African entrepreneurs - giving you real numbers and operational clarity so you can run your business with confidence.",
     price: "Access included for clients",
     cta: "See the Tools",
     details: {
       description:
-        "We built a suite of digital tools specifically for how African entrepreneurs run their businesses. These are not generic spreadsheets or Western-market software repurposed for Africa. They are built from the ground up with African currencies, African business structures, and the real challenges African business owners face every day.\n\nWe do not build custom tools for individual clients. What we do is give our clients access to tools that already exist and work. Each tool is designed to solve a specific operational problem that most small business owners in Africa are dealing with but have no proper system for.\n\nKnowing your actual costs before you launch. Understanding whether your pricing is actually profitable. Tracking cash so you are never surprised by an empty account. Managing invoices and following up on payments. Monitoring your stock before you run out. Planning your marketing and content without the chaos.\n\nThese are the things the tools handle. And because they are built for African businesses specifically, they work the way your business actually works — with the currencies, the context, and the conditions that matter here.",
+        "We built a suite of digital tools specifically for how African entrepreneurs run their businesses. These are not generic spreadsheets or Western-market software repurposed for Africa. They are built from the ground up with African currencies, African business structures, and the real challenges African business owners face every day.\n\nWe do not build custom tools for individual clients. What we do is give our clients access to tools that already exist and work. Each tool is designed to solve a specific operational problem that most small business owners in Africa are dealing with but have no proper system for.\n\nKnowing your actual costs before you launch. Understanding whether your pricing is actually profitable. Tracking cash so you are never surprised by an empty account. Managing invoices and following up on payments. Monitoring your stock before you run out. Planning your marketing and content without the chaos.\n\nThese are the things the tools handle. And because they are built for African businesses specifically, they work the way your business actually works - with the currencies, the context, and the conditions that matter here.",
       whoFor: [
         "Clients of Prowess Digital Solutions who need practical operational tools",
         "Business owners who make decisions based on guesswork because they have no reliable numbers",
@@ -260,11 +260,11 @@ export const services: Service[] = [
         "African entrepreneurs who need tools that actually reflect how business works on this continent",
       ],
       whatYouGet: [
-        "Startup Cost and Break-Even Calculator — know your real costs and pricing before you commit",
-        "Profit and Cashflow Tracker — track every naira monthly and annually so you always know where you stand",
-        "Invoice Manager — create professional invoices and send payment reminders in one tap",
-        "Inventory Manager — monitor stock levels and get low-stock alerts before you run out",
-        "Reach and Growth Planner — plan content, track campaigns, and manage your social calendar",
+        "Startup Cost and Break-Even Calculator - know your real costs and pricing before you commit",
+        "Profit and Cashflow Tracker - track every naira monthly and annually so you always know where you stand",
+        "Invoice Manager - create professional invoices and send payment reminders in one tap",
+        "Inventory Manager - monitor stock levels and get low-stock alerts before you run out",
+        "Reach and Growth Planner - plan content, track campaigns, and manage your social calendar",
       ],
       notes: [
         "Premium tools are available to Prowess Digital Solutions clients with a valid access code. Free tools are available to everyone at no cost.",

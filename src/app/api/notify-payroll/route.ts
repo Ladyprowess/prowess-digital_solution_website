@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: "Prowess Digital Solutions <info@prowessdigitalsolutions.com>",
       to: [to],
-      subject: `Payment Received — ${month}`,
+      subject: `Payment Received - ${month}`,
       html,
     });
 

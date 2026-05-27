@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       from: process.env.RESEND_FROM_EMAIL!,
       to: [process.env.RESEND_TO!, email],
       replyTo: email,
-      subject: `New contact message — ${inquiry_type}`,
+      subject: `New contact message - ${inquiry_type}`,
       template: {
         id: "contact", // ✅ your template slug (same style as event-sub)
         variables: {

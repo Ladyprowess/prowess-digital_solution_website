@@ -30,7 +30,7 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
   // On mount, check if there's a saved session and verify it with the server
   useEffect(() => {
     const raw = localStorage.getItem(`pds-access-${toolKey}`);
-    if (!raw) return; // No saved session — show gate
+    if (!raw) return; // No saved session - show gate
     try {
       const saved = JSON.parse(raw) as { code: string; client: ClientInfo };
       silentVerify(saved.code);
@@ -52,7 +52,7 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolKey]);
 
-  // Silent verify on page load — if it fails for ANY reason, clear and show gate
+  // Silent verify on page load - if it fails for ANY reason, clear and show gate
   async function silentVerify(savedCode: string) {
     try {
       const res = await fetch("/api/verify-code", {
@@ -68,11 +68,11 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
         // Refresh the saved client info
         localStorage.setItem(`pds-access-${toolKey}`, JSON.stringify({ code: savedCode, client: data.client }));
       } else {
-        // Code is revoked, expired, or invalid — clear session, show gate
+        // Code is revoked, expired, or invalid - clear session, show gate
         signOut();
       }
     } catch {
-      // Network error — clear session, show gate. Better safe than auto-granting access.
+      // Network error - clear session, show gate. Better safe than auto-granting access.
       signOut();
     }
   }
