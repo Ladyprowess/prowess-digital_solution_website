@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const T = "#507c80";
 const TDark = "#3d5f62";
@@ -146,12 +146,41 @@ function StatusBadge({ label, tier }: { label: string; tier: "solid" | "mid" | "
 }
 
 export function HeroSection() {
-  const bizCount   = useCountUp(47,  1500, 500);
-  const satisf     = useCountUp(94,  1300, 700);
-  const scoreVal   = useCountUp(78,  1800, 300);
+  const bizCount = useCountUp(47,  1500, 500);
+  const satisf   = useCountUp(94,  1300, 700);
+  const scoreVal = useCountUp(78,  1800, 300);
+
+  const stripRef   = useRef<HTMLDivElement>(null);
+  const activeCard = useRef(0);
+  const paused     = useRef(false);
+
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) return;
+
+    const pause  = () => { paused.current = true; };
+    const resume = () => {
+      setTimeout(() => { paused.current = false; }, 1500);
+    };
+    el.addEventListener("touchstart", pause,  { passive: true });
+    el.addEventListener("touchend",   resume, { passive: true });
+
+    const interval = setInterval(() => {
+      if (paused.current || !el) return;
+      const cards = 3;
+      activeCard.current = (activeCard.current + 1) % cards;
+      el.scrollTo({ left: activeCard.current * (el.offsetWidth * 0.78 + 12), behavior: "smooth" });
+    }, 3000);
+
+    return () => {
+      clearInterval(interval);
+      el.removeEventListener("touchstart", pause);
+      el.removeEventListener("touchend",   resume);
+    };
+  }, []);
 
   return (
-    <section style={{ background: "#F5F5F7", backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' fill='none' stroke='%23507c80' stroke-opacity='0.04' stroke-width='0.6'/%3E%3C/svg%3E")`, position: "relative", overflow: "hidden" }}>
+    <section style={{ background: "#F5F5F7", backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' fill='none' stroke='%23507c80' stroke-opacity='0.04' stroke-width='0.6'/%3E%3C/svg%3E")`, position: "relative", overflowX: "clip" }}>
       <style>{CSS}</style>
 
       {/* Ambient glows */}
@@ -234,6 +263,7 @@ export function HeroSection() {
           {/* ─── MOBILE CARD STRIP (hidden on lg+) ─── */}
           <div className="lg:hidden" style={{ marginTop: -16 }}>
             <div
+              ref={stripRef}
               style={{
                 display: "flex",
                 gap: 12,
