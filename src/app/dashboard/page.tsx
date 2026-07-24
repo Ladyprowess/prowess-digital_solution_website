@@ -480,7 +480,8 @@ export default function DashboardPage() {
       body: form.body,
       created_by: state.profile.id,
     }).select().single();
-    if (!error && data) {
+    if (error) throw new Error(error.message);
+    if (data) {
       const authorName = state.profile.full_name || "A team member";
       const withAuthor = { ...data, author_name: authorName };
       setState((p: any) => ({ ...p, announcements: [withAuthor, ...(p.announcements || [])] }));
@@ -504,7 +505,8 @@ export default function DashboardPage() {
 
   async function deleteAnnouncement(id: string) {
     const { error } = await supabase.from("announcements").delete().eq("id", id);
-    if (!error) setState((p: any) => ({ ...p, announcements: (p.announcements || []).filter((a: any) => a.id !== id) }));
+    if (error) throw new Error(error.message);
+    setState((p: any) => ({ ...p, announcements: (p.announcements || []).filter((a: any) => a.id !== id) }));
   }
 
   async function createAvailableProject(form: any) {

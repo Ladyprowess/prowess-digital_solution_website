@@ -74,6 +74,8 @@ const howWeHelp = [
   },
 ];
 
+const values = ["Clarity", "Integrity", "Structure", "Simplicity", "Long-term thinking"];
+
 const impactSteps = [
   {
     step: "01",
@@ -284,8 +286,108 @@ export default function ModernHomePage() {
         </div>
       </section>
 
+      {/* FREE TOOLS PROMO */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#507c80] to-[#3d5f62] py-20 sm:py-24">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto max-w-6xl px-6 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+
+            <Reveal>
+              <div>
+                <div className="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 ring-1 ring-white/15">
+                  Free Tools
+                </div>
+                <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                  Not Sure Where to Start?
+                </h2>
+                <p className="mt-4 text-base leading-relaxed text-white/85 sm:text-lg">
+                We have built a set of free and premium tools for African business owners. Diagnose your business, plan your finances, map your structure, and more; all in one place.
+                </p>
+                <p className="mt-3 text-sm text-white/65">
+                No sign-up required for most tools. Start in under 5 minutes.
+                </p>
+                <div className="mt-8">
+                  <Link href="/tools">
+                    <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-[#507c80] shadow-2xl transition hover:scale-[1.02] hover:bg-white/95">
+                    Explore All Tools
+                      <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={120}>
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
+                <p className="text-sm font-semibold text-white/60 uppercase tracking-widest mb-6">What you get</p>
+                {[
+                  "A Business Health Score from the Business Helper",
+"Startup cost and break-even calculations",
+"Profit and cashflow tracking for your business",
+"Checklists, templates, and guides built for Africa",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 mb-4 last:mb-0">
+                    <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
+                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-white/85 leading-relaxed">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
+          </div>
+        </div>
+      </section>
+
       {/* TESTIMONIALS - real Google reviews */}
       <ManualGoogleReviews />
+
+      {/* VALUES */}
+      <section className="bg-white py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+                Our Values
+              </h2>
+              <p className="text-lg text-slate-600">
+                Simple principles that guide every conversation and every decision we make with clients.
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={80}>
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
+              {values.map((value, idx) => (
+                <div key={idx} className="group inline-flex items-center gap-3 rounded-full border-2 border-[#507c80]/20 bg-white px-8 py-4 shadow-sm transition hover:border-[#507c80] hover:shadow-lg">
+                  <div className="h-2 w-2 rounded-full bg-[#507c80] transition group-hover:scale-125" />
+                  <span className="text-base font-semibold text-slate-900">{value}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+
+          <Reveal delay={160}>
+            <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-[#507c80]/20 bg-white p-10 text-center shadow-xl">
+              <p className="text-lg leading-relaxed text-slate-700 sm:text-xl">
+                <span className="font-bold text-slate-900">Our Promise:</span>
+              </p>
+              <p className="mt-3 text-lg leading-relaxed text-slate-600">
+                We do not give advice and walk away. We sit with you, understand your specific situation, and help you build something that actually works for your business. Not a template. Not theory.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
 
       {/* FINAL CTA */}
       <section className="bg-slate-50 py-20 sm:py-28">

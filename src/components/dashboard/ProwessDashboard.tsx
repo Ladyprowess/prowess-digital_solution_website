@@ -5888,13 +5888,17 @@ function AnnouncementsPage({ user, announcements, onCreate, onDelete }: {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const submit = async () => {
     if (!title.trim() || !body.trim()) return;
+    setErrorMsg("");
     setSaving(true);
     try {
       await onCreate({ title: title.trim(), body: body.trim() });
       setTitle(""); setBody(""); setOpen(false);
+    } catch (e: any) {
+      setErrorMsg(e?.message || "Could not post this announcement.");
     } finally {
       setSaving(false);
     }
@@ -5929,6 +5933,9 @@ function AnnouncementsPage({ user, announcements, onCreate, onDelete }: {
             rows={4}
             style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, outline: "none", resize: "vertical" }}
           />
+          {errorMsg && (
+            <div style={{ marginTop: 10, padding: "10px 13px", borderRadius: 10, background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", fontSize: 12.5 }}>{errorMsg}</div>
+          )}
           <button
             onClick={submit}
             disabled={saving || !title.trim() || !body.trim()}
@@ -6113,6 +6120,7 @@ function MessagesPage({ user, users, messages, onSend }: {
 }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [mentionIds, setMentionIds] = useState<string[]>([]);
   const [mentionEveryone, setMentionEveryone] = useState(false);
   const [mentionMenu, setMentionMenu] = useState<{ atIndex: number; query: string } | null>(null);
@@ -6168,6 +6176,7 @@ function MessagesPage({ user, users, messages, onSend }: {
   const send = async () => {
     const body = draft.trim();
     if (!body) return;
+    setErrorMsg("");
     setDraft("");
     setSending(true);
     const mentions = { mentionIds, mentionEveryone };
@@ -6175,6 +6184,11 @@ function MessagesPage({ user, users, messages, onSend }: {
     setMentionEveryone(false);
     try {
       await onSend(body, mentions);
+    } catch (e: any) {
+      setErrorMsg(e?.message || "Could not send this message.");
+      setDraft(body);
+      setMentionIds(mentions.mentionIds);
+      setMentionEveryone(mentions.mentionEveryone);
     } finally {
       setSending(false);
     }
@@ -6214,6 +6228,10 @@ function MessagesPage({ user, users, messages, onSend }: {
         })}
         <div ref={endRef} />
       </div>
+
+      {errorMsg && (
+        <div style={{ marginTop: 10, padding: "9px 13px", borderRadius: 10, background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", fontSize: 12.5, flexShrink: 0 }}>{errorMsg}</div>
+      )}
 
       <div style={{ position: "relative", marginTop: 14, flexShrink: 0 }}>
         {mentionMenu && mentionOptions.length > 0 && (
