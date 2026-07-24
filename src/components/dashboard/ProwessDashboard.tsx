@@ -5858,7 +5858,7 @@ function TaskSubmissionsPage({ user, tasks }: { user: any; tasks: any[] }) {
                 </div>
               </div>
               <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 10 }}>
-                Submitted {fmtTime(t.completedAt) || "—"}
+                Submitted {fmtTime(t.completedAt) || "-"}
               </div>
               {t.submission_links?.length > 0 && (
                 <div style={{ marginTop: 10 }}>

@@ -124,7 +124,7 @@ export default function ModernHomePage() {
       {/* HERO SECTION */}
       <HeroSection />
 
-      {/* TRUST BAR — honest, no invented numbers */}
+      {/* TRUST BAR - honest, no invented numbers */}
       <section className="border-y border-slate-200 bg-white py-10">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <Reveal>
@@ -159,7 +159,7 @@ export default function ModernHomePage() {
         </div>
       </section>
 
-      {/* HOW WE HELP — carousel */}
+      {/* HOW WE HELP - carousel */}
       <section className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <Reveal>
@@ -284,7 +284,7 @@ export default function ModernHomePage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS — real Google reviews */}
+      {/* TESTIMONIALS - real Google reviews */}
       <ManualGoogleReviews />
 
       {/* FINAL CTA */}
