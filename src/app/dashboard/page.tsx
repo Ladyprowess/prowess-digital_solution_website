@@ -71,6 +71,8 @@ export default function DashboardPage() {
         { data: offlineIncome               },
         { data: offlineOutgoing             },
         { data: announcementsRaw            },
+        { data: availableProjects            },
+        { data: messages                     },
       ] = await Promise.all([
         supabase.from("tasks").select("*, task_assignments(user_id, assigned_by, status, submission_links, completed_at, approval_status, approval_note, approved_by, approved_at)").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
@@ -83,9 +85,12 @@ export default function DashboardPage() {
         supabase.from("payroll_entries").select("*").order("created_at", { ascending: false }),
         supabase.from("offline_income").select("*").order("income_date", { ascending: false }),
         supabase.from("offline_outgoing").select("*").order("payment_date", { ascending: false }),
-        // Non-fatal: the announcements table may not exist until
-        // supabase/announcements.sql has been run.
+        // Non-fatal: these tables may not exist until the matching file in
+        // supabase/ has been run (announcements.sql, available_projects.sql,
+        // messages.sql).
         supabase.from("announcements").select("*, author:profiles!created_by(full_name)").order("created_at", { ascending: false }),
+        supabase.from("available_projects").select("*").order("created_at", { ascending: false }),
+        supabase.from("messages").select("*").order("created_at", { ascending: true }).limit(200),
       ]);
 
       if (tasksErr) throw new Error(`Tasks failed to load: ${tasksErr.message}`);
@@ -106,6 +111,8 @@ export default function DashboardPage() {
         offlineIncome: offlineIncome || [],
         offlineOutgoing: offlineOutgoing || [],
         announcements,
+        availableProjects: availableProjects || [],
+        messages: messages || [],
       });
 
     } catch (err: any) {
@@ -116,6 +123,27 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Live chat: subscribe once the dashboard has actually loaded a profile,
+  // so new messages from any team member appear without a page refresh.
+  useEffect(() => {
+    if (!state?.profile) return;
+    const channel = supabase
+      .channel("messages-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          setState((p: any) => {
+            if (!p) return p;
+            if ((p.messages || []).some((m: any) => m.id === payload.new.id)) return p;
+            return { ...p, messages: [...(p.messages || []), payload.new] };
+          });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [state?.profile?.id]);
 
   // Loading screen
   if (loading) return (
@@ -461,6 +489,74 @@ export default function DashboardPage() {
   async function deleteAnnouncement(id: string) {
     const { error } = await supabase.from("announcements").delete().eq("id", id);
     if (!error) setState((p: any) => ({ ...p, announcements: (p.announcements || []).filter((a: any) => a.id !== id) }));
+  }
+
+  async function createAvailableProject(form: any) {
+    const { data, error } = await supabase.from("available_projects").insert({
+      title: form.title,
+      description: form.description || null,
+      project: form.project || null,
+      priority: form.priority || "medium",
+      deadline: form.deadline || null,
+      created_by: state.profile.id,
+    }).select().single();
+    if (error) throw new Error(error.message);
+    if (data) setState((p: any) => ({ ...p, availableProjects: [data, ...(p.availableProjects || [])] }));
+  }
+
+  async function claimAvailableProject(projectId: string) {
+    const project = (state.availableProjects || []).find((p: any) => p.id === projectId);
+    if (!project) throw new Error("This project could not be found.");
+    if (project.claimed_by) throw new Error("This project has already been claimed.");
+
+    const { data: task, error: taskErr } = await supabase.from("tasks").insert({
+      title: project.title,
+      description: project.description,
+      project: project.project,
+      priority: project.priority,
+      deadline: project.deadline,
+      created_by: project.created_by,
+      assigned_to: state.profile.id,
+      approval_status: "pending",
+    }).select().single();
+    if (taskErr || !task) throw new Error(taskErr?.message || "Failed to claim project.");
+
+    const { error: assignErr } = await supabase.from("task_assignments").insert({
+      task_id: task.id,
+      user_id: state.profile.id,
+      assigned_by: project.created_by,
+    });
+    if (assignErr) throw new Error(assignErr.message);
+
+    const claimedAt = new Date().toISOString();
+    const { error: claimErr } = await supabase.from("available_projects").update({
+      claimed_by: state.profile.id,
+      claimed_at: claimedAt,
+      resulting_task_id: task.id,
+    }).eq("id", projectId);
+    if (claimErr) throw new Error(claimErr.message);
+
+    const taskWithAssignments = {
+      ...task,
+      task_assignments: [{ user_id: state.profile.id, assigned_by: project.created_by }],
+    };
+    setState((p: any) => ({
+      ...p,
+      tasks: [taskWithAssignments, ...p.tasks],
+      availableProjects: (p.availableProjects || []).map((ap: any) =>
+        ap.id === projectId ? { ...ap, claimed_by: state.profile.id, claimed_at: claimedAt, resulting_task_id: task.id } : ap
+      ),
+    }));
+  }
+
+  async function sendMessage(body: string) {
+    const { error } = await supabase.from("messages").insert({
+      user_id: state.profile.id,
+      body,
+    });
+    if (error) throw new Error(error.message);
+    // No local state update here -- the Realtime subscription below appends
+    // the row for everyone, including the sender, once Postgres confirms it.
   }
 
   async function createMember(form: any) {
@@ -1013,6 +1109,11 @@ export default function DashboardPage() {
       announcements={state.announcements || []}
       onCreateAnnouncement={createAnnouncement}
       onDeleteAnnouncement={deleteAnnouncement}
+      availableProjects={state.availableProjects || []}
+      onCreateAvailableProject={createAvailableProject}
+      onClaimAvailableProject={claimAvailableProject}
+      messages={state.messages || []}
+      onSendMessage={sendMessage}
       onCreateAssignment={createAssignment}
       onLogKPI={logKPI}
       onSetVerdict={setVerdict}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
@@ -459,6 +459,9 @@ const ICON_PATHS: Record<string, string> = {
   banned: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636",
   xMark: "M6 18L18 6M6 6l12 12",
   arrowUpRight: "M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25",
+  briefcase: "M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.08.768-2.015 1.837-2.174a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0",
+  chatBubble: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",
+  paperAirplane: "M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5",
 };
 
 function Icon({ name, size = 18, color = "currentColor", strokeWidth = 1.8 }: { name: string; size?: number; color?: string; strokeWidth?: number }) {
@@ -594,11 +597,13 @@ const sBtn = (c: string): React.CSSProperties => ({
 const NAV = [
   { id: "dashboard",     label: "Dashboard",         icon: "home" },
   { id: "tasks",         label: "My Tasks",          icon: "clipboardCheck" },
+  { id: "available",     label: "Available Projects",icon: "briefcase" },
   { id: "submissions",   label: "Task Submissions",  icon: "documentText" },
   { id: "activity",      label: "Time Tracking",     icon: "clock" },
   { id: "kpi",           label: "My Performance",    icon: "bolt" },
   { id: "leaderboard",   label: "Leaderboard",       icon: "trophy" },
   { id: "announcements", label: "Announcements",     icon: "megaphone" },
+  { id: "messages",      label: "Messages",          icon: "chatBubble" },
   { id: "commission",    label: "Commission",        icon: "currencyDollar", commissionOnly: true },
   { id: "payroll",       label: "Payroll",           icon: "creditCard", privileged: true },
   { id: "finance",       label: "Finance",           icon: "trendingUp", adminOnly: true },
@@ -5966,6 +5971,222 @@ function AnnouncementsPage({ user, announcements, onCreate, onDelete }: {
   );
 }
 
+// --- Available Projects: unclaimed work anyone can pick up --------------------
+function AvailableProjectsPage({ user, availableProjects, onCreate, onClaim }: {
+  user: any; availableProjects: any[];
+  onCreate: (form: any) => Promise<void>;
+  onClaim: (id: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [form, setForm] = useState({ title: "", description: "", project: "", priority: "medium", deadline: "" });
+
+  const open_ = availableProjects.filter(p => !p.claimed_by);
+  const claimed = availableProjects.filter(p => p.claimed_by);
+
+  const submit = async () => {
+    if (!form.title.trim()) return;
+    setSaving(true);
+    try {
+      await onCreate(form);
+      setForm({ title: "", description: "", project: "", priority: "medium", deadline: "" });
+      setOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const claim = async (id: string) => {
+    setErrorMsg("");
+    setClaimingId(id);
+    try {
+      await onClaim(id);
+    } catch (e: any) {
+      setErrorMsg(e?.message || "Could not claim this project.");
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  return (
+    <div className="prowess-page-pad" style={{ padding: 28, maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0A0A0F", margin: 0 }}>Available Projects</h2>
+          <p style={{ fontSize: 13, color: "#496167", marginTop: 4 }}>Open work anyone can pick up. Claiming a project assigns it to you as a task.</p>
+        </div>
+        {isPrivileged(user) && (
+          <button onClick={() => setOpen(v => !v)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
+            {open ? "Cancel" : "Post a Project"}
+          </button>
+        )}
+      </div>
+
+      {errorMsg && (
+        <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 10, background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", fontSize: 13 }}>{errorMsg}</div>
+      )}
+
+      {open && (
+        <Card style={{ padding: 18, marginBottom: 18 }}>
+          <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Project title"
+            style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, marginBottom: 10, outline: "none" }} />
+          <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Description" rows={3}
+            style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, marginBottom: 10, outline: "none", resize: "vertical" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <input value={form.project} onChange={e => setForm(f => ({ ...f, project: e.target.value }))} placeholder="Project tag"
+              style={{ padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, outline: "none" }} />
+            <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={SEL}>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+            <input type="date" value={form.deadline} onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+              style={{ padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, outline: "none" }} />
+          </div>
+          <button onClick={submit} disabled={saving || !form.title.trim()} style={{ marginTop: 12, padding: "10px 18px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 600, opacity: saving ? 0.6 : 1 }}>
+            {saving ? "Posting..." : "Post Project"}
+          </button>
+        </Card>
+      )}
+
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
+        Open ({open_.length})
+      </div>
+      {open_.length === 0 ? (
+        <Card style={{ padding: 30, textAlign: "center", marginBottom: 24 }}>
+          <div style={{ color: "#94a3b8", fontSize: 14 }}>No open projects right now.</div>
+        </Card>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+          {open_.map((p: any) => (
+            <Card key={p.id} style={{ padding: 18 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 700, color: "#0A0A0F" }}>{p.title}</div>
+                  {p.project && <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{p.project}</div>}
+                  {p.description && <p style={{ fontSize: 13, color: "#374151", marginTop: 8, lineHeight: 1.6 }}>{p.description}</p>}
+                  {p.deadline && <div style={{ fontSize: 11.5, color: "#94a3b8", marginTop: 8 }}>Due {p.deadline}</div>}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
+                  <Pill type="priority" value={p.priority} />
+                  <button
+                    onClick={() => claim(p.id)}
+                    disabled={claimingId === p.id}
+                    style={{ padding: "8px 16px", borderRadius: 9, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", opacity: claimingId === p.id ? 0.6 : 1 }}
+                  >
+                    {claimingId === p.id ? "Claiming..." : "Take Project"}
+                  </button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {claimed.length > 0 && (
+        <>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
+            Already Claimed ({claimed.length})
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {claimed.map((p: any) => (
+              <Card key={p.id} style={{ padding: "14px 18px", opacity: 0.65 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0A0A0F" }}>{p.title}</div>
+                  <span style={{ fontSize: 11.5, color: "#94a3b8" }}>Claimed</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// --- Messages: shared team chat, live via Supabase Realtime ------------------
+function MessagesPage({ user, users, messages, onSend }: {
+  user: any; users: any[]; messages: any[];
+  onSend: (body: string) => Promise<void>;
+}) {
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  const send = async () => {
+    const body = draft.trim();
+    if (!body) return;
+    setDraft("");
+    setSending(true);
+    try {
+      await onSend(body);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="prowess-page-pad" style={{ padding: 28, maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", height: "calc(100vh - 58px - 56px)" }}>
+      <div style={{ marginBottom: 16, flexShrink: 0 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0A0A0F", margin: 0 }}>Messages</h2>
+        <p style={{ fontSize: 13, color: "#496167", marginTop: 4 }}>Team chat -- everyone on the team sees this channel.</p>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, paddingRight: 4 }}>
+        {messages.length === 0 && (
+          <div style={{ margin: "auto", color: "#94a3b8", fontSize: 14 }}>No messages yet. Say hello.</div>
+        )}
+        {messages.map((m: any) => {
+          const sender = normUser(users.find((u: any) => u.id === m.user_id)) || { name: "Someone", avatar: "?" };
+          const mine = m.user_id === user.id;
+          return (
+            <div key={m.id} style={{ display: "flex", gap: 10, flexDirection: mine ? "row-reverse" : "row", alignItems: "flex-end" }}>
+              <Av user={sender} size={30} />
+              <div style={{ maxWidth: "72%" }}>
+                {!mine && <div style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", marginBottom: 3 }}>{sender.name}</div>}
+                <div style={{
+                  padding: "9px 13px", borderRadius: 14,
+                  borderBottomRightRadius: mine ? 4 : 14, borderBottomLeftRadius: mine ? 14 : 4,
+                  background: mine ? B : "white", color: mine ? "white" : "#0A0A0F",
+                  border: mine ? "none" : "1px solid #e7e7ec", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word",
+                }}>
+                  {m.body}
+                </div>
+                <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 3, textAlign: mine ? "right" : "left" }}>{fmtTime(m.created_at)}</div>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={endRef} />
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginTop: 14, flexShrink: 0 }}>
+        <textarea
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+          placeholder="Type a message..."
+          rows={1}
+          style={{ flex: 1, padding: "11px 14px", borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 14, outline: "none", resize: "none" }}
+        />
+        <button
+          onClick={send}
+          disabled={sending || !draft.trim()}
+          style={{ width: 44, height: 44, borderRadius: 12, background: B, border: "none", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: sending || !draft.trim() ? 0.6 : 1 }}
+        >
+          <Icon name="paperAirplane" size={18} color="white" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // This is the main component
 export default function ProwessDashboard({
   currentUser,
@@ -5983,6 +6204,11 @@ export default function ProwessDashboard({
   announcements = [],
   onCreateAnnouncement,
   onDeleteAnnouncement,
+  availableProjects = [],
+  onCreateAvailableProject,
+  onClaimAvailableProject,
+  messages = [],
+  onSendMessage,
   onCreateAssignment,
   onLogKPI,
   onSetVerdict,
@@ -6083,6 +6309,11 @@ export default function ProwessDashboard({
   announcements?: any[];
   onCreateAnnouncement?: (form: { title: string; body: string }) => Promise<void>;
   onDeleteAnnouncement?: (id: string) => Promise<void>;
+  availableProjects?: any[];
+  onCreateAvailableProject?: (form: any) => Promise<void>;
+  onClaimAvailableProject?: (id: string) => Promise<void>;
+  messages?: any[];
+  onSendMessage?: (body: string) => Promise<void>;
 }) {
   const [page,        setPage]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -6099,6 +6330,7 @@ export default function ProwessDashboard({
   const [localIncome,  setLocalIncome]  = useState(offlineIncome);
   const [localOutgoing, setLocalOutgoing] = useState(offlineOutgoing);
   const [localAnnouncements, setLocalAnnouncements] = useState(announcements);
+  const [localAvailableProjects, setLocalAvailableProjects] = useState(availableProjects);
   const isMobile = useIsMobile();
 
   useEffect(() => setLocalTasks(tasks),          [tasks]);
@@ -6112,6 +6344,7 @@ export default function ProwessDashboard({
   useEffect(() => setLocalIncome(offlineIncome),  [offlineIncome]);
   useEffect(() => setLocalOutgoing(offlineOutgoing), [offlineOutgoing]);
   useEffect(() => setLocalAnnouncements(announcements), [announcements]);
+  useEffect(() => setLocalAvailableProjects(availableProjects), [availableProjects]);
 
   const user = normUser(currentUser);
 
@@ -6276,6 +6509,20 @@ export default function ProwessDashboard({
             setLocalAnnouncements((p: any[]) => p.filter((a: any) => a.id !== id));
             await onDeleteAnnouncement?.(id);
           }}
+        />;
+      case "available":
+        return <AvailableProjectsPage
+          user={user}
+          availableProjects={localAvailableProjects}
+          onCreate={async (form: any) => { await onCreateAvailableProject?.(form); }}
+          onClaim={async (id: string) => { await onClaimAvailableProject?.(id); }}
+        />;
+      case "messages":
+        return <MessagesPage
+          user={user}
+          users={users}
+          messages={messages}
+          onSend={async (body: string) => { await onSendMessage?.(body); }}
         />;
       case "leaderboard":
         return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} monthlyWinners={localMonthlyWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); }} onCloseMonth={async (month: string, sc: any[]) => { await onCloseMonth?.(month, sc); }} />;
