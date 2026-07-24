@@ -435,6 +435,50 @@ function Av({ user, size = 36 }: { user: any; size?: number }) {
   );
 }
 
+// --- SVG icon set (replaces emoji icons across nav/stat cards) ---------------
+const ICON_PATHS: Record<string, string> = {
+  home: "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75",
+  clipboardCheck: "M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z",
+  documentText: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
+  clock: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z",
+  bolt: "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z",
+  trophy: "M8 21h8M12 17v4M7.5 4h9v3.5a4.5 4.5 0 01-9 0V4zM7.5 5.25h-3a2 2 0 002 2h1M16.5 5.25h3a2 2 0 01-2 2h-1",
+  megaphone: "M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535",
+  bookOpen: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25",
+  currencyDollar: "M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  creditCard: "M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z",
+  trendingUp: "M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941",
+  chartBar: "M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z",
+  users: "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
+  cog: "M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28zM15 12a3 3 0 11-6 0 3 3 0 016 0z",
+  search: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z",
+  checkCircle: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  refresh: "M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99",
+  warningTriangle: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z",
+  calendar: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5",
+  banned: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636",
+  xMark: "M6 18L18 6M6 6l12 12",
+  arrowUpRight: "M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25",
+};
+
+function Icon({ name, size = 18, color = "currentColor", strokeWidth = 1.8 }: { name: string; size?: number; color?: string; strokeWidth?: number }) {
+  if (name === "power") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18.36 6.64a9 9 0 11-12.73 0" />
+        <line x1="12" y1="2" x2="12" y2="12" />
+      </svg>
+    );
+  }
+  const d = ICON_PATHS[name];
+  if (!d) return null;
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <path d={d} />
+    </svg>
+  );
+}
+
 // Coloured label badge
 function Pill({ type, value }: { type: "priority" | "status"; value: string }) {
   const cfg = type === "priority" ? PRI[value] : STA[value];
@@ -456,8 +500,8 @@ function Pill({ type, value }: { type: "priority" | "status"; value: string }) {
 function Card({ children, style = {}, ...rest }: { children: React.ReactNode; style?: React.CSSProperties; [key: string]: any }) {
   return (
     <div style={{
-      background: "white", borderRadius: 16,
-      border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ...style,
+      background: "white", borderRadius: 20,
+      border: "1px solid #e7e7ec", boxShadow: "0 2px 10px rgba(10,10,15,0.04)", ...style,
     }} {...rest}>
       {children}
     </div>
@@ -501,15 +545,25 @@ function Stat({ icon, label, value, sub, color = B, trend }: {
   icon: string; label: string; value: string | number;
   sub?: string; color?: string; trend?: number;
 }) {
+  const [hover, setHover] = useState(false);
   return (
-    <Card style={{ padding: 24, flex: 1, minWidth: 150 }}>
+    <Card
+      style={{
+        padding: 22, flex: 1, minWidth: 150,
+        transform: hover ? "translateY(-2px)" : "translateY(0)",
+        boxShadow: hover ? "0 10px 28px rgba(10,10,15,0.08)" : "0 2px 10px rgba(10,10,15,0.04)",
+        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{
-          width: 44, height: 44, borderRadius: 12,
-          background: color + "18", display: "flex", alignItems: "center",
-          justifyContent: "center", color, fontSize: 20,
+          width: 42, height: 42, borderRadius: 13,
+          background: color + "14", display: "flex", alignItems: "center",
+          justifyContent: "center", color,
         }}>
-          {icon}
+          <Icon name={icon} size={19} color={color} strokeWidth={1.9} />
         </div>
         {trend !== undefined && (
           <span style={{ fontSize: 12, color: trend >= 0 ? "#22c55e" : "#ef4444", fontWeight: 600 }}>
@@ -517,9 +571,9 @@ function Stat({ icon, label, value, sub, color = B, trend }: {
           </span>
         )}
       </div>
-      <div style={{ marginTop: 16 }}>
-        <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{value}</div>
-        <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{label}</div>
+      <div style={{ marginTop: 18 }}>
+        <div style={{ fontSize: 27, fontWeight: 800, color: "#0A0A0F", lineHeight: 1, letterSpacing: "-0.01em" }}>{value}</div>
+        <div style={{ fontSize: 13, color: "#496167", marginTop: 5 }}>{label}</div>
         {sub && <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{sub}</div>}
       </div>
     </Card>
@@ -538,18 +592,29 @@ const sBtn = (c: string): React.CSSProperties => ({
 });
 
 const NAV = [
-  { id: "dashboard",   label: "Dashboard",    icon: "🏠" },
-  { id: "tasks",       label: "Tasks",        icon: "✅" },
-  { id: "activity",    label: "Activity Log", icon: "📝" },
-  { id: "kpi",         label: "KPIs",         icon: "🎯" },
-  { id: "leaderboard", label: "Leaderboard",  icon: "🏆" },
-  { id: "commission",  label: "Commission",   icon: "💰", commissionOnly: true },
-  { id: "payroll",     label: "Payroll",      icon: "💳", privileged: true },
-  { id: "finance",     label: "Finance",      icon: "📈", adminOnly: true },
-  { id: "reports",     label: "Reports",      icon: "📊", privileged: true },
-  { id: "team",        label: "Team",         icon: "👥", privileged: true },
-  { id: "settings",    label: "Settings",     icon: "⚙️" },
+  { id: "dashboard",     label: "Dashboard",         icon: "home" },
+  { id: "tasks",         label: "My Tasks",          icon: "clipboardCheck" },
+  { id: "submissions",   label: "Task Submissions",  icon: "documentText" },
+  { id: "activity",      label: "Time Tracking",     icon: "clock" },
+  { id: "kpi",           label: "My Performance",    icon: "bolt" },
+  { id: "leaderboard",   label: "Leaderboard",       icon: "trophy" },
+  { id: "announcements", label: "Announcements",     icon: "megaphone" },
+  { id: "commission",    label: "Commission",        icon: "currencyDollar", commissionOnly: true },
+  { id: "payroll",       label: "Payroll",           icon: "creditCard", privileged: true },
+  { id: "finance",       label: "Finance",           icon: "trendingUp", adminOnly: true },
+  { id: "reports",       label: "Reports",           icon: "chartBar", privileged: true },
+  { id: "team",          label: "Team",              icon: "users", privileged: true },
+  { id: "settings",      label: "Profile Settings",  icon: "cog" },
 ];
+
+// "tasks" and "kpi" mean something different for privileged users (whole-team
+// management, not just their own) -- the sidebar label reflects that instead
+// of calling an admin's team-wide task list "My Tasks".
+function navLabel(id: string, base: string, user: any) {
+  if (id === "tasks" && isPrivileged(user)) return "Tasks";
+  if (id === "kpi" && isPrivileged(user)) return "KPIs";
+  return base;
+}
 
 // --- Currency helpers ---------------------------------------------------------
 const CURRENCIES = [
@@ -621,8 +686,8 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCo
               <div style={{ color: "#4b5563", fontSize: 11 }}>Digital Solutions</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: "#374151", border: "none", borderRadius: 9, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "white", fontSize: 17, fontWeight: 700, flexShrink: 0 }}>
-            ✕
+          <button onClick={onClose} style={{ background: "#374151", border: "none", borderRadius: 9, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "white", flexShrink: 0 }}>
+            <Icon name="xMark" size={17} strokeWidth={2.2} />
           </button>
         </div>
 
@@ -649,8 +714,8 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCo
                 cursor: "pointer", color: on ? "#7ecfd4" : "#9ca3af",
                 fontSize: 14, fontWeight: on ? 600 : 400, textAlign: "left",
               }}>
-                <span style={{ fontSize: 20, width: 26, textAlign: "center", flexShrink: 0 }}>{n.icon}</span>
-                <span style={{ flex: 1 }}>{n.label}</span>
+                <span style={{ width: 26, display: "flex", justifyContent: "center", flexShrink: 0 }}><Icon name={n.icon} size={19} /></span>
+                <span style={{ flex: 1 }}>{navLabel(n.id, n.label, user)}</span>
                 {n.id === "approvals" && approvalCount > 0 && (
                   <span style={{ fontSize: 11, fontWeight: 700, background: "#ef4444", color: "white", borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{approvalCount}</span>
                 )}
@@ -658,6 +723,20 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCo
               </button>
             );
           })}
+          <a
+            href="/resources"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "flex", alignItems: "center", gap: 12, width: "100%",
+              padding: "12px 14px", borderRadius: 11, marginBottom: 3,
+              color: "#9ca3af", fontSize: 14, fontWeight: 400, textDecoration: "none",
+            }}
+          >
+            <span style={{ width: 26, display: "flex", justifyContent: "center", flexShrink: 0 }}><Icon name="bookOpen" size={19} /></span>
+            <span style={{ flex: 1 }}>Resources</span>
+            <Icon name="arrowUpRight" size={13} color="#6b7280" />
+          </a>
         </nav>
 
         {/* Approvals button - privileged only */}
@@ -671,7 +750,7 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCo
               cursor: "pointer", color: approvalCount > 0 ? "#fbbf24" : "#9ca3af",
               fontSize: 14, fontWeight: approvalCount > 0 ? 600 : 400, textAlign: "left",
             }}>
-              <span style={{ fontSize: 20, width: 26, textAlign: "center", flexShrink: 0 }}>🔍</span>
+              <span style={{ width: 26, display: "flex", justifyContent: "center", flexShrink: 0 }}><Icon name="search" size={19} /></span>
               <span style={{ flex: 1 }}>Approvals</span>
               {approvalCount > 0 && (
                 <span style={{ fontSize: 11, fontWeight: 700, background: "#ef4444", color: "white", borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{approvalCount}</span>
@@ -687,7 +766,7 @@ function MobileDrawer({ user, page, setPage, onLogout, open, onClose, approvalCo
             padding: "12px 14px", borderRadius: 11, background: "#1f2937",
             border: "none", cursor: "pointer", color: "#ef4444", fontSize: 14, fontWeight: 500,
           }}>
-            <span style={{ fontSize: 20, width: 26, textAlign: "center" }}>🚪</span>
+            <span style={{ width: 26, display: "flex", justifyContent: "center" }}><Icon name="power" size={19} /></span>
             Sign Out
           </button>
         </div>
@@ -707,17 +786,17 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
       <div style={{ padding: "16px 12px", borderBottom: "1px solid #1f2937", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         {open && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, background: B, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: B, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <span style={{ color: "white", fontSize: 18, fontWeight: 800 }}>P</span>
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ color: "white", fontWeight: 700, fontSize: 13, lineHeight: 1.3, whiteSpace: "nowrap" }}>Prowess</div>
-              <div style={{ color: "#4b5563", fontSize: 10, whiteSpace: "nowrap" }}>Digital Solutions</div>
+              <div style={{ color: "#5b6472", fontSize: 10, whiteSpace: "nowrap" }}>Digital Solutions</div>
             </div>
           </div>
         )}
         {!open && (
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: B, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: B, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
             <span style={{ color: "white", fontSize: 18, fontWeight: 800 }}>P</span>
           </div>
         )}
@@ -737,15 +816,22 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
         }).map(n => {
           const on = page === n.id;
           return (
-            <button key={n.id} onClick={() => setPage(n.id)} title={n.label} style={{
-              display: "flex", alignItems: "center", gap: open ? 11 : 0, width: "100%",
-              padding: open ? "10px 12px" : "10px 0", borderRadius: 10, justifyContent: open ? "flex-start" : "center",
-              background: on ? B + "22" : "transparent", border: "none", cursor: "pointer",
-              color: on ? "#7ecfd4" : "#9ca3af", fontSize: 14, fontWeight: on ? 600 : 400,
-              marginBottom: 2, textAlign: "left", overflow: "hidden", whiteSpace: "nowrap",
-            }}>
-              <span style={{ fontSize: 17, flexShrink: 0 }}>{n.icon}</span>
-              {open && <span style={{ flex: 1 }}>{n.label}</span>}
+            <button
+              key={n.id}
+              onClick={() => setPage(n.id)}
+              title={n.label}
+              onMouseEnter={e => { if (!on) e.currentTarget.style.background = "#1a2333"; }}
+              onMouseLeave={e => { if (!on) e.currentTarget.style.background = "transparent"; }}
+              style={{
+                display: "flex", alignItems: "center", gap: open ? 11 : 0, width: "100%",
+                padding: open ? "10px 12px" : "10px 0", borderRadius: 11, justifyContent: open ? "flex-start" : "center",
+                background: on ? B + "22" : "transparent", border: "none", cursor: "pointer",
+                color: on ? "#7ecfd4" : "#9ca3af", fontSize: 14, fontWeight: on ? 600 : 400,
+                marginBottom: 2, textAlign: "left", overflow: "hidden", whiteSpace: "nowrap",
+                transition: "background 0.15s ease",
+              }}>
+              <span style={{ flexShrink: 0, display: "flex" }}><Icon name={n.icon} size={17} /></span>
+              {open && <span style={{ flex: 1 }}>{navLabel(n.id, n.label, user)}</span>}
               {open && n.id === "approvals" && approvalCount > 0 && (
                 <span style={{ fontSize: 11, fontWeight: 700, background: "#ef4444", color: "white", borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{approvalCount}</span>
               )}
@@ -756,6 +842,25 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
             </button>
           );
         })}
+        <a
+          href="/resources"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Resources"
+          onMouseEnter={e => (e.currentTarget.style.background = "#1a2333")}
+          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          style={{
+            display: "flex", alignItems: "center", gap: open ? 11 : 0, width: "100%",
+            padding: open ? "10px 12px" : "10px 0", borderRadius: 11, justifyContent: open ? "flex-start" : "center",
+            color: "#9ca3af", fontSize: 14, fontWeight: 400,
+            marginBottom: 2, textAlign: "left", overflow: "hidden", whiteSpace: "nowrap",
+            transition: "background 0.15s ease", textDecoration: "none",
+          }}
+        >
+          <span style={{ flexShrink: 0, display: "flex" }}><Icon name="bookOpen" size={17} /></span>
+          {open && <span style={{ flex: 1 }}>Resources</span>}
+          {open && <Icon name="arrowUpRight" size={12} color="#6b7280" />}
+        </a>
       </nav>
 
       {/* Approvals button - privileged only */}
@@ -770,7 +875,7 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
             fontSize: 14, fontWeight: approvalCount > 0 ? 600 : 400,
             marginBottom: 2, textAlign: "left", overflow: "hidden", whiteSpace: "nowrap",
           }}>
-            <span style={{ fontSize: 17, flexShrink: 0 }}>🔍</span>
+            <span style={{ flexShrink: 0, display: "flex" }}><Icon name="search" size={17} /></span>
             {open && <span style={{ flex: 1 }}>Approvals</span>}
             {open && approvalCount > 0 && (
               <span style={{ fontSize: 11, fontWeight: 700, background: "#ef4444", color: "white", borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{approvalCount}</span>
@@ -792,13 +897,24 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
                 <div style={{ color: "#6b7280", fontSize: 11 }}>{user.role === "admin" ? "Administrator" : user.title}</div>
               </div>
             </div>
-            <button onClick={onLogout} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", borderRadius: 8, background: "#1f2937", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 14 }}>
+            <button
+              onClick={onLogout}
+              onMouseEnter={e => (e.currentTarget.style.background = "#2a3547")}
+              onMouseLeave={e => (e.currentTarget.style.background = "#1f2937")}
+              style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", borderRadius: 9, background: "#1f2937", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 14, transition: "background 0.15s ease" }}
+            >
               Sign Out
             </button>
           </>
         ) : (
-          <button onClick={onLogout} title="Sign Out" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "10px 0", borderRadius: 8, background: "#1f2937", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 18 }}>
-            ⏻
+          <button
+            onClick={onLogout}
+            title="Sign Out"
+            onMouseEnter={e => (e.currentTarget.style.background = "#2a3547")}
+            onMouseLeave={e => (e.currentTarget.style.background = "#1f2937")}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "10px 0", borderRadius: 9, background: "#1f2937", border: "none", cursor: "pointer", color: "#9ca3af", transition: "background 0.15s ease" }}
+          >
+            <Icon name="power" size={18} />
           </button>
         )}
       </div>
@@ -807,17 +923,12 @@ function Sidebar({ user, page, setPage, onLogout, open, setOpen, approvalCount =
 }
 
 function TopBar({ user, page, isMobile, onMenuOpen }: { user: any; page: string; isMobile?: boolean; onMenuOpen?: () => void }) {
-  const titles: Record<string, string> = {
-    dashboard: "Dashboard", tasks: "Tasks", activity: "Activity Log",
-    kpi: "KPI Tracker", leaderboard: "Leaderboard", reports: "Reports", team: "Team", settings: "Settings",
-  };
-  const icons: Record<string, string> = {
-    dashboard: "🏠", tasks: "✅", activity: "📝", kpi: "🎯",
-    leaderboard: "🏆", reports: "📊", team: "👥", settings: "⚙️",
-  };
+  const navItem = NAV.find(n => n.id === page);
+  const title = navItem ? navLabel(navItem.id, navItem.label, user) : "Dashboard";
+  const icon = navItem?.icon ?? "home";
   return (
     <div style={{
-      background: "white", borderBottom: "1px solid #e2e8f0",
+      background: "white", boxShadow: "0 1px 0 rgba(10,10,15,0.06)",
       padding: isMobile ? "0 14px" : "0 28px",
       height: isMobile ? 54 : 58,
       display: "flex", alignItems: "center",
@@ -837,9 +948,9 @@ function TopBar({ user, page, isMobile, onMenuOpen }: { user: any; page: string;
           </button>
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          {isMobile && <span style={{ fontSize: 18 }}>{icons[page]}</span>}
+          {isMobile && <Icon name={icon} size={18} color="#374151" />}
           <h1 style={{ fontSize: isMobile ? 16 : 17, fontWeight: 700, color: "#0f172a", margin: 0 }}>
-            {titles[page]}
+            {title}
           </h1>
         </div>
       </div>
@@ -961,12 +1072,12 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
         );
       })()}
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-        <Stat icon="📋" label="Total Tasks"  value={total}     sub="This month"   color="#6366f1" />
-        <Stat icon="✅" label="Completed"    value={completed} sub={`${total ? Math.round(completed / total * 100) : 0}% rate`} color="#22c55e" />
-        <Stat icon="🔄" label="In Progress"  value={inProg}    sub="Active now"   color="#3b82f6" />
-        <Stat icon="⚠️" label="Overdue"      value={overdue}   sub="Need attention" color="#ef4444" />
+        <Stat icon="clipboardCheck" label="Total Tasks"  value={total}     sub="This month"   color="#6366f1" />
+        <Stat icon="checkCircle" label="Completed"    value={completed} sub={`${total ? Math.round(completed / total * 100) : 0}% rate`} color="#22c55e" />
+        <Stat icon="refresh" label="In Progress"  value={inProg}    sub="Active now"   color="#3b82f6" />
+        <Stat icon="warningTriangle" label="Overdue"      value={overdue}   sub="Need attention" color="#ef4444" />
         {pendingApprovals > 0 && (
-          <Stat icon="🔍" label="Need Approval" value={pendingApprovals} sub="Tasks and logs" color="#d97706" />
+          <Stat icon="search" label="Need Approval" value={pendingApprovals} sub="Tasks and logs" color="#d97706" />
         )}
       </div>
 
@@ -1267,11 +1378,11 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
       })()}
 
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-        <Stat icon="📋" label="Assigned Tasks" value={myT.length}       color="#6366f1" />
-        <Stat icon="✅" label="Completed"      value={done}             color="#22c55e" />
-        <Stat icon="⚡" label="All-Time Score" value={`${pts}pt`}       sub="Approved only" color={B} />
-        <Stat icon="📅" label="Weekly Points"  value={`${weeklyPts}pt`} sub={`Rank #${weeklyRank}`} color="#f59e0b" />
-        <Stat icon="⚠️" label="Overdue"        value={od}               color="#ef4444" />
+        <Stat icon="clipboardCheck" label="Assigned Tasks" value={myT.length}       color="#6366f1" />
+        <Stat icon="checkCircle" label="Completed"      value={done}             color="#22c55e" />
+        <Stat icon="bolt" label="All-Time Score" value={`${pts}pt`}       sub="Approved only" color={B} />
+        <Stat icon="calendar" label="Weekly Points"  value={`${weeklyPts}pt`} sub={`Rank #${weeklyRank}`} color="#f59e0b" />
+        <Stat icon="warningTriangle" label="Overdue"        value={od}               color="#ef4444" />
       </div>
 
       {/* Weekly progress to #1 */}
@@ -3186,10 +3297,10 @@ function ReportsPage({ tasks, logs, users, user }: any) {
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-        <Stat icon="📈" label="Total Points"    value={sc.reduce((s: number, u: any) => s + u.score, 0)} color={B} />
-        <Stat icon="✅" label="Completion Rate" value={`${tasks.length ? Math.round(compl / tasks.length * 100) : 0}%`} color="#22c55e" />
-        <Stat icon="📝" label="Activity Entries" value={logs.length} color="#6366f1" />
-        <Stat icon="⏱" label="Hours Logged"     value={`${totHrs.toFixed(1)}h`} color="#f59e0b" />
+        <Stat icon="trendingUp" label="Total Points"    value={sc.reduce((s: number, u: any) => s + u.score, 0)} color={B} />
+        <Stat icon="checkCircle" label="Completion Rate" value={`${tasks.length ? Math.round(compl / tasks.length * 100) : 0}%`} color="#22c55e" />
+        <Stat icon="documentText" label="Activity Entries" value={logs.length} color="#6366f1" />
+        <Stat icon="clock" label="Hours Logged"     value={`${totHrs.toFixed(1)}h`} color="#f59e0b" />
       </div>
 
       <div className="prowess-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -3655,10 +3766,10 @@ function PayrollPage({ user, users, tasks, payroll, onLogPayroll, onApprovePayro
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-        <Stat icon="⏳" label="Pending" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "pending").length} color="#f59e0b" />
-        <Stat icon="✅" label="Approved" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "approved").length} color="#22c55e" />
-        <Stat icon="🚫" label="Withheld" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "withheld").length} color="#ef4444" />
-        <Stat icon="💰" label="Unpaid (Approved)" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "approved" && e.payout_status === "unpaid").length} color={B} />
+        <Stat icon="clock" label="Pending" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "pending").length} color="#f59e0b" />
+        <Stat icon="checkCircle" label="Approved" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "approved").length} color="#22c55e" />
+        <Stat icon="banned" label="Withheld" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "withheld").length} color="#ef4444" />
+        <Stat icon="currencyDollar" label="Unpaid (Approved)" value={payroll.filter((e: any) => (isAdmin || e.member_id === user.id) && e.status === "approved" && e.payout_status === "unpaid").length} color={B} />
       </div>
 
       {/* Filters */}
@@ -5706,6 +5817,155 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
   );
 }
 
+// --- Task Submissions: what I've turned in and its review status -------------
+// Distinct from Time Tracking (activity_logs / hours) -- this is specifically
+// about completed task assignments and their approval outcome.
+function TaskSubmissionsPage({ user, tasks }: { user: any; tasks: any[] }) {
+  const mine = expandTasksPerAssignee(tasks.map(normTask))
+    .filter((t: any) => t._singleAssignee === user.id && (t.status === "completed" || t.approvalStatus !== "pending"))
+    .sort((a: any, b: any) => new Date(b.completedAt || b.approvedAt || 0).getTime() - new Date(a.completedAt || a.approvedAt || 0).getTime());
+
+  return (
+    <div className="prowess-page-pad" style={{ padding: 28, maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0A0A0F", margin: 0 }}>Task Submissions</h2>
+        <p style={{ fontSize: 13, color: "#496167", marginTop: 4 }}>
+          Tasks you have marked complete, and what happened to them after review.
+        </p>
+      </div>
+
+      {mine.length === 0 ? (
+        <Card style={{ padding: 40, textAlign: "center" }}>
+          <div style={{ color: "#94a3b8", fontSize: 14 }}>You haven&rsquo;t submitted any tasks yet.</div>
+        </Card>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {mine.map((t: any) => (
+            <Card key={t._expandedId} style={{ padding: 18 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0A0A0F" }}>{t.title}</div>
+                  {t.project && <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{t.project}</div>}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  {t.priority && <Pill type="priority" value={t.priority} />}
+                  <ApprBadge status={t.approvalStatus} />
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 10 }}>
+                Submitted {fmtTime(t.completedAt) || "—"}
+              </div>
+              {t.submission_links?.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <LinkDisplay links={t.submission_links} />
+                </div>
+              )}
+              {t.approvalStatus === "rejected" && t.approvalNote && (
+                <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, background: "#fef2f2", border: "1px solid #fecaca", fontSize: 12.5, color: "#991b1b" }}>
+                  <strong>Feedback:</strong> {t.approvalNote}
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Announcements: admin-postable feed, everyone can read -------------------
+function AnnouncementsPage({ user, announcements, onCreate, onDelete }: {
+  user: any; announcements: any[];
+  onCreate: (form: { title: string; body: string }) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    if (!title.trim() || !body.trim()) return;
+    setSaving(true);
+    try {
+      await onCreate({ title: title.trim(), body: body.trim() });
+      setTitle(""); setBody(""); setOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="prowess-page-pad" style={{ padding: 28, maxWidth: 800, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0A0A0F", margin: 0 }}>Announcements</h2>
+          <p style={{ fontSize: 13, color: "#496167", marginTop: 4 }}>Updates from the team.</p>
+        </div>
+        {isPrivileged(user) && (
+          <button onClick={() => setOpen(v => !v)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 600, flexShrink: 0 }}>
+            {open ? "Cancel" : "New Announcement"}
+          </button>
+        )}
+      </div>
+
+      {open && (
+        <Card style={{ padding: 18, marginBottom: 18 }}>
+          <input
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="Title"
+            style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, marginBottom: 10, outline: "none" }}
+          />
+          <textarea
+            value={body}
+            onChange={e => setBody(e.target.value)}
+            placeholder="What's the update?"
+            rows={4}
+            style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, outline: "none", resize: "vertical" }}
+          />
+          <button
+            onClick={submit}
+            disabled={saving || !title.trim() || !body.trim()}
+            style={{ marginTop: 12, padding: "10px 18px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 600, opacity: saving ? 0.6 : 1 }}
+          >
+            {saving ? "Posting..." : "Post Announcement"}
+          </button>
+        </Card>
+      )}
+
+      {announcements.length === 0 ? (
+        <Card style={{ padding: 40, textAlign: "center" }}>
+          <div style={{ color: "#94a3b8", fontSize: 14 }}>No announcements yet.</div>
+        </Card>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {announcements.map((a: any) => (
+            <Card key={a.id} style={{ padding: 18 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 700, color: "#0A0A0F" }}>{a.title}</div>
+                {isPrivileged(user) && (
+                  <button
+                    onClick={() => onDelete(a.id)}
+                    title="Delete"
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "#cbd5e1", flexShrink: 0, display: "flex" }}
+                  >
+                    <Icon name="xMark" size={15} />
+                  </button>
+                )}
+              </div>
+              <p style={{ fontSize: 13.5, color: "#374151", marginTop: 8, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{a.body}</p>
+              <div style={{ fontSize: 11.5, color: "#94a3b8", marginTop: 10 }}>
+                {a.author_name ? `${a.author_name} · ` : ""}{fmtTime(a.created_at)}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // This is the main component
 export default function ProwessDashboard({
   currentUser,
@@ -5720,6 +5980,9 @@ export default function ProwessDashboard({
   payroll = [],
   offlineIncome = [],
   offlineOutgoing = [],
+  announcements = [],
+  onCreateAnnouncement,
+  onDeleteAnnouncement,
   onCreateAssignment,
   onLogKPI,
   onSetVerdict,
@@ -5817,6 +6080,9 @@ export default function ProwessDashboard({
   payroll?: any[];
   offlineIncome?: any[];
   offlineOutgoing?: any[];
+  announcements?: any[];
+  onCreateAnnouncement?: (form: { title: string; body: string }) => Promise<void>;
+  onDeleteAnnouncement?: (id: string) => Promise<void>;
 }) {
   const [page,        setPage]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -5832,6 +6098,7 @@ export default function ProwessDashboard({
   const [localPayroll, setLocalPayroll] = useState(payroll);
   const [localIncome,  setLocalIncome]  = useState(offlineIncome);
   const [localOutgoing, setLocalOutgoing] = useState(offlineOutgoing);
+  const [localAnnouncements, setLocalAnnouncements] = useState(announcements);
   const isMobile = useIsMobile();
 
   useEffect(() => setLocalTasks(tasks),          [tasks]);
@@ -5844,6 +6111,7 @@ export default function ProwessDashboard({
   useEffect(() => setLocalPayroll(payroll),       [payroll]);
   useEffect(() => setLocalIncome(offlineIncome),  [offlineIncome]);
   useEffect(() => setLocalOutgoing(offlineOutgoing), [offlineOutgoing]);
+  useEffect(() => setLocalAnnouncements(announcements), [announcements]);
 
   const user = normUser(currentUser);
 
@@ -5993,6 +6261,22 @@ export default function ProwessDashboard({
             return <TasksPage user={user} tasks={localTasks} setTasks={setLocalTasks} users={users} onCreateTask={onCreateTask} onUpdateTaskStatus={onUpdateTaskStatus} onDeleteTask={onDeleteTask} onApproveTask={onApproveTask} onRejectTask={onRejectTask} onReassignTask={async (taskId: string, newIds: string[]) => { await onReassignTask?.(taskId, newIds); setLocalTasks((p: any[]) => p.map((t: any) => t.id === taskId ? { ...t, assigned_to: newIds[0] ?? null, assignees: newIds, task_assignments: newIds.map((uid: string) => ({ user_id: uid })) } : t)); }} />;
           case "activity":
         return <ActivityLogPage user={user} users={users} logs={localLogs} setLogs={setLocalLogs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} onResubmitLog={onResubmitLog} />;
+      case "submissions":
+        return <TaskSubmissionsPage user={user} tasks={localTasks} />;
+      case "announcements":
+        return <AnnouncementsPage
+          user={user}
+          announcements={localAnnouncements}
+          onCreate={async (form: { title: string; body: string }) => {
+            const temp = { id: "tmp-" + Date.now(), ...form, author_name: user.name, created_at: new Date().toISOString() };
+            setLocalAnnouncements((p: any[]) => [temp, ...p]);
+            await onCreateAnnouncement?.(form);
+          }}
+          onDelete={async (id: string) => {
+            setLocalAnnouncements((p: any[]) => p.filter((a: any) => a.id !== id));
+            await onDeleteAnnouncement?.(id);
+          }}
+        />;
       case "leaderboard":
         return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} monthlyWinners={localMonthlyWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); }} onCloseMonth={async (month: string, sc: any[]) => { await onCloseMonth?.(month, sc); }} />;
       case "reports":

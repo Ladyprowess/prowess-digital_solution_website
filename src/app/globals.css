@@ -1,33 +1,20 @@
+/* Only Regular and Semibold ship as files. Regular covers the light end of
+   the range and Semibold stands in for 600-900 so bold/black text still
+   renders in-brand instead of silently falling back to a system font. */
 @font-face {
   font-family: "Proxima Nova";
-  src: url("/fonts/ProximaNova-Regular.woff2") format("woff2"),
-    url("/fonts/ProximaNova-Regular.woff") format("woff");
-  font-weight: 400;
+  src: url("/fonts/Proxima-Nova-Regular.woff2") format("woff2"),
+    url("/fonts/Proxima-Nova-Regular.woff") format("woff");
+  font-weight: 100 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Proxima Nova";
-  src: url("/fonts/ProximaNova-Medium.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Proxima Nova";
-  src: url("/fonts/ProximaNova-Semibold.woff2") format("woff2"),
-    url("/fonts/ProximaNova-Semibold.woff") format("woff");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Proxima Nova";
-  src: url("/fonts/ProximaNova-Bold.woff2") format("woff2");
-  font-weight: 700;
+  src: url("/fonts/Proxima-Nova-Semibold.woff2") format("woff2"),
+    url("/fonts/Proxima-Nova-Semibold.woff") format("woff");
+  font-weight: 501 900;
   font-style: normal;
   font-display: swap;
 }

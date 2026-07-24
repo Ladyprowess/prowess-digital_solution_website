@@ -369,3 +369,7 @@ export const contact = {
   whatsapp: "+2348162174443",
   location: "Africa (Remote-friendly)",
 };
+
+// Real client logos only. Leave empty until actual logo files are supplied —
+// the trust bar hides itself rather than showing placeholder/fake brands.
+export const clientLogos: { name: string; src: string }[] = [];

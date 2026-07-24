@@ -70,6 +70,7 @@ export default function DashboardPage() {
         { data: payroll                     },
         { data: offlineIncome               },
         { data: offlineOutgoing             },
+        { data: announcementsRaw            },
       ] = await Promise.all([
         supabase.from("tasks").select("*, task_assignments(user_id, assigned_by, status, submission_links, completed_at, approval_status, approval_note, approved_by, approved_at)").order("created_at", { ascending: false }),
         supabase.from("activity_logs").select("*").order("log_date", { ascending: false }),
@@ -82,12 +83,19 @@ export default function DashboardPage() {
         supabase.from("payroll_entries").select("*").order("created_at", { ascending: false }),
         supabase.from("offline_income").select("*").order("income_date", { ascending: false }),
         supabase.from("offline_outgoing").select("*").order("payment_date", { ascending: false }),
+        // Non-fatal: the announcements table may not exist until
+        // supabase/announcements.sql has been run.
+        supabase.from("announcements").select("*, author:profiles!created_by(full_name)").order("created_at", { ascending: false }),
       ]);
 
       if (tasksErr) throw new Error(`Tasks failed to load: ${tasksErr.message}`);
       if (logsErr)  throw new Error(`Activity logs failed to load: ${logsErr.message}`);
       if (usersErr) throw new Error(`Team profiles failed to load: ${usersErr.message}`);
       // KPI errors are non-fatal -- tables may not exist yet if schema not yet run
+      const announcements = (announcementsRaw || []).map((a: any) => ({
+        ...a,
+        author_name: a.author?.full_name || null,
+      }));
       setState({
         profile, tasks: tasks || [], logs: logs || [], users: users || [],
         kpiAssignments: kpiAssignments || [], kpiLogs: kpiLogs || [],
@@ -97,6 +105,7 @@ export default function DashboardPage() {
         payroll: payroll || [],
         offlineIncome: offlineIncome || [],
         offlineOutgoing: offlineOutgoing || [],
+        announcements,
       });
 
     } catch (err: any) {
@@ -435,6 +444,23 @@ export default function DashboardPage() {
   async function deleteLog(logId: string) {
     const { error } = await supabase.from("activity_logs").delete().eq("id", logId);
     if (!error) setState((p: any) => ({ ...p, logs: p.logs.filter((l: any) => l.id !== logId) }));
+  }
+
+  async function createAnnouncement(form: { title: string; body: string }) {
+    const { data, error } = await supabase.from("announcements").insert({
+      title: form.title,
+      body: form.body,
+      created_by: state.profile.id,
+    }).select().single();
+    if (!error && data) {
+      const withAuthor = { ...data, author_name: state.profile.full_name || null };
+      setState((p: any) => ({ ...p, announcements: [withAuthor, ...(p.announcements || [])] }));
+    }
+  }
+
+  async function deleteAnnouncement(id: string) {
+    const { error } = await supabase.from("announcements").delete().eq("id", id);
+    if (!error) setState((p: any) => ({ ...p, announcements: (p.announcements || []).filter((a: any) => a.id !== id) }));
   }
 
   async function createMember(form: any) {
@@ -984,6 +1010,9 @@ export default function DashboardPage() {
       payroll={state.payroll || []}
       offlineIncome={state.offlineIncome || []}
       offlineOutgoing={state.offlineOutgoing || []}
+      announcements={state.announcements || []}
+      onCreateAnnouncement={createAnnouncement}
+      onDeleteAnnouncement={deleteAnnouncement}
       onCreateAssignment={createAssignment}
       onLogKPI={logKPI}
       onSetVerdict={setVerdict}
