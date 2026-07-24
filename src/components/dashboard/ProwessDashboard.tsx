@@ -6109,23 +6109,72 @@ function AvailableProjectsPage({ user, availableProjects, onCreate, onClaim }: {
 // --- Messages: shared team chat, live via Supabase Realtime ------------------
 function MessagesPage({ user, users, messages, onSend }: {
   user: any; users: any[]; messages: any[];
-  onSend: (body: string) => Promise<void>;
+  onSend: (body: string, mentions?: { mentionIds?: string[]; mentionEveryone?: boolean }) => Promise<void>;
 }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [mentionIds, setMentionIds] = useState<string[]>([]);
+  const [mentionEveryone, setMentionEveryone] = useState(false);
+  const [mentionMenu, setMentionMenu] = useState<{ atIndex: number; query: string } | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  const otherUsers = users.filter((u: any) => u.id !== user.id && u.role !== "disabled").map(normUser);
+  const mentionOptions: { id: string; label: string; everyone?: boolean }[] = mentionMenu
+    ? [
+        ...("everyone".startsWith(mentionMenu.query.toLowerCase()) ? [{ id: "everyone", label: "everyone", everyone: true }] : []),
+        ...otherUsers
+          .filter((u: any) => u.name.toLowerCase().includes(mentionMenu.query.toLowerCase()))
+          .map((u: any) => ({ id: u.id, label: u.name })),
+      ]
+    : [];
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursor = e.target.selectionStart ?? value.length;
+    setDraft(value);
+
+    const upToCursor = value.slice(0, cursor);
+    const atIndex = upToCursor.lastIndexOf("@");
+    if (atIndex === -1) { setMentionMenu(null); return; }
+    const query = upToCursor.slice(atIndex + 1);
+    if (/\s/.test(query)) { setMentionMenu(null); return; }
+    setMentionMenu({ atIndex, query });
+    setActiveIndex(0);
+  };
+
+  const pickMention = (opt: { id: string; label: string; everyone?: boolean }) => {
+    if (!mentionMenu || !textareaRef.current) return;
+    const cursor = textareaRef.current.selectionStart ?? draft.length;
+    const before = draft.slice(0, mentionMenu.atIndex);
+    const after = draft.slice(cursor);
+    const inserted = `@${opt.label} `;
+    setDraft(before + inserted + after);
+    if (opt.everyone) setMentionEveryone(true);
+    else setMentionIds(ids => (ids.includes(opt.id) ? ids : [...ids, opt.id]));
+    setMentionMenu(null);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      const pos = (before + inserted).length;
+      textareaRef.current?.setSelectionRange(pos, pos);
+    });
+  };
 
   const send = async () => {
     const body = draft.trim();
     if (!body) return;
     setDraft("");
     setSending(true);
+    const mentions = { mentionIds, mentionEveryone };
+    setMentionIds([]);
+    setMentionEveryone(false);
     try {
-      await onSend(body);
+      await onSend(body, mentions);
     } finally {
       setSending(false);
     }
@@ -6135,7 +6184,7 @@ function MessagesPage({ user, users, messages, onSend }: {
     <div className="prowess-page-pad" style={{ padding: 28, maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", height: "calc(100vh - 58px - 56px)" }}>
       <div style={{ marginBottom: 16, flexShrink: 0 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0A0A0F", margin: 0 }}>Messages</h2>
-        <p style={{ fontSize: 13, color: "#496167", marginTop: 4 }}>Team chat -- everyone on the team sees this channel.</p>
+        <p style={{ fontSize: 13, color: "#496167", marginTop: 4 }}>Team chat -- everyone on the team sees this channel. Type @ to tag someone, or @everyone to email the whole team.</p>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, paddingRight: 4 }}>
@@ -6166,22 +6215,61 @@ function MessagesPage({ user, users, messages, onSend }: {
         <div ref={endRef} />
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginTop: 14, flexShrink: 0 }}>
-        <textarea
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-          placeholder="Type a message..."
-          rows={1}
-          style={{ flex: 1, padding: "11px 14px", borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 14, outline: "none", resize: "none" }}
-        />
-        <button
-          onClick={send}
-          disabled={sending || !draft.trim()}
-          style={{ width: 44, height: 44, borderRadius: 12, background: B, border: "none", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: sending || !draft.trim() ? 0.6 : 1 }}
-        >
-          <Icon name="paperAirplane" size={18} color="white" />
-        </button>
+      <div style={{ position: "relative", marginTop: 14, flexShrink: 0 }}>
+        {mentionMenu && mentionOptions.length > 0 && (
+          <div style={{
+            position: "absolute", bottom: "100%", left: 0, marginBottom: 8, width: 220,
+            background: "white", border: "1px solid #e2e8f0", borderRadius: 12,
+            boxShadow: "0 10px 30px rgba(10,10,15,0.12)", overflow: "hidden", zIndex: 20,
+          }}>
+            {mentionOptions.map((opt, i) => (
+              <button
+                key={opt.id}
+                onClick={() => pickMention(opt)}
+                onMouseEnter={() => setActiveIndex(i)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 13px",
+                  background: i === activeIndex ? "#f1f5f9" : "white", border: "none", cursor: "pointer",
+                  textAlign: "left", fontSize: 13.5, color: "#0A0A0F", fontWeight: opt.everyone ? 700 : 500,
+                }}
+              >
+                {opt.everyone ? (
+                  <span style={{ width: 22, height: 22, borderRadius: "50%", background: B + "18", color: B, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flexShrink: 0 }}>@</span>
+                ) : (
+                  <Av user={{ id: opt.id, avatar: opt.label[0] }} size={22} />
+                )}
+                {opt.everyone ? "everyone" : opt.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={handleChange}
+            onKeyDown={e => {
+              if (mentionMenu && mentionOptions.length > 0) {
+                if (e.key === "ArrowDown") { e.preventDefault(); setActiveIndex(i => (i + 1) % mentionOptions.length); return; }
+                if (e.key === "ArrowUp") { e.preventDefault(); setActiveIndex(i => (i - 1 + mentionOptions.length) % mentionOptions.length); return; }
+                if (e.key === "Enter") { e.preventDefault(); pickMention(mentionOptions[activeIndex]); return; }
+                if (e.key === "Escape") { setMentionMenu(null); return; }
+              }
+              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+            }}
+            placeholder="Type a message... use @ to tag someone"
+            rows={1}
+            style={{ flex: 1, padding: "11px 14px", borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 14, outline: "none", resize: "none" }}
+          />
+          <button
+            onClick={send}
+            disabled={sending || !draft.trim()}
+            style={{ width: 44, height: 44, borderRadius: 12, background: B, border: "none", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: sending || !draft.trim() ? 0.6 : 1 }}
+          >
+            <Icon name="paperAirplane" size={18} color="white" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -6313,7 +6401,7 @@ export default function ProwessDashboard({
   onCreateAvailableProject?: (form: any) => Promise<void>;
   onClaimAvailableProject?: (id: string) => Promise<void>;
   messages?: any[];
-  onSendMessage?: (body: string) => Promise<void>;
+  onSendMessage?: (body: string, mentions?: { mentionIds?: string[]; mentionEveryone?: boolean }) => Promise<void>;
 }) {
   const [page,        setPage]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -6522,7 +6610,7 @@ export default function ProwessDashboard({
           user={user}
           users={users}
           messages={messages}
-          onSend={async (body: string) => { await onSendMessage?.(body); }}
+          onSend={async (body: string, mentions?: { mentionIds?: string[]; mentionEveryone?: boolean }) => { await onSendMessage?.(body, mentions); }}
         />;
       case "leaderboard":
         return <LeaderboardPage tasks={localTasks} logs={localLogs} users={users} user={user} weeklyWinners={localWinners} monthlyWinners={localMonthlyWinners} onCloseWeek={async (ws: string, we: string, sc: any[]) => { await onCloseWeek?.(ws, we, sc); }} onCloseMonth={async (month: string, sc: any[]) => { await onCloseMonth?.(month, sc); }} />;

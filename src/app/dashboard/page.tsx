@@ -481,8 +481,24 @@ export default function DashboardPage() {
       created_by: state.profile.id,
     }).select().single();
     if (!error && data) {
-      const withAuthor = { ...data, author_name: state.profile.full_name || null };
+      const authorName = state.profile.full_name || "A team member";
+      const withAuthor = { ...data, author_name: authorName };
       setState((p: any) => ({ ...p, announcements: [withAuthor, ...(p.announcements || [])] }));
+
+      // Announcements are for the whole team by nature -- email everyone
+      // active except the person who just posted it.
+      const recipients = (state.users || []).filter(
+        (u: any) => u.role !== "disabled" && u.id !== state.profile.id && u.email
+      );
+      Promise.allSettled(
+        recipients.map((u: any) =>
+          fetch("/api/notify-announcement", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: u.email, title: form.title, body: form.body, authorName }),
+          })
+        )
+      ).catch(() => {});
     }
   }
 
@@ -549,7 +565,7 @@ export default function DashboardPage() {
     }));
   }
 
-  async function sendMessage(body: string) {
+  async function sendMessage(body: string, mentions?: { mentionIds?: string[]; mentionEveryone?: boolean }) {
     const { error } = await supabase.from("messages").insert({
       user_id: state.profile.id,
       body,
@@ -557,6 +573,34 @@ export default function DashboardPage() {
     if (error) throw new Error(error.message);
     // No local state update here -- the Realtime subscription below appends
     // the row for everyone, including the sender, once Postgres confirms it.
+
+    const senderName = state.profile.full_name || "A team member";
+    const activeOthers = (state.users || []).filter(
+      (u: any) => u.role !== "disabled" && u.id !== state.profile.id && u.email
+    );
+
+    if (mentions?.mentionEveryone) {
+      Promise.allSettled(
+        activeOthers.map((u: any) =>
+          fetch("/api/notify-mention", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: u.email, taggerName: senderName, messageBody: body, everyone: true }),
+          })
+        )
+      ).catch(() => {});
+    } else if (mentions?.mentionIds?.length) {
+      const targets = activeOthers.filter((u: any) => mentions.mentionIds!.includes(u.id));
+      Promise.allSettled(
+        targets.map((u: any) =>
+          fetch("/api/notify-mention", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: u.email, taggerName: senderName, messageBody: body, everyone: false }),
+          })
+        )
+      ).catch(() => {});
+    }
   }
 
   async function createMember(form: any) {
