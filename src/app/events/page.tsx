@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
+import AgencyPageHeader from "@/components/AgencyPageHeader";
 
 function CalendarIcon() {
   return (
@@ -66,6 +67,18 @@ type EventItem = {
   price_ngn?: number | null;
 };
 
+type RawEventItem = Partial<EventItem> & {
+  event_type?: string | null;
+  startDatetime?: string | null;
+  start_date?: string | null;
+};
+
+type EventsResponse = {
+  items?: RawEventItem[];
+  data?: RawEventItem[];
+  events?: RawEventItem[];
+};
+
 const EVENT_TYPES = ["All", "Webinar", "Workshop", "Business Clinic"];
 
 function formatDate(isoLike: string) {
@@ -94,7 +107,7 @@ function isPastEvent(dateISO: string) {
  * OR
  * - start_datetime / price_ngn / slug (new)
  */
-function normaliseEvent(e: any): EventItem {
+function normaliseEvent(e: RawEventItem): EventItem {
   const start = e.start_datetime || e.startDatetime || e.start_date || null;
 
   // date: prefer explicit e.date, else derive from start_datetime
@@ -220,7 +233,7 @@ export default function EventsPage() {
     try {
       const params = buildParams("upcoming", page, searchText);
       const res = await fetch(`/api/events?${params.toString()}`, { cache: "no-store" });
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as EventsResponse | null;
 
       if (!res.ok) {
         setUpcoming([]);
@@ -228,13 +241,13 @@ export default function EventsPage() {
         return;
       }
 
-      const raw = (json?.items || json?.data || json?.events || []) as any[];
+      const raw = json?.items || json?.data || json?.events || [];
       const normalised = raw.map(normaliseEvent);
 
       setUpcoming(normalised.filter((e) => !isPastEvent(e.date)));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setUpcoming([]);
-      setUpcomingError(err?.message || "Network error loading upcoming events.");
+      setUpcomingError(err instanceof Error ? err.message : "Network error loading upcoming events.");
     } finally {
       setLoadingUpcoming(false);
     }
@@ -247,7 +260,7 @@ export default function EventsPage() {
     try {
       const params = buildParams("past", page, searchText);
       const res = await fetch(`/api/events?${params.toString()}`, { cache: "no-store" });
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as EventsResponse | null;
 
       if (!res.ok) {
         setPast([]);
@@ -255,13 +268,13 @@ export default function EventsPage() {
         return;
       }
 
-      const raw = (json?.items || json?.data || json?.events || []) as any[];
+      const raw = json?.items || json?.data || json?.events || [];
       const normalised = raw.map(normaliseEvent);
 
       setPast(normalised.filter((e) => isPastEvent(e.date)));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setPast([]);
-      setPastError(err?.message || "Network error loading past events.");
+      setPastError(err instanceof Error ? err.message : "Network error loading past events.");
     } finally {
       setLoadingPast(false);
     }
@@ -346,7 +359,6 @@ export default function EventsPage() {
     }
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const isUpcomingLastPage = upcoming.length < PAGE_SIZE;
@@ -372,59 +384,22 @@ export default function EventsPage() {
 
   return (
     <div className="pb-16">
-      {/* HERO */}
-      <section className="relative overflow-hidden bg-[#0c1a1b] py-24 sm:py-32">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(80,124,128,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(80,124,128,.07) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-            maskImage:
-              "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-20"
-          style={{
-            background: "radial-gradient(circle, #507c80 0%, transparent 70%)",
-            filter: "blur(80px)",
-          }}
-        />
-        <Container>
-          <div className="relative mx-auto max-w-4xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#507c80]/30 bg-[#507c80]/10 px-4 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#507c80]" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#6a9ea3]">
-                Events & Training
-              </span>
-            </div>
-            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Business Events
-              <span className="block text-[#507c80]">& Training</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-              Practical sessions that help you build structure, make better decisions, and run your business properly.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a
-                href="#upcoming-events"
-                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-8 py-3.5 font-semibold text-white transition hover:bg-[#3a5c60]"
-              >
-                See Upcoming Events
-              </a>
-              <a
-                href="#subscribe"
-                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-8 py-3.5 font-semibold text-white transition hover:bg-white/10"
-              >
-                Get Event Updates
-              </a>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <AgencyPageHeader
+        eyebrow="Events and Training"
+        title={
+          <>
+            Business events and <span className="text-primary">training.</span>
+          </>
+        }
+        description="Practical sessions that help you build structure, make better decisions, and run your business properly."
+        primaryAction={{ label: "See Upcoming Events", href: "#upcoming-events" }}
+        secondaryAction={{ label: "Get Event Updates", href: "#subscribe" }}
+        proof={[
+          "Practical business training",
+          "Clear topics and registration steps",
+          "Sessions built for owners and teams",
+        ]}
+      />
 
       {/* FILTER BAR */}
       <section className="py-6">

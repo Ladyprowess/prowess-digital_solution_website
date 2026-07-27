@@ -280,7 +280,7 @@ function PricingItem({sv,idx,overheadPerUnit,upd,del,sym}:{sv:any,idx:number,ove
         </div>}
       </div>
       {underpriced&&<div style={{marginTop:12,background:"#fdecea",borderRadius:8,padding:"10px 14px",fontSize:13,fontWeight:700,color:"#c0392b"}}>
-        ⚠ Your selling price of {sym}{fmt(sellPrice)} is below your total cost of {sym}{fmt(unitTotalCost)}. You are selling at a loss. Raise your price to at least {sym}{fmt(prodMinPrice)}.
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{display:"inline",verticalAlign:"-2px",marginRight:5}}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>Your selling price of {sym}{fmt(sellPrice)} is below your total cost of {sym}{fmt(unitTotalCost)}. You are selling at a loss. Raise your price to at least {sym}{fmt(prodMinPrice)}.
       </div>}
     </div>}
   </div>;
@@ -350,8 +350,8 @@ function TabFunding({d,sd,sym}:{d:any,sd:any,sym:string}){
       </table></div>
       <AddRow fn={()=>sd((x:any)=>({...x,funding:[...x.funding,{id:mkid(),src:"",avail:"",conf:"",note:""}]}))}/>
     </div>
-    {gap>0&&<div style={{...card,background:"#fdecea",border:"1.5px solid #f5c6cb"}}><p style={{margin:0,fontSize:13,fontWeight:700,color:"#c0392b"}}>⚠ Funding gap of {sym}{fmt(gap)}. Do not launch until this is closed.</p></div>}
-    {gap<=0&&totConf>0&&<div style={{...card,background:"#e8f5e9",border:"1.5px solid #a5d6a7"}}><p style={{margin:0,fontSize:13,fontWeight:700,color:"#2e7d32"}}>✓ Your confirmed funding covers your startup costs. You are ready.</p></div>}
+    {gap>0&&<div style={{...card,background:"#fdecea",border:"1.5px solid #f5c6cb"}}><p style={{margin:0,fontSize:13,fontWeight:700,color:"#c0392b"}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{display:"inline",verticalAlign:"-2px",marginRight:5}}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>Funding gap of {sym}{fmt(gap)}. Do not launch until this is closed.</p></div>}
+    {gap<=0&&totConf>0&&<div style={{...card,background:"#e8f5e9",border:"1.5px solid #a5d6a7"}}><p style={{margin:0,fontSize:13,fontWeight:700,color:"#2e7d32"}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} style={{display:"inline",verticalAlign:"-2px",marginRight:5}}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>Your confirmed funding covers your startup costs. You are ready.</p></div>}
   </div>;
 }
 
@@ -416,7 +416,7 @@ function CalculatorTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
         </div>
         <div style={{textAlign:"right"}}>
           <div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>Prowess Digital Solutions</div>
-          <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"✓ Saved":"Auto-saving..."}</div>
+          <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"Saved":"Auto-saving..."}</div>
         </div>
       </div>
       <div style={{background:B,padding:"9px 22px",display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
@@ -626,13 +626,17 @@ export default function CalculatorPage(){
               <p className="g-body-txt">Most businesses fail not because they lacked effort, but because they started without knowing the real cost of what they were building. This calculator changes that.</p>
               <div className="g-pills">
                 {[
-                  {icon:"💰",title:"Startup Cost Planner",sub:"See exactly what it costs before you commit"},
-                  {icon:"⚖️",title:"Break-Even Calculator",sub:"Know when you stop losing and start winning"},
-                  {icon:"🏷️",title:"Pricing Builder",sub:"Set prices that actually cover your costs"},
-                  {icon:"📈",title:"Funding Tracker",sub:"Map your funding needs against your goals"},
+                  {icon:"M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z",title:"Startup Cost Planner",sub:"See exactly what it costs before you commit"},
+                  {icon:"M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941",title:"Break-Even Calculator",sub:"Know when you stop losing and start winning"},
+                  {icon:"M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z",title:"Pricing Builder",sub:"Set prices that actually cover your costs"},
+                  {icon:"M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941",title:"Funding Tracker",sub:"Map your funding needs against your goals"},
                 ].map((f,i)=>(
                   <div key={i} className="g-pill">
-                    <div className="g-pill-icon">{f.icon}</div>
+                    <div className="g-pill-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d={f.icon} />
+                      </svg>
+                    </div>
                     <div className="g-pill-text"><span className="g-pill-title">{f.title}</span><span className="g-pill-sub">{f.sub}</span></div>
                   </div>
                 ))}

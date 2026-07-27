@@ -89,7 +89,7 @@ function MonthView({mIdx,d,update,sym}:{mIdx:number,d:any,update:any,sym:string}
           <div style={{height:6,background:LGRAY,borderRadius:3,overflow:"hidden"}}>
             <div style={{height:"100%",width:`${Math.min(totalIncome/tgt*100,100)}%`,background:totalIncome>=tgt?"#27ae60":B,borderRadius:3}}/>
           </div>
-          <div style={{marginTop:5,fontSize:12,color:totalIncome>=tgt?"#27ae60":MID,fontWeight:600}}>{totalIncome>=tgt?"✓ Target reached!":`${sym}${fmt(tgt-totalIncome)} still to go`}</div>
+          <div style={{marginTop:5,fontSize:12,color:totalIncome>=tgt?"#27ae60":MID,fontWeight:600}}>{totalIncome>=tgt?<><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} style={{display:"inline",verticalAlign:"-1px",marginRight:4}}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>Target reached!</>:`${sym}${fmt(tgt-totalIncome)} still to go`}</div>
         </div>}
       </div>
       <div style={{...card,marginBottom:0,padding:"14px 16px"}}>
@@ -209,7 +209,7 @@ function AnnualSummary({d,sym}:{d:any,sym:string}){
               <td style={{...TD(i%2===1),textAlign:"right",fontWeight:700,color:!hasData?"#ccc":s.profit>=0?"#27ae60":"#c0392b"}}>{hasData?(s.profit>=0?`${sym}${fmt(s.profit)}`:`(${sym}${fmt(Math.abs(s.profit))})`):""}</td>
               <td style={{...TD(i%2===1),textAlign:"right",color:!hasData?"#ccc":s.margin!==null&&s.margin>=0.2?"#27ae60":"#c0392b"}}>{hasData&&s.margin!==null?fmtPct(s.margin):" "}</td>
               <td style={{...TD(i%2===1),textAlign:"right",color:delta===null||!hasData?"#ccc":delta>=0?"#27ae60":"#c0392b",fontWeight:600}}>{delta!==null&&hasData?(delta>=0?`+${sym}${fmt(delta)}`:`-${sym}${fmt(Math.abs(delta))}`):" "}</td>
-              <td style={{...TD(i%2===1),textAlign:"right"}}>{s.target>0?(s.income>=s.target?"✓":"✗"):" "}</td>
+              <td style={{...TD(i%2===1),textAlign:"right"}}>{s.target>0?(s.income>=s.target?<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#27ae60" strokeWidth={3} style={{display:"inline"}}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c0392b" strokeWidth={3} style={{display:"inline"}}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>):" "}</td>
             </tr>;
           })}</tbody>
           <tfoot><tr style={{background:DARK}}>
@@ -250,7 +250,7 @@ function Forecast({d,update,sym}:{d:any,update:any,sym:string}){
     <div style={{...card,background:LITE,border:`1.5px solid ${B}`,padding:"14px 18px"}}>
       <p style={{margin:0,fontSize:13,color:DARK,lineHeight:1.7}}><b>Cashflow Forecast</b>: enter what you expect to earn and spend each month. Negative closing balance means you need to plan now.</p>
     </div>
-    {negCount>0&&<div style={{...card,background:"#fdecea",border:"1.5px solid #f5c6cb",padding:"12px 16px"}}><p style={{margin:0,fontSize:13,fontWeight:700,color:"#c0392b"}}>⚠ {negCount} month{negCount>1?"s":""} forecast to go negative. Plan how to cover these shortfalls before they arrive.</p></div>}
+    {negCount>0&&<div style={{...card,background:"#fdecea",border:"1.5px solid #f5c6cb",padding:"12px 16px"}}><p style={{margin:0,fontSize:13,fontWeight:700,color:"#c0392b"}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{display:"inline",verticalAlign:"-2px",marginRight:5}}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>{negCount} month{negCount>1?"s":""} forecast to go negative. Plan how to cover these shortfalls before they arrive.</p></div>}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:14}}>
       <KPI accent label="Forecast Annual Income" val={`${sym}${fmt(annI)}`}/>
       <KPI label="Forecast Annual Expenses" val={`${sym}${fmt(annE)}`}/>
@@ -330,7 +330,7 @@ function TrackerTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
       </div>
       <div style={{textAlign:"right"}}>
         <div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>Prowess Digital Solutions</div>
-        <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"✓ Saved":"Auto-saving..."}</div>
+        <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"Saved":"Auto-saving..."}</div>
       </div>
     </div>
     <div style={{background:B,padding:"9px 22px",display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
@@ -515,15 +515,15 @@ export default function TrackerPage(){
             <div className="g-left">
               <div className="g-tag"><span className="g-tag-pulse"/><span>Premium Tool</span></div>
               <h1 className="g-headline">Your money deserves<br/><span className="hi">a clear picture.</span></h1>
-              <p className="g-body-txt">Running a business without tracking your cashflow is like driving without looking at the road. This tracker gives you a full view of every naira, every month, every year.</p>
+              <p className="g-body-txt">Running a business without tracking your cashflow is like driving without looking at the road. This tracker gives you a full view of every dollar, every month, every year.</p>
               <div className="g-pills">
                 {[
-                  {icon:"📅",title:"Monthly Tracker",sub:"Every transaction, every category, every day"},
-                  {icon:"📊",title:"Annual Overview",sub:"See how your year performed at a glance"},
-                  {icon:"🔮",title:"Cashflow Forecast",sub:"Project ahead so you never get caught short"},
+                  {icon:"M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5",title:"Monthly Tracker",sub:"Every transaction, every category, every day"},
+                  {icon:"M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z",title:"Annual Overview",sub:"See how your year performed at a glance"},
+                  {icon:"M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z",title:"Cashflow Forecast",sub:"Project ahead so you never get caught short"},
                 ].map((f,i)=>(
                   <div key={i} className="g-pill">
-                    <div className="g-pill-icon">{f.icon}</div>
+                    <div className="g-pill-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d={f.icon}/></svg></div>
                     <div className="g-pill-text"><span className="g-pill-title">{f.title}</span><span className="g-pill-sub">{f.sub}</span></div>
                   </div>
                 ))}

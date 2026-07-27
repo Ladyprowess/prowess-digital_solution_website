@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Container from "@/components/Container";
+import AgencyPageHeader from "@/components/AgencyPageHeader";
 import ResourcesBrowser from "@/components/resources/ResourcesBrowser";
 import Link from "next/link";
 
@@ -87,60 +88,22 @@ const TOOLS = [
 export default function ResourcesPage() {
   return (
     <div>
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#0c1a1b] py-24 sm:py-32">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(80,124,128,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(80,124,128,.07) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-            maskImage:
-              "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-20"
-          style={{
-            background: "radial-gradient(circle, #507c80 0%, transparent 70%)",
-            filter: "blur(80px)",
-          }}
-        />
-        <Container>
-          <div className="relative mx-auto max-w-4xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#507c80]/30 bg-[#507c80]/10 px-4 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#507c80]" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#6a9ea3]">
-                Resources
-              </span>
-            </div>
-            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Tools, Guides &
-              <span className="block text-[#507c80]">Practical Resources</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-              Guides, templates, and practical tools to support clear business thinking.
-              Everything here is built for African entrepreneurs who are serious about structure.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="#tools"
-                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-8 py-3.5 font-semibold text-white transition hover:bg-[#3a5c60]"
-              >
-                Explore Free Tools
-              </Link>
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-8 py-3.5 font-semibold text-white transition hover:bg-white/10"
-              >
-                Talk to Us
-              </Link>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <AgencyPageHeader
+        eyebrow="Resources"
+        title={
+          <>
+            Tools, guides, and <span className="text-primary">practical resources.</span>
+          </>
+        }
+        description="Guides, templates, and practical tools to support clear business thinking. Everything here is built for entrepreneurs who are serious about structure."
+        primaryAction={{ label: "Explore Free Tools", href: "#tools" }}
+        secondaryAction={{ label: "Talk to Us", href: "/contact" }}
+        proof={[
+          "Free tools you can use today",
+          "Templates for structure and planning",
+          "Guides for clearer business decisions",
+        ]}
+      />
 
     <section className="py-12 sm:py-16 bg-slate-50/40">
       <Container>

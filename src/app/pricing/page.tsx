@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Container from "@/components/Container";
 import Link from "next/link";
+import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { packages, annualMonthlyPrice, annualTotalPrice } from "@/content/site";
 import MembershipIntakeModal from "@/components/MembershipIntakeModal";
 import type { BillingInterval } from "@/lib/payments/paystack";
@@ -89,61 +90,22 @@ export default function PricingPage() {
   return (
     <div className="pb-16">
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <div className="dark">
-        <section className="relative overflow-hidden bg-background py-20 sm:py-28">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage:
-                "linear-gradient(color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
-              maskImage: "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
-            }}
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 rounded-full opacity-20"
-            style={{
-              background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)",
-              filter: "blur(80px)",
-            }}
-          />
-          <Container>
-            <div className="relative mx-auto max-w-3xl text-center">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                <span className="text-xs font-semibold uppercase tracking-widest text-primary">
-                  Pricing
-                </span>
-              </div>
-              <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
-                Simple pricing.
-                <span className="block text-primary">Clear outcomes.</span>
-              </h1>
-              <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                Fixed monthly membership tiers. No hidden charges, no vague promises.
-                Pay yearly and save 20%.
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  href="#packages"
-                  className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition hover:opacity-90"
-                >
-                  See All Tiers
-                </Link>
-                <Link
-                  href={DIAGNOSTIC_LINK}
-                  className="inline-flex items-center justify-center rounded-xl border border-border bg-card/40 px-8 py-3.5 font-semibold text-foreground transition hover:bg-card/70"
-                >
-                  What is the Diagnostic?
-                </Link>
-              </div>
-            </div>
-          </Container>
-        </section>
-      </div>
+      <AgencyPageHeader
+        eyebrow="Pricing"
+        title={
+          <>
+            Simple pricing. <span className="text-primary">Clear outcomes.</span>
+          </>
+        }
+        description="Fixed monthly membership tiers. No hidden charges, no vague promises. Pay yearly and save 20%."
+        primaryAction={{ label: "See All Tiers", href: "#packages" }}
+        secondaryAction={{ label: "What is the Diagnostic?", href: DIAGNOSTIC_LINK }}
+        proof={[
+          "Clear scope before we start",
+          "Every tier starts with a diagnostic",
+          "Move up when your business is ready",
+        ]}
+      />
 
       {/* ── TRUST STRIP ───────────────────────────────────────────────────── */}
       <section className="border-b border-border bg-card py-10">
@@ -330,8 +292,8 @@ export default function PricingPage() {
           <div className="mt-12 overflow-hidden rounded-2xl border border-border">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px] text-left">
-                <thead className="dark">
-                  <tr className="bg-background">
+                <thead>
+                  <tr className="bg-muted">
                     <th className="w-[36%] px-6 py-4 text-sm font-semibold text-muted-foreground">
                       Feature
                     </th>

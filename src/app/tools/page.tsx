@@ -2,16 +2,36 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+const ICON_PATHS: Record<string, string> = {
+  calculator: "M8.25 3v1.5M4.5 8.25h15M5.25 21h13.5A2.25 2.25 0 0021 18.75V5.25A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25v13.5A2.25 2.25 0 005.25 21zM9.75 15h.008v.008H9.75V15zm0 3h.008v.008H9.75V18zm3-3h.008v.008H12.75V15zm0 3h.008v.008H12.75V18zm3-3h.008v.008H15.75V15zm0 3h.008v.008H15.75V18zM9.75 11.25h4.5",
+  tracker: "M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941",
+  invoice: "M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z",
+  inventory: "M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z",
+  reach: "M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46",
+  "business-helper": "M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5",
+  "business-health-check": "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z",
+  "business-structure": "M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21",
+  "customer-support": "M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5",
+};
+
+function ToolIcon({ iconKey }: { iconKey: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d={ICON_PATHS[iconKey] || ICON_PATHS["business-helper"]} />
+    </svg>
+  );
+}
+
 const TOOLS = [
-  {key:"calculator",href:"/tools/calculator",icon:"🧮",badge:"Premium",title:"Startup Cost & Break-Even Calculator",desc:"Know exactly how much it costs to launch. Set the right price. Find your break-even point before you spend a single naira.",detail:"Startup costs · Pricing · Break-even · Funding tracker",gated:true},
-  {key:"tracker",href:"/tools/tracker",icon:"📊",badge:"Premium",title:"Profit & Cashflow Tracker",desc:"Track every naira in and out. Monthly summaries, annual overview, and cashflow forecasting so you always know where your business stands.",detail:"Monthly tracking · Annual view · Cashflow forecast",gated:true},
-  {key:"invoice",href:"/tools/invoice",icon:"🧾",badge:"Premium",title:"Invoice Manager",desc:"Create professional invoices, track who has paid and who has not, and send payment reminders directly to clients via WhatsApp or email.",detail:"Invoice creation · Payment tracking · WhatsApp reminders",gated:true},
-  {key:"inventory",href:"/tools/inventory",icon:"📦",badge:"Premium",title:"Inventory Manager",desc:"Track your stock levels in real time. Get low stock alerts before you run out. Works for both product and service businesses.",detail:"Stock tracking · Low stock alerts · Service availability",gated:true},
-  {key:"reach",href:"/tools/reach",icon:"📣",badge:"Premium",title:"Reach & Growth Planner",desc:"A full growth toolkit; content ideas for every platform, an ad campaign tracker, a social media calendar, and a practical marketing guide.",detail:"Content ideas · Ad planner · Social calendar · Growth guide",gated:true},
-  {key:"business-helper",href:"/tools/business-helper",icon:"🤖",badge:"Free",title:"Business Helper",desc:"Tell us what is happening in your business. Get a structured diagnostic report with a Business Health Score and clear next steps powered by AI.",detail:"AI diagnostic · Health score · Action plan",gated:false},
-  {key:"business-health-check",href:"/tools/business-health-check",icon:"✅",badge:"Free",title:"Operational Health Self-Audit",desc:"Work through the foundational things every business must have before chasing growth. Check off what you have. See where the gaps are.",detail:"36 checkpoints · 6 categories · Progress tracking",gated:false},
-  {key:"business-structure",href:"/tools/business-structure",icon:"🏗️",badge:"Free",title:"Business Structure Template",desc:"Map out your business structure step by step. Define roles, responsibilities, decision making, and communication flow.",detail:"Role mapping · Decision flow · Downloadable output",gated:false},
-  {key:"customer-support",href:"/tools/customer-support",icon:"🤝",badge:"Free",title:"Customer Service Guide",desc:"A practical guide to handling client communication, complaints, and retention.",detail:"Response scripts · Complaint handling · Retention",gated:false},
+  {key:"calculator",href:"/tools/calculator",badge:"Premium",title:"Startup Cost & Break-Even Calculator",desc:"Know exactly how much it costs to launch. Set the right price. Find your break-even point before you spend a single dollar.",detail:"Startup costs · Pricing · Break-even · Funding tracker",gated:true},
+  {key:"tracker",href:"/tools/tracker",badge:"Premium",title:"Profit & Cashflow Tracker",desc:"Track every dollar in and out. Monthly summaries, annual overview, and cashflow forecasting so you always know where your business stands.",detail:"Monthly tracking · Annual view · Cashflow forecast",gated:true},
+  {key:"invoice",href:"/tools/invoice",badge:"Premium",title:"Invoice Manager",desc:"Create professional invoices, track who has paid and who has not, and send payment reminders directly to clients via WhatsApp or email.",detail:"Invoice creation · Payment tracking · WhatsApp reminders",gated:true},
+  {key:"inventory",href:"/tools/inventory",badge:"Premium",title:"Inventory Manager",desc:"Track your stock levels in real time. Get low stock alerts before you run out. Works for both product and service businesses.",detail:"Stock tracking · Low stock alerts · Service availability",gated:true},
+  {key:"reach",href:"/tools/reach",badge:"Premium",title:"Reach & Growth Planner",desc:"A full growth toolkit; content ideas for every platform, an ad campaign tracker, a social media calendar, and a practical marketing guide.",detail:"Content ideas · Ad planner · Social calendar · Growth guide",gated:true},
+  {key:"business-helper",href:"/tools/business-helper",badge:"Free",title:"Business Helper",desc:"Tell us what is happening in your business. Get a structured diagnostic report with a Business Health Score and clear next steps powered by AI.",detail:"AI diagnostic · Health score · Action plan",gated:false},
+  {key:"business-health-check",href:"/tools/business-health-check",badge:"Free",title:"Operational Health Self-Audit",desc:"Work through the foundational things every business must have before chasing growth. Check off what you have. See where the gaps are.",detail:"36 checkpoints · 6 categories · Progress tracking",gated:false},
+  {key:"business-structure",href:"/tools/business-structure",badge:"Free",title:"Business Structure Template",desc:"Map out your business structure step by step. Define roles, responsibilities, decision making, and communication flow.",detail:"Role mapping · Decision flow · Downloadable output",gated:false},
+  {key:"customer-support",href:"/tools/customer-support",badge:"Free",title:"Customer Service Guide",desc:"A practical guide to handling client communication, complaints, and retention.",detail:"Response scripts · Complaint handling · Retention",gated:false},
 ];
 
 export default function ToolsPage() {
@@ -94,7 +114,7 @@ export default function ToolsPage() {
               {premium.map((tool, i) => (
                 <Link key={tool.key} href={tool.href} className={`tc prem ${visible ? "vis" : ""}`} style={{ transitionDelay: visible ? `${i * 75}ms` : "0ms" }}>
                   <div className="ctop">
-                    <div className="cicon">{tool.icon}</div>
+                    <div className="cicon"><ToolIcon iconKey={tool.key} /></div>
                     <span className="cbadge bprem">{tool.badge}</span>
                   </div>
                   <div className="ctitle">{tool.title}</div>
@@ -112,7 +132,7 @@ export default function ToolsPage() {
               {free.map((tool, i) => (
                 <Link key={tool.key} href={tool.href} className={`tc ${visible ? "vis" : ""}`} style={{ transitionDelay: visible ? `${(i + 5) * 75}ms` : "0ms" }}>
                   <div className="ctop">
-                    <div className="cicon">{tool.icon}</div>
+                    <div className="cicon"><ToolIcon iconKey={tool.key} /></div>
                     <span className="cbadge bfree">{tool.badge}</span>
                   </div>
                   <div className="ctitle">{tool.title}</div>

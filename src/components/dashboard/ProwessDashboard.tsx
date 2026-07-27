@@ -189,7 +189,7 @@ function LinkDisplay({ links }: { links: { label?: string; url: string }[] }) {
           onClick={e => e.stopPropagation()}
           style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: B + "0d", borderRadius: 10, textDecoration: "none", border: `1px solid ${B}22` }}
         >
-          <span style={{ fontSize: 16, flexShrink: 0 }}>🔗</span>
+          <span style={{ flexShrink: 0, display:"flex" }}><Icon name="link" size={16}/></span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: B, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {link.label || link.url}
@@ -221,7 +221,7 @@ function LinkAttacher({ links, onChange }: { links: { label: string; url: string
       </div>
       {links.length === 0 ? (
         <button onClick={add} type="button" style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1.5px dashed #e2e8f0", background: "transparent", color: "#94a3b8", fontSize: 13, cursor: "pointer", textAlign: "center" }}>
-          🔗 Attach a URL, doc, or submission link
+          <Icon name="link" size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>Attach a URL, doc, or submission link
         </button>
       ) : links.map((link, i) => (
         <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
@@ -233,7 +233,7 @@ function LinkAttacher({ links, onChange }: { links: { label: string; url: string
               onChange={e => update(i, "url", e.target.value)}
               style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 16, boxSizing: "border-box", outline: "none" }} />
           </div>
-          <button onClick={() => remove(i)} type="button" style={{ padding: "8px 10px", borderRadius: 8, background: "#fef2f2", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 16, flexShrink: 0, marginTop: 2 }}>✕</button>
+          <button onClick={() => remove(i)} type="button" style={{ padding: "8px 10px", borderRadius: 8, background: "#fef2f2", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 16, flexShrink: 0, marginTop: 2 }}><Icon name="xMark" size={14}/></button>
         </div>
       ))}
     </div>
@@ -462,12 +462,30 @@ const ICON_PATHS: Record<string, string> = {
   briefcase: "M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.08.768-2.015 1.837-2.174a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0",
   chatBubble: "M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",
   paperAirplane: "M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5",
+  star: "M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z",
+  medal: "M15 8.25a3 3 0 11-6 0 3 3 0 016 0zM12 11.25a3 3 0 100-6 3 3 0 000 6zm-6 8.25l3.75-3.75L12 18l2.25-2.25L18 19.5m-12 0v-3.75m12 3.75v-3.75",
+  folder: "M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0v6a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25v-6m-19.5 0h19.5m-19.5 0v-6.375c0-.621.504-1.125 1.125-1.125H9.75l1.5 1.5h7.125c.621 0 1.125.504 1.125 1.125V12",
+  target: "M12 21a9 9 0 100-18 9 9 0 000 18zm0-4a5 5 0 100-10 5 5 0 000 10zm0-3a2 2 0 100-4 2 2 0 000 4z",
+  camera: "M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316zM16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z",
+  sparkles: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z",
+  xCircle: "M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  newspaper: "M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z",
+  inbox: "M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5 0v6a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25v-6m-19.5 0V9.664a2.25 2.25 0 01.454-1.354L5.928 3.44A2.25 2.25 0 017.734 2.25h8.532a2.25 2.25 0 011.806 1.19l3.224 4.87a2.25 2.25 0 01.454 1.354V13.5",
+  pencil: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10",
+  paperclip: "M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13",
+  clipboard: "M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z",
+  heart: "M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z",
+  person: "M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z",
+  flag: "M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5",
+  gift: "M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H4.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z",
+  scale: "M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z",
+  link: "M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244",
 };
 
-function Icon({ name, size = 18, color = "currentColor", strokeWidth = 1.8 }: { name: string; size?: number; color?: string; strokeWidth?: number }) {
+function Icon({ name, size = 18, color = "currentColor", strokeWidth = 1.8, style }: { name: string; size?: number; color?: string; strokeWidth?: number; style?: React.CSSProperties }) {
   if (name === "power") {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style}>
         <path d="M18.36 6.64a9 9 0 11-12.73 0" />
         <line x1="12" y1="2" x2="12" y2="12" />
       </svg>
@@ -476,7 +494,7 @@ function Icon({ name, size = 18, color = "currentColor", strokeWidth = 1.8 }: { 
   const d = ICON_PATHS[name];
   if (!d) return null;
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style}>
       <path d={d} />
     </svg>
   );
@@ -1048,7 +1066,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
     <div className="prowess-page-pad" style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
       {lastWinner && (
         <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fffbeb,#fef9c3)", border: "1px solid #fde68a", borderRadius: 14, padding: "14px 20px" }}>
-          <span style={{ fontSize: 32 }}>🏆</span>
+          <span><Icon name="trophy" size={32}/></span>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.5px" }}>Last Team Member of the Week</div>
             <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{lastWinner.winner_name}</div>
@@ -1065,7 +1083,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
         const monthLabel = new Date(monthWinner.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
         return (
           <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fdf4ff,#fae8ff)", border: "1px solid #e879f9", borderRadius: 14, padding: "14px 20px" }}>
-            <span style={{ fontSize: 32 }}>🌟</span>
+            <span><Icon name="star" size={32}/></span>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#86198f", textTransform: "uppercase", letterSpacing: "0.5px" }}>{(monthlyWinners || []).length > 0 ? "Employee of the Month" : "Current Employee of the Month"} - {monthLabel}</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{monthWinner.winner_name}</div>
@@ -1145,7 +1163,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
           </div>
         </Card>
         <Card style={{ padding: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 16 }}>🏆 Top Performers</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 16, display:"flex", alignItems:"center", gap:6 }}><Icon name="trophy" size={15}/>Top Performers</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {scores.slice(0, 4).map((s: any, i: number) => {
               const u = users.find((u: any) => u.id === s.userId);
@@ -1179,7 +1197,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
       {(kpiTotal > 0 || membersWithoutKpi.length > 0) && (
         <Card style={{ padding: 22 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>🎯 KPI Health - {new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}><Icon name="target" size={14} style={{display:"inline",verticalAlign:"-3px",marginRight:5}}/>KPI Health - {new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
             <button onClick={() => setPage("kpi")} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, background: B + "12", border: `1px solid ${B}30`, color: B, fontWeight: 600, cursor: "pointer" }}>
               Manage KPIs {">"}
             </button>
@@ -1187,9 +1205,9 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: membersWithoutKpi.length > 0 ? 18 : 0 }}>
             {[
-              { label: "Total KPIs", value: kpiTotal, color: "#6366f1", icon: "📊" },
-              { label: "On Track",   value: onTrack,  color: "#22c55e", icon: "✅" },
-              { label: "Behind",     value: behind,   color: behind > 0 ? "#ef4444" : "#94a3b8", icon: "⚠️" },
+              { label: "Total KPIs", value: kpiTotal, color: "#6366f1", icon: <Icon name="chartBar" size={20} color="#6366f1" /> },
+              { label: "On Track",   value: onTrack,  color: "#22c55e", icon: <Icon name="checkCircle" size={20} color="#22c55e" /> },
+              { label: "Behind",     value: behind,   color: behind > 0 ? "#ef4444" : "#94a3b8", icon: <Icon name="warningTriangle" size={20} color={behind > 0 ? "#ef4444" : "#94a3b8"} /> },
             ].map(s => (
               <div key={s.label} style={{ textAlign: "center", padding: "12px 8px", background: "#f8fafc", borderRadius: 12, border: "1px solid #f1f5f9" }}>
                 <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
@@ -1202,7 +1220,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
           {membersWithoutKpi.length > 0 && (
             <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px" }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 8 }}>
-                ⚡ {membersWithoutKpi.length} member{membersWithoutKpi.length !== 1 ? "s" : ""} with no KPIs set this month
+                <Icon name="bolt" size={14} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>{membersWithoutKpi.length} member{membersWithoutKpi.length !== 1 ? "s" : ""} with no KPIs set this month
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {membersWithoutKpi.slice(0, 6).map((u: any) => {
@@ -1229,7 +1247,7 @@ function AdminDashboard({ tasks, logs, users, kpiAssignments, kpiLogs, weeklyWin
       {/* If no KPIs set at all yet, show a gentle prompt */}
       {kpiTotal === 0 && membersWithoutKpi.length === 0 && staffUsers.length > 0 && (
         <Card style={{ padding: 22, display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ fontSize: 36 }}>🎯</div>
+          <div style={{display:"flex"}}><Icon name="target" size={36}/></div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>No KPIs set for this month yet</div>
             <div style={{ fontSize: 13, color: "#64748b" }}>Assign KPI targets to your team to start tracking performance.</div>
@@ -1306,7 +1324,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
         return (
           <div style={{ background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 14, padding: "16px 20px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <span style={{ fontSize: 22 }}>❌</span>
+              <span style={{display:"flex"}}><Icon name="xCircle" size={22} color="#ef4444"/></span>
               <div style={{ fontSize: 14, fontWeight: 800, color: "#dc2626" }}>
                 {total} item{total !== 1 ? "s" : ""} rejected -- action required
               </div>
@@ -1332,7 +1350,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
       })()}
       {!monthWinner && isTMOTW && (
         <div style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,#fffbeb,#fef9c3)", border: "2px solid #f59e0b", borderRadius: 16, padding: "16px 20px" }}>
-          <span style={{ fontSize: 40 }}>🏆</span>
+          <span><Icon name="trophy" size={40}/></span>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.5px" }}>Team Member of the Week</div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>Congratulations, {user.name}!</div>
@@ -1344,7 +1362,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
       )}
       {!monthWinner && !isTMOTW && isCurrentLeader && (
         <div style={{ display: "flex", alignItems: "center", gap: 12, background: "linear-gradient(135deg,#f0fdf4,#dcfce7)", border: "1px solid #86efac", borderRadius: 14, padding: "12px 18px" }}>
-          <span style={{ fontSize: 28 }}>🌟</span>
+          <span><Icon name="star" size={28}/></span>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#166534" }}>You are currently #1 this week!</div>
             <div style={{ fontSize: 12, color: "#4ade80" }}>Keep going to claim the weekly title.</div>
@@ -1361,14 +1379,14 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
             background: isMonthWinner ? "linear-gradient(135deg,#fdf4ff,#fae8ff)" : "linear-gradient(135deg,#f8fafc,#f1f5f9)",
             border: isMonthWinner ? "2px solid #e879f9" : "1px solid #e2e8f0",
             borderRadius: 16, padding: "16px 20px" }}>
-            <span style={{ fontSize: isMonthWinner ? 40 : 28 }}>{isMonthWinner ? "🌟" : "🏆"}</span>
+            <span>{isMonthWinner ? <Icon name="star" size={40}/> : <Icon name="trophy" size={28}/>}</span>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: isMonthWinner ? "#86198f" : "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                 {((monthlyWinners || []).length > 0 ? "Employee of the Month" : "Current Employee of the Month")} - {monthLabel}
               </div>
               {isMonthWinner ? (
                 <>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>Congratulations, {user.name}! 🎉</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", display:"flex", alignItems:"center", gap:6 }}>Congratulations, {user.name}!<Icon name="sparkles" size={18} color="#eab308"/></div>
                   <div style={{ fontSize: 12, color: "#64748b" }}>{monthWinner.total_points}pts · {monthWinner.tasks_completed} tasks · {monthWinner.logs_submitted} logs</div>
                 </>
               ) : (
@@ -1409,7 +1427,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
           <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
             {weeklyScores.slice(0, 3).map((s: any, i: number) => (
               <div key={s.userId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, background: s.userId === user.id ? B + "12" : "#f8fafc", border: s.userId === user.id ? `1px solid ${B}30` : "1px solid #f1f5f9" }}>
-                <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</span>
+                <span style={{ width: 24, textAlign: "center", display:"inline-flex", justifyContent:"center" }}>{i === 0 ? <Icon name="medal" size={16} color="#eab308"/> : i === 1 ? <Icon name="medal" size={16} color="#94a3b8"/> : <Icon name="medal" size={16} color="#b45309"/>}</span>
                 <Av user={users?.find((u: any) => u.id === s.userId)} size={26} />
                 <span style={{ fontSize: 13, fontWeight: s.userId === user.id ? 700 : 400, color: "#0f172a", flex: 1 }}>{s.name}</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? "#f59e0b" : "#64748b" }}>{s.score}pt</span>
@@ -1440,7 +1458,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
       {myKpis.length > 0 && (
         <Card style={{ padding: 20 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>🎯 My KPIs this month</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}><Icon name="target" size={14} style={{display:"inline",verticalAlign:"-3px",marginRight:5}}/>My KPIs this month</div>
             <button onClick={() => setPage("kpi")} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 8, background: B + "12", border: `1px solid ${B}30`, color: B, fontWeight: 600, cursor: "pointer" }}>
               View all {">"}
             </button>
@@ -1449,7 +1467,7 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
           {/* Nudge banner */}
           {kpiUnlogged > 0 && (
             <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
-              <span style={{ fontSize: 18 }}>⚡</span>
+              <span style={{display:"flex"}}><Icon name="bolt" size={18}/></span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>
                   {kpiUnlogged} KPI{kpiUnlogged !== 1 ? "s" : ""} with no progress logged yet
@@ -1526,14 +1544,14 @@ function MemberDashboard({ user, tasks, logs, users, kpiAssignments, kpiLogs, we
                       <ApprBadge status={task.approvalStatus} />
                     )}
                     <span style={{ fontSize: 11, color: task.deadline < fmt(today) ? "#ef4444" : "#94a3b8" }}>
-                      📅 {task.deadline}
+                      <Icon name="calendar" size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>{task.deadline}
                     </span>
                   </div>
                 </div>
               ))}
             {myT.filter((t: any) => t.status !== "completed" || t.approvalStatus === "rejected").length === 0 && (
               <div style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "16px 0" }}>
-                All caught up! 🎉
+                All caught up!
               </div>
             )}
           </div>
@@ -1632,7 +1650,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
             <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>{task.title}</div>
             {late && <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 600, background: "#fef2f2", padding: "2px 8px", borderRadius: 20 }}>Overdue</span>}
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", flexShrink: 0, padding: 4 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", flexShrink: 0, padding: 4 }}><Icon name="xMark" size={14}/></button>
         </div>
 
         <div style={{ fontSize: 14, color: "#64748b", lineHeight: 1.7, marginBottom: task.links?.length ? 16 : 22, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
@@ -1650,7 +1668,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
         {/* Submitted work links - shown when already submitted */}
         {task.submission_links && task.submission_links.length > 0 && (
           <div style={{ marginBottom: 18, padding: "14px 16px", background: "#f0fdf4", borderRadius: 12, border: "1px solid #bbf7d0" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>✅ Submitted Work</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8, display:"flex", alignItems:"center", gap:5 }}><Icon name="checkCircle" size={13}/>Submitted Work</div>
             <LinkDisplay links={task.submission_links} />
           </div>
         )}
@@ -1659,8 +1677,8 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
           {[
             ["Priority",   <Pill type="priority" value={task.priority} />],
             ["Status",     <Pill type="status" value={task.status} />],
-            ["Project",    <span style={{ fontSize: 13, color: "#374151" }}>📁 {task.project || "None"}</span>],
-            ["Deadline",   <span style={{ fontSize: 13, color: late ? "#ef4444" : "#374151" }}>📅 {task.deadline || "No deadline"}</span>],
+            ["Project",    <span style={{ fontSize: 13, color: "#374151" }}><Icon name="folder" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{task.project || "None"}</span>],
+            ["Deadline",   <span style={{ fontSize: 13, color: late ? "#ef4444" : "#374151" }}><Icon name="calendar" size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>{task.deadline || "No deadline"}</span>],
             ["Assigned To", assigneeUsers.length > 0
               ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {assigneeUsers.map((a: any) => (
@@ -1701,7 +1719,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
         {(task.status !== "completed" || task.approvalStatus === "rejected") && task.assignees.includes(user.id) && (
           <div style={{ marginBottom: 16, padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 12 }}>
-              📎 Attach work links <span style={{ fontWeight: 400, color: "#94a3b8" }}>- add before or when marking complete</span>
+              <Icon name="paperclip" size={14} style={{display:"inline",verticalAlign:"-2px",marginRight:5}}/>Attach work links <span style={{ fontWeight: 400, color: "#94a3b8" }}>- add before or when marking complete</span>
             </div>
             <LinkAttacher links={subLinks} onChange={setSubLinks} />
           </div>
@@ -1716,7 +1734,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
             </div>
           ) : task.approvalStatus === "approved" && task.status === "completed" ? (
             <div style={{ fontSize: 13, color: "#059669", padding: "10px 14px", background: "#d1fae5", borderRadius: 10, fontWeight: 600 }}>
-              ✅ Approved and counted in your score.
+              <Icon name="checkCircle" size={14} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>Approved and counted in your score.
             </div>
           ) : (
             <>
@@ -1805,7 +1823,7 @@ function TaskDetailModal({ task, users, user, onClose, onUpdate, onDelete, onApp
             {!reassignMode ? (
               <button onClick={() => setReassignMode(true)}
                 style={{ width: "100%", padding: "10px", borderRadius: 10, background: "#f8fafc", border: "1px solid #e2e8f0", color: "#374151", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-                👥 Reassign Task
+                <Icon name="users" size={14} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>Reassign Task
               </button>
             ) : (
               <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px" }}>
@@ -1981,7 +1999,7 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.length === 0 && (
           <Card style={{ padding: 40, textAlign: "center" }}>
-            <div style={{ fontSize: 30, marginBottom: 8 }}>📭</div>
+            <div style={{marginBottom:8, display:"flex", justifyContent:"center"}}><Icon name="inbox" size={30}/></div>
             <div style={{ color: "#94a3b8" }}>No tasks match your filters</div>
           </Card>
         )}
@@ -2014,8 +2032,8 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                     {task.approvalStatus && task.approvalStatus !== "pending" && (
                       <ApprBadge status={task.approvalStatus} />
                     )}
-                    <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {task.project}</span>
-                    <span style={{ fontSize: 12, color: late ? "#ef4444" : "#94a3b8" }}>📅 {task.deadline}</span>
+                    <span style={{ fontSize: 12, color: "#94a3b8" }}><Icon name="folder" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{task.project}</span>
+                    <span style={{ fontSize: 12, color: late ? "#ef4444" : "#94a3b8" }}><Icon name="calendar" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{task.deadline}</span>
                     {task._singleAssignee && (() => {
                       const au = normUser(users.find((u: any) => u.id === task._singleAssignee));
                       return au ? (
@@ -2027,12 +2045,12 @@ function TasksPage({ user, tasks, setTasks, users, onCreateTask, onUpdateTaskSta
                     })()}
                     {task.links?.length > 0 && (
                       <span style={{ fontSize: 11, fontWeight: 600, color: B, background: B + "12", padding: "2px 8px", borderRadius: 20 }}>
-                        🔗 {task.links.length} link{task.links.length > 1 ? "s" : ""}
+                        <Icon name="link" size={11} style={{display:"inline",verticalAlign:"-1px",marginRight:3}}/>{task.links.length} link{task.links.length > 1 ? "s" : ""}
                       </span>
                     )}
                     {task.submission_links?.length > 0 && (
                       <span style={{ fontSize: 11, fontWeight: 600, color: "#16a34a", background: "#f0fdf4", padding: "2px 8px", borderRadius: 20 }}>
-                        ✅ Submitted
+                        <Icon name="checkCircle" size={12} style={{display:"inline",verticalAlign:"-1px",marginRight:3}}/>Submitted
                       </span>
                     )}
                   </div>
@@ -2195,7 +2213,7 @@ function LogDetailModal({ log, users, currentUser, onClose, onDelete, onResubmit
       <Card style={{ padding: 32, width: 480, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{log.taskTitle}</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", padding: 4 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", padding: 4 }}><Icon name="xMark" size={14}/></button>
         </div>
 
         {/* Rejection banner */}
@@ -2415,7 +2433,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
       {/* Entries */}
       {Object.keys(grp).length === 0 && (
         <Card style={{ padding: 40, textAlign: "center" }}>
-          <div style={{ fontSize: 30, marginBottom: 8 }}>📝</div>
+          <div style={{marginBottom:8, display:"flex", justifyContent:"center"}}><Icon name="pencil" size={30}/></div>
           <div style={{ color: "#94a3b8", marginBottom: 16 }}>No activity logged yet</div>
           {(user.role === "member" || user.role === "leader") && (
             <button onClick={() => setLogModal(true)}
@@ -2455,9 +2473,9 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
                       )}
                       <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{log.description}</div>
                       <div style={{ display: "flex", gap: 10, marginTop: 5, alignItems: "center", flexWrap: "wrap" }}>
-                        <div style={{ fontSize: 11, color: "#94a3b8" }}>📁 {log.project}</div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}><Icon name="folder" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{log.project}</div>
                         {log.created_at && (
-                          <div style={{ fontSize: 11, color: "#94a3b8" }}>🕐 {fmtTime(log.created_at)}</div>
+                          <div style={{ fontSize: 11, color: "#94a3b8" }}><Icon name="clock" size={11} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{fmtTime(log.created_at)}</div>
                         )}
                         {log.completion_status && (
                           <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
@@ -2471,7 +2489,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
                         )}
                         {log.links?.length > 0 && (
                           <span style={{ fontSize: 11, fontWeight: 600, color: B, background: B + "12", padding: "2px 8px", borderRadius: 20 }}>
-                            🔗 {log.links.length} link{log.links.length > 1 ? "s" : ""}
+                            <Icon name="link" size={11} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{log.links.length} link{log.links.length > 1 ? "s" : ""}
                           </span>
                         )}
                       </div>
@@ -2495,7 +2513,7 @@ function ActivityLogPage({ user, users, logs, setLogs, onAddLog, onDeleteLog, on
           <Card style={{ padding: 28, width: 480, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>Log Today&apos;s Work</div>
-              <button onClick={() => setLogModal(false)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", padding: 4 }}>✕</button>
+              <button onClick={() => setLogModal(false)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#94a3b8", padding: 4 }}><Icon name="xMark" size={14}/></button>
             </div>
 
             <div style={{ marginBottom: 14 }}>
@@ -2586,7 +2604,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
   const monthlySc  = useMemo(() => computeMonthlyScores(tasks, logs, users), [tasks, logs, users]);
   const sc         = lbTab === "week" ? weeklySc : alltimeSc;
   const [top, ...rest] = sc;
-  const medals     = ["🥇", "🥈", "🥉"];
+  const medals = [<Icon name="medal" size={16} color="#eab308"/>, <Icon name="medal" size={16} color="#94a3b8"/>, <Icon name="medal" size={16} color="#b45309"/>];
   const lbTotalPages = Math.ceil(rest.length / LB_PER_PAGE);
   const pagedRest  = rest.slice((lbPage - 1) * LB_PER_PAGE, lbPage * LB_PER_PAGE);
   const lastWinner = weeklyWinners && weeklyWinners.length > 0 ? weeklyWinners[0] : null;
@@ -2633,13 +2651,13 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
           {user?.role === "admin" && lbTab !== "history" && (
             <button onClick={() => setCloseModal(true)}
               style={{ padding: "9px 18px", borderRadius: 11, background: "#f59e0b", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-              🏁 Close Week
+              <Icon name="flag" size={14} style={{display:"inline",verticalAlign:"-2px",marginRight:5}}/>Close Week
             </button>
           )}
           {user?.role === "admin" && (
             <button onClick={() => !isCurrentMonthClosed && setCloseMonthModal(true)}
               style={{ padding: "9px 18px", borderRadius: 11, background: isCurrentMonthClosed ? "#c4b5fd" : "#9333ea", border: "none", color: "white", fontSize: 13, fontWeight: 700, cursor: isCurrentMonthClosed ? "not-allowed" : "pointer" }}>
-              {isCurrentMonthClosed ? "🌟 Month Closed" : "🌟 Close Month"}
+              {isCurrentMonthClosed ? <><Icon name="star" size={14} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>Month Closed</> : <><Icon name="star" size={14} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>Close Month</>}
             </button>
           )}
         </div>
@@ -2651,18 +2669,18 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
           {/* Monthly Winners section */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-              <span>🌟</span> Team Member of the Month - History
+              <span><Icon name="star" size={14}/></span> Team Member of the Month - History
             </div>
             {(!monthlyWinners || monthlyWinners.length === 0) ? (
               <Card style={{ padding: 32, textAlign: "center" }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>🌟</div>
+                <div style={{ marginBottom: 8, display:"flex", justifyContent:"center" }}><Icon name="star" size={28}/></div>
                 <div style={{ color: "#94a3b8" }}>No monthly winners recorded yet. Close the first month to start the history.</div>
               </Card>
             ) : monthlyWinners.map((w: any, i: number) => {
               const monthLabel = new Date(w.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
               return (
                 <Card key={w.id} style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 10, background: i === 0 ? "linear-gradient(135deg,#fdf4ff,#fae8ff)" : "white", borderColor: i === 0 ? "#e879f9" : "#e2e8f0" }}>
-                  <div style={{ fontSize: 28 }}>{i === 0 ? "🌟" : "⭐"}</div>
+                  <div style={{display:"flex",justifyContent:"center"}}>{i === 0 ? <Icon name="star" size={28}/> : <Icon name="star" size={22}/>}</div>
                   <Av user={users.find((u: any) => u.id === w.winner_id)} size={44} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{w.winner_name}</div>
@@ -2684,16 +2702,16 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
           {/* Weekly Winners section */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-              <span>🏆</span> Team Member of the Week - History
+              <span><Icon name="trophy" size={14}/></span> Team Member of the Week - History
             </div>
             {(!weeklyWinners || weeklyWinners.length === 0) ? (
               <Card style={{ padding: 40, textAlign: "center" }}>
-                <div style={{ fontSize: 30, marginBottom: 8 }}>🏆</div>
+                <div style={{ marginBottom: 8, display:"flex", justifyContent:"center" }}><Icon name="trophy" size={30}/></div>
                 <div style={{ color: "#94a3b8" }}>No weekly winners recorded yet. Close the first week to start the history.</div>
               </Card>
             ) : weeklyWinners.map((w: any, i: number) => (
               <Card key={w.id} style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
-                <div style={{ fontSize: 28 }}>{i === 0 ? "🏆" : "🥈"}</div>
+                <div style={{display:"flex",justifyContent:"center"}}>{i === 0 ? <Icon name="trophy" size={28}/> : <Icon name="medal" size={24} color="#94a3b8"/>}</div>
                 <Av user={users.find((u: any) => u.id === w.winner_id)} size={44} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{w.winner_name}</div>
@@ -2719,7 +2737,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
           {/* Current leader / last winner card */}
           {lbTab === "week" && lastWinner && (
             <Card style={{ padding: 22, background: "linear-gradient(135deg,#fffbeb,#fef9c3)", borderColor: "#fde68a", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 36 }}>🏆</span>
+              <span><Icon name="trophy" size={36}/></span>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.5px" }}>Last Week Winner</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{lastWinner.winner_name}</div>
@@ -2747,7 +2765,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
           )}
           {!top && (
             <Card style={{ padding: 40, textAlign: "center", marginBottom: 18 }}>
-              <div style={{ fontSize: 30, marginBottom: 8 }}>📊</div>
+              <div style={{marginBottom:8, display:"flex", justifyContent:"center"}}><Icon name="chartBar" size={30}/></div>
               <div style={{ color: "#94a3b8" }}>No approved activity this {lbTab === "week" ? "week" : "period"} yet.</div>
             </Card>
           )}
@@ -2802,7 +2820,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
                 {weeklySc.map((s: any, i: number) => (
                   <div key={s.userId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10,
                     background: i === 0 ? "#fffbeb" : "#f8fafc", border: i === 0 ? "1px solid #fde68a" : "1px solid #f1f5f9" }}>
-                    <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{i === 0 ? "🏆" : `#${i + 1}`}</span>
+                    <span style={{ width: 24, textAlign: "center", display:"inline-flex", justifyContent:"center" }}>{i === 0 ? <Icon name="trophy" size={16}/> : `#${i + 1}`}</span>
                     <Av user={users.find((u: any) => u.id === s.userId)} size={30} />
                     <span style={{ fontSize: 13, fontWeight: i === 0 ? 700 : 400, flex: 1, color: "#0f172a" }}>{s.name}</span>
                     <span style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? "#f59e0b" : "#64748b" }}>{s.score}pt</span>
@@ -2832,7 +2850,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
       {closeMonthModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <Card style={{ padding: 32, width: 460, maxWidth: "100%", maxHeight: "90vh", overflowY: "auto" }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>🌟 Close Month</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", marginBottom: 6, display:"flex", alignItems:"center", gap:6 }}><Icon name="star" size={15}/>Close Month</div>
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
               This will record {monthlySc[0]?.name || "the top scorer"} as Team Member of the Month for{" "}
               {new Date(thisMonth + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" })} and notify the whole team.
@@ -2843,7 +2861,7 @@ function LeaderboardPage({ tasks, logs, users, user, weeklyWinners, onCloseWeek,
                   <div key={s.userId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10,
                     background: i === 0 ? "linear-gradient(135deg,#fdf4ff,#fae8ff)" : "#f8fafc",
                     border: i === 0 ? "1px solid #e879f9" : "1px solid #f1f5f9" }}>
-                    <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{i === 0 ? "🌟" : `#${i + 1}`}</span>
+                    <span style={{ width: 24, textAlign: "center", display:"inline-flex", justifyContent:"center" }}>{i === 0 ? <Icon name="star" size={16}/> : `#${i + 1}`}</span>
                     <Av user={users.find((u: any) => u.id === s.userId)} size={30} />
                     <span style={{ fontSize: 13, fontWeight: i === 0 ? 700 : 400, flex: 1, color: "#0f172a" }}>{s.name}</span>
                     <span style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? "#9333ea" : "#64748b" }}>{s.score}pt</span>
@@ -2966,7 +2984,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {pendingTasks.length === 0 ? (
             <div style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>
-              <div style={{ fontSize: 30, marginBottom: 8 }}>✅</div>
+              <div style={{ marginBottom: 8, display:"flex", justifyContent:"center", color:"#22c55e" }}><Icon name="checkCircle" size={30}/></div>
               No tasks pending approval
             </div>
           ) : pendingTasks.map((task: any) => {
@@ -2991,7 +3009,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
                     </div>
                   )}
                   <Pill type="priority" value={task.priority} />
-                  {task.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {task.project}</span>}
+                  {task.project && <span style={{ fontSize: 12, color: "#94a3b8" }}><Icon name="folder" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{task.project}</span>}
                 </div>
                 <div style={{ fontSize: 12, color: "#d97706", fontWeight: 600, marginTop: 8 }}>Tap to review</div>
               </div>
@@ -3005,7 +3023,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {pendingLogs.length === 0 ? (
             <div style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>
-              <div style={{ fontSize: 30, marginBottom: 8 }}>✅</div>
+              <div style={{ marginBottom: 8, display:"flex", justifyContent:"center", color:"#22c55e" }}><Icon name="checkCircle" size={30}/></div>
               No activity logs pending approval
             </div>
           ) : pendingLogs.map((log: any) => {
@@ -3024,7 +3042,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
                     </div>
                   )}
                   <span style={{ fontSize: 12, color: "#94a3b8" }}>{log.date}</span>
-                  {log.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {log.project}</span>}
+                  {log.project && <span style={{ fontSize: 12, color: "#94a3b8" }}><Icon name="folder" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{log.project}</span>}
                 </div>
                 {log.description && (
                   <div style={{ fontSize: 12, color: "#64748b", marginTop: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
@@ -3058,7 +3076,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
                 {selectedType === "task" ? selected.title : selected.taskTitle}
               </div>
               <button onClick={closeDetail} style={{ background: "#f1f5f9", border: "none", borderRadius: 9, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: "#64748b", flexShrink: 0 }}>
-                ✕
+                <Icon name="xMark" size={14}/>
               </button>
             </div>
 
@@ -3085,8 +3103,8 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
                     <Pill type="priority" value={selected.priority} />
                     <Pill type="status" value={selected.status} />
-                    {selected.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {selected.project}</span>}
-                    {selected.deadline && <span style={{ fontSize: 12, color: "#94a3b8" }}>📅 {selected.deadline}</span>}
+                    {selected.project && <span style={{ fontSize: 12, color: "#94a3b8" }}><Icon name="folder" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{selected.project}</span>}
+                    {selected.deadline && <span style={{ fontSize: 12, color: "#94a3b8" }}><Icon name="calendar" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{selected.deadline}</span>}
                   </div>
                   {selected.description && (
                     <div style={{ fontSize: 14, color: "#475569", lineHeight: 1.7, marginBottom: 16, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
@@ -3124,7 +3142,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
                     </div>
                   )}
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-                    {selected.project && <span style={{ fontSize: 12, color: "#94a3b8" }}>📁 {selected.project}</span>}
+                    {selected.project && <span style={{ fontSize: 12, color: "#94a3b8" }}><Icon name="folder" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>{selected.project}</span>}
                     {selected.timeSpent > 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>⏱ {selected.timeSpent}h</span>}
                     {selected.completion_status && (
                       <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
@@ -3170,7 +3188,7 @@ function ApprovalPage({ user, tasks, logs, users, onApproveTask, onRejectTask, o
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>📰 Count as Article</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", display:"flex", alignItems:"center", gap:5 }}><Icon name="newspaper" size={14}/>Count as Article</div>
                   <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
                     Marks this task for per-article pay calculation
                   </div>
@@ -3365,7 +3383,7 @@ function ReportsPage({ tasks, logs, users, user }: any) {
                   <td style={{ padding: "12px", fontSize: 14, fontWeight: 800, color: B }}>{s.score}pt</td>
                   <td style={{ padding: "12px" }}>
                     <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? "#f59e0b" : i === 1 ? "#94a3b8" : i === 2 ? "#cd7c2f" : "#94a3b8" }}>
-                      {["🥇 #1", "🥈 #2", "🥉 #3"][i] || `#${i + 1}`}
+                      {i < 3 ? <>{[<Icon name="medal" size={14} color="#eab308"/>, <Icon name="medal" size={14} color="#94a3b8"/>, <Icon name="medal" size={14} color="#b45309"/>][i]} #{i + 1}</> : `#${i + 1}`}
                     </span>
                   </td>
                 </tr>
@@ -3392,7 +3410,7 @@ function BirthdayBanner({ users }: { users: any[] }) {
   if (celebrants.length === 0 || dismissed) return null;
   return (
     <div style={{ background: "linear-gradient(135deg,#fdf4ff,#fce7f3)", border: "1px solid #f0abfc", borderRadius: 14, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-      <span style={{ fontSize: 32, flexShrink: 0 }}>🎂</span>
+      <span style={{ flexShrink: 0, display:"flex" }}><Icon name="gift" size={32}/></span>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: "#7e22ce", marginBottom: 2 }}>
           {celebrants.length === 1
@@ -3400,12 +3418,12 @@ function BirthdayBanner({ users }: { users: any[] }) {
             : `Today is ${celebrants.map((u: any) => normUser(u)?.name).join(" & ")}'s birthday!`}
         </div>
         <div style={{ fontSize: 12, color: "#a855f7" }}>
-          Send them a message or wish them happy birthday in person! 🥳
+          Send them a message or wish them happy birthday in person!
         </div>
       </div>
       <button onClick={() => setDismissed(true)}
         style={{ background: "#f3e8ff", border: "none", borderRadius: 8, width: 30, height: 30, cursor: "pointer", color: "#7e22ce", fontSize: 16, fontWeight: 700, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        ✕
+        <Icon name="xMark" size={14}/>
       </button>
     </div>
   );
@@ -3500,7 +3518,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
       <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Log Payroll Entry</div>
-          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}><Icon name="xMark" size={14}/></button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -3538,7 +3556,7 @@ function LogPayrollModal({ user, users, tasks, onClose, onSubmit }: any) {
                     : <span style={{ color: adj !== 0 ? "#166534" : "#ef4444" }}>
                         {adj !== 0
                           ? "Bonus-only / adjustment-only payment will be logged with base pay set to 0."
-                          : "⚠️ No monthly rate set - go to Team → member profile to set it, or enter a reward in Adjustment."}
+                          : <><Icon name="warningTriangle" size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>No monthly rate set - go to Team → member profile to set it, or enter a reward in Adjustment.</>}
                       </span>
                   }
                 </div>
@@ -3625,7 +3643,7 @@ function PayrollDetailModal({ entry, users, user, onClose, onApprove, onWithhold
       <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Payroll Detail</div>
-          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}><Icon name="xMark" size={14}/></button>
         </div>
 
         {mn && (
@@ -3760,7 +3778,7 @@ function PayrollPage({ user, users, tasks, payroll, onLogPayroll, onApprovePayro
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>💳 Payroll</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", display:"flex", alignItems:"center", gap:8 }}><Icon name="creditCard" size={20}/>Payroll</div>
         {isAdmin && (
           <button onClick={() => setLogOpen(true)}
             style={{ padding: "10px 18px", borderRadius: 10, background: B, color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
@@ -3890,7 +3908,7 @@ function OutgoingModal({ currency, onClose, onSubmit }: any) {
       <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 440, padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Log Offline Outgoing</div>
-          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}><Icon name="xMark" size={14}/></button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
@@ -4050,7 +4068,7 @@ function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoi
   return (
     <div className="prowess-page-pad" style={{ padding: "24px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>📈 Finance Dashboard</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", display:"flex", alignItems:"center", gap:8 }}><Icon name="trendingUp" size={20}/>Finance Dashboard</div>
         <div style={{ display: "flex", gap: 10 }}>
           <button onClick={() => setOutgoingOpen(true)}
             style={{ padding: "10px 18px", borderRadius: 10, background: "#ef4444", color: "white", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
@@ -4117,7 +4135,7 @@ function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoi
       {/* Income table */}
       <Card style={{ marginBottom: 20 }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
-          💚 Income ({allIncome.length})
+          <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:"#22c55e",marginRight:6,verticalAlign:"1px"}}/>Income ({allIncome.length})
         </div>
         {allIncome.length === 0 ? (
           <div style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>No income recorded for this period.</div>
@@ -4162,7 +4180,7 @@ function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoi
       {/* Outgoings table */}
       <Card>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
-          🔴 Outgoings ({allOutgoings.length})
+          <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:"#ef4444",marginRight:6,verticalAlign:"1px"}}/>Outgoings ({allOutgoings.length})
         </div>
         {allOutgoings.length === 0 ? (
           <div style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>No outgoings recorded for this period.</div>
@@ -4210,7 +4228,7 @@ function FinancePage({ user, users, sales, payroll, offlineIncome, offlineOutgoi
           <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 440, padding: 28 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Log Offline Income</div>
-              <button onClick={() => setIncomeOpen(false)} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+              <button onClick={() => setIncomeOpen(false)} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}><Icon name="xMark" size={14}/></button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {[
@@ -4327,7 +4345,7 @@ function LogSaleModal({ user, users, onClose, onSubmit }: any) {
       <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Log a Sale</div>
-          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}><Icon name="xMark" size={14}/></button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {isAdmin && (
@@ -4397,7 +4415,7 @@ function SaleDetailModal({ sale, users, user, onClose, onConfirm, onReject, onMa
       <div style={{ background: "white", borderRadius: 16, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Sale Details</div>
-          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}>✕</button>
+          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", fontWeight: 700 }}><Icon name="xMark" size={14}/></button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
@@ -4450,11 +4468,11 @@ function SaleDetailModal({ sale, users, user, onClose, onConfirm, onReject, onMa
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => { onConfirm(sale.id); onClose(); }}
                 style={{ flex: 1, padding: "11px", borderRadius: 9, border: "none", background: "#10b981", color: "white", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>
-                ✓ Confirm Sale
+                <Icon name="checkCircle" size={14} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>Confirm Sale
               </button>
               <button onClick={() => setRejectOpen(true)}
                 style={{ flex: 1, padding: "11px", borderRadius: 9, border: "none", background: "#ef4444", color: "white", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>
-                ✕ Reject
+                <Icon name="xMark" size={14} color="white" style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>Reject
               </button>
             </div>
           )}
@@ -4555,7 +4573,7 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>💰 Commission</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", display:"flex", alignItems:"center", gap:8 }}><Icon name="currencyDollar" size={20}/>Commission</div>
           <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>
             {isAdmin ? "Manage all team sales and payouts" : isLeader ? "Your earnings and your team's payouts" : "Your sales and commission earnings"}
           </div>
@@ -4608,7 +4626,7 @@ function CommissionPage({ user, users, sales, onLogSale, onConfirmSale, onReject
         return (
           <Card style={{ padding: "18px 20px", marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: unpaidByMember.length > 0 ? 16 : 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a" }}>💳 Bulk Payout</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", display:"flex", alignItems:"center", gap:6 }}><Icon name="creditCard" size={15}/>Bulk Payout</div>
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <input type="month" value={bulkMonth} onChange={e => setBulkMonth(e.target.value)}
                   style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, outline: "none" }} />
@@ -5054,7 +5072,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
               {/* Pay Settings -- admin only */}
               {user.role === "admin" && selectedMember.role !== "admin" && !isDisabledProfile(selectedMember) && (
                 <div style={{ marginTop: 16, padding: "16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 12 }}>💳 Pay Settings</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 12, display:"flex", alignItems:"center", gap:5 }}><Icon name="creditCard" size={14}/>Pay Settings</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     <div>
                       <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Pay Type</label>
@@ -5124,7 +5142,7 @@ function TeamPage({ users, user, tasks, logs, onCreateMember, onAssignLeader, on
           <Card style={{ padding: 32, width: 460, maxWidth: "100%" }}>
             {done ? (
               <div style={{ textAlign: "center", padding: "24px 0" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+                <div style={{ marginBottom: 12, display:"flex", justifyContent:"center", color:"#22c55e" }}><Icon name="checkCircle" size={40}/></div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>Account created!</div>
                 <div style={{ fontSize: 13, color: "#64748b", marginTop: 6 }}>They can now log in at /login</div>
               </div>
@@ -5327,10 +5345,10 @@ function kpiPct(current: number, target: number): number {
 }
 
 const VERDICT_CFG: Record<string, { label: string; color: string; bg: string }> = {
-  exceeded:      { label: "Exceeded 🌟",      color: "#059669", bg: "#d1fae5" },
-  met:           { label: "Met ✅",            color: "#2563eb", bg: "#dbeafe" },
-  partially_met: { label: "Partially Met 🔶", color: "#d97706", bg: "#fef3c7" },
-  not_met:       { label: "Not Met ❌",        color: "#dc2626", bg: "#fee2e2" },
+  exceeded:      { label: "Exceeded",      color: "#059669", bg: "#d1fae5" },
+  met:           { label: "Met",            color: "#2563eb", bg: "#dbeafe" },
+  partially_met: { label: "Partially Met", color: "#d97706", bg: "#fef3c7" },
+  not_met:       { label: "Not Met",        color: "#dc2626", bg: "#fee2e2" },
 };
 
 function VerdictBadge({ verdict }: { verdict: string }) {
@@ -5461,7 +5479,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{assignment.metric_name}</div>
             <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-              {assignment.metric_type === "cumulative" ? "📈 Cumulative" : "📸 Snapshot"} {" | "} Target: <strong style={{ color: "#475569" }}>{assignment.target_value} {assignment.unit}</strong>
+              {assignment.metric_type === "cumulative" ? <><Icon name="trendingUp" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>Cumulative</> : <><Icon name="camera" size={12} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>Snapshot</>} {" | "} Target: <strong style={{ color: "#475569" }}>{assignment.target_value} {assignment.unit}</strong>
             </div>
           </div>
           {assignment.verdict
@@ -5497,7 +5515,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
           )}
           {logs.length > 0 && (
             <button onClick={() => setShowHistory(assignment)} style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#f1f5f9", border: "1px solid #e2e8f0", color: "#64748b", cursor: "pointer" }}>
-              📋 {logs.length} {logs.length === 1 ? "entry" : "entries"}
+              <Icon name="clipboard" size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>{logs.length} {logs.length === 1 ? "entry" : "entries"}
             </button>
           )}
           {canManage && (
@@ -5510,7 +5528,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
         {/* Verdict note */}
         {assignment.verdict_note && (
           <div style={{ marginTop: 10, padding: "8px 12px", background: "white", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12, color: "#475569", fontStyle: "italic" }}>
-            💬 "{assignment.verdict_note}"
+            <Icon name="chatBubble" size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:4}}/>"{assignment.verdict_note}"
           </div>
         )}
       </div>
@@ -5638,7 +5656,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
           {myAssignments.length === 0
             ? (
               <Card style={{ padding: "40px 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
+                <div style={{marginBottom:12, display:"flex", justifyContent:"center"}}><Icon name="target" size={40}/></div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>No KPIs for {monthLabel()}</div>
                 <div style={{ fontSize: 13, color: "#94a3b8" }}>Your admin or leader will assign KPI targets for this month.</div>
               </Card>
@@ -5654,13 +5672,13 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
       {showAssign && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={e => { if (e.target === e.currentTarget) setShowAssign(false); }}>
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", padding: "28px 24px 40px" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}>🎯 Assign KPI - {monthLabel()}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 20 }}><Icon name="target" size={16} style={{display:"inline",verticalAlign:"-3px",marginRight:5}}/>Assign KPI - {monthLabel()}</div>
 
             {/* Assign mode */}
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
               {(["individual", "role"] as const).map(m => (
                 <button key={m} onClick={() => setAForm(f => ({ ...f, assignMode: m }))} style={{ flex: 1, padding: "9px", borderRadius: 10, border: `2px solid ${aForm.assignMode === m ? B : "#e2e8f0"}`, background: aForm.assignMode === m ? B + "12" : "white", color: aForm.assignMode === m ? B : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                  {m === "individual" ? "👤 Individual" : "👥 By Role / Team"}
+                  {m === "individual" ? <><Icon name="person" size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>Individual</> : <><Icon name="users" size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:3}}/>By Role / Team</>}
                 </button>
               ))}
             </div>
@@ -5711,8 +5729,8 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>Tracking Type</label>
                 <select value={aForm.metricType} onChange={e => setAForm(f => ({ ...f, metricType: e.target.value as any }))} style={{ ...SEL, width: "100%" }}>
-                  <option value="cumulative">📈 Cumulative (adds up)</option>
-                  <option value="snapshot">📸 Snapshot (latest value)</option>
+                  <option value="cumulative">Cumulative (adds up)</option>
+                  <option value="snapshot">Snapshot (latest value)</option>
                 </select>
               </div>
             </div>
@@ -5735,7 +5753,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
       {showLog && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={e => { if (e.target === e.currentTarget) setShowLog(null); }}>
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 500, padding: "28px 24px 40px" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>📊 Log Progress</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4, display:"flex", alignItems:"center", gap:6 }}><Icon name="chartBar" size={16}/>Log Progress</div>
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
               {showLog.metric_name} {" | "} Target: {showLog.target_value} {showLog.unit}
               <span style={{ marginLeft: 8, fontSize: 12, color: "#94a3b8" }}>({showLog.metric_type === "cumulative" ? "adds to total" : "replaces last value"})</span>
@@ -5763,7 +5781,7 @@ function KPIPage({ user, users, kpiAssignments, kpiLogs, onCreateAssignment, onL
       {showVerdict && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={e => { if (e.target === e.currentTarget) setShowVerdict(null); }}>
           <div style={{ background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 500, padding: "28px 24px 40px" }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>⚖️ Set Verdict</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 4, display:"flex", alignItems:"center", gap:6 }}><Icon name="scale" size={16}/>Set Verdict</div>
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>{showVerdict.metric_name} - {kpiCurrentValue(showVerdict, kpiLogs || [])} / {showVerdict.target_value} {showVerdict.unit} achieved</div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
@@ -6684,13 +6702,13 @@ export default function ProwessDashboard({
             {/* Modal header */}
             <div style={{ padding: "18px 24px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between", background: "white", flexShrink: 0 }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>🔍 Approvals</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", display:"flex", alignItems:"center", gap:6 }}><Icon name="search" size={16}/>Approvals</div>
                 {approvalCount > 0 && (
                   <div style={{ fontSize: 12, color: "#d97706", fontWeight: 600, marginTop: 2 }}>{approvalCount} item{approvalCount !== 1 ? "s" : ""} pending review</div>
                 )}
               </div>
               <button onClick={() => setApprovalsOpen(false)} style={{ background: "#f1f5f9", border: "none", borderRadius: 9, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, color: "#64748b", fontWeight: 700 }}>
-                ✕
+                <Icon name="xMark" size={14}/>
               </button>
             </div>
             <ApprovalPage

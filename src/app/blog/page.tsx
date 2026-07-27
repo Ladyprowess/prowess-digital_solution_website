@@ -1,7 +1,7 @@
 import Link from "next/link";
 import BlogSearchBar from "./BlogSearchBar";
 import Script from "next/script";
-import Container from "@/components/Container";
+import AgencyPageHeader from "@/components/AgencyPageHeader";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0; // always fetch fresh
@@ -142,45 +142,20 @@ export default async function BlogPage({
       strategy="afterInteractive"
     />
 
-    {/* ── HERO ──────────────────────────────────────────────────────────── */}
-    <section className="relative overflow-hidden bg-[#0c1a1b] py-24 sm:py-32">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(80,124,128,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(80,124,128,.07) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-          maskImage:
-            "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-20"
-        style={{
-          background: "radial-gradient(circle, #507c80 0%, transparent 70%)",
-          filter: "blur(80px)",
-        }}
-      />
-      <Container>
-        <div className="relative mx-auto max-w-4xl text-center">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#507c80]/30 bg-[#507c80]/10 px-4 py-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#507c80]" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#6a9ea3]">
-              Blog
-            </span>
-          </div>
-          <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Practical Business
-            <span className="block text-[#507c80]">Thinking & Guides</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-            Articles that help you build structure, make better decisions, and think long-term about your business.
-          </p>
-        </div>
-      </Container>
-    </section>
+    <AgencyPageHeader
+      eyebrow="Blog"
+      title={
+        <>
+          Practical business <span className="text-primary">thinking and guides.</span>
+        </>
+      }
+      description="Articles that help you build structure, make better decisions, and think long term about your business."
+      proof={[
+        "Business structure and operations",
+        "Founder decision making",
+        "Practical guides you can apply",
+      ]}
+    />
 
     <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
       <header style={{ marginBottom: 18 }}>
@@ -295,4 +270,3 @@ export default async function BlogPage({
     </>
   );
 }
-

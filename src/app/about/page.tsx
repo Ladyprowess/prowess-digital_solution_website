@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import Container from "@/components/Container";
+import AgencyPageHeader from "@/components/AgencyPageHeader";
 import {
   GraduationCap,
   Users,
@@ -22,64 +22,22 @@ export default function AboutPage() {
   return (
     <div className="page-wrap">
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <div className="dark">
-        <section className="relative overflow-hidden bg-background py-24 sm:py-32">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage:
-                "linear-gradient(color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
-              maskImage:
-                "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
-            }}
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-20"
-            style={{
-              background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)",
-              filter: "blur(80px)",
-            }}
-          />
-          <Container>
-            <div className="relative mx-auto max-w-4xl text-center">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                <span className="text-xs font-semibold uppercase tracking-widest text-primary">
-                  About Us
-                </span>
-              </div>
-              <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Structure First.
-                <span className="block text-primary">Growth Follows.</span>
-              </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-                Most businesses do not fail because the founder lacked effort or ambition.
-                They fail because the foundations were never properly built.
-                Prowess Digital Solutions started in Nigeria to change that, and now works
-                with founders everywhere who deserve the same quality of business support.
-              </p>
-              <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition hover:opacity-90"
-                >
-                  Start a Conversation
-                </Link>
-                <Link
-                  href="#our-story"
-                  className="inline-flex items-center justify-center rounded-xl border border-border bg-card/40 px-8 py-3.5 font-semibold text-foreground transition hover:bg-card/70"
-                >
-                  Our Story
-                </Link>
-              </div>
-            </div>
-          </Container>
-        </section>
-      </div>
+      <AgencyPageHeader
+        eyebrow="About Prowess"
+        title={
+          <>
+            Structure first. <span className="text-primary">Growth follows.</span>
+          </>
+        }
+        description="Most businesses do not fail because the founder lacked effort or ambition. They fail because the foundations were never properly built. Prowess Digital Solutions started in Nigeria to change that, and now works with founders everywhere who deserve the same quality of business support."
+        primaryAction={{ label: "Start a Conversation", href: "/contact" }}
+        secondaryAction={{ label: "Read Our Story", href: "#our-story" }}
+        proof={[
+          "Founder led business guidance",
+          "Fixed scope diagnostics and documentation",
+          "Support for founders building globally",
+        ]}
+      />
 
       {/* ── WHY WE EXIST ──────────────────────────────────────────────────── */}
       <section className="section">
@@ -161,7 +119,7 @@ export default function AboutPage() {
 
               <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <p className="italic leading-relaxed text-foreground">
-                  "Before I do anything in business, I speak to Prowess Digital Solutions."
+                  &ldquo;Before I do anything in business, I speak to Prowess Digital Solutions.&rdquo;
                   We will save you from countless expensive mistakes and help you build
                   something sustainable.
                 </p>

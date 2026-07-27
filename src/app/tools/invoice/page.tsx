@@ -370,11 +370,13 @@ function InvCard({inv,onMarkPaid,onDelete}:{inv:Invoice,onMarkPaid:(id:string)=>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             {waLink&&<a href={waLink} target="_blank" rel="noopener"
               style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:"#25d366",borderRadius:9,color:W,fontSize:13,fontWeight:700,textDecoration:"none"}}>
-              <span>💬</span><span>WhatsApp</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.86 14.16c-.25.7-1.45 1.34-2 1.42-.51.08-1.15.11-1.86-.12-.43-.13-.98-.31-1.68-.61-2.96-1.28-4.89-4.26-5.04-4.46-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.3.6-.37.8-.37.2 0 .4 0 .58.01.19.01.44-.07.68.53.25.6.85 2.08.92 2.23.07.15.12.33.02.53-.1.2-.15.32-.3.5-.15.18-.31.4-.44.53-.15.15-.3.31-.13.6.17.3.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.36 1.46.3.15.47.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.68-.15.28.1 1.76.83 2.06.98.3.15.5.23.58.35.08.13.08.7-.17 1.4z"/></svg>
+              <span>WhatsApp</span>
             </a>}
             {mailLink&&<a href={mailLink}
               style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:W,border:`1.5px solid ${MGRAY}`,borderRadius:9,color:DARK,fontSize:13,fontWeight:700,textDecoration:"none"}}>
-              <span>✉</span><span>Email</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+              <span>Email</span>
             </a>}
           </div>
         </div>}
@@ -385,15 +387,18 @@ function InvCard({inv,onMarkPaid,onDelete}:{inv:Invoice,onMarkPaid:(id:string)=>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
             {inv.status==="unpaid"&&<button onClick={()=>onMarkPaid(inv.id)}
               style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:"#e8f5e9",border:"1.5px solid #a5d6a7",borderRadius:9,color:"#2e7d32",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-              <span>✓</span><span>Mark as Paid</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <span>Mark as Paid</span>
             </button>}
             <button onClick={()=>printInvoice(inv)}
               style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:LITE,border:`1.5px solid ${MGRAY}`,borderRadius:9,color:DARK,fontSize:13,fontWeight:700,cursor:"pointer"}}>
-              <span>🖨</span><span>Print Invoice</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.318 2.647a.75.75 0 01-.44.807 4.13 4.13 0 01-1.928.421H8.39c-.677 0-1.298-.166-1.928-.42a.75.75 0 01-.44-.808L6.34 18m11.32 0H6.34m0-10.5v-3.375c0-.621.504-1.125 1.125-1.125h9.06c.621 0 1.125.504 1.125 1.125V7.5m-11.31 0h11.31m-11.31 0h-.75A2.25 2.25 0 003 9.75v6a2.25 2.25 0 002.25 2.25h.75m11.31-8.25h.75A2.25 2.25 0 0121 9.75v6a2.25 2.25 0 01-2.25 2.25h-.75"/></svg>
+              <span>Print Invoice</span>
             </button>
             <button onClick={()=>{if(window.confirm("Delete this invoice? This cannot be undone."))onDelete(inv.id);}}
               style={{display:"inline-flex",alignItems:"center",gap:7,padding:"9px 16px",background:"#fdecea",border:"1.5px solid #f5c6cb",borderRadius:9,color:"#c0392b",fontSize:13,fontWeight:700,cursor:"pointer",marginLeft:"auto"}}>
-              <span>🗑</span><span>Delete</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+              <span>Delete</span>
             </button>
           </div>
         </div>
@@ -426,7 +431,11 @@ function ListTab({invoices,profile,onMarkPaid,onDelete,onNew}:{invoices:Invoice[
       <button onClick={onNew} style={{padding:"8px 18px",background:B,border:"none",borderRadius:9,color:W,fontSize:13,fontWeight:700,cursor:"pointer"}}>+ New Invoice</button>
     </div>
     {filtered.length===0?<div style={{textAlign:"center",padding:"50px 20px",color:MID}}>
-      <div style={{fontSize:40,marginBottom:12}}>🧾</div>
+      <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+        </svg>
+      </div>
       <div style={{fontSize:15,fontWeight:800,color:DARK,marginBottom:8}}>{invoices.length===0?"No invoices yet":"Nothing here"}</div>
       <p style={{fontSize:13,marginBottom:16}}>{invoices.length===0?"Create your first invoice to start tracking payments.":"Try a different filter."}</p>
       {invoices.length===0&&<button onClick={onNew} style={{padding:"10px 20px",background:B,border:"none",borderRadius:9,color:W,fontSize:14,fontWeight:700,cursor:"pointer"}}>Create First Invoice</button>}
@@ -475,7 +484,7 @@ function InvoiceTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
       </div>
       <div style={{textAlign:"right"}}>
         <div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>Prowess Digital Solutions</div>
-        <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"✓ Saved":"Auto-saving..."}</div>
+        <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"Saved":"Auto-saving..."}</div>
       </div>
     </div>
     <div style={{background:B,padding:"9px 22px",display:"flex",alignItems:"center",flexWrap:"wrap",gap:8}}>
@@ -624,8 +633,14 @@ export default function InvoicePage(){
             <h1 className="g-headline">Get paid faster.<br/><span className="hi">Track every invoice.</span></h1>
             <p className="g-body-txt">Stop chasing payments with no paper trail. Create professional invoices, see who has paid and who has not, and send reminders in one tap.</p>
             <div className="g-pills">
-              {[{icon:"🧾",title:"Professional Invoices",sub:"Create and send in under 2 minutes"},{icon:"💰",title:"Payment Status",sub:"Paid, unpaid, and overdue at a glance"},{icon:"💬",title:"WhatsApp Reminder",sub:"One tap sends the reminder to the client"},{icon:"✉",title:"Email Reminder",sub:"Opens email ready to send"},{icon:"🖨",title:"Print-Ready Invoices",sub:"Beautiful printed invoice to share with clients"}].map((f,i)=>(
-                <div key={i} className="g-pill"><div className="g-pill-icon">{f.icon}</div><div className="g-pill-text"><span className="g-pill-title">{f.title}</span><span className="g-pill-sub">{f.sub}</span></div></div>
+              {[
+                {icon:"M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z",title:"Professional Invoices",sub:"Create and send in under 2 minutes"},
+                {icon:"M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z",title:"Payment Status",sub:"Paid, unpaid, and overdue at a glance"},
+                {icon:"M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",title:"WhatsApp Reminder",sub:"One tap sends the reminder to the client"},
+                {icon:"M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75",title:"Email Reminder",sub:"Opens email ready to send"},
+                {icon:"M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.318 2.647a.75.75 0 01-.44.807 4.13 4.13 0 01-1.928.421H8.39c-.677 0-1.298-.166-1.928-.42a.75.75 0 01-.44-.808L6.34 18m11.32 0H6.34m0-10.5v-3.375c0-.621.504-1.125 1.125-1.125h9.06c.621 0 1.125.504 1.125 1.125V7.5m-11.31 0h11.31m-11.31 0h-.75A2.25 2.25 0 003 9.75v6a2.25 2.25 0 002.25 2.25h.75m11.31-8.25h.75A2.25 2.25 0 0121 9.75v6a2.25 2.25 0 01-2.25 2.25h-.75",title:"Print-Ready Invoices",sub:"Beautiful printed invoice to share with clients"},
+              ].map((f,i)=>(
+                <div key={i} className="g-pill"><div className="g-pill-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d={f.icon}/></svg></div><div className="g-pill-text"><span className="g-pill-title">{f.title}</span><span className="g-pill-sub">{f.sub}</span></div></div>
               ))}
             </div>
           </div>

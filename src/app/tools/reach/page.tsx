@@ -37,12 +37,12 @@ function FSel({label,val,set,opts}:{label?:string,val:string,set:(v:string)=>voi
 
 // ── Growth Guide Tab ──────────────────────────────────────────────────────
 const GUIDE_SECTIONS=[
-  {icon:"🔧",title:"Fix Your Profile First",content:"Before spending a single naira on ads, your profile must do the work. Your bio should tell visitors exactly who you help and what you offer in one sentence. Use a real photo or a clear logo. Put your WhatsApp or contact link where anyone can tap it. Your most recent post should be something a stranger would trust. If your page looks abandoned or confusing, ads will just bring people to a dead end."},
-  {icon:"📅",title:"Post Consistently",content:"Consistency beats virality. One post a day that speaks directly to your customer is more powerful than ten random posts a week. Plan your content around your customer's real problems. Show results, show process, show yourself. For product businesses, show the product being used. For service businesses, show the transformation. People buy from who they trust, and trust is built by showing up regularly."},
-  {icon:"💬",title:"Engage Before You Sell",content:"Reply to every comment and DM within 24 hours. Ask questions in your captions to invite responses. Comment meaningfully on posts from your target audience. Join conversations in groups where your ideal client is active. When you engage first, the algorithm rewards you and customers remember you. Most African business owners are too busy to do this consistently; that gap is your advantage."},
-  {icon:"🤝",title:"Build a Referral System",content:"Your best marketing is a satisfied client who tells someone. Make referrals easy and worth doing. After every job, follow up and ask if they know anyone who needs the same service. Consider a simple referral reward; a small discount or gift. Post client testimonials regularly. One real testimonial from someone local and recognisable is worth more than fifty generic quotes. Build a system, not a hope."},
-  {icon:"📊",title:"Track What is Working",content:"You cannot grow what you do not measure. Every week, write down your total reach, your DM conversations started, your leads, and your conversions. Compare week by week. If something worked; a post format, a caption style, a time of day; do more of it. If something did not; drop it. Most business owners run on feel. Data gives you an edge."},
-  {icon:"🔗",title:"Never Lose a Lead",content:"Every person who messages you is a warm lead. Save their contact immediately. Use a simple WhatsApp broadcast list to follow up on people who expressed interest but did not buy. A polite message two weeks later; 'Just checking in, do you still need this?'; converts more than a hundred cold posts. Build your customer list as if your business depends on it. Because it does."},
+  {icon:"M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z",title:"Fix Your Profile First",content:"Before spending a single dollar on ads, your profile must do the work. Your bio should tell visitors exactly who you help and what you offer in one sentence. Use a real photo or a clear logo. Put your WhatsApp or contact link where anyone can tap it. Your most recent post should be something a stranger would trust. If your page looks abandoned or confusing, ads will just bring people to a dead end."},
+  {icon:"M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5",title:"Post Consistently",content:"Consistency beats virality. One post a day that speaks directly to your customer is more powerful than ten random posts a week. Plan your content around your customer's real problems. Show results, show process, show yourself. For product businesses, show the product being used. For service businesses, show the transformation. People buy from who they trust, and trust is built by showing up regularly."},
+  {icon:"M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",title:"Engage Before You Sell",content:"Reply to every comment and DM within 24 hours. Ask questions in your captions to invite responses. Comment meaningfully on posts from your target audience. Join conversations in groups where your ideal client is active. When you engage first, the algorithm rewards you and customers remember you. Most business owners are too busy to do this consistently; that gap is your advantage."},
+  {icon:"M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5",title:"Build a Referral System",content:"Your best marketing is a satisfied client who tells someone. Make referrals easy and worth doing. After every job, follow up and ask if they know anyone who needs the same service. Consider a simple referral reward; a small discount or gift. Post client testimonials regularly. One real testimonial from someone local and recognisable is worth more than fifty generic quotes. Build a system, not a hope."},
+  {icon:"M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941",title:"Track What is Working",content:"You cannot grow what you do not measure. Every week, write down your total reach, your DM conversations started, your leads, and your conversions. Compare week by week. If something worked; a post format, a caption style, a time of day; do more of it. If something did not; drop it. Most business owners run on feel. Data gives you an edge."},
+  {icon:"M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244",title:"Never Lose a Lead",content:"Every person who messages you is a warm lead. Save their contact immediately. Use a simple WhatsApp broadcast list to follow up on people who expressed interest but did not buy. A polite message two weeks later; 'Just checking in, do you still need this?'; converts more than a hundred cold posts. Build your customer list as if your business depends on it. Because it does."},
 ];
 
 function GuideTab(){
@@ -58,10 +58,12 @@ function GuideTab(){
     {GUIDE_SECTIONS.map((s,i)=><div key={i} style={{...card,cursor:"pointer",marginBottom:10}} onClick={()=>setOpen(open===i?null:i)}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={{width:38,height:38,borderRadius:10,background:LITE,border:`1.5px solid ${MID}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{s.icon}</div>
+          <div style={{width:38,height:38,borderRadius:10,background:LITE,border:`1.5px solid ${MID}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:B}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d={s.icon}/></svg>
+          </div>
           <span style={{fontWeight:800,fontSize:14,color:DARK}}>{s.title}</span>
         </div>
-        <span style={{color:MID,fontWeight:700,fontSize:16,flexShrink:0}}>{open===i?"▲":"▼"}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MID} strokeWidth={2.5} style={{flexShrink:0,transform:open===i?"rotate(180deg)":"none",transition:"transform .2s"}}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
       </div>
       {open===i&&<div style={{marginTop:14,paddingTop:14,borderTop:`1.5px solid ${LGRAY}`,fontSize:14,color:DARK,lineHeight:1.8}}>{s.content}</div>}
     </div>)}
@@ -70,35 +72,35 @@ function GuideTab(){
 
 // ── Content Ideas Tab ──────────────────────────────────────────────────────
 const CONTENT_IDEAS:{[k:string]:{icon:string,ideas:{type:string,caption:string}[]}}={
-  Instagram:{icon:"📸",ideas:[
+  Instagram:{icon:"M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316zM16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z",ideas:[
     {type:"Before & After",caption:"This is what [service/product] does for my clients. Before on the left, after on the right. If you want this result, send me a message."},
     {type:"Behind the Scenes",caption:"A day in the life of running [your business]. Not glamorous, but this is what it takes to give you the best results."},
     {type:"Client Testimonial",caption:"[Client name] came to me with [problem]. Here is what they said after. Their words, not mine."},
     {type:"Educational Tip",caption:"Most people get this wrong when it comes to [topic]. Here is the right way to do it."},
     {type:"Direct Offer",caption:"If you are in [city] and need [service/product], I am available this week. DM me or tap the link in bio. Serious inquiries only."},
   ]},
-  Facebook:{icon:"👥",ideas:[
+  Facebook:{icon:"M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z",ideas:[
     {type:"Community Post",caption:"Question for my [city] community: what is the biggest challenge you face when it comes to [relevant topic]? Drop your answer below."},
     {type:"Product/Service Highlight",caption:"A lot of people do not know we offer [service]. Here is exactly what it includes and who it is for."},
     {type:"Social Proof",caption:"We have served [X] clients in [city] this year. Here is what some of them are saying."},
     {type:"Helpful List",caption:"5 things every [target customer] should know about [topic]. Save this for later."},
     {type:"Promotion",caption:"This week only: [offer]. First [X] people to message us get [bonus]. Do not wait."},
   ]},
-  WhatsApp:{icon:"💬",ideas:[
+  WhatsApp:{icon:"M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",ideas:[
     {type:"Status Update",caption:"Available this week for [service]. Limited slots. Message me directly to book."},
     {type:"Broadcast Follow-Up",caption:"Hi [Name], just checking in. We spoke a while back about [topic]. Are you still looking for help with that?"},
     {type:"New Product Alert",caption:"New in: [product name]. [Price]. Limited stock. Reply to this message to order."},
     {type:"Referral Ask",caption:"If you know anyone who needs [service/product], I would appreciate the referral. I always take care of people who come through my existing clients."},
     {type:"Quick Testimonial Share",caption:"A client just sent me this message. If you want the same result, reach out today."},
   ]},
-  TikTok:{icon:"🎵",ideas:[
+  TikTok:{icon:"M9 9V4.5M9 9c-1.5 0-3 1.5-3 3.75S6 16.5 9 16.5s3-2.25 3-3.75V6.75c.6 1.2 1.8 2.25 3 2.25",ideas:[
     {type:"Process Video",caption:"Watch how I do [process] from start to finish. Most people have no idea how much goes into this."},
     {type:"Myth Busting",caption:"Everyone says [common belief]. Here is why that is wrong for your situation."},
-    {type:"Day in the Life",caption:"A real day running [type of business] in Nigeria. No filters."},
+    {type:"Day in the Life",caption:"A real day running [type of business]. No filters."},
     {type:"Product Demo",caption:"This is [product]. Here is what it does, who it is for, and how much it costs. Link in bio."},
     {type:"Quick Tip",caption:"One thing I wish I knew when I started [business type]. Watch till the end."},
   ]},
-  "Google Business":{icon:"🗺",ideas:[
+  "Google Business":{icon:"M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0zM15 10.5a3 3 0 11-6 0 3 3 0 016 0z",ideas:[
     {type:"Update Post",caption:"We are open [days and hours]. Located at [address]. Call or WhatsApp [number] to book or order."},
     {type:"Offer Post",caption:"Special this week: [offer]. Visit us at [address] or call [number] to find out more."},
     {type:"New Service",caption:"We now offer [service]. [Brief description]. Contact us to learn more."},
@@ -128,13 +130,13 @@ function ContentTab(){
       </div>
     </div>
     <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:18}}>
-      {Object.keys(CONTENT_IDEAS).map(p=><button key={p} onClick={()=>setPlatform(p)} style={{padding:"7px 14px",borderRadius:99,border:`1.5px solid ${platform===p?B:MGRAY}`,background:platform===p?B:W,color:platform===p?W:MID,fontSize:13,fontWeight:700,cursor:"pointer"}}>{CONTENT_IDEAS[p].icon} {p}</button>)}
+      {Object.keys(CONTENT_IDEAS).map(p=><button key={p} onClick={()=>setPlatform(p)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:99,border:`1.5px solid ${platform===p?B:MGRAY}`,background:platform===p?B:W,color:platform===p?W:MID,fontSize:13,fontWeight:700,cursor:"pointer"}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d={CONTENT_IDEAS[p].icon}/></svg>{p}</button>)}
     </div>
     <div style={{display:"grid",gap:12}}>
       {pl.ideas.map((idea,i)=><div key={i} style={card}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
           <span style={{padding:"3px 10px",borderRadius:99,background:LITE,color:B,fontSize:11,fontWeight:700,border:`1px solid ${MID}`}}>{idea.type}</span>
-          <button onClick={()=>copyCaption(idea.caption,i)} style={{padding:"5px 12px",background:copied===i?"#e8f5e9":LGRAY,border:`1.5px solid ${copied===i?"#a5d6a7":MGRAY}`,borderRadius:7,color:copied===i?"#2e7d32":MID,fontSize:12,fontWeight:700,cursor:"pointer"}}>{copied===i?"✓ Copied":"Copy Caption"}</button>
+          <button onClick={()=>copyCaption(idea.caption,i)} style={{padding:"5px 12px",background:copied===i?"#e8f5e9":LGRAY,border:`1.5px solid ${copied===i?"#a5d6a7":MGRAY}`,borderRadius:7,color:copied===i?"#2e7d32":MID,fontSize:12,fontWeight:700,cursor:"pointer"}}>{copied===i?"Copied":"Copy Caption"}</button>
         </div>
         <p style={{fontSize:13,color:DARK,lineHeight:1.8,margin:0,fontStyle:"italic"}}>"{idea.caption}"</p>
       </div>)}
@@ -226,7 +228,7 @@ function AdPlannerTab({campaigns,setCampaigns}:{campaigns:Campaign[],setCampaign
         <button onClick={()=>{setAdding(false);setEditing(null);}} style={{padding:"9px 16px",background:W,border:`1.5px solid ${MGRAY}`,borderRadius:8,color:MID,fontSize:13,fontWeight:700,cursor:"pointer"}}>Cancel</button>
       </div>
     </div>}
-    {campaigns.length===0&&!adding?<div style={{textAlign:"center",padding:"40px",color:MID}}><div style={{fontSize:36,marginBottom:10}}>📣</div><div style={{fontSize:14,fontWeight:800,color:DARK,marginBottom:6}}>No campaigns yet</div><p style={{fontSize:13}}>Add your first ad campaign to start tracking results.</p></div>:
+    {campaigns.length===0&&!adding?<div style={{textAlign:"center",padding:"40px",color:MID}}><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46"/></svg></div><div style={{fontSize:14,fontWeight:800,color:DARK,marginBottom:6}}>No campaigns yet</div><p style={{fontSize:13}}>Add your first ad campaign to start tracking results.</p></div>:
     campaigns.map(c=>{
       const sc=c.status==="active"?{bg:"#e8f5e9",c:"#2e7d32",b:"#a5d6a7"}:c.status==="ended"?{bg:LGRAY,c:MID,b:MGRAY}:{bg:"#fff7ed",c:"#c2410c",b:"#fed7aa"};
       return <div key={c.id} style={{...card,marginBottom:10}}>
@@ -378,7 +380,7 @@ function ReachTool({code,onSignOut}:{code:string,onSignOut:()=>void}){
       </div>
       <div style={{textAlign:"right"}}>
         <div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>Prowess Digital Solutions</div>
-        <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"✓ Saved":"Auto-saving..."}</div>
+        <div style={{fontSize:11,fontWeight:600,color:saved?"#81c784":"rgba(255,255,255,.4)",marginTop:2}}>{saved?"Saved":"Auto-saving..."}</div>
       </div>
     </div>
     <div style={{background:B,padding:"9px 22px",display:"flex",alignItems:"center",flexWrap:"wrap",gap:8}}>
@@ -528,8 +530,13 @@ export default function ReachPage(){
             <h1 className="g-headline">Grow with purpose.<br/><span className="hi">Not just noise.</span></h1>
             <p className="g-body-txt">Random posting does not build a business. This planner gives you a real growth strategy, ready-to-use content, and a system to track what is working.</p>
             <div className="g-pills">
-              {[{icon:"📖",title:"Growth Guide",sub:"Six things that actually grow African businesses"},{icon:"✍",title:"Content Ideas",sub:"Platform-specific captions you can copy and use today"},{icon:"📣",title:"Ad Planner",sub:"Budget guide and campaign tracker"},{icon:"📅",title:"Social Calendar",sub:"Plan your posts month by month"}].map((f,i)=>(
-                <div key={i} className="g-pill"><div className="g-pill-icon">{f.icon}</div><div className="g-pill-text"><span className="g-pill-title">{f.title}</span><span className="g-pill-sub">{f.sub}</span></div></div>
+              {[
+                {icon:"M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25",title:"Growth Guide",sub:"Six things that actually grow a business"},
+                {icon:"M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10",title:"Content Ideas",sub:"Platform-specific captions you can copy and use today"},
+                {icon:"M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46",title:"Ad Planner",sub:"Budget guide and campaign tracker"},
+                {icon:"M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5",title:"Social Calendar",sub:"Plan your posts month by month"},
+              ].map((f,i)=>(
+                <div key={i} className="g-pill"><div className="g-pill-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d={f.icon}/></svg></div><div className="g-pill-text"><span className="g-pill-title">{f.title}</span><span className="g-pill-sub">{f.sub}</span></div></div>
               ))}
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Container from "@/components/Container";
+import AgencyPageHeader from "@/components/AgencyPageHeader";
 
 type Role = {
   id: string;
@@ -17,11 +18,16 @@ type Role = {
   created_at: string;
 };
 
-const CHECK = (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+type RolesResponse = {
+  ok?: boolean;
+  error?: string;
+  items?: Role[];
+};
+
+type SubscribeResponse = {
+  ok?: boolean;
+  error?: string;
+};
 
 const CHEVRON = (
   <svg className="h-5 w-5 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -56,10 +62,10 @@ export default function CareersPage() {
       try {
         const res = await fetch("/api/careers/roles", { cache: "no-store" });
         const text = await res.text();
-        let json: any = null;
+        let json: RolesResponse | null = null;
         try { json = text ? JSON.parse(text) : null; } catch { json = null; }
         if (!res.ok || !json?.ok) throw new Error(json?.error || `Request failed (${res.status}).`);
-        setRoles((json.items || []) as Role[]);
+        setRoles(json.items || []);
       } catch (e) {
         console.error(e);
         setRoles([]);
@@ -75,56 +81,22 @@ export default function CareersPage() {
   return (
     <div className="min-h-screen">
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#0c1a1b] py-24 sm:py-32">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(80,124,128,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(80,124,128,.07) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-            maskImage: "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-20"
-          style={{ background: "radial-gradient(circle, #507c80 0%, transparent 70%)", filter: "blur(80px)" }}
-        />
-        <Container>
-          <div className="relative mx-auto max-w-4xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#507c80]/30 bg-[#507c80]/10 px-4 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#507c80]" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#6a9ea3]">
-                Careers
-              </span>
-            </div>
-            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Work With Us.
-              <span className="block text-[#507c80]">Build With Purpose.</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-              At Prowess Digital Solutions, we help African entrepreneurs build properly.
-              If you think clearly, communicate well, and take quality seriously - you will fit in here.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a
-                href="#openings"
-                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-8 py-3.5 font-semibold text-white transition hover:bg-[#3a5c60]"
-              >
-                See Open Roles
-              </a>
-              <a
-                href="#culture"
-                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-8 py-3.5 font-semibold text-white transition hover:bg-white/10"
-              >
-                Our Work Culture
-              </a>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <AgencyPageHeader
+        eyebrow="Careers"
+        title={
+          <>
+            Work with us. <span className="text-primary">Build with purpose.</span>
+          </>
+        }
+        description="At Prowess Digital Solutions, we help African entrepreneurs build properly. If you think clearly, communicate well, and take quality seriously, you will fit in here."
+        primaryAction={{ label: "See Open Roles", href: "#openings" }}
+        secondaryAction={{ label: "Our Work Culture", href: "#culture" }}
+        proof={[
+          "Clear work standards",
+          "Practical client problems",
+          "A calm, structured team culture",
+        ]}
+      />
 
       {/* ── WHAT YOU CAN EXPECT ───────────────────────────────────────────── */}
       <section id="culture" className="bg-white py-20 sm:py-24">
@@ -384,12 +356,12 @@ function NotifyModal({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({ email: v }),
       });
       const text = await res.text();
-      let json: any = null;
+      let json: SubscribeResponse | null = null;
       try { json = text ? JSON.parse(text) : null; } catch { json = null; }
       if (!res.ok || !json?.ok) throw new Error(json?.error || `Request failed (${res.status}).`);
       setDone(true);
-    } catch (e: any) {
-      setError(e?.message || "Something went wrong.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
