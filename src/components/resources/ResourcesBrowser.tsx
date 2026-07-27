@@ -92,7 +92,11 @@ export default function ResourcesBrowser() {
       {/* ✅ Search bar */}
       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="text-slate-400">🔍</div>
+          <div className="text-slate-400">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </div>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
