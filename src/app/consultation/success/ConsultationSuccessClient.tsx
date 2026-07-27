@@ -34,7 +34,7 @@ export default function ConsultationSuccessClient() {
           return;
         }
 
-        // ✅ PAID booking: verify with Paystack reference
+        // ✅ PAID booking: verify with payment reference
         if (!reference) {
           setMsg("Missing booking details.");
           return;

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { verifyTransaction } from "@/lib/payments/paystack";
+import { verifyTransaction } from "@/lib/payments/flutterwave";
 import { markMembershipPaid } from "@/lib/payments/membership";
 
 export const runtime = "nodejs";
 
 // Belt-and-suspenders alongside the webhook: the browser lands here right
-// after Paystack checkout, before the webhook may have arrived. This
-// re-verifies the transaction directly with Paystack (never trusts the
+// after Flutterwave checkout, before the webhook may have arrived. This
+// re-verifies the transaction directly with Flutterwave (never trusts the
 // client's say-so) before marking anything paid.
 export async function POST(req: Request) {
   try {
@@ -16,11 +16,11 @@ export async function POST(req: Request) {
     }
 
     const data = await verifyTransaction(reference);
-    if (data?.status !== "success") {
+    if (data?.status !== "successful") {
       return NextResponse.json({ ok: false, error: "Payment not successful" }, { status: 400 });
     }
 
-    const subscriptionId = data?.metadata?.subscription_id as string | undefined;
+    const subscriptionId = data?.meta?.subscription_id as string | undefined;
     if (!subscriptionId) {
       return NextResponse.json({ ok: false, error: "Missing subscription reference" }, { status: 400 });
     }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Modal from "@/components/Modal";
-import type { BillingInterval } from "@/lib/payments/paystack";
+import type { BillingInterval } from "@/lib/payments/flutterwave";
 
 type Plan = {
   slug: string;

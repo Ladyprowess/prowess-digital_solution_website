@@ -12,6 +12,7 @@ type RegRow = {
   phone: string | null;
   payment_status: "free" | "paid";
   paystack_reference: string | null;
+  flutterwave_reference: string | null;
   created_at: string;
 };
 
@@ -29,7 +30,7 @@ export default function AdminEventRegistrationsPage() {
 
     const { data, error } = await supabase
       .from("event_registrations")
-      .select("id,event_id,full_name,email,phone,payment_status,paystack_reference,created_at")
+      .select("id,event_id,full_name,email,phone,payment_status,paystack_reference,flutterwave_reference,created_at")
       .eq("event_id", eventId)
       .order("created_at", { ascending: false });
 
@@ -129,9 +130,9 @@ export default function AdminEventRegistrationsPage() {
                   {r.phone || "No phone provided"}
                 </div>
 
-                {r.paystack_reference && (
+                {(r.flutterwave_reference || r.paystack_reference) && (
                   <div className="text-xs text-slate-500">
-                    Ref: {r.paystack_reference}
+                    Ref: {r.flutterwave_reference || r.paystack_reference}
                   </div>
                 )}
               </div>

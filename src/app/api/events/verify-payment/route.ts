@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { verifyTransaction } from "@/lib/payments/flutterwave";
 
 export const runtime = "nodejs";
 
@@ -11,37 +12,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing reference." }, { status: 400 });
     }
 
-    const verifyRes = await fetch(
-      `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY!}`,
-        },
-      }
-    );
-
-    const verifyData = await verifyRes.json();
-
-    if (!verifyRes.ok || !verifyData?.status) {
-      return NextResponse.json({ error: "Payment verification failed." }, { status: 400 });
-    }
-
-    const payment = verifyData.data;
-    if (payment.status !== "success") {
+    const data = await verifyTransaction(reference);
+    if (data?.status !== "successful") {
       return NextResponse.json({ error: "Payment not successful." }, { status: 400 });
     }
 
-    const meta = payment.metadata || {};
+    const meta = data?.meta || {};
     const event_id = meta.event_id;
     const full_name = meta.full_name;
     const phone = meta.phone || "";
-    const email = payment.customer?.email;
+    const email = data?.customer?.email;
 
     if (!event_id || !full_name || !email) {
       return NextResponse.json({ error: "Missing registration details." }, { status: 400 });
     }
 
     const supabase = supabaseAdmin();
+
+    // Guard against the webhook already having inserted this registration.
+    const { data: existing } = await supabase
+      .from("event_registrations")
+      .select("id")
+      .eq("flutterwave_reference", String(reference))
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ ok: true, already_registered: true });
+    }
 
     const { error: regError } = await supabase.from("event_registrations").insert([
       {
@@ -50,7 +47,7 @@ export async function POST(req: Request) {
         email: String(email).trim(),
         phone: phone ? String(phone).trim() : null,
         payment_status: "paid",
-        paystack_reference: String(reference),
+        flutterwave_reference: String(reference),
       },
     ]);
 
@@ -59,7 +56,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Something went wrong.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

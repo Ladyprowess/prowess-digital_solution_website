@@ -7,7 +7,7 @@ import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
 import { packages, addOns, annualMonthlyPrice, annualTotalPrice } from "@/content/site";
 import MembershipIntakeModal from "@/components/MembershipIntakeModal";
-import type { BillingInterval } from "@/lib/payments/paystack";
+import type { BillingInterval } from "@/lib/payments/flutterwave";
 
 const DIAGNOSTIC_LINK = "/services/business-structure-diagnostic";
 
@@ -355,22 +355,34 @@ export default function PricingPage() {
             </div>
           </Reveal>
 
-          <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2">
+          <div className="mx-auto mt-10 grid max-w-4xl gap-5 sm:grid-cols-2">
             {[
               {
                 title: addOns[0],
                 desc: "Get your business properly registered and named so you can operate, invoice, and open accounts with confidence.",
+                icon: "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z",
               },
               {
                 title: addOns[1],
                 desc: "A professional domain and business email set up and connected, so you look established from day one.",
+                icon: "M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9",
+              },
+              {
+                title: addOns[2],
+                desc: "A full custom website built and launched for your business, beyond what a template can do, designed around how you actually sell.",
+                icon: "M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5",
+              },
+              {
+                title: addOns[3],
+                desc: "Ongoing search visibility and content management, so your site keeps attracting the right people long after launch.",
+                icon: "M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z",
               },
             ].map((item, i) => (
               <Reveal key={item.title} delay={i * 90}>
                 <div className="flex h-full flex-col rounded-2xl border border-border bg-background p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
                   <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10">
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                     </svg>
                   </div>
                   <div className="mt-4 font-bold text-foreground">{item.title}</div>

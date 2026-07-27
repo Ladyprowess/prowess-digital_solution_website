@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createGoogleEvent } from "@/lib/googleCalendar";
 import { sendConsultationEmail } from "@/lib/email";
+import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
 
 export const runtime = "nodejs";
-
-function makeRef() {
-  return `CONS-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-}
 
 // Nigeria is +01:00 (no DST). Fixed offset.
 function buildStartISO(scheduled_date: string, scheduled_time: string) {
@@ -62,8 +58,8 @@ export async function POST(req: Request) {
 
     const end = new Date(start.getTime() + duration_minutes * 60 * 1000);
 
-    // Only create Paystack reference if PAID
-    const reference = isPaid ? makeRef() : null;
+    // Only create a payment reference if PAID
+    const reference = isPaid ? generateReference("CONS") : null;
 
     // 3) Insert booking
     const { data: booking, error: insErr } = await supabase
@@ -85,11 +81,11 @@ export async function POST(req: Request) {
           notes,
 
           payment_status: isPaid ? "pending" : "free",
-          paystack_reference: reference,
+          flutterwave_reference: reference,
           amount_ngn: Math.floor(amount_ngn),
         },
       ])
-      .select("id,full_name,email,phone,start_at,end_at,timezone,payment_status,paystack_reference,amount_ngn,service_id")
+      .select("id,full_name,email,phone,start_at,end_at,timezone,payment_status,flutterwave_reference,amount_ngn,service_id")
       .single();
 
     // Handle insert errors properly (including duplicate slot)
@@ -156,58 +152,44 @@ await sendConsultationEmail({
     
       return NextResponse.json({ ok: true, mode: "free", booking_id: booking.id }, { status: 200 });
     }
-    // ✅ PAID => Paystack initialise
-    const safeRef = String(booking.paystack_reference); // guaranteed for paid
+    // ✅ PAID => Flutterwave initialise
+    const safeRef = String(booking.flutterwave_reference); // guaranteed for paid
     const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/consultation/success?reference=${encodeURIComponent(
       safeRef
     )}`;
 
-    const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY!}`,
-        "Content-Type": "application/json",
+    const { link } = await initializePayment({
+      email,
+      amount: Math.floor(amount_ngn),
+      currency: "NGN",
+      reference: safeRef,
+      callbackUrl,
+      metadata: {
+        type: "consultation",
+        booking_id: booking.id,
+        service_id,
+        full_name,
+        phone: phone || "",
+        scheduled_date,
+        scheduled_time,
+        timezone,
+        start_at: booking.start_at,
+        end_at: booking.end_at,
       },
-      body: JSON.stringify({
-        email,
-        amount: Math.floor(amount_ngn) * 100,
-        reference: safeRef,
-        callback_url: callbackUrl,
-        metadata: {
-          type: "consultation",
-          booking_id: booking.id,
-          service_id,
-          full_name,
-          phone: phone || "",
-          scheduled_date,
-          scheduled_time,
-          timezone,
-          start_at: booking.start_at,
-          end_at: booking.end_at,
-        },
-      }),
     });
-
-    const paystackData = await paystackRes.json().catch(() => null);
-
-    if (!paystackRes.ok || !paystackData?.status) {
-      return NextResponse.json(
-        { ok: false, error: paystackData?.message || "Paystack initialisation failed." },
-        { status: 400 }
-      );
-    }
 
     return NextResponse.json(
       {
         ok: true,
         mode: "paid",
         booking_id: booking.id,
-        authorization_url: paystackData.data.authorization_url,
+        authorization_url: link,
         reference: safeRef,
       },
       { status: 200 }
     );
-  } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

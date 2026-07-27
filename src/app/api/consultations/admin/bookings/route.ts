@@ -9,7 +9,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("consultation_bookings")
-      .select("id,full_name,email,phone,scheduled_date,scheduled_time,timezone,payment_status,paystack_reference,created_at,service_id")
+      .select("id,full_name,email,phone,scheduled_date,scheduled_time,timezone,payment_status,paystack_reference,flutterwave_reference,created_at,service_id")
       .order("created_at", { ascending: false });
 
     if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });

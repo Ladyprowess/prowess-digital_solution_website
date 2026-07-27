@@ -5,7 +5,7 @@ import { genAccessCode, toolsForPlan, PREMIUM_TOOL_NAMES } from "@/lib/tools/tie
 /**
  * Marks a membership subscription paid and sends both confirmation emails.
  * Idempotent (guarded by the payment_status update condition) so it's safe
- * to call from both the Paystack webhook and the client-side verify route -
+ * to call from both the Flutterwave webhook and the client-side verify route -
  * whichever fires first wins, the second is a no-op.
  */
 export async function markMembershipPaid(subscriptionId: string, reference: string) {
@@ -22,7 +22,12 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
 
   const { error: updErr } = await supabase
     .from("membership_subscriptions")
-    .update({ payment_status: "paid", paystack_reference: reference })
+    .update({
+      payment_status: "paid",
+      flutterwave_reference: reference,
+      subscription_status: "active",
+      lapsed_at: null,
+    })
     .eq("id", sub.id)
     .neq("payment_status", "paid");
 
@@ -72,7 +77,7 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
         <p>This code unlocks:</p>
         <ul>${toolsList}</ul>
         <p>Enter it at <a href="https://prowessdigitalsolutions.com/tools">prowessdigitalsolutions.com/tools</a> to get started.</p>
-        <p>Payment reference: ${sub.paystack_reference}</p>
+        <p>Payment reference: ${reference}</p>
       </div>
     `,
   });
@@ -92,7 +97,7 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
         <p><b>What their business does:</b> ${sub.business_description}</p>
         <p><b>What they want us to focus on:</b> ${sub.service_focus}</p>
         <p><b>Amount:</b> $${sub.amount_usd} (${sub.billing_interval})</p>
-        <p><b>Ref:</b> ${sub.paystack_reference}</p>
+        <p><b>Ref:</b> ${reference}</p>
         <p><b>Tools access code auto-issued:</b> ${accessCode} (${unlockedTools.join(", ") || "no tools on this tier"})</p>
         <p style="color:#b45309;"><b>Reminder: reach out within 24 hours.</b></p>
       </div>
@@ -100,4 +105,106 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
   });
 
   return { ok: true as const, alreadyPaid: false };
+}
+
+/**
+ * A recurring renewal charge failed (Flutterwave will retry up to 3 times
+ * before giving up). Flag the subscription as lapsed and let the admin know,
+ * but don't touch payment_status or revoke tools access yet - that happens
+ * on the subscription.cancelled webhook once Flutterwave actually gives up.
+ */
+export async function markMembershipRenewalFailed(subscriptionId: string) {
+  const supabase = supabaseAdmin();
+
+  const { data: sub, error } = await supabase
+    .from("membership_subscriptions")
+    .select("*")
+    .eq("id", subscriptionId)
+    .single();
+
+  if (error || !sub) return { ok: false as const };
+
+  await supabase
+    .from("membership_subscriptions")
+    .update({ subscription_status: "lapsed", lapsed_at: new Date().toISOString() })
+    .eq("id", sub.id);
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL!;
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
+
+  await resend.emails.send({
+    from: fromEmail,
+    to: adminEmail,
+    subject: `Renewal payment failed: ${sub.full_name} (${sub.plan_slug})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2>A membership renewal charge failed</h2>
+        <p><b>Name:</b> ${sub.full_name} · <b>Email:</b> ${sub.email}</p>
+        <p><b>Plan:</b> ${sub.plan_slug} (${sub.billing_interval})</p>
+        <p>Flutterwave will retry automatically. If it fails 3 times, the subscription is cancelled and you'll get a separate notice.</p>
+      </div>
+    `,
+  });
+
+  return { ok: true as const };
+}
+
+/**
+ * Flutterwave has given up on a subscription (cancelled by the customer, or
+ * auto-cancelled after 3 failed renewal attempts). Revoke tools access by
+ * revoking the client_codes row(s) tied to this plan, and notify both sides.
+ */
+export async function markMembershipCancelled(subscriptionId: string) {
+  const supabase = supabaseAdmin();
+
+  const { data: sub, error } = await supabase
+    .from("membership_subscriptions")
+    .select("*")
+    .eq("id", subscriptionId)
+    .single();
+
+  if (error || !sub) return { ok: false as const };
+
+  await supabase
+    .from("membership_subscriptions")
+    .update({ subscription_status: "cancelled", lapsed_at: sub.lapsed_at || new Date().toISOString() })
+    .eq("id", sub.id);
+
+  await supabase
+    .from("client_codes")
+    .update({ status: "revoked" })
+    .eq("email", sub.email)
+    .eq("plan_slug", sub.plan_slug);
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL!;
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
+
+  await resend.emails.send({
+    from: fromEmail,
+    to: sub.email,
+    subject: "Your membership has been cancelled",
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2>Your ${sub.plan_slug} membership has ended</h2>
+        <p>Your subscription payment could not be completed, so your membership and tools access have been cancelled.</p>
+        <p>You can restart anytime from <a href="https://prowessdigitalsolutions.com/pricing">prowessdigitalsolutions.com/pricing</a>.</p>
+      </div>
+    `,
+  });
+
+  await resend.emails.send({
+    from: fromEmail,
+    to: adminEmail,
+    subject: `Membership cancelled: ${sub.full_name} (${sub.plan_slug})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2>Membership cancelled</h2>
+        <p><b>Name:</b> ${sub.full_name} · <b>Email:</b> ${sub.email}</p>
+        <p><b>Plan:</b> ${sub.plan_slug} (${sub.billing_interval})</p>
+        <p>Tools access has been revoked.</p>
+      </div>
+    `,
+  });
+
+  return { ok: true as const };
 }

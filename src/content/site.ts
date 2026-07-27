@@ -249,6 +249,8 @@ export function annualTotalPrice(monthlyPrice: number): number {
 export const addOns = [
   "Legal and Business Name Registration",
   "Domain and Email Setup",
+  "Full Website Development",
+  "SEO and Content Management",
 ];
 
 export const resources = [

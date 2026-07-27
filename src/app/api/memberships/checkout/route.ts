@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { getOrCreatePlan, initializeSubscriptionTransaction } from "@/lib/payments/paystack";
+import { getOrCreatePaymentPlan, initializePayment, generateReference } from "@/lib/payments/flutterwave";
 import { packages, annualTotalPrice } from "@/content/site";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Could not create subscription record" }, { status: 500 });
     }
 
-    const planCode = await getOrCreatePlan({
+    const planId = await getOrCreatePaymentPlan({
       slug: planSlug,
       title: plan.title,
       interval,
@@ -66,23 +66,27 @@ export async function POST(req: Request) {
 
     await supabase
       .from("membership_subscriptions")
-      .update({ paystack_plan_code: planCode })
+      .update({ flutterwave_plan_id: planId })
       .eq("id", row.id);
 
-    const { authorizationUrl, reference } = await initializeSubscriptionTransaction({
+    const reference = generateReference("MEM");
+
+    const { link } = await initializePayment({
       email,
-      planCode,
-      amountUSD,
+      amount: amountUSD,
+      currency: "USD",
+      reference,
       callbackUrl: `${SITE_URL}/pricing/success`,
       metadata: { type: "membership", subscription_id: row.id },
+      paymentPlanId: planId,
     });
 
     await supabase
       .from("membership_subscriptions")
-      .update({ paystack_reference: reference })
+      .update({ flutterwave_reference: reference })
       .eq("id", row.id);
 
-    return NextResponse.json({ ok: true, authorizationUrl });
+    return NextResponse.json({ ok: true, authorizationUrl: link });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Checkout failed";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });

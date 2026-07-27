@@ -139,13 +139,13 @@ export default function ConsultationPage() {
         return;
       }
 
-      // Paid => redirect to paystack
+      // Paid => redirect to payment provider
       if (json?.authorization_url) {
         window.location.href = json.authorization_url;
         return;
       }
 
-      setMsg("Something went wrong. No Paystack link returned.");
+      setMsg("Something went wrong. No payment link returned.");
     } catch (e: any) {
       setMsg(e?.message || "Network error");
     } finally {
