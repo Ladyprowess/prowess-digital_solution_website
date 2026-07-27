@@ -8,7 +8,7 @@ export const navPrimary = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About Us" },
   { href: "/services", label: "Services" },
-  { href: "/tools", label: "Tools" },
+  { href: "/case-studies", label: "Case Studies" },
   { href: "/resources", label: "Resources" },
   { href: "/blog", label: "Blog" },
 ] as const;
@@ -48,292 +48,207 @@ export type Service = {
 
 export const services: Service[] = [
   {
-    id: "clarity-session",
-    slug: "business-clarity-session",
-    icon: "clarity",
-    title: "Business Clarity Session",
-    short:
-      "A focused one-on-one session to identify what is really holding your business back, get an honest outside perspective, and leave with a clear, prioritised direction.",
-    price: "$60 – $90",
-    cta: "Book Session",
-    details: {
-      description:
-        "A business clarity session is a focused, one on one consultation designed to help you understand what is really happening inside your business. We sit down together, look at where things stand, identify what is not working, and map out what needs to change. There are no vague motivational talks. No scripts. Just honest, structured guidance built around your actual situation.\n\nMany business owners in Africa operate in reactive mode. They respond to problems as they come, make decisions under pressure, and never quite feel like they are moving forward with a plan. This is not because they lack intelligence or effort. It is because they have not had a proper space to step back, look at the full picture, and think clearly about what the business actually needs.\n\nThat is what this session provides. We assess your current position, your challenges, your goals, and the patterns behind your decisions. We ask the questions most people around you will not ask. We challenge assumptions in a calm, respectful way. And we help you build a clearer understanding of what is working, what is wasting your time, and where your energy should go next.\n\nYou leave the session with a more structured view of your business and practical, prioritised options for what to do next. Not a 50 page document. Not a complicated strategy. Just clear thinking, honest feedback, and a simple direction you can act on immediately.",
-      whoFor: [
-        "New business owners who need a clear starting point",
-        "Founders unsure where to begin or what to prioritise",
-        "Business owners feeling overwhelmed by too many moving parts",
-        "Entrepreneurs who need structured direction before investing more time or money",
-        "Small business owners across Africa looking for honest, practical business guidance",
-      ],
-      whatYouGet: [
-        "60 to 90 minute private strategy session tailored to your business",
-        "A clearer understanding of what is really holding the business back",
-        "Better structure around your services, pricing, or internal processes",
-        "A simple, prioritised view of where to focus your time and energy",
-        "Increased confidence in your decisions, backed by a realistic plan",
-        "A calm, supportive space to talk through ideas without pressure or sales tactics",
-      ],
-      notes: [
-        "This session is the recommended starting point for every new client. It gives both of us the clarity we need before any further engagement.",
-      ],
-    },
-  },
-
-  {
-    id: "audit-review",
-    slug: "business-audit-review",
+    id: "business-structure-diagnostic",
+    slug: "business-structure-diagnostic",
     icon: "audit",
-    title: "Business Audit and Review",
+    title: "Business Structure Diagnostic",
     short:
-      "A structured review of how your business actually operates today, with a clear professional report, specific recommendations, and a prioritised roadmap for fixing what needs to be fixed.",
-    price: "$200 – $350",
-    cta: "Book Audit",
+      "A fast, focused review of how your business actually runs today. In 48 to 72 hours you get an honest outside look at what is working, what is leaking time or money, and what to fix first.",
+    price: "$180 – $320",
+    cta: "Start the Diagnostic",
     details: {
       description:
-        "When your business feels messy, scattered, or stuck, it can be difficult to see what is really going wrong. You know something is off, but you cannot pinpoint exactly where the problems are because you are inside it every day. A Business Audit and Review gives you a clear, honest picture of how your business is working today and what needs to change so it can work better tomorrow.\n\nWe take a calm, detailed look at how your business actually operates. Not just what your website says or what your business plan reads like, but how things really move on a day to day basis. How decisions get made. How work flows between people. Where money goes. Where time gets wasted. Where confusion keeps showing up.\n\nThe aim is to identify gaps, weak points, and areas of confusion, then turn them into clear, actionable next steps. We look at your operations, your team structure, your service delivery, your pricing, your customer experience, and the internal systems that hold everything together or fail to.\n\nMany business owners in Africa try to grow without first understanding where the cracks are. They add more services, hire more people, or spend more on marketing without realising the foundation is unstable. A business audit prevents that. It gives you an accurate picture before you make expensive decisions.",
+        "A Business Structure Diagnostic is a fast, focused review of how your business actually runs today. In 48 to 72 hours, we look at your workflow, your numbers, and the way decisions get made, and hand you a clear picture of what is working, what is leaking time or money, and what to fix first.\n\nThis is not a long coaching engagement. It is a short, sharp look at your business from the outside, the kind of perspective that is hard to get when you are inside the business every day. We ask the questions you have not had time to ask yourself, and we give you a written plan you can act on immediately.\n\nSolo founders, local service businesses, and small teams everywhere use this as their starting point with us. Whether you are running a service business in Lagos, a shop in London, or a small agency in Buenos Aires, the diagnostic works the same way. We look at what is actually happening in your business, not what your business plan says should be happening.",
       whoFor: [
-        "Businesses with inconsistent performance or unpredictable results",
-        "Founders who sense something is wrong but cannot identify the exact issue",
-        "Businesses preparing to scale and wanting to fix problems before they multiply",
-        "Companies that have grown quickly without proper structure",
-        "African SMEs looking for a professional operational review",
+        "Founders who sense something is off but cannot pinpoint exactly where",
+        "Solo business owners and small teams who want an outside, honest look at how things really run",
+        "Local service businesses such as technicians, coaches, and boutique owners who built the business on skill, not systems",
+        "Anyone about to invest more time or money in a business and wanting to know the real state of it first",
       ],
       whatYouGet: [
-        "A structured summary of what is really happening inside your business",
-        "Clear identification of operational gaps and weak points",
-        "Step by step recommendations for improving structure and decision making",
-        "A prioritised roadmap that shows what to address first and what can wait",
-        "Suggestions for simple, sustainable systems that support long term growth",
-        "A professional audit document you can reference as you implement changes",
+        "A financial and workflow review of your business as it runs today",
+        "A written report identifying where time or revenue is leaking",
+        "A clear, prioritised action plan you can start using immediately",
+        "A fixed 48 to 72 hour turnaround from the moment we start",
+        "A short call to walk through the findings together",
       ],
       notes: [
-        "The audit is most effective when done after a Clarity Session, but can also be booked independently.",
+        "This is the recommended starting point for anyone new to working with us. Everything else we offer builds on what the diagnostic finds.",
       ],
     },
   },
 
   {
-    id: "strategy-action-plan",
-    slug: "strategy-action-plan",
+    id: "sop-vault",
+    slug: "sop-vault",
+    icon: "sop",
+    title: "SOP Vault",
+    short:
+      "Your team's most important workflows, written down as clear, repeatable systems. Client onboarding, inventory tracking, lead handoff, and billing, documented so the business does not depend on any one person.",
+    price: "$300 – $550",
+    cta: "Build Your SOP Vault",
+    details: {
+      description:
+        "Most businesses run on knowledge that lives only in one person's head. When that person is out sick, on holiday, or simply busy, everything slows down or breaks. An SOP Vault fixes that by turning your actual workflows into written, repeatable systems anyone on your team can follow.\n\nWe document the processes that matter most: how a new client gets onboarded, how inventory gets tracked, how a lead gets handed from one person to the next, how billing gets sent and followed up on. Nothing generic. We build the SOPs around how your business actually works, so your team can pick them up and run with them without needing you to explain everything every time.\n\nThe result is a business that depends less on any one person, including you. New hires ramp up faster, mistakes drop, and the day to day runs the same way whether you are in the room or not.",
+      whoFor: [
+        "Founders who are the only ones who know how anything actually gets done",
+        "Growing teams where onboarding a new hire takes far longer than it should",
+        "Businesses with messy, undocumented workflows for onboarding, inventory, billing, or lead handling",
+        "Anyone preparing to delegate or hire and wanting the systems in place first",
+      ],
+      whatYouGet: [
+        "Written, step by step SOPs for the processes you choose, such as client onboarding, inventory tracking, lead handoff, or billing",
+        "Documentation built around how your business actually works, not a generic template",
+        "A shared vault your team can reference without asking you first",
+        "Guidance on rolling the new systems out to your team",
+      ],
+      notes: [
+        "Most clients start with three to four core processes. More can be added once the first set is in place.",
+      ],
+    },
+  },
+
+  {
+    id: "gtm-offer-playbook",
+    slug: "go-to-market-offer-playbook",
     icon: "strategy",
-    title: "Strategy and Action Plan",
+    title: "Go To Market and Offer Playbook",
     short:
-      "A practical, step-by-step growth roadmap that turns your business clarity into a real plan with milestones, priorities, and clear sequencing so you know exactly what to do next.",
-    price: "$250 – $450",
-    cta: "Get Strategy Plan",
+      "A practical framework for packaging what you do, pricing it properly, and mapping out how the right customers actually find you.",
+    price: "$280 – $480",
+    cta: "Get Your Playbook",
     details: {
       description:
-        "Clarity without action does not change anything. Once you understand where your business stands, you need a plan that turns that understanding into real progress. That is what the Strategy and Action Plan delivers.\n\nWe take the insights from your clarity session or business audit and build a structured roadmap around them. This is not a generic template or a motivational vision board. It is a practical, step by step plan that is specific to your business, your current resources, and your goals.\n\nEvery step in the plan is prioritised. We define what needs to happen first, what can wait, and what depends on other things being in place. We set realistic timelines so you are not trying to do everything at once, which is one of the most common reasons small businesses lose momentum.\n\nThe action plan includes clear milestones and a priority framework. The milestones are specific points where you can measure whether things are on track. The priority framework helps you stay focused when everything feels equally urgent. Both are written clearly, without jargon, so you and your team can follow the plan without needing to decode anything.",
+        "Having a good business does not automatically mean people know how to buy from you. A Go To Market and Offer Playbook is a practical framework for packaging what you do, pricing it properly, and mapping out how the right customers actually find you.\n\nWe work through your offer first. What exactly are you selling, to whom, and why should they choose you over the alternative. From there we build out pricing that reflects the value you provide, not just a guess at what feels fair. Then we map the channels most likely to bring you customers, so your effort goes toward what will actually move the needle instead of everything at once.\n\nThis is built for founders who are good at the work itself but have never had a clear, honest look at how they package and sell it.",
       whoFor: [
-        "Businesses that have completed a clarity session or audit and are ready for next steps",
-        "Founders preparing to expand or enter a new phase of growth",
-        "Entrepreneurs who want deliberate, structured progress instead of scattered effort",
-        "Business owners who tend to start things but struggle to follow through consistently",
-        "African SMEs looking for a realistic growth plan, not theoretical advice",
+        "Solo founders and small service businesses who are unsure how to price what they offer",
+        "Anyone with a good service and no clear plan for how new customers should find them",
+        "Founders who have been guessing at pricing or copying competitors instead of pricing with intention",
+        "Businesses expanding into new markets and needing a clear plan for how to enter them",
       ],
       whatYouGet: [
-        "A 4 to 8 week structured roadmap tailored to your business goals",
-        "Clear milestone definitions so you can track progress objectively",
-        "A priority framework to help you decide what to focus on and what to set aside",
-        "A strategic direction document written in plain, actionable language",
-        "Guidance on sequencing so you know what comes first, second, and third",
+        "A clearly packaged offer, written in language your customers actually understand",
+        "Pricing built around your real costs and the value you provide, not a guess",
+        "A prioritised map of the channels most likely to bring you customers",
+        "A written playbook you and your team can follow and revisit",
       ],
       notes: [
-        "Implementation support is available separately through our mentorship or structured support packages.",
+        "Works well on its own or as a follow up to the Business Structure Diagnostic.",
       ],
     },
   },
 
   {
-    id: "business-structure-setup",
-    slug: "business-structure-setup",
-    icon: "setup",
-    title: "Business Structure Setup",
-    short:
-      "A properly defined internal framework for your business: clear roles, responsibilities, a decision hierarchy, and an operational structure that reduces founder dependency and supports steady growth.",
-    price: "$350 – $600",
-    cta: "Set Up Structure",
-    details: {
-      description:
-        "Most business problems are structure problems. When roles are unclear, decisions get delayed, tasks fall through the cracks, and everyone ends up doing a bit of everything without real accountability. The business might still function, but it functions on stress rather than on systems. That is not sustainable.\n\nThe Business Structure Setup service gives your business a proper internal framework. We look at how your business is currently organised, where the confusion sits, and design a structure that makes it easier for the right people to do the right things at the right time.\n\nThis includes defining roles clearly. Not just job titles, but actual responsibilities. Who owns what. Who reports to whom. Who makes which decisions. In many small businesses across Africa, the founder is the bottleneck for every single decision. A clear structure removes that bottleneck and distributes responsibility in a way that still keeps you in control of the important things.\n\nWe also set up a decision hierarchy: which decisions need your direct involvement and which ones your team can handle on their own. This frees up your time, reduces delays, and gives your team the confidence to act. The structure we design is built for where your business is right now, with room to grow.",
-      whoFor: [
-        "Growing SMEs that have outgrown their original setup",
-        "Founders who are overwhelmed because everything depends on them",
-        "Businesses preparing to hire and wanting the structure in place first",
-        "Teams where roles overlap and accountability is unclear",
-        "African entrepreneurs building businesses that need to run without constant oversight",
-      ],
-      whatYouGet: [
-        "A defined organisational framework tailored to your business size and stage",
-        "Role clarity mapping so every team member knows exactly what they are responsible for",
-        "A responsibility structure that reduces overlap and confusion",
-        "A decision hierarchy that frees up founder time and speeds up execution",
-        "Operational guidance on how to implement and communicate the new structure",
-      ],
-      notes: [
-        "Final pricing depends on the scope of the business and the number of roles involved.",
-      ],
-    },
-  },
-
-  {
-    id: "training-sessions",
-    slug: "business-training-sessions",
-    icon: "training",
-    title: "Business Training Sessions",
-    short:
-      "Practical training built around your business and your team's real challenges, covering structure, systems, leadership, and operational thinking in a format your team can actually apply.",
-    price: "$150 – $350",
-    cta: "Book Training",
-    details: {
-      description:
-        "Most business training is too generic. It gives broad advice that sounds good in the room but does not change anything when people go back to work. Our training sessions are different. They are built around your actual business, your current challenges, and the specific skills your team needs to move forward.\n\nWe deliver structured training focused on the areas that matter most for growing businesses: clarity, systems, leadership, decision making, and operational thinking. Each session is practical, not theoretical. We use real examples, discuss real scenarios, and focus on things your team can apply the same week.\n\nFor small teams, this kind of training creates alignment. When everyone understands how the business is structured, what the priorities are, and how decisions should be made, the whole team moves in the same direction. That reduces internal friction, speeds up execution, and makes your business feel more stable.\n\nFor founders, the sessions can also serve as a space to develop your own leadership capacity. Running a business and leading a team are two different skill sets, and many entrepreneurs are expected to do both without any formal support. These sessions give you frameworks and thinking tools that make leadership feel less overwhelming.",
-      whoFor: [
-        "Small teams that need to understand the business better and work more effectively together",
-        "Founders developing their own leadership and management capacity",
-        "Organisations seeking practical internal improvement without bringing in external managers",
-        "Business owners across Africa who want structured learning that applies to real operations",
-        "Teams going through a period of growth or transition and needing shared understanding",
-      ],
-      whatYouGet: [
-        "A structured training session tailored to your business stage and challenges",
-        "Practical case examples drawn from real business scenarios",
-        "Learning materials your team can reference after the session",
-        "Interactive discussion time where real questions get real answers",
-        "A clearer shared understanding of roles, priorities, and decision making within the team",
-      ],
-      notes: [
-        "Custom training topics are available. Let us know what your team is struggling with and we will design the session around it.",
-      ],
-    },
-  },
-
-  {
-    id: "mentorship-accountability",
-    slug: "mentorship-accountability-programme",
-    icon: "mentorship",
-    title: "Mentorship and Accountability Programme",
-    short:
-      "Structured, ongoing mentorship over three months with regular check-ins, progress tracking, and strategic guidance so you grow steadily and never have to figure things out completely alone.",
-    price: "$300 – $600 (3 months)",
-    cta: "Start Mentorship",
-    details: {
-      description:
-        "Building a business is not just about getting the right advice once. It is about having consistent support as things change, as new problems come up, and as the pressure to make the right decisions increases. That is what the Mentorship and Accountability Programme provides.\n\nThis is a structured, ongoing engagement where we work with you over a three month period. Through regular sessions, we review how your business is progressing, discuss the decisions you are facing, and help you think through them clearly before you act. It is practical, strategic guidance from someone who understands business structure and operations.\n\nAccountability is a big part of this programme. Many founders have great intentions but struggle with follow through. Not because they are lazy, but because they are doing everything alone and there is no external structure holding them to their commitments. This programme creates that structure. We set goals together, track progress, and have honest conversations about what is and is not getting done.\n\nThe mentorship is tailored to your business stage. If you are just starting, we focus on building foundations. If you are growing, we focus on structure, systems, and sustainable decision making. If you are navigating a transition, we help you manage that process without losing stability.",
-      whoFor: [
-        "Founders who need ongoing guidance and a structured sounding board",
-        "Business owners managing major transitions like hiring, scaling, or repositioning",
-        "Entrepreneurs who want consistent accountability to stay on track with their goals",
-        "Business owners in Africa who lack access to experienced, trustworthy mentors",
-        "Anyone building a business who knows they perform better with external support and structure",
-      ],
-      whatYouGet: [
-        "Bi-weekly mentorship sessions over a three month period",
-        "Progress tracking against goals we define together at the start",
-        "Strategic review discussions tailored to the decisions you are currently facing",
-        "Decision making support so you do not have to figure everything out alone",
-        "A consistent relationship with someone who understands your business and your goals",
-      ],
-      notes: [
-        "The programme duration can be extended beyond three months. Many clients continue because the ongoing support becomes part of how they run their business.",
-      ],
-    },
-  },
-
-  {
-    id: "premium-tools",
-    slug: "premium-business-tools",
+    id: "financial-tracking-dashboard",
+    slug: "financial-tracking-dashboard",
     icon: "tools",
-    title: "Premium Business Tools",
+    title: "Financial Tracking and Unit Economics Dashboard",
     short:
-      "A suite of practical digital tools built specifically for African entrepreneurs - giving you real numbers and operational clarity so you can run your business with confidence.",
-    price: "Access included for clients",
-    cta: "See the Tools",
+      "A configured, ongoing dashboard for your margins, customer acquisition cost, and monthly cashflow, built on tools we have already tested rather than something new and unproven.",
+    price: "$150 – $260",
+    cta: "Set Up Your Dashboard",
     details: {
       description:
-        "We built a suite of digital tools specifically for how African entrepreneurs run their businesses. These are not generic spreadsheets or Western-market software repurposed for Africa. They are built from the ground up with African currencies, African business structures, and the real challenges African business owners face every day.\n\nWe do not build custom tools for individual clients. What we do is give our clients access to tools that already exist and work. Each tool is designed to solve a specific operational problem that most small business owners in Africa are dealing with but have no proper system for.\n\nKnowing your actual costs before you launch. Understanding whether your pricing is actually profitable. Tracking cash so you are never surprised by an empty account. Managing invoices and following up on payments. Monitoring your stock before you run out. Planning your marketing and content without the chaos.\n\nThese are the things the tools handle. And because they are built for African businesses specifically, they work the way your business actually works - with the currencies, the context, and the conditions that matter here.",
+        "You cannot run a business well on guesswork. A Financial Tracking and Unit Economics Dashboard gives you a clear, ongoing view of your margins, your customer acquisition cost, and how much cash is actually moving through the business each month.\n\nRather than build something from scratch, we configure the tools we have already built and tested for exactly this: a startup cost and break even calculator, and a profit and cashflow tracker. We set them up around your actual numbers, walk you through how to read them, and hand you a dashboard you can update yourself going forward.\n\nThis is the offer for founders who want to stop finding out how their business did last month by checking their bank balance.",
       whoFor: [
-        "Clients of Prowess Digital Solutions who need practical operational tools",
-        "Business owners who make decisions based on guesswork because they have no reliable numbers",
-        "Founders who are losing money to pricing errors, unpaid invoices, or stock shortfalls",
-        "African entrepreneurs who need tools that actually reflect how business works on this continent",
+        "Founders making pricing or spending decisions without knowing their real numbers",
+        "Anyone who has never calculated their true customer acquisition cost or margin",
+        "Small business owners who want an ongoing view of cashflow, not a one time snapshot",
+        "Businesses preparing to raise money, apply for funding, or bring on a financial partner",
       ],
       whatYouGet: [
-        "Startup Cost and Break-Even Calculator - know your real costs and pricing before you commit",
-        "Profit and Cashflow Tracker - track every naira monthly and annually so you always know where you stand",
-        "Invoice Manager - create professional invoices and send payment reminders in one tap",
-        "Inventory Manager - monitor stock levels and get low-stock alerts before you run out",
-        "Reach and Growth Planner - plan content, track campaigns, and manage your social calendar",
+        "A configured Startup Cost and Break Even Calculator built around your numbers",
+        "A configured Profit and Cashflow Tracker set up for monthly and annual tracking",
+        "A walkthrough session on how to read and update your own dashboard",
+        "Ongoing access to both tools through your client account",
       ],
       notes: [
-        "Premium tools are available to Prowess Digital Solutions clients with a valid access code. Free tools are available to everyone at no cost.",
+        "This offer includes ongoing access to the underlying tools, not just a one time report.",
       ],
     },
   },
 ];
 
+// Fixed monthly membership pricing. Paying yearly gets 20% off the monthly
+// rate (see pricingHelpers below) rather than a separate hand-maintained number.
 export const packages = [
   {
-    title: "Clarity",
-    purpose: "The right starting point. Understand what is really happening in your business and leave with a clear direction.",
+    slug: "diagnostic",
+    title: "Diagnostic",
+    purpose: "The right starting point. Understand what is really happening in your business and keep a monthly pulse on it going forward.",
+    monthlyPrice: 320,
     deliverables: [
-      "60-minute Business Clarity Session",
-      "Honest assessment of your current situation",
-      "Prioritised list of what to fix first",
-      "Clear next steps you can act on immediately",
+      "A Business Structure Diagnostic when you join, then a fresh check in every month",
+      "Access to the Startup Cost and Break Even Calculator and the Profit and Cashflow Tracker",
+      "Guides on setting up the basics so your business runs on systems, not memory",
+      "Email support",
     ],
-    outcomes: ["Stop operating in reactive mode", "Know exactly what to focus on", "Confidence to move forward"],
-    investment: "$60 – $90",
+    outcomes: ["Know exactly where your business stands, every month", "An honest, outside perspective on call", "The basic tools to track your real numbers"],
   },
   {
+    slug: "foundation",
     title: "Foundation",
-    purpose: "Fix the foundations. Build structure, sort your operations, and get your business running properly.",
+    purpose: "Fix the foundations. Turn the diagnostic's findings into real systems and a clear way to bring in customers, kept current every month.",
+    monthlyPrice: 1050,
     deliverables: [
-      "Business Clarity Session",
-      "Business Audit and Review",
-      "Strategy and Action Plan",
-      "Business Structure Setup",
-      "Access to Premium Business Tools",
-      "Email support throughout",
+      "Everything in Diagnostic",
+      "SOP Vault for your core processes, updated as your business changes",
+      "Go To Market and Offer Playbook, revisited monthly",
+      "Access to the Invoice Manager",
+      "Guides on building systems that let your business run without you",
     ],
-    outcomes: ["Stable operational structure", "Clear roles and decision flow", "A business that runs without chaos"],
-    investment: "$400 – $700",
+    outcomes: ["A business that runs on systems, not memory", "A clear plan for how customers find you", "Less dependence on you for every decision"],
   },
   {
+    slug: "growth",
     title: "Growth",
-    purpose: "Scale with intention. Strategy, training, tools, and ongoing mentorship to help you grow without losing control.",
+    purpose: "Scale with intention. Add the numbers and the team alignment that let you grow without losing control.",
+    monthlyPrice: 1750,
     deliverables: [
       "Everything in Foundation",
-      "Customised growth and strategy plan",
-      "Team structure and role clarity",
-      "Business Training Sessions",
-      "3-month Mentorship Programme",
-      "Bi-weekly accountability check-ins",
+      "Financial Tracking and Unit Economics Dashboard, monitored monthly",
+      "Full access to the tools suite, including Inventory Manager and Reach and Growth Planner",
+      "A monthly team training session on the systems in place",
+      "Bi-weekly check ins",
     ],
-    outcomes: ["A team that works without you in everything", "Steady, structured growth", "A business you can scale"],
-    investment: "$800 – $1,500",
+    outcomes: ["A full financial picture you can act on", "A team aligned on how the business runs", "Steady, structured growth"],
   },
   {
+    slug: "full-support",
     title: "Full Support",
-    purpose: "Comprehensive, ongoing support for founders who want a dedicated strategic partner as they build.",
+    purpose: "An ongoing partnership for founders who want continued support as the business grows, including the mentorship and accountability most clients ask for after the first three tiers.",
+    monthlyPrice: 3900,
     deliverables: [
       "Everything in Growth",
-      "Extended mentorship beyond 3 months",
-      "Custom advisory support",
-      "Priority response and access",
-      "Quarterly business reviews",
-      "Tailored engagement built around your specific needs",
+      "Ongoing mentorship and accountability check ins",
+      "Priority access for new questions or reviews",
+      "Business reviews",
     ],
-    outcomes: ["A consistent strategic partner in your corner", "Decisions made with confidence", "Long-term, sustainable growth"],
-    investment: "From $1,500",
+    outcomes: ["A consistent partner in your corner", "Decisions made with confidence", "Long term, sustainable growth"],
   },
 ];
+
+export function annualMonthlyPrice(monthlyPrice: number): number {
+  return Math.round(monthlyPrice * 12 * 0.8) / 12;
+}
+
+// Each individual offer page sells access via the membership tier that
+// includes it, since the four offers are the deliverables and the four
+// packages above are what is actually billed.
+export const offerToPackageSlug: Record<string, string> = {
+  "business-structure-diagnostic": "diagnostic",
+  "sop-vault": "foundation",
+  "go-to-market-offer-playbook": "foundation",
+  "financial-tracking-dashboard": "growth",
+};
+
+export function annualTotalPrice(monthlyPrice: number): number {
+  return Math.round(monthlyPrice * 12 * 0.8);
+}
 
 export const addOns = [
   "Legal and Business Name Registration",
   "Domain and Email Setup",
-  "Ongoing Retainer Support",
 ];
 
 export const resources = [
@@ -367,7 +282,7 @@ export const events = [
 export const contact = {
   email: "info@prowessdigitalsolutions.com",
   whatsapp: "+2348162174443",
-  location: "Africa (Remote-friendly)",
+  location: "Remote, worldwide. Based in Nigeria.",
 };
 
 // Real client logos only. Leave empty until actual logo files are supplied -

@@ -28,7 +28,7 @@ export default async function CaseStudyPage({
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-24">
-      <h1 className="text-4xl font-semibold text-[#223433]">{data.title}</h1>
+      <h1 className="text-4xl font-semibold text-foreground">{data.title}</h1>
 
       {data.image_url ? (
         <div className="mt-8 overflow-hidden rounded-xl">
@@ -37,24 +37,42 @@ export default async function CaseStudyPage({
       ) : null}
 
       <section className="mt-12">
-        <h2 className="text-sm font-semibold tracking-widest text-[#6b7d7b]">
+        <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">
           CHALLENGE
         </h2>
-        <p className="mt-3 leading-relaxed text-[#4d5f5e]">{data.challenge}</p>
+        <p className="mt-3 leading-relaxed text-foreground">{data.challenge}</p>
       </section>
 
       {data.solution ? (
         <section className="mt-10">
-          <h2 className="text-sm font-semibold tracking-widest text-[#6b7d7b]">
+          <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">
             SOLUTION
           </h2>
-          <p className="mt-3 leading-relaxed text-[#4d5f5e]">{data.solution}</p>
+          <p className="mt-3 leading-relaxed text-foreground">{data.solution}</p>
+        </section>
+      ) : null}
+
+      {data.before_state && data.after_state ? (
+        <section className="mt-10">
+          <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">
+            BEFORE AND AFTER
+          </h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-border bg-muted p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Before</p>
+              <p className="mt-2 leading-relaxed text-foreground">{data.before_state}</p>
+            </div>
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">After</p>
+              <p className="mt-2 leading-relaxed text-foreground">{data.after_state}</p>
+            </div>
+          </div>
         </section>
       ) : null}
 
       {results.length > 0 ? (
         <section className="mt-10">
-          <h2 className="text-sm font-semibold tracking-widest text-[#6b7d7b]">
+          <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">
             RESULTS ACHIEVED
           </h2>
 
@@ -62,10 +80,10 @@ export default async function CaseStudyPage({
             {results.map((r, idx) => (
               <div
                 key={`${r?.label || "result"}-${idx}`}
-                className="flex items-center justify-between rounded-xl bg-[#eaf6f6] px-4 py-4"
+                className="flex items-center justify-between rounded-xl bg-accent px-4 py-4"
               >
-                <span className="text-sm text-[#223433]">{r?.label}</span>
-                <span className="text-sm font-semibold text-[#507c80]">
+                <span className="text-sm text-foreground">{r?.label}</span>
+                <span className="text-sm font-semibold text-primary">
                   {r?.value}
                 </span>
               </div>
@@ -75,14 +93,17 @@ export default async function CaseStudyPage({
       ) : null}
 
       {data.testimonial ? (
-        <div className="mt-10 rounded-xl border-l-4 border-[#507c80] bg-white px-5 py-4 text-[#223433]">
-          <p className="italic leading-relaxed">“{data.testimonial}”</p>
+        <div className="mt-10 rounded-xl border-l-4 border-primary bg-card px-5 py-4 text-foreground">
+          <p className="italic leading-relaxed">"{data.testimonial}"</p>
         </div>
       ) : null}
 
       {typeof data.timeline_months === "number" ? (
-        <div className="mt-6 text-sm text-[#4d5f5e]">
-          🕒 Timeline: {data.timeline_months} months
+        <div className="mt-6 flex items-center gap-1.5 text-sm text-muted-foreground">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Timeline: {data.timeline_months} months
         </div>
       ) : null}
     </article>

@@ -168,7 +168,7 @@ export default function AdminEventsPage() {
         return;
       }
 
-      setMessage("Event created ✅");
+      setMessage("Event created");
 
       // reset
       setTitle("");
@@ -389,7 +389,7 @@ export default function AdminEventsPage() {
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className={cn("text-sm", message.includes("✅") ? "text-emerald-700" : "text-rose-700")}>
+            <p className={cn("text-sm", message === "Event created" ? "text-emerald-700" : "text-rose-700")}>
               {message || "Fill the form and click Create Event."}
             </p>
 
@@ -460,18 +460,32 @@ export default function AdminEventsPage() {
                   )}
 
                   <div className="mt-4 grid gap-2 text-sm text-slate-700">
-                    <div>
-                      📅 {ev.date} {ev.time ? `• ${ev.time}` : ""}
+                    <div className="flex items-center gap-1.5">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="shrink-0 text-slate-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                      </svg>
+                      {ev.date} {ev.time ? `• ${ev.time}` : ""}
                     </div>
-                    <div>🏷️ {ev.type}</div>
-                    <div>
-                      💳{" "}
+                    <div className="flex items-center gap-1.5">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="shrink-0 text-slate-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+                      </svg>
+                      {ev.type}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="shrink-0 text-slate-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-9-9.5v10.5a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25h-15a2.25 2.25 0 00-2.25 2.25z" />
+                      </svg>
                       {ev.registration_type === "paid"
                         ? `Paid (₦${Number(ev.price_ngn || 0).toLocaleString()})`
                         : "Free"}
                     </div>
-                    <div>
-                      👥 Registrations: <span className="font-semibold">{count}</span>
+                    <div className="flex items-center gap-1.5">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="shrink-0 text-slate-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                      </svg>
+                      Registrations: <span className="font-semibold">{count}</span>
                     </div>
                   </div>
 

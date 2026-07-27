@@ -29,13 +29,21 @@ const CHEVRON = (
   </svg>
 );
 
+function PerkIcon({ path }: { path: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d={path} />
+    </svg>
+  );
+}
+
 const perks = [
-  { icon: "🎯", title: "Clear roles", desc: "You will always know what matters and what to do next. No confusion, no shifting targets." },
-  { icon: "📈", title: "Room to grow", desc: "You will build real skills in writing, systems, and structured thinking that go beyond the job." },
-  { icon: "🤝", title: "Good communication", desc: "Clear updates, honest feedback, and decisions that are explained - not just handed down." },
-  { icon: "⚙️", title: "Simple processes", desc: "We use clean tools and documented systems so work flows without friction or guesswork." },
-  { icon: "🕐", title: "Flexible where possible", desc: "We focus on outcomes and good delivery, not where you sit or what time you log in." },
-  { icon: "✅", title: "Respect for quality", desc: "We prefer work that is correct, clear, and useful - and we take the time to get it right." },
+  { icon: <PerkIcon path="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />, title: "Clear roles", desc: "You will always know what matters and what to do next. No confusion, no shifting targets." },
+  { icon: <PerkIcon path="M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941" />, title: "Room to grow", desc: "You will build real skills in writing, systems, and structured thinking that go beyond the job." },
+  { icon: <PerkIcon path="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />, title: "Good communication", desc: "Clear updates, honest feedback, and decisions that are explained - not just handed down." },
+  { icon: <PerkIcon path="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />, title: "Simple processes", desc: "We use clean tools and documented systems so work flows without friction or guesswork." },
+  { icon: <PerkIcon path="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />, title: "Flexible where possible", desc: "We focus on outcomes and good delivery, not where you sit or what time you log in." },
+  { icon: <PerkIcon path="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />, title: "Respect for quality", desc: "We prefer work that is correct, clear, and useful - and we take the time to get it right." },
 ];
 
 export default function CareersPage() {
@@ -139,7 +147,7 @@ export default function CareersPage() {
                 key={p.title}
                 className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#507c80]/40 hover:shadow-md"
               >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#507c80]/10 text-xl">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#507c80]/10 text-[#507c80]">
                   {p.icon}
                 </div>
                 <h3 className="font-bold text-slate-900">{p.title}</h3>
@@ -200,8 +208,12 @@ export default function CareersPage() {
                           </span>
                         )}
                         {r.location && (
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                            📍 {r.location}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                            </svg>
+                            {r.location}
                           </span>
                         )}
                       </div>
@@ -272,8 +284,11 @@ export default function CareersPage() {
                   }}
                 />
                 <div className="relative px-8 py-16 text-center sm:px-14">
-                  <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#507c80]/20 text-2xl">
-                    👀
+                  <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#507c80]/20 text-[#507c80]">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-white sm:text-3xl">
                     No open roles right now
@@ -397,13 +412,15 @@ function NotifyModal({ onClose }: { onClose: () => void }) {
             className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100"
             aria-label="Close"
           >
-            ✕
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
         {done ? (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center">
-            <p className="font-semibold text-emerald-800">You are on the list ✅</p>
+            <p className="font-semibold text-emerald-800">You are on the list</p>
             <p className="mt-1 text-sm text-emerald-700">Check your inbox for a confirmation.</p>
             <button
               type="button"

@@ -420,7 +420,9 @@ export default function CaseStudiesPage() {
 
                           {typeof cs.timeline_months === "number" ? (
                             <div className="flex items-center gap-2 text-sm text-[#4d5f5e]">
-                              <span aria-hidden>🕒</span>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
                               <span>
                                 Timeline: {cs.timeline_months} months
                               </span>

@@ -10,6 +10,8 @@ export default function NewCaseStudyPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [challenge, setChallenge] = useState("");
   const [solution, setSolution] = useState("");
+  const [beforeState, setBeforeState] = useState("");
+  const [afterState, setAfterState] = useState("");
 
   const [resultsJson, setResultsJson] = useState(
     `[
@@ -55,6 +57,8 @@ export default function NewCaseStudyPage() {
           image_url: imageUrl || null,
           challenge,
           solution: solution || null,
+          before_state: beforeState || null,
+          after_state: afterState || null,
           results: resultsJson || null,
           testimonial: testimonial || null,
           timeline_months: timelineMonths ?? null,
@@ -202,6 +206,34 @@ export default function NewCaseStudyPage() {
               className="mt-2 min-h-[120px] w-full rounded-lg border border-[#dbe9e8] px-4 py-3 text-sm"
               placeholder="We ran a Business Clarity Session and then..."
             />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-xs font-semibold tracking-widest text-[#6b7d7b]">
+                BEFORE (optional)
+              </label>
+              <textarea
+                value={beforeState}
+                onChange={(e) => setBeforeState(e.target.value)}
+                className="mt-2 min-h-[100px] w-full rounded-lg border border-[#dbe9e8] px-4 py-3 text-sm"
+                placeholder="Manual invoicing, no SOPs, founder approving every decision"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold tracking-widest text-[#6b7d7b]">
+                AFTER (optional)
+              </label>
+              <textarea
+                value={afterState}
+                onChange={(e) => setAfterState(e.target.value)}
+                className="mt-2 min-h-[100px] w-full rounded-lg border border-[#dbe9e8] px-4 py-3 text-sm"
+                placeholder="Automated invoicing, documented SOPs, team makes routine decisions"
+              />
+            </div>
+            <p className="md:col-span-2 text-xs text-[#4d5f5e]">
+              Fill both to show a before/after comparison on the case study page. Leave blank to skip it.
+            </p>
           </div>
 
           <div>

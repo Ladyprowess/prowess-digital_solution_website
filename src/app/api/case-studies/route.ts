@@ -97,6 +97,8 @@ export async function POST(req: Request) {
       business_size: String(body.business_size || "").trim(),
       challenge: String(body.challenge || "").trim(),
       solution: body.solution ? String(body.solution).trim() : null,
+      before_state: body.before_state ? String(body.before_state).trim() : null,
+      after_state: body.after_state ? String(body.after_state).trim() : null,
       image_url: body.image_url ? String(body.image_url).trim() : null,
       results,
       testimonial: body.testimonial ? String(body.testimonial).trim() : null,

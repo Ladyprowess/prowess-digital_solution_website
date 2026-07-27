@@ -4,16 +4,20 @@ import "./globals.css";
 import SiteShell from "@/components/SiteShell";
 import { brand } from "@/content/site";
 import Script from "next/script";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: {
-    default: `${brand.name} | Business Structure and Guidance for Africa`,
+    default: `${brand.name} | Business Structure and Diagnostics for Founders Everywhere`,
     template: `%s | ${brand.name}`,
   },
   description:
-    "Prowess Digital Solutions provides structured guidance to help business owners gain clarity, build strong business systems, and run organised, sustainable businesses.",
+    "Prowess Digital Solutions provides fixed scope diagnostics, SOP documentation, and practical tools to help founders and business owners gain clarity, build strong systems, and run organised, sustainable businesses, wherever they are.",
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: `${SITE_URL}/`,
@@ -32,14 +36,12 @@ export const metadata: Metadata = {
   applicationName: brand.name,
   category: "Business consulting",
   keywords: [
-    "business clarity",
-    "business structure",
-    "business guidance",
-    "business audit",
+    "business structure diagnostic",
+    "SOP documentation",
+    "go to market playbook",
     "business systems",
-    "business mentorship",
     "small business support",
-    "business consulting Africa",
+    "business consulting for solopreneurs",
     "business consulting Nigeria",
     "business operations guidance",
   ],
@@ -77,10 +79,6 @@ const orgSchema = {
   image: `${SITE_URL}/og-image.png`,
   description:
     "Prowess Digital Solutions provides clear strategies, structured processes, and practical guidance to help business owners stay organised, improve operations, and achieve long-term success.",
-  areaServed: {
-    "@type": "Country",
-    name: "Africa",
-  },
   sameAs: [
     "https://www.instagram.com/prowessdigitalsolutions",
     "https://twitter.com/prowessDS",
@@ -97,8 +95,9 @@ const websiteSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB">
+    <html lang="en-GB" className={cn("font-sans", geist.variable)}>
       <head>
+        <meta name="color-scheme" content="light" />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-N9N42PJ7YT"
           strategy="afterInteractive"

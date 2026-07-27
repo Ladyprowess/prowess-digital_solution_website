@@ -1,0 +1,263 @@
+/* Only Regular and Semibold ship as files. Regular covers the light end of
+   the range and Semibold stands in for 600-900 so bold/black text still
+   renders in-brand instead of silently falling back to a system font. */
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/Proxima-Nova-Regular.woff2") format("woff2"),
+    url("/fonts/Proxima-Nova-Regular.woff") format("woff");
+  font-weight: 100 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("/fonts/Proxima-Nova-Semibold.woff2") format("woff2"),
+    url("/fonts/Proxima-Nova-Semibold.woff") format("woff");
+  font-weight: 501 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ✅ Tailwind v4 uses this (NOT @tailwind base/components/utilities) */
+@import "tailwindcss";
+
+:root {
+  --steel-teal: #507c80;
+  --ink: #0b1b1d;
+  --muted: #496167;
+  --bg: #ffffff;
+  --soft: #f5faf9;
+  --soft-2: #eef6f5;
+  --border: rgba(15, 23, 42, 0.10);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Proxima Nova", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ===== Reusable UI styles ===== */
+/* ===== Reusable UI styles + Blog Typography ===== */
+@layer components {
+  .page-wrap {
+    background:
+      radial-gradient(900px 350px at 50% -50px, var(--soft), transparent 60%),
+      radial-gradient(700px 250px at 10% 0px, rgba(80,124,128,0.10), transparent 60%),
+      radial-gradient(700px 250px at 90% 40px, rgba(80,124,128,0.08), transparent 55%);
+  }
+
+  .section {
+    @apply py-14 sm:py-20;
+  }
+
+  .section-tight {
+    @apply py-12 sm:py-16;
+  }
+
+  .card {
+    @apply rounded-2xl border bg-white;
+    border-color: var(--border);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+  }
+
+  .card-soft {
+    @apply rounded-2xl border;
+    border-color: rgba(80, 124, 128, 0.14);
+    background: linear-gradient(180deg, var(--soft), #ffffff);
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm;
+    background: rgba(80, 124, 128, 0.08);
+    border-color: rgba(80, 124, 128, 0.18);
+    color: #33565a;
+  }
+
+  .h1 {
+    @apply font-semibold tracking-tight;
+    font-size: clamp(2.15rem, 3.8vw, 3.9rem);
+    line-height: 1.05;
+  }
+
+  .h2 {
+    @apply text-2xl sm:text-4xl font-semibold tracking-tight;
+  }
+
+  .lead {
+    @apply text-base sm:text-lg;
+    color: var(--muted);
+  }
+
+  .divider {
+    @apply border-t;
+    border-color: rgba(15, 23, 42, 0.06);
+  }
+
+  /* ===== Blog Typography ===== */
+  .blog-wrap {
+    @apply mx-auto max-w-3xl;
+  }
+
+  .blog-meta {
+    @apply text-sm font-semibold;
+    color: rgba(73, 97, 103, 0.9);
+  }
+
+  .blog-title {
+    @apply mt-4 font-semibold tracking-tight text-center;
+    font-size: clamp(2.0rem, 3.2vw, 3.4rem);
+    line-height: 1.08;
+    color: var(--ink);
+  }
+
+  .blog-subactions {
+    @apply mt-5 flex items-center justify-center gap-3;
+  }
+
+  .blog-back {
+    @apply inline-flex items-center gap-2 font-semibold;
+    color: var(--steel-teal);
+  }
+
+  .blog-hero-img {
+    @apply w-full rounded-3xl border;
+    border-color: rgba(15, 23, 42, 0.10);
+  }
+
+  .blog-content {
+    font-size: 18px;
+    line-height: 1.9;
+    color: rgba(11, 27, 29, 0.92);
+  }
+
+  .blog-content p {
+    margin: 0 0 18px 0;
+    text-align: justify;
+    text-justify: inter-word;
+  }
+
+  .blog-content h2 {
+    margin-top: 34px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+
+  .blog-content h3 {
+    margin-top: 26px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  .blog-content h4 {
+    margin-top: 22px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 1.35;
+    color: var(--ink);
+  }
+
+  .blog-content ul {
+    list-style-type: disc;
+    padding-left: 1.6rem;
+    margin: 18px 0;
+  }
+  
+  .blog-content ol {
+    list-style-type: decimal;
+    padding-left: 1.6rem;
+    margin: 18px 0;
+  }
+  
+  .blog-content li::marker {
+    color: var(--steel-teal);
+    font-weight: 600;
+  }
+  
+  
+
+  .blog-content a {
+    color: var(--steel-teal);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .blog-content blockquote {
+    margin: 22px 0;
+    padding: 14px 16px;
+    border-left: 4px solid rgba(80, 124, 128, 0.35);
+    background: rgba(80, 124, 128, 0.06);
+    border-radius: 12px;
+    color: rgba(11, 27, 29, 0.9);
+  }
+
+  .blog-content img {
+    border-radius: 18px;
+    margin: 18px 0;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+  }
+
+/* ===== Blog Tables (visible borders + clean spacing) ===== */
+  .blog-content table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid rgba(15, 23, 42, 0.18); /* outer border */
+    background: #fff;
+    margin: 18px 0;
+  }
+
+  .blog-content th,
+  .blog-content td {
+    border: 1px solid rgba(15, 23, 42, 0.14); /* grid lines */
+    padding: 12px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .blog-content th {
+    font-weight: 700;
+    background: rgba(80, 124, 128, 0.08);
+    color: var(--ink);
+  }
+
+  /* WordPress tables sometimes include thead/tbody with strange spacing */
+  .blog-content thead th {
+    border-bottom: 2px solid rgba(15, 23, 42, 0.18);
+  }
+
+    .blog-content .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 18px 0;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: #fff;
+  }
+
+  /* force scroll instead of compressing */
+  .blog-content table {
+    min-width: 720px;
+  }
+}

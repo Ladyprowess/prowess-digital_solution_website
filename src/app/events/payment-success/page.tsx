@@ -35,7 +35,7 @@ export default function PaymentSuccessPage() {
         return;
       }
 
-      setMessage("Payment confirmed ✅ You are registered for the event.");
+      setMessage("Payment confirmed. You are registered for the event.");
     }
 
     verify();

@@ -143,7 +143,11 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
 
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center sm:p-10">
-      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f4f5] text-2xl">🔐</div>
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f4f5] text-[#507c80]">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+      </div>
       <h3 className="mb-2 text-xl font-bold text-slate-900">{toolName}</h3>
       <p className="mb-6 text-sm text-slate-500">
         This tool requires an access code. Enter your PDS code below.{" "}

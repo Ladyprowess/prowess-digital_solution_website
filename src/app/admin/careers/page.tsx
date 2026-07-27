@@ -58,7 +58,7 @@ export default function AdminCareersPage() {
         throw new Error(json?.error || `Request failed (${res.status}).`);
       }
 
-      setMsg("Role saved ✅");
+      setMsg("Role saved.");
 
       setTitle("");
       setLocation("");

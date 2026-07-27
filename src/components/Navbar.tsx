@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "@/components/Container";
 import { navPrimary, navMore } from "@/content/site";
 
-const BOOKING_URL = "https://prowessdigitalsolutions.com/consultation";
+const BOOKING_URL = "/services/business-structure-diagnostic";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -57,7 +57,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50">
-      <div className="border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="border-b border-border bg-background/95 backdrop-blur">
         <Container>
           <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(160px,200px)_1fr_220px] lg:gap-6">
             {/* Logo */}
@@ -78,9 +78,9 @@ export default function Navbar() {
               {primaryLinks.map((item) => {
                 const active = !("external" in item) && isActive(item.href);
                 const base =
-                  "relative text-base font-medium text-slate-700 hover:text-slate-900 transition whitespace-nowrap";
+                  "relative text-base font-medium text-foreground hover:text-foreground transition whitespace-nowrap";
                 const underline = active
-                  ? "after:absolute after:left-0 after:-bottom-2 after:h-[2px] after:w-full after:bg-[#507c80]"
+                  ? "after:absolute after:left-0 after:-bottom-2 after:h-[2px] after:w-full after:bg-primary"
                   : "after:absolute after:left-0 after:-bottom-2 after:h-[2px] after:w-full after:bg-transparent";
 
                 if ("external" in item && item.external) {
@@ -113,9 +113,9 @@ export default function Navbar() {
                   aria-expanded={moreOpen}
                   className={[
                     "flex items-center gap-2 rounded-xl px-4 py-2",
-                    "text-base font-semibold text-slate-800 whitespace-nowrap",
-                    "border border-transparent hover:border-slate-200 hover:bg-slate-50 transition",
-                    moreOpen ? "border-slate-200 bg-slate-50" : "",
+                    "text-base font-semibold text-foreground whitespace-nowrap",
+                    "border border-transparent hover:border-border hover:bg-muted transition",
+                    moreOpen ? "border-border bg-muted" : "",
                   ].join(" ")}
                 >
                   More
@@ -125,7 +125,7 @@ export default function Navbar() {
                 {moreOpen ? (
                   <div
                     role="menu"
-                    className="absolute right-0 mt-3 w-80 rounded-2xl border border-slate-200 bg-white shadow-xl p-2"
+                    className="absolute right-0 mt-3 w-80 rounded-2xl border border-border bg-card shadow-xl p-2"
                   >
                     {moreLinks.map((m) => (
                       <Link
@@ -133,7 +133,7 @@ export default function Navbar() {
                         href={m.href}
                         role="menuitem"
                         onClick={() => setMoreOpen(false)}
-                        className="block rounded-xl px-4 py-4 text-lg font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        className="block rounded-xl px-4 py-4 text-lg font-medium text-foreground hover:bg-muted hover:text-foreground"
                       >
                         {m.label}
                       </Link>
@@ -145,14 +145,12 @@ export default function Navbar() {
 
             {/* Desktop CTA */}
             <div className="hidden lg:flex justify-end">
-              <a
+              <Link
                 href={BOOKING_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex w-[220px] items-center justify-center rounded-xl bg-[#507c80] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-slate-200 hover:bg-[#466e71] transition whitespace-nowrap"
->
-                Book a Clarity Session
-              </a>
+                className="inline-flex w-[220px] items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition whitespace-nowrap"
+              >
+                Start the Diagnostic
+              </Link>
             </div>
 
             {/* Mobile toggle */}
@@ -161,24 +159,30 @@ export default function Navbar() {
                 type="button"
                 aria-label={mobileOpen ? "Close menu" : "Open menu"}
                 onClick={() => setMobileOpen((v) => !v)}
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 hover:bg-slate-50"
+                className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-4 py-3 text-foreground hover:bg-muted"
               >
-                <span className="text-2xl leading-none">{mobileOpen ? "✕" : "☰"}</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  {mobileOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+                  )}
+                </svg>
               </button>
 
               {/* ✅ MOBILE DROPDOWN (clean + soft background) */}
               {mobileOpen ? (
-                <div className="absolute left-0 top-[80px] w-full bg-[#507c80]/10 border-t border-slate-200 shadow-lg">
+                <div className="absolute left-0 top-[80px] w-full bg-primary/10 border-t border-border shadow-lg">
                   <div className="mx-auto w-full max-w-6xl px-4 py-5">
-                    <div className="rounded-3xl bg-white/70 backdrop-blur border border-slate-200 p-4 shadow-sm">
+                    <div className="rounded-3xl bg-card/70 backdrop-blur border border-border p-4 shadow-sm">
                       {/* Primary links in a 2-column grid */}
                       <div className="grid grid-cols-2 gap-3">
                         {primaryLinks.map((item) => {
                           const active = !("external" in item) && isActive(item.href);
 
                           const cls = active
-                            ? "rounded-2xl bg-[#507c80]/10 border border-[#507c80]/20 px-4 py-4 text-base font-semibold text-slate-900"
-                            : "rounded-2xl bg-white px-4 py-4 text-base font-semibold text-slate-700 border border-slate-200 hover:bg-slate-50";
+                            ? "rounded-2xl bg-primary/10 border border-primary/20 px-4 py-4 text-base font-semibold text-foreground"
+                            : "rounded-2xl bg-card px-4 py-4 text-base font-semibold text-foreground border border-border hover:bg-muted";
 
                           if ("external" in item && item.external) {
                             return (
@@ -208,10 +212,10 @@ export default function Navbar() {
                         })}
                       </div>
 
-                      <div className="my-5 h-px bg-slate-200/70" />
+                      <div className="my-5 h-px bg-border/70" />
 
                       {/* More section */}
-                      <p className="text-xs font-semibold tracking-widest text-slate-500 px-1">
+                      <p className="text-xs font-semibold tracking-widest text-muted-foreground px-1">
                         MORE
                       </p>
 
@@ -221,7 +225,7 @@ export default function Navbar() {
                             key={m.href}
                             href={m.href}
                             onClick={() => setMobileOpen(false)}
-                            className="rounded-2xl bg-white px-4 py-4 text-base font-semibold text-slate-700 border border-slate-200 hover:bg-slate-50"
+                            className="rounded-2xl bg-card px-4 py-4 text-base font-semibold text-foreground border border-border hover:bg-muted"
                           >
                             {m.label}
                           </Link>
@@ -229,14 +233,13 @@ export default function Navbar() {
                       </div>
 
                       {/* Mobile CTA button */}
-                      <a
+                      <Link
                         href={BOOKING_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-[#507c80] px-6 py-5 text-lg font-semibold text-white shadow-md shadow-slate-200 hover:bg-[#466e71] transition"
+                        onClick={() => setMobileOpen(false)}
+                        className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-primary px-6 py-5 text-lg font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition"
                       >
-                        Book Clarity Session
-                      </a>
+                        Start the Diagnostic
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -246,7 +249,7 @@ export default function Navbar() {
         </Container>
       </div>
 
-      <div className="h-[1px] bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+      <div className="h-[1px] bg-gradient-to-r from-transparent via-border to-transparent" />
     </header>
   );
 }

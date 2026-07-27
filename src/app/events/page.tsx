@@ -4,6 +4,35 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
 
+function CalendarIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="inline shrink-0 -mt-0.5 mr-1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+    </svg>
+  );
+}
+function ClockIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="inline shrink-0 -mt-0.5 mr-1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+function LaptopIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="inline shrink-0 -mt-0.5 mr-1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.625c.621 0 1.125.504 1.125 1.125v.375M3.75 4.5H21m-17.25 0v9.75A2.25 2.25 0 006 16.5h12a2.25 2.25 0 002.25-2.25V4.5" />
+    </svg>
+  );
+}
+function BellIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+    </svg>
+  );
+}
+
 type EventItem = {
   id: string;
 
@@ -264,7 +293,7 @@ export default function EventsPage() {
         return;
       }
 
-      setSubMsg("You’re subscribed 🎉");
+      setSubMsg("You're subscribed.");
       setEmail("");
     } catch {
       setSubMsg("Network error. Please try again.");
@@ -493,14 +522,14 @@ export default function EventsPage() {
                     <h3 className="text-xl font-semibold text-slate-900">{e.title}</h3>
 
                     <div className="mt-4 space-y-2 text-sm text-slate-700">
-                      <div>📅 {formatDate(e.date)}</div>
+                      <div><CalendarIcon />{formatDate(e.date)}</div>
                       {e.time ? (
                         <div>
-                          🕒 {e.time}
+                          <ClockIcon />{e.time}
                           {e.duration ? ` (${e.duration})` : ""}
                         </div>
                       ) : null}
-                      {e.location ? <div>💻 {e.location}</div> : null}
+                      {e.location ? <div><LaptopIcon />{e.location}</div> : null}
                     </div>
 
                     <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-5">
@@ -576,7 +605,7 @@ export default function EventsPage() {
 
                     <div className="p-6">
                       <h3 className="text-xl font-semibold text-slate-900">{e.title}</h3>
-                      <div className="mt-3 text-sm text-slate-700">📅 {formatDate(e.date)}</div>
+                      <div className="mt-3 flex items-center text-sm text-slate-700"><CalendarIcon />{formatDate(e.date)}</div>
                       <div className="mt-6 border-t border-slate-200 pt-5 text-sm font-medium text-[var(--steel-teal)]">
                         View details →
                       </div>
@@ -618,7 +647,7 @@ export default function EventsPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-8 sm:p-10">
             <div className="flex items-start gap-4">
               <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50">
-                <span aria-hidden>🔔</span>
+                <BellIcon />
               </div>
 
               <div className="flex-1">
@@ -691,14 +720,14 @@ export default function EventsPage() {
               <h3 className="text-2xl font-semibold text-slate-900">{selected.title}</h3>
 
               <div className="mt-4 space-y-2 text-sm text-slate-700">
-                <div>📅 {formatDate(selected.date)}</div>
+                <div><CalendarIcon />{formatDate(selected.date)}</div>
                 {selected.time ? (
                   <div>
-                    🕒 {selected.time}
+                    <ClockIcon />{selected.time}
                     {selected.duration ? ` (${selected.duration})` : ""}
                   </div>
                 ) : null}
-                {selected.location ? <div>💻 {selected.location}</div> : null}
+                {selected.location ? <div><LaptopIcon />{selected.location}</div> : null}
               </div>
 
               {selected.description ? (

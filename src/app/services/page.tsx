@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import Container from "@/components/Container";
+import { services } from "@/content/site";
 
-// ── Four things PDS does ───────────────────────────────────────────────────
+// ── Four things Prowess does ────────────────────────────────────────────────
 const pillars = [
   {
     number: "01",
     label: "Free Business Toolkit",
-    title: "Start here; no cost, no commitment",
-    body: "Whether you are about to start a business or already running one, our free toolkit gives you practical resources you can use right now. No payment. No sign-up pressure. Just useful tools that help you think clearly, check your foundations, and take the right next step.",
-    services: [
+    title: "Start here, no cost and no commitment",
+    body: "Whether you are about to start a business or already running one, our free toolkit gives you practical resources you can use right now. No payment, no sign up pressure, just useful tools that help you think clearly, check your foundations, and take the right next step.",
+    items: [
       "Available free to everyone",
       "No access code or payment needed",
       "More tools being added regularly",
@@ -20,45 +21,39 @@ const pillars = [
   },
   {
     number: "02",
-    label: "Business Consulting",
-    title: "We diagnose, structure, and build a plan with you",
-    body: "We work directly with founders and business owners to identify what is holding the business back, fix the foundations, and put the right systems in place. This is hands-on, practical work built around your actual situation; not generic advice.",
-    services: [
-      "Business Clarity Session",
-      "Business Audit and Review",
-      "Strategy and Action Plan",
-      "Business Structure Setup",
-      "Business Training Sessions",
-      "Mentorship and Accountability",
-    ],
-    cta: { label: "Book a Clarity Session", href: "https://prowessdigitalsolutions.com/consultation" },
+    label: "Productized Offers",
+    title: "Fixed scope, fixed timeline, built around your business",
+    body: "We work directly with founders and business owners to diagnose what is holding the business back, document the systems it needs, and build a clear plan for growth. Each offer has a defined deliverable and turnaround, not an open ended engagement.",
+    items: services.map((s) => s.title),
+    cta: { label: "Start the Diagnostic", href: "/services/business-structure-diagnostic" },
     free: false,
   },
   {
     number: "03",
-    label: "Premium Business Tools",
+    label: "Practical Tools",
     title: "We give you the tools to run your business properly",
-    body: "We built a suite of practical digital tools specifically for African entrepreneurs. We give our clients access to tools that already work. Each one solves a real operational problem: knowing your numbers, tracking cash, managing invoices, monitoring stock, and planning growth.",
-    services: [
-      "Startup Cost and Break-Even Calculator",
+    body: "We built a suite of practical digital tools ourselves. We give clients access to tools that already work, each one solving a real operational problem: knowing your numbers, tracking cash, managing invoices, monitoring stock, and planning growth.",
+    items: [
+      "Startup Cost and Break Even Calculator",
       "Profit and Cashflow Tracker",
       "Invoice Manager",
       "Inventory Manager",
       "Reach and Growth Planner",
     ],
-    cta: { label: "See Premium Tools", href: "/tools" },
+    cta: { label: "See the Tools", href: "/tools" },
     free: false,
   },
   {
     number: "04",
-    label: "Training and Mentorship",
-    title: "We build the people behind the business",
-    body: "Tools and structure only go so far if the people running the business do not have the right knowledge and support. We offer training sessions for founders and teams, and structured mentorship programmes for founders who need consistent, strategic guidance as they grow.",
-    services: [
-      "Business Training Sessions",
-      "Mentorship and Accountability Programme",
+    label: "Ongoing Support",
+    title: "We stay with you as the business grows",
+    body: "Tools and structure only go so far if there is no one to talk decisions through with. Our Full Support package includes team training and ongoing mentorship for founders who want consistent, strategic guidance as they grow.",
+    items: [
+      "Team training sessions",
+      "Ongoing mentorship and accountability check ins",
+      "Business reviews",
     ],
-    cta: { label: "Start a Conversation", href: "https://prowessdigitalsolutions.com/consultation" },
+    cta: { label: "See Pricing", href: "/pricing" },
     free: false,
   },
 ];
@@ -66,20 +61,20 @@ const pillars = [
 // ── Who we work with ───────────────────────────────────────────────────────
 const whoWeWork = [
   {
-    label: "People about to start a business",
-    desc: "Not sure where to begin or what to do first. The free toolkit and our clarity session are built exactly for this stage.",
+    label: "Solopreneurs and local service businesses",
+    desc: "Coaches, technicians, and boutique owners in the US and UK who built the business on skill and now need the structure to match.",
   },
   {
-    label: "Early-stage founders",
-    desc: "Just launched and need structure from the start, not after the problems pile up.",
+    label: "Tech and B2B founders",
+    desc: "Founders across Western Europe who need clear systems, pricing, and a go to market plan they can actually execute.",
   },
   {
-    label: "Growing SMEs",
-    desc: "Already running but things feel scattered, inconsistent, or too dependent on the founder.",
+    label: "Cross border entrepreneurs",
+    desc: "Founders across Latin America building borderless, digital first businesses who need operational clarity as they expand.",
   },
   {
-    label: "Established businesses",
-    desc: "Wanting a proper operational review, structured training, or a system overhaul.",
+    label: "African SMEs",
+    desc: "Where Prowess started. Business owners building properly, with real support and no shortcuts.",
   },
 ];
 
@@ -88,17 +83,17 @@ const process = [
   {
     step: "01",
     title: "Understand before we act",
-    desc: "Every engagement starts with a proper conversation. We ask the right questions, listen carefully, and make sure we understand your actual situation before we suggest anything. No templates. No assumptions.",
+    desc: "Every engagement starts with a proper look at your actual situation. We ask the right questions and make sure we understand what is really happening before we suggest anything. No templates, no assumptions.",
   },
   {
     step: "02",
     title: "Build the right foundation",
-    desc: "Whether it is structure, systems, strategy, or access to the right tools; we focus on what your business actually needs at its current stage, not what sounds impressive.",
+    desc: "Whether it is structure, systems, pricing, or the numbers, we focus on what your business actually needs at its current stage, not what sounds impressive.",
   },
   {
     step: "03",
     title: "Stay with you as you grow",
-    desc: "Most of our clients come back. Not because we lock them in, but because building a business is an ongoing process and having consistent support makes a real difference.",
+    desc: "Most of our clients come back. Not because they are locked in, but because building a business is an ongoing process and consistent support makes a real difference.",
   },
 ];
 
@@ -107,74 +102,75 @@ export default function ServicesPage() {
     <div className="page-wrap">
 
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#0c1a1b] py-24 sm:py-32">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(80,124,128,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(80,124,128,.07) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-            maskImage:
-              "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-20"
-          style={{
-            background: "radial-gradient(circle, #507c80 0%, transparent 70%)",
-            filter: "blur(80px)",
-          }}
-        />
+      <div className="dark">
+        <section className="relative overflow-hidden bg-background py-24 sm:py-32">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
+              maskImage:
+                "radial-gradient(ellipse 80% 70% at 50% 40%, #000 40%, transparent 100%)",
+            }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-20"
+            style={{
+              background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)",
+              filter: "blur(80px)",
+            }}
+          />
 
-        <Container>
-          <div className="relative mx-auto max-w-4xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#507c80]/30 bg-[#507c80]/10 px-4 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#507c80]" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#6a9ea3]">
-                What We Do
-              </span>
+          <Container>
+            <div className="relative mx-auto max-w-4xl text-center">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+                  What We Do
+                </span>
+              </div>
+
+              <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                We teach businesses
+                <span className="block text-primary">how to run with structure.</span>
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+                Whether you are about to start a business, already running one, or trying to grow
+                what you have built, Prowess Digital Solutions has something for you. Free tools,
+                fixed scope diagnostics, practical systems, and ongoing support, wherever you are building.
+              </p>
+
+              <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition hover:opacity-90"
+                >
+                  Start a Conversation
+                </Link>
+                <Link
+                  href="#our-services"
+                  className="inline-flex items-center justify-center rounded-xl border border-border bg-card/40 px-8 py-3.5 font-semibold text-foreground transition hover:bg-card/70"
+                >
+                  See Everything We Offer
+                </Link>
+              </div>
             </div>
+          </Container>
+        </section>
+      </div>
 
-            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-              We help African businesses
-              <span className="block text-[#507c80]">scale with structure.</span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-              Whether you are about to start a business, already running one, or trying to grow
-              what you have built; Prowess Digital Solutions has something for you.
-              Free tools, hands-on consulting, practical resources, and structured training,
-              all built specifically for African entrepreneurs.
-            </p>
-
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-8 py-3.5 font-semibold text-white transition hover:bg-[#3a5c60]"
-              >
-                Start a Conversation
-              </Link>
-              <Link
-                href="#our-services"
-                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-8 py-3.5 font-semibold text-white transition hover:bg-white/10"
-              >
-                See All Services
-              </Link>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* ── THREE PILLARS ─────────────────────────────────────────────────── */}
-      <section id="our-services" className="section bg-white">
+      {/* ── FOUR PILLARS ──────────────────────────────────────────────────── */}
+      <section id="our-services" className="section bg-background">
         <Container>
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="h2">Everything we offer, in one place</h2>
             <p className="lead mt-4">
-              From free tools you can use today, to consulting, premium tools, and ongoing mentorship;
-              there is a starting point here for every stage of your business journey.
+              From free tools you can use today, to fixed scope offers, practical tools, and
+              ongoing support, there is a starting point here for every stage of your business.
             </p>
           </div>
 
@@ -182,53 +178,48 @@ export default function ServicesPage() {
             {pillars.map((p) => (
               <div
                 key={p.number}
-                className={`group relative overflow-hidden rounded-2xl border bg-white p-8 transition hover:shadow-lg sm:p-10 ${
-                  p.free
-                    ? "border-[#507c80]/30 hover:border-[#507c80]/60"
-                    : "border-slate-200 hover:border-[#507c80]/40"
+                className={`group relative overflow-hidden rounded-2xl border bg-card p-8 transition hover:shadow-lg sm:p-10 ${
+                  p.free ? "border-primary/30 hover:border-primary/60" : "border-border hover:border-primary/40"
                 }`}
               >
-                <div className="absolute inset-x-0 top-0 h-0.5 scale-x-0 bg-gradient-to-r from-[#507c80] to-[#6a9ea3] transition-transform duration-500 group-hover:scale-x-100" />
+                <div className="absolute inset-x-0 top-0 h-0.5 scale-x-0 bg-gradient-to-r from-primary to-primary/50 transition-transform duration-500 group-hover:scale-x-100" />
 
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
-                  {/* Number + label */}
                   <div className="flex-shrink-0 lg:w-48">
-                    <div className="text-5xl font-black leading-none text-slate-100">{p.number}</div>
+                    <div className="text-5xl font-black leading-none text-muted">{p.number}</div>
                     <div className="mt-2 flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-widest text-[#507c80]">
+                      <span className="text-xs font-bold uppercase tracking-widest text-primary">
                         {p.label}
                       </span>
                       {p.free && (
-                        <span className="rounded-full bg-[#507c80]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#507c80] border border-[#507c80]/20">
+                        <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
                           Free
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Title + body + optional CTA */}
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-slate-900 sm:text-2xl">{p.title}</h3>
-                    <p className="mt-3 text-base leading-relaxed text-slate-600">{p.body}</p>
+                    <h3 className="text-xl font-bold text-foreground sm:text-2xl">{p.title}</h3>
+                    <p className="mt-3 text-base leading-relaxed text-muted-foreground">{p.body}</p>
                     {p.cta && (
                       <Link
                         href={p.cta.href}
-                        className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#507c80] hover:text-[#3a5c60]"
+                        className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:opacity-80"
                       >
                         {p.cta.label} →
                       </Link>
                     )}
                   </div>
 
-                  {/* Services list */}
-                  <div className="flex-shrink-0 lg:w-52">
-                    <div className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">
+                  <div className="flex-shrink-0 lg:w-56">
+                    <div className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                       {p.free ? "Available now" : "Includes"}
                     </div>
                     <ul className="space-y-2">
-                      {p.services.map((s) => (
-                        <li key={s} className="flex items-start gap-2 text-sm text-slate-600">
-                          <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#507c80]" />
+                      {p.items.map((s) => (
+                        <li key={s} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                           {s}
                         </li>
                       ))}
@@ -242,41 +233,40 @@ export default function ServicesPage() {
       </section>
 
       {/* ── TOOLS CALLOUT ─────────────────────────────────────────────────── */}
-      <section className="section bg-white">
+      <section className="section bg-background">
         <Container>
-          <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-[#507c80]/20 shadow-sm">
+          <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-primary/20 shadow-sm">
             <div className="grid lg:grid-cols-2">
-              <div className="bg-[#0c1a1b] p-10 lg:p-14">
-                <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#507c80]">
-                  Premium Business Tools
+              <div className="dark bg-background p-10 lg:p-14">
+                <p className="mb-4 text-xs font-bold uppercase tracking-widest text-primary">
+                  Practical Tools
                 </p>
-                <h3 className="text-2xl font-bold leading-snug text-white sm:text-3xl">
-                  Tools built for African businesses.
+                <h3 className="text-2xl font-bold leading-snug text-foreground sm:text-3xl">
+                  Tools built to be used, not admired.
                 </h3>
-                <p className="mt-5 text-sm leading-relaxed text-white/60">
-                  We built these tools ourselves; specifically for how African entrepreneurs
-                  run their businesses. We give our clients access to them as part of our service.
-                  You use the tools we have already built
-                  so you can run your business with better information and less guesswork.
+                <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
+                  We built these tools ourselves and use them with our own clients. You get access
+                  to tools that already work, so you can run your business on real information
+                  instead of guesswork.
                 </p>
                 <Link
                   href="/tools"
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#507c80] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#3a5c60]"
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
                 >
                   See the tools →
                 </Link>
               </div>
 
-              <div className="bg-white p-10 lg:p-14">
+              <div className="bg-card p-10 lg:p-14">
                 <div className="space-y-6">
                   {[
                     {
-                      name: "Startup Cost and Break-Even Calculator",
-                      desc: "Know exactly what it costs to launch. Price correctly from day one. Find your break-even point before you commit a single naira.",
+                      name: "Startup Cost and Break Even Calculator",
+                      desc: "Know exactly what it costs to launch. Price correctly from day one. Find your break even point before you commit a single dollar.",
                     },
                     {
                       name: "Profit and Cashflow Tracker",
-                      desc: "Track every naira in and out, monthly and annually. See your real profit, not just your revenue.",
+                      desc: "Track income and expenses monthly and annually. See your real profit, not just your revenue.",
                     },
                     {
                       name: "Invoice Manager",
@@ -288,23 +278,23 @@ export default function ServicesPage() {
                     },
                     {
                       name: "Reach and Growth Planner",
-                      desc: "Plan your content, track ad campaigns, and manage your social calendar; all in one organised place.",
+                      desc: "Plan your content, track ad campaigns, and manage your social calendar, all in one organised place.",
                     },
                   ].map((tool) => (
                     <div key={tool.name} className="flex items-start gap-4">
-                      <span className="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#507c80]/15">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#507c80]" />
+                      <span className="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                       </span>
                       <div>
-                        <div className="text-sm font-bold text-slate-900">{tool.name}</div>
-                        <div className="mt-0.5 text-xs leading-relaxed text-slate-500">{tool.desc}</div>
+                        <div className="text-sm font-bold text-foreground">{tool.name}</div>
+                        <div className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{tool.desc}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <p className="mt-8 text-xs text-slate-400">
-                  Tools are available to Prowess Digital Solutions clients with a valid access code.{" "}
-                  <Link href="/tools" className="font-semibold text-[#507c80] hover:underline">
+                <p className="mt-8 text-xs text-muted-foreground">
+                  Tools are available to Prowess clients with a valid access code.{" "}
+                  <Link href="/tools" className="font-semibold text-primary hover:underline">
                     Learn more →
                   </Link>
                 </p>
@@ -315,26 +305,26 @@ export default function ServicesPage() {
       </section>
 
       {/* ── WHO WE WORK WITH ──────────────────────────────────────────────── */}
-      <section className="section bg-[#f5f9f9]">
+      <section className="section bg-muted">
         <Container>
           <div className="mx-auto max-w-5xl">
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
               <div>
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#507c80]">
+                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
                   Who This Is For
                 </p>
-                <h2 className="text-3xl font-bold leading-snug text-slate-900 sm:text-4xl">
+                <h2 className="text-3xl font-bold leading-snug text-foreground sm:text-4xl">
                   For founders who are serious about building properly.
                 </h2>
-                <p className="mt-5 text-base leading-relaxed text-slate-600">
-                  We work with people at every stage; from someone who has not started yet
-                  and does not know where to begin, all the way to an established business that
-                  needs a proper structural overhaul. If you are building a business in Africa
-                  and want real support, this is for you.
+                <p className="mt-5 text-base leading-relaxed text-muted-foreground">
+                  We work with people at every stage, from someone who has not started yet and
+                  does not know where to begin, to an established business that needs a proper
+                  structural overhaul. Wherever you are building, if you want real support, this
+                  is for you.
                 </p>
                 <Link
                   href="/contact"
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#507c80] px-6 py-3 font-semibold text-white transition hover:bg-[#3a5c60]"
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-90"
                 >
                   Talk to us →
                 </Link>
@@ -344,14 +334,14 @@ export default function ServicesPage() {
                 {whoWeWork.map((w) => (
                   <div
                     key={w.label}
-                    className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5"
+                    className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
                   >
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#507c80]/15">
-                      <span className="h-2 w-2 rounded-full bg-[#507c80]" />
+                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
+                      <span className="h-2 w-2 rounded-full bg-primary" />
                     </span>
                     <div>
-                      <div className="font-bold text-slate-900">{w.label}</div>
-                      <div className="mt-0.5 text-sm leading-relaxed text-slate-600">{w.desc}</div>
+                      <div className="font-bold text-foreground">{w.label}</div>
+                      <div className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{w.desc}</div>
                     </div>
                   </div>
                 ))}
@@ -362,49 +352,48 @@ export default function ServicesPage() {
       </section>
 
       {/* ── HOW WE WORK ───────────────────────────────────────────────────── */}
-      <section className="section bg-[#0c1a1b]">
-        <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">How we work</h2>
-            <p className="mt-4 text-lg leading-relaxed text-white/60">
-              The same three principles apply to every engagement, regardless of the service.
-            </p>
-          </div>
-          <div className="mt-14 grid gap-6 sm:grid-cols-3">
-            {process.map((item) => (
-              <div
-                key={item.step}
-                className="relative rounded-2xl border border-white/10 bg-white/5 p-8"
-              >
-                <div className="text-4xl font-black leading-none text-white/10">{item.step}</div>
-                <h3 className="mt-4 text-lg font-bold text-white">{item.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-white/55">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
+      <div className="dark">
+        <section className="bg-background section">
+          <Container>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold text-foreground sm:text-4xl">How we work</h2>
+              <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+                The same three principles apply to every engagement, regardless of the offer.
+              </p>
+            </div>
+            <div className="mt-14 grid gap-6 sm:grid-cols-3">
+              {process.map((item) => (
+                <div key={item.step} className="relative rounded-2xl border border-border bg-card p-8">
+                  <div className="text-4xl font-black leading-none text-muted-foreground/30">{item.step}</div>
+                  <h3 className="mt-4 text-lg font-bold text-foreground">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </section>
+      </div>
 
       {/* ── CTA ───────────────────────────────────────────────────────────── */}
-      <section className="section bg-[#3a5c60]">
+      <section className="section bg-primary">
         <Container>
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+            <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl lg:text-5xl">
               Not sure where to start?
             </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/80">
-              Start with a Business Clarity Session. In 60 minutes we will look at your current
-              situation, identify what is actually holding you back, and map out the clearest
-              path forward. No pressure. No sales pitch. Just honest, structured guidance.
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-primary-foreground/80">
+              Start with the Business Structure Diagnostic. In 48 to 72 hours we will look at your
+              current situation, identify what is actually holding you back, and map out the
+              clearest path forward. No pressure, no sales pitch, just honest, structured guidance.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="https://prowessdigitalsolutions.com/consultation">
-                <button className="w-full rounded-xl bg-white px-10 py-4 text-base font-semibold text-[#2e5659] shadow-lg transition hover:scale-[1.02] sm:w-auto">
-                  Book a Clarity Session
+              <Link href="/services/business-structure-diagnostic">
+                <button className="w-full rounded-xl bg-primary-foreground px-10 py-4 text-base font-semibold text-primary shadow-lg transition hover:scale-[1.02] sm:w-auto">
+                  Start the Diagnostic
                 </button>
               </Link>
               <Link href="/pricing">
-                <button className="w-full rounded-xl border-2 border-white/40 bg-transparent px-10 py-4 text-base font-semibold text-white transition hover:bg-white/10 sm:w-auto">
+                <button className="w-full rounded-xl border-2 border-primary-foreground/40 bg-transparent px-10 py-4 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/10 sm:w-auto">
                   View Pricing
                 </button>
               </Link>

@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createGoogleEvent } from "@/lib/googleCalendar";
 import { resend } from "@/lib/resendClient";
+import { markMembershipPaid } from "@/lib/payments/membership";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,11 @@ export async function POST(req: Request) {
     if (!reference) return NextResponse.json({ ok: true });
 
     const metadata = payload?.data?.metadata || {};
+
+    if (metadata?.type === "membership") {
+      return handleMembershipPayment(reference, metadata);
+    }
+
     // ✅ make sure it is a consultation payment
     if (metadata?.type !== "consultation") {
       return NextResponse.json({ ok: true });
@@ -128,4 +134,12 @@ export async function POST(req: Request) {
     // Paystack expects 200 OK even if we fail
     return NextResponse.json({ ok: true });
   }
+}
+
+async function handleMembershipPayment(reference: string, metadata: Record<string, unknown>) {
+  const subscriptionId = metadata?.subscription_id as string | undefined;
+  if (!subscriptionId) return NextResponse.json({ ok: true });
+
+  await markMembershipPaid(subscriptionId, reference);
+  return NextResponse.json({ ok: true });
 }

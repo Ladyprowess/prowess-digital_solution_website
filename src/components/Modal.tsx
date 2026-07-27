@@ -45,19 +45,19 @@ export default function Modal({ open, title, onClose, children }: Props) {
         ref={panelRef}
         tabIndex={-1}
         className="
-          relative z-10 w-full max-w-2xl rounded-xl bg-white shadow-xl outline-none
+          relative z-10 w-full max-w-2xl rounded-xl bg-card shadow-xl outline-none
           flex flex-col
           max-h-[85vh]
           overflow-hidden
         "
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-4 sm:p-6">
-          <h3 id="modal-title" className="text-lg font-semibold">
+        <div className="flex items-start justify-between gap-4 border-b border-border p-4 sm:p-6">
+          <h3 id="modal-title" className="text-lg font-semibold text-foreground">
             {title}
           </h3>
           <button
-            className="rounded-md px-2 py-1 text-slate-600 hover:bg-slate-100"
+            className="rounded-md px-2 py-1 text-muted-foreground hover:bg-muted"
             onClick={onClose}
           >
             Close

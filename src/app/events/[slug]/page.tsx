@@ -90,7 +90,7 @@ export default function EventRegistrationPage() {
       setFullName("");
       setEmail("");
       setPhone("");
-      setMsg("You are registered successfully ✅");
+      setMsg("You are registered successfully.");
       return;
     }
 

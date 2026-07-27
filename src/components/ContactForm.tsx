@@ -60,13 +60,11 @@ export default function ContactForm() {
       <div>
         <label className="text-sm font-medium">What do you need help with?</label>
         <select name="topic" className="mt-1 w-full rounded-lg border border-slate-200 p-3 bg-white" required>
-          <option>Business Clarity Session</option>
-          <option>Business Audit & Review</option>
-          <option>Business Setup & Structure</option>
-          <option>Brand Foundation</option>
-          <option>Systems & Operations</option>
-          <option>Training & Mentorship</option>
-          <option>Retainer support</option>
+          <option>Business Structure Diagnostic</option>
+          <option>SOP Vault</option>
+          <option>Go To Market and Offer Playbook</option>
+          <option>Financial Tracking and Unit Economics Dashboard</option>
+          <option>Membership pricing</option>
           <option>Other enquiry</option>
         </select>
       </div>

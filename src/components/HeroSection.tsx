@@ -56,7 +56,7 @@ function StatCard({
       className={className}
       style={{
         position: "absolute",
-        width: 172,
+        width: "clamp(132px, 38vw, 172px)",
         background: "#fff",
         borderRadius: 16,
         border: `1px solid ${border}`,
@@ -66,13 +66,13 @@ function StatCard({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ fontSize: 9.5, fontWeight: 700, color: muted, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
+        <span style={{ fontSize: "clamp(8.5px, 2.4vw, 9.5px)", fontWeight: 700, color: muted, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
         <div style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(80,124,128,0.10)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {icon}
         </div>
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: ink, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 9.5, color: muted, marginTop: 3 }}>{sub}</div>
+      <div style={{ fontSize: "clamp(18px, 5vw, 22px)", fontWeight: 800, color: ink, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: "clamp(8.5px, 2.4vw, 9.5px)", color: muted, marginTop: 3 }}>{sub}</div>
     </div>
   );
 }
@@ -114,7 +114,7 @@ export function HeroSection() {
             </p>
 
             <div className="justify-center lg:justify-start" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 30, animation: "fadeUp 0.65s ease 0.3s both" }}>
-              <Link href="/consultation">
+              <Link href="/services/business-structure-diagnostic">
                 <button
                   style={{ display: "inline-flex", alignItems: "center", gap: 8, background: T, color: "#fff", fontWeight: 600, fontSize: "0.9rem", padding: "13px 24px", borderRadius: 10, border: "none", cursor: "pointer", boxShadow: `0 4px 22px rgba(80,124,128,0.32)`, transition: "background 0.15s ease" }}
                   onMouseEnter={e => (e.currentTarget.style.background = TDark)}
@@ -123,7 +123,7 @@ export function HeroSection() {
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  Book a Clarity Session
+                  Start the Diagnostic
                 </button>
               </Link>
               <Link href="/services">
@@ -183,8 +183,7 @@ export function HeroSection() {
             </div>
 
             <StatCard
-              className="hidden sm:block"
-              style={{ top: -20, right: -20, animation: "floatA 7s ease-in-out infinite" }}
+              style={{ top: -12, right: -8, animation: "floatA 7s ease-in-out infinite" }}
               label="Session Format"
               value="60–90 min"
               sub="Focused, one-on-one"
@@ -196,11 +195,10 @@ export function HeroSection() {
             />
 
             <StatCard
-              className="hidden sm:block"
-              style={{ top: "40%", right: -40, animation: "floatB 8s ease-in-out 1s infinite" }}
-              label="Core Services"
-              value="7"
-              sub="End-to-end business support"
+              style={{ top: "42%", right: -14, animation: "floatB 8s ease-in-out 1s infinite" }}
+              label="Fixed Scope Offers"
+              value="4"
+              sub="Diagnostic to Full Support"
               icon={
                 <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke={T} strokeWidth={2.4}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
@@ -209,10 +207,9 @@ export function HeroSection() {
             />
 
             <StatCard
-              className="hidden sm:block"
-              style={{ bottom: -18, right: -16, animation: "floatC 9s ease-in-out 0.5s infinite" }}
+              style={{ bottom: -10, right: -6, animation: "floatC 9s ease-in-out 0.5s infinite" }}
               label="Client Rating"
-              value="4.7★"
+              value="4.7"
               sub="On Google, verified reviews"
               icon={
                 <svg width="12" height="12" viewBox="0 0 20 20" fill={T}>

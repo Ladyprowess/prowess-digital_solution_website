@@ -102,7 +102,7 @@ export default function ResourceUploadPage() {
         throw new Error(data?.error || "Upload failed");
       }
 
-      alert("Uploaded successfully ✅");
+      alert("Uploaded successfully.");
 
       // reset
       setTitle("");
