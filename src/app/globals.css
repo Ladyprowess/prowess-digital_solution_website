@@ -195,10 +195,7 @@ body {
   }
 
   .pill {
-    @apply inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm;
-    background: rgba(80, 124, 128, 0.08);
-    border-color: rgba(80, 124, 128, 0.18);
-    color: #33565a;
+    @apply inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm text-primary;
   }
 
   .h1 {
@@ -212,8 +209,7 @@ body {
   }
 
   .lead {
-    @apply text-base sm:text-lg;
-    color: var(--legacy-muted-text);
+    @apply text-base sm:text-lg text-muted-foreground;
   }
 
   .divider {

@@ -111,7 +111,7 @@ export default function PricingPage() {
       {/* ── TRUST STRIP ───────────────────────────────────────────────────── */}
       <section className="bg-background pb-24 pt-2 sm:pb-32">
         <Container>
-          <div className="mx-auto grid max-w-4xl gap-10 sm:grid-cols-3">
+          <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-3">
             {[
               {
                 icon: (
@@ -132,16 +132,14 @@ export default function PricingPage() {
               },
             ].map((item, i) => (
               <Reveal key={item.title} delay={i * 90}>
-                <div className="flex items-start gap-4">
+                <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md">
                   <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10">
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
                       {item.icon}
                     </svg>
                   </div>
-                  <div>
-                    <div className="font-bold text-foreground">{item.title}</div>
-                    <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</div>
-                  </div>
+                  <div className="mt-4 font-bold text-foreground">{item.title}</div>
+                  <div className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.desc}</div>
                 </div>
               </Reveal>
             ))}

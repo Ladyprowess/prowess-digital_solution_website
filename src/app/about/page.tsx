@@ -285,8 +285,10 @@ function TrustCard({
   desc: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition hover:shadow-md">
-      <div className="mb-4 flex justify-center text-primary">{icon}</div>
+    <div className="group rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 transition group-hover:scale-105">
+        {icon}
+      </div>
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <p className="mt-2 leading-relaxed text-muted-foreground">{desc}</p>
     </div>
