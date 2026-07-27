@@ -18,7 +18,21 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     .single();
 
   if (subErr || !sub) return { ok: false as const };
-  if (sub.payment_status === "paid") return { ok: true as const, alreadyPaid: true };
+
+  if (sub.payment_status === "paid") {
+    // A renewal charge on an already-paid subscription - the access code
+    // from the first charge is still valid, so don't re-send emails or
+    // re-issue a code. But DO clear a stale "lapsed" flag if a prior
+    // renewal failed and this one recovered before Flutterwave cancelled
+    // the subscription outright.
+    if (sub.subscription_status === "lapsed") {
+      await supabase
+        .from("membership_subscriptions")
+        .update({ subscription_status: "active", lapsed_at: null, flutterwave_reference: reference })
+        .eq("id", sub.id);
+    }
+    return { ok: true as const, alreadyPaid: true };
+  }
 
   const { error: updErr } = await supabase
     .from("membership_subscriptions")
