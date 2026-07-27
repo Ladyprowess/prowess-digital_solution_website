@@ -381,14 +381,21 @@ export default function ModernHomePage() {
                 <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
                   Start with the Business Structure Diagnostic and take the first step towards sustainable growth.
                 </p>
-                <Link href="/services/business-structure-diagnostic">
-                  <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90 hover:shadow-xl">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Start the Diagnostic Now
-                  </button>
-                </Link>
+                <div className="flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
+                  <Link href="/services/business-structure-diagnostic">
+                    <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90 hover:shadow-xl">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Start the Diagnostic Now
+                    </button>
+                  </Link>
+                  <Link href="/consultation">
+                    <button className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-8 py-4 text-base font-semibold text-foreground transition hover:bg-muted">
+                      Book a Consultation First
+                    </button>
+                  </Link>
+                </div>
               </div>
             </Reveal>
 

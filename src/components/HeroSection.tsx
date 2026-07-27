@@ -126,13 +126,13 @@ export function HeroSection() {
                   Start the Diagnostic
                 </button>
               </Link>
-              <Link href="/services">
+              <Link href="/consultation">
                 <button
                   style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: ink, fontWeight: 600, fontSize: "0.9rem", padding: "12px 22px", borderRadius: 10, border: `1.5px solid ${border}`, cursor: "pointer", transition: "border-color 0.15s, background 0.15s" }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(80,124,128,0.35)"; e.currentTarget.style.background = "#fff"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = border; e.currentTarget.style.background = "transparent"; }}
                 >
-                  Explore Our Services
+                  Book a Consultation
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>

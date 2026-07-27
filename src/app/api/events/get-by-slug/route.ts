@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabase
     .from("events")
-    .select("id,title,slug,description,start_datetime,registration_type,price_ngn,status")
+    .select("id,title,slug,description,start_datetime,registration_type,price_usd,status")
     .eq("slug", slug)
     .eq("status", "published")
     .limit(1)

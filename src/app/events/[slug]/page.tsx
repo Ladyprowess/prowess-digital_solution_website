@@ -12,7 +12,7 @@ type EventRow = {
   description: string | null;
   start_datetime: string;
   registration_type: "free" | "paid";
-  price_ngn: number | null;
+  price_usd: number | null;
 };
 
 export default function EventRegistrationPage() {
@@ -128,7 +128,9 @@ export default function EventRegistrationPage() {
   }
 
   const isPaid = event.registration_type === "paid";
-  const priceText = isPaid ? `₦${Number(event.price_ngn || 0).toLocaleString()}` : "Free";
+  const priceText = isPaid
+    ? `$${Number(event.price_usd || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : "Free";
 
   return (
     <div className="pb-16">

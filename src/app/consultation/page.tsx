@@ -9,7 +9,7 @@ type Service = {
   id: string;
   name: string;
   duration_minutes: number;
-  price_ngn: number;
+  price_usd: number;
 };
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -17,7 +17,7 @@ function cn(...classes: Array<string | false | null | undefined>) {
 }
 
 function fmtPrice(n: number) {
-  return `₦${Number(n || 0).toLocaleString("en-NG")}`;
+  return `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function getNextBusinessDays(days = 14) {
@@ -199,7 +199,7 @@ export default function ConsultationPage() {
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name} - {s.price_ngn > 0 ? fmtPrice(s.price_ngn) : "Free"}
+                      {s.name} - {s.price_usd > 0 ? fmtPrice(s.price_usd) : "Free"}
                     </option>
                   ))}
                 </select>
@@ -335,8 +335,8 @@ export default function ConsultationPage() {
               >
                 {loading
                   ? "Processing…"
-                  : selectedService?.price_ngn && selectedService.price_ngn > 0
-                    ? `Pay ${fmtPrice(selectedService.price_ngn)} & Book`
+                  : selectedService?.price_usd && selectedService.price_usd > 0
+                    ? `Pay ${fmtPrice(selectedService.price_usd)} & Book`
                     : "Book Consultation"}
               </button>
             </div>

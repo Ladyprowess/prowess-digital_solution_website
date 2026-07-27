@@ -19,7 +19,7 @@ type EventRow = {
 
   status: "published" | "draft";
   registration_type: "free" | "paid";
-  price_ngn: number | null;
+  price_usd: number | null;
 
   price: number | null;
   spots_left: number | null;
@@ -47,7 +47,7 @@ export default function AdminEventsPage() {
   const [location, setLocation] = useState("");
 
   const [registrationType, setRegistrationType] = useState<"free" | "paid">("free");
-  const [priceNgn, setPriceNgn] = useState("");
+  const [priceUsd, setPriceUsd] = useState("");
 
   const [status, setStatus] = useState<"published" | "draft">("published");
 
@@ -95,7 +95,7 @@ export default function AdminEventsPage() {
     const { data: eventsData, error: eventsError } = await supabase
       .from("events")
       .select(
-        "id,title,slug,description,type,date,time,duration,location,status,registration_type,price_ngn,price,spots_left,cover_url,registration_url,created_at"
+        "id,title,slug,description,type,date,time,duration,location,status,registration_type,price_usd,price,spots_left,cover_url,registration_url,created_at"
       )
       .order("created_at", { ascending: false });
 
@@ -127,7 +127,7 @@ export default function AdminEventsPage() {
     if (!date.trim()) return setMessage("Date is required.");
 
     if (registrationType === "paid") {
-      const p = Number(priceNgn);
+      const p = Number(priceUsd);
       if (!p || p < 1) return setMessage("Enter a valid price for paid events.");
     }
 
@@ -147,7 +147,7 @@ export default function AdminEventsPage() {
 
       form.append("status", status);
       form.append("registration_type", registrationType);
-      form.append("price_ngn", registrationType === "paid" ? String(Number(priceNgn)) : "");
+      form.append("price_usd", registrationType === "paid" ? String(Number(priceUsd)) : "");
 
       // optional slug
       if (slug.trim()) form.append("slug", slug.trim());
@@ -180,7 +180,7 @@ export default function AdminEventsPage() {
       setDuration("");
       setLocation("");
       setRegistrationType("free");
-      setPriceNgn("");
+      setPriceUsd("");
       setStatus("published");
       setCoverFile(null);
 
@@ -345,10 +345,10 @@ export default function AdminEventsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-slate-900">Price (₦)</label>
+              <label className="text-sm font-semibold text-slate-900">Price ($)</label>
               <input
-                value={priceNgn}
-                onChange={(e) => setPriceNgn(e.target.value)}
+                value={priceUsd}
+                onChange={(e) => setPriceUsd(e.target.value)}
                 disabled={registrationType !== "paid"}
                 className={cn(
                   "mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm",
@@ -478,7 +478,7 @@ export default function AdminEventsPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-9-9.5v10.5a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25h-15a2.25 2.25 0 00-2.25 2.25z" />
                       </svg>
                       {ev.registration_type === "paid"
-                        ? `Paid (₦${Number(ev.price_ngn || 0).toLocaleString()})`
+                        ? `Paid ($${Number(ev.price_usd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
                         : "Free"}
                     </div>
                     <div className="flex items-center gap-1.5">

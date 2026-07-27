@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("id,registration_type,price_ngn")
+      .select("id,registration_type,price_usd")
       .eq("id", event_id)
       .limit(1)
       .single();
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     }
 
     // PAID EVENT
-    const amount = Number(event.price_ngn || 0);
+    const amount = Number(event.price_usd || 0);
     if (!amount || amount < 1) {
       return NextResponse.json({ error: "Paid event price is not set." }, { status: 400 });
     }
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     const { link } = await initializePayment({
       email: String(email).trim(),
       amount,
-      currency: "NGN",
+      currency: "USD",
       reference,
       callbackUrl,
       metadata: {

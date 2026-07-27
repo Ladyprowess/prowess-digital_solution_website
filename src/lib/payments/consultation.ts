@@ -44,12 +44,12 @@ export async function markConsultationPaid(reference: string) {
 
   const { data: service } = await supabase
     .from("consultation_services")
-    .select("name,price_ngn")
+    .select("name,price_usd")
     .eq("id", booking.service_id)
     .single();
 
-  const expectedAmount = Math.floor(Number(service?.price_ngn || 0));
-  const paidAmount = Math.floor(Number(data?.amount || 0));
+  const expectedAmount = Math.round(Number(service?.price_usd || 0) * 100);
+  const paidAmount = Math.round(Number(data?.amount || 0) * 100);
   if (paidAmount !== expectedAmount) {
     await supabase
       .from("consultation_bookings")

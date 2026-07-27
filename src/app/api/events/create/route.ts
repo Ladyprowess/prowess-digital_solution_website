@@ -29,16 +29,16 @@ export async function POST(req: Request) {
 
     const registration_url = String(form.get("registration_url") || "").trim();
 
-    // ✅ NEW: status + registration_type + price_ngn (from your form)
+    // ✅ NEW: status + registration_type + price_usd (from your form)
     const statusRaw = String(form.get("status") || "published").trim().toLowerCase();
     const status = (statusRaw === "draft" ? "draft" : "published") as "published" | "draft";
 
     const regRaw = String(form.get("registration_type") || "free").trim().toLowerCase();
     const registration_type = (regRaw === "paid" ? "paid" : "free") as "free" | "paid";
 
-    const priceNgnRaw = String(form.get("price_ngn") || "").trim();
-    const price_ngn =
-      registration_type === "paid" ? Number(priceNgnRaw || 0) : null;
+    const priceUsdRaw = String(form.get("price_usd") || "").trim();
+    const price_usd =
+      registration_type === "paid" ? Number(priceUsdRaw || 0) : null;
 
     // keep your old fields too (in case your table still uses them)
     const priceRaw = String(form.get("price") || "0").trim();
@@ -56,9 +56,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (registration_type === "paid" && (!price_ngn || price_ngn < 1)) {
+    if (registration_type === "paid" && (!price_usd || price_usd < 1)) {
       return NextResponse.json(
-        { ok: false, error: "Paid events must have a valid price_ngn." },
+        { ok: false, error: "Paid events must have a valid price_usd." },
         { status: 400 }
       );
     }
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
       // new fields
       status,
       registration_type,
-      price_ngn,
+      price_usd,
 
       // old fields (optional)
       price: Number.isFinite(price) ? price : 0,

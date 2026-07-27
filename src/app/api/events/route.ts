@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     let query = supabase
       .from("events")
       .select(
-        "id,title,type,description,date,time,duration,location,price,spots_left,cover_url,registration_url,slug,start_datetime,registration_type,price_ngn,status,created_at"
+        "id,title,type,description,date,time,duration,location,price,spots_left,cover_url,registration_url,slug,start_datetime,registration_type,price_usd,status,created_at"
       )
       .eq("status", "published")
       .range(from, to);
@@ -81,11 +81,14 @@ export async function GET(req: Request) {
             ? toISODateOnly(String(start))
             : "";
 
+        // price_usd is the authoritative field post-migration; only fall
+        // back to the legacy generic `price` column for rows that somehow
+        // never got a price_usd value.
         const price =
-          typeof e.price === "number"
-            ? e.price
-            : typeof e.price_ngn === "number"
-              ? e.price_ngn
+          typeof e.price_usd === "number"
+            ? e.price_usd
+            : typeof e.price === "number"
+              ? e.price
               : null;
 
         // ✅ ONLY use registration_url (no external_registration_link)
@@ -99,7 +102,7 @@ export async function GET(req: Request) {
           slug: e.slug || null,
           start_datetime: start,
           registration_type: e.registration_type || null,
-          price_ngn: typeof e.price_ngn === "number" ? e.price_ngn : null,
+          price_usd: typeof e.price_usd === "number" ? e.price_usd : null,
         };
       }) ?? [];
 

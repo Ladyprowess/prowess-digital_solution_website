@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     // 1) Get service (price + duration)
     const { data: service, error: svcErr } = await supabase
       .from("consultation_services")
-      .select("id,name,duration_minutes,price_ngn,is_active")
+      .select("id,name,duration_minutes,price_usd,is_active")
       .eq("id", service_id)
       .single();
 
@@ -45,9 +45,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Selected service not available." }, { status: 400 });
     }
 
-    const amount_ngn = Number(service.price_ngn || 0);
+    const amount_usd = Number(service.price_usd || 0);
     const duration_minutes = Number(service.duration_minutes || 30);
-    const isPaid = amount_ngn > 0;
+    const isPaid = amount_usd > 0;
 
     // 2) Compute start_at / end_at
     const startISO = buildStartISO(scheduled_date, scheduled_time);
@@ -82,10 +82,10 @@ export async function POST(req: Request) {
 
           payment_status: isPaid ? "pending" : "free",
           flutterwave_reference: reference,
-          amount_ngn: Math.floor(amount_ngn),
+          amount_usd,
         },
       ])
-      .select("id,full_name,email,phone,start_at,end_at,timezone,payment_status,flutterwave_reference,amount_ngn,service_id")
+      .select("id,full_name,email,phone,start_at,end_at,timezone,payment_status,flutterwave_reference,amount_usd,service_id")
       .single();
 
     // Handle insert errors properly (including duplicate slot)
@@ -160,8 +160,8 @@ await sendConsultationEmail({
 
     const { link } = await initializePayment({
       email,
-      amount: Math.floor(amount_ngn),
-      currency: "NGN",
+      amount: amount_usd,
+      currency: "USD",
       reference: safeRef,
       callbackUrl,
       metadata: {
