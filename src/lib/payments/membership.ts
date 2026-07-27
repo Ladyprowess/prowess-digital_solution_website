@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
+import { genAccessCode, toolsForPlan, PREMIUM_TOOL_NAMES } from "@/lib/tools/tierAccess";
 
 /**
  * Marks a membership subscription paid and sends both confirmation emails.
@@ -33,6 +34,29 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     .replace(/-/g, " ")
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
 
+  // Auto-issue a tools access code scoped to exactly what this tier includes,
+  // so the client can get into their tools immediately rather than waiting
+  // on a manual admin step.
+  const unlockedTools = toolsForPlan(sub.plan_slug);
+  const accessCode = genAccessCode();
+
+  await supabase.from("client_codes").insert({
+    code: accessCode,
+    name: sub.full_name,
+    email: sub.email,
+    business: sub.business_name,
+    type: "1year",
+    status: "active",
+    created_at: Date.now(),
+    expires_at: Date.now() + 365 * 24 * 60 * 60 * 1000,
+    allowed_tools: unlockedTools,
+    plan_slug: sub.plan_slug,
+  });
+
+  const toolsList = unlockedTools.length
+    ? unlockedTools.map((t) => `<li>${PREMIUM_TOOL_NAMES[t]}</li>`).join("")
+    : "<li>No premium tools are included on this tier.</li>";
+
   await resend.emails.send({
     from: fromEmail,
     to: sub.email,
@@ -43,6 +67,11 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
         <p>Your <b>${planTitle}</b> membership payment has been received (billed ${sub.billing_interval}).</p>
         <p>Here is what happens next: we have your business details and what you would like us to focus on
            (${sub.service_focus}), and we will reach out to you directly within 24 hours to get started.</p>
+        <p>Your tools access is ready right now. Your access code is:</p>
+        <p style="font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 1px;">${accessCode}</p>
+        <p>This code unlocks:</p>
+        <ul>${toolsList}</ul>
+        <p>Enter it at <a href="https://prowessdigitalsolutions.com/tools">prowessdigitalsolutions.com/tools</a> to get started.</p>
         <p>Payment reference: ${sub.paystack_reference}</p>
       </div>
     `,
@@ -64,6 +93,7 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
         <p><b>What they want us to focus on:</b> ${sub.service_focus}</p>
         <p><b>Amount:</b> $${sub.amount_usd} (${sub.billing_interval})</p>
         <p><b>Ref:</b> ${sub.paystack_reference}</p>
+        <p><b>Tools access code auto-issued:</b> ${accessCode} (${unlockedTools.join(", ") || "no tools on this tier"})</p>
         <p style="color:#b45309;"><b>Reminder: reach out within 24 hours.</b></p>
       </div>
     `,

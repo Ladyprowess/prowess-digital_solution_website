@@ -378,6 +378,7 @@ const REASON_MSG:Record<string,string>={
   invalid:"That code is not recognised. Please check and try again.",
   revoked:"This access code has been revoked. Please contact Prowess Digital Solutions.",
   expired:"This access code has expired. Please contact Prowess Digital Solutions to renew.",
+  not_included:"Your current plan does not include this tool. Upgrade your membership to unlock it.",
 };
 
 export default function TrackerPage(){
@@ -396,17 +397,17 @@ export default function TrackerPage(){
 
   async function silentVerify(savedCode:string){
     try{
-      const res=await fetch("/api/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:savedCode})});
+      const res=await fetch("/api/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:savedCode,tool:"tracker"})});
       const data=await res.json();
       if(data.valid){setGrantedCode(savedCode);localStorage.setItem("pds-access-tracker",JSON.stringify({code:savedCode}));}
-      else{localStorage.removeItem("pds-access-tracker");}
+      else if(data.reason==="not_included"){setCode(savedCode);setReason("not_included");setStatus("denied");}else{localStorage.removeItem("pds-access-tracker");}
     }catch{localStorage.removeItem("pds-access-tracker");}
   }
 
   async function verify(){
     setStatus("checking");
     try{
-      const res=await fetch("/api/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code.trim()})});
+      const res=await fetch("/api/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code.trim(),tool:"tracker"})});
       const data=await res.json();
       if(data.valid){const c=code.trim().toUpperCase();setGrantedCode(c);localStorage.setItem("pds-access-tracker",JSON.stringify({code:c}));}
       else{setReason(data.reason??"invalid");setStatus("denied");localStorage.removeItem("pds-access-tracker");}
@@ -549,7 +550,7 @@ export default function TrackerPage(){
                     className={`g-code-input${status==="denied"?" err":status==="granted"?" ok":""}`}
                   />
                 </div>
-                <div className="g-err-txt">{status==="denied"?(REASON_MSG[reason]??REASON_MSG.invalid):""}</div>
+                <div className="g-err-txt">{status==="denied"?(<>{REASON_MSG[reason]??REASON_MSG.invalid}{reason==="not_included"&&<> <a href="/pricing" style={{color:"inherit",textDecoration:"underline"}}>View plans →</a></>}</>):""}</div>
 
                 <button onClick={verify} disabled={status==="checking"||!code.trim()} className="g-submit">
                   {status==="checking"?"Verifying your code...":"Unlock Tracker →"}

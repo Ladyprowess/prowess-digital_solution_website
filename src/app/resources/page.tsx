@@ -48,7 +48,7 @@ const TOOLS = [
     ),
     title: "Business Helper",
     desc: "Describe what is happening in your business and get a structured diagnostic report with a Business Health Score and clear next steps, powered by AI.",
-    href: "/tools/business-helper.html",
+    href: "/tools/business-helper",
     cta: "Run a Diagnostic",
   },
   {
@@ -70,7 +70,7 @@ const TOOLS = [
     ),
     title: "Business Structure Template",
     desc: "Map out your roles, departments, decision making, and communication flow. Fill it in and download it as your operating foundation.",
-    href: "/tools/business-structure.html",
+    href: "/tools/business-structure",
     cta: "Build Your Structure",
   },
   {
@@ -81,7 +81,7 @@ const TOOLS = [
     ),
     title: "Customer Service Guide",
     desc: "A practical guide to handling clients, complaints, and retention.",
-    href: "/tools/customer-support.html",
+    href: "/tools/customer-support",
     cta: "Read the Guide",
   },
 ];

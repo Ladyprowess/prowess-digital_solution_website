@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  async rewrites() {
+    return [
+      { source: "/tools/business-helper", destination: "/tools/business-helper.html" },
+      { source: "/tools/business-structure", destination: "/tools/business-structure.html" },
+      { source: "/tools/customer-support", destination: "/tools/customer-support.html" },
+    ];
+  },
 };
 
 export default nextConfig;

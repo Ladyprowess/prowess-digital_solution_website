@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { PREMIUM_TOOL_KEYS, PREMIUM_TOOL_NAMES, type PremiumToolKey } from "@/lib/tools/tierAccess";
 
 const B = "#507c80", DARK = "#3a5c60", MID = "#6a9ea3", LITE = "#e8f4f5";
 const LGRAY = "#f2f5f5", MGRAY = "#c8d8da", W = "#fff";
@@ -13,6 +14,7 @@ interface Client {
   email: string | null; business: string | null; notes: string | null;
   type: AccessType; status: "active" | "revoked";
   created_at: number; expires_at: number | null;
+  allowed_tools: string[] | null; plan_slug: string | null;
 }
 
 const fmtDate = (ts: number | null) =>
@@ -49,8 +51,13 @@ function CopyBtn({ text }: { text: string }) {
 
 function CreateModal({ token, onSave, onClose }: { token: string; onSave: (c: Client) => void; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", phone: "", email: "", business: "", notes: "", type: "1year" as AccessType });
+  const [tools, setTools] = useState<PremiumToolKey[]>([...PREMIUM_TOOL_KEYS]);
   const [saving, setSaving] = useState(false);
   const f = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm(x => ({ ...x, [k]: v }));
+
+  function toggleTool(key: PremiumToolKey) {
+    setTools(prev => prev.includes(key) ? prev.filter(t => t !== key) : [...prev, key]);
+  }
 
   async function save() {
     if (!form.name.trim()) return;
@@ -58,7 +65,7 @@ function CreateModal({ token, onSave, onClose }: { token: string; onSave: (c: Cl
     const res = await fetch("/api/admin/clients", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-token": token },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, allowed_tools: tools }),
     });
     if (res.ok) { onSave(await res.json()); onClose(); }
     setSaving(false);
@@ -93,6 +100,20 @@ function CreateModal({ token, onSave, onClose }: { token: string; onSave: (c: Cl
                 <div style={{ fontSize: 11, color: form.type === v ? MID : "#bbb", marginTop: 2 }}>{v === "1year" ? "Expires in 1 year" : "Never expires"}</div>
               </div>
             ))}
+          </div>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: DARK, display: "block", marginBottom: 6 }}>Tools Included</label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {PREMIUM_TOOL_KEYS.map(key => (
+              <label key={key} style={{ display: "flex", alignItems: "center", gap: 7, padding: "7px 10px", border: `1.5px solid ${tools.includes(key) ? B : MGRAY}`, borderRadius: 8, cursor: "pointer", background: tools.includes(key) ? LITE : W }}>
+                <input type="checkbox" checked={tools.includes(key)} onChange={() => toggleTool(key)} style={{ accentColor: B }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: DARK }}>{PREMIUM_TOOL_NAMES[key]}</span>
+              </label>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: MID, marginTop: 6 }}>
+            All checked = full access to every premium tool. Uncheck to limit this code to specific tools.
           </div>
         </div>
         <div style={{ marginBottom: 20 }}>
@@ -181,7 +202,13 @@ function ClientRow({ client, token, onUpdate, onDelete }: { client: Client; toke
                     <button onClick={() => setConf(false)} style={{ padding: "6px 12px", background: LGRAY, border: "none", borderRadius: 7, fontSize: 12, cursor: "pointer" }}>No</button>
                   </div>}
             </div>
-            {client.notes && <div style={{ marginTop: 10, fontSize: 12, color: "#888" }}><b>Notes:</b> {client.notes}</div>}
+            <div style={{ marginTop: 10, fontSize: 12, color: "#888" }}>
+              <b>Tools:</b> {client.allowed_tools && client.allowed_tools.length > 0
+                ? client.allowed_tools.map(t => PREMIUM_TOOL_NAMES[t as PremiumToolKey] ?? t).join(", ")
+                : "All tools"}
+              {client.plan_slug && <span> · from {client.plan_slug} membership</span>}
+            </div>
+            {client.notes && <div style={{ marginTop: 6, fontSize: 12, color: "#888" }}><b>Notes:</b> {client.notes}</div>}
           </td>
         </tr>
       )}

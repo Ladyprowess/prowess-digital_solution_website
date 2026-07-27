@@ -18,6 +18,7 @@ const REASON_MSG: Record<string, string> = {
   invalid: "That code is not recognised. Please check and try again.",
   revoked: "This access code has been revoked. Please contact Prowess Digital Solutions.",
   expired: "This access code has expired. Please contact Prowess Digital Solutions to renew.",
+  not_included: "Your current plan does not include this tool. Upgrade your membership to unlock it.",
 };
 
 export default function AccessGate({ toolKey, toolName, children }: Props) {
@@ -58,7 +59,7 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
       const res = await fetch("/api/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: savedCode }),
+        body: JSON.stringify({ code: savedCode, tool: toolKey }),
       });
       const data = await res.json();
       if (data.valid) {
@@ -67,6 +68,12 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
         setStatus("granted");
         // Refresh the saved client info
         localStorage.setItem(`pds-access-${toolKey}`, JSON.stringify({ code: savedCode, client: data.client }));
+      } else if (data.reason === "not_included") {
+        // Valid code, just not for this tool - show the reason directly
+        // rather than resetting to a blank "enter your code" form.
+        setCode(savedCode);
+        setReason("not_included");
+        setStatus("denied");
       } else {
         // Code is revoked, expired, or invalid - clear session, show gate
         signOut();
@@ -84,7 +91,7 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
       const res = await fetch("/api/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: input }),
+        body: JSON.stringify({ code: input, tool: toolKey }),
       });
       const data = await res.json();
       if (data.valid) {
@@ -161,7 +168,17 @@ export default function AccessGate({ toolKey, toolName, children }: Props) {
           className="w-full rounded-xl border border-slate-200 px-4 py-3 text-center font-mono text-lg font-bold tracking-widest outline-none focus:border-[#507c80] focus:ring-2 focus:ring-[#507c80]/20"
         />
         {status === "denied" && (
-          <p className="text-sm font-medium text-red-600">{REASON_MSG[reason] ?? REASON_MSG.invalid}</p>
+          <p className="text-sm font-medium text-red-600">
+            {REASON_MSG[reason] ?? REASON_MSG.invalid}
+            {reason === "not_included" && (
+              <>
+                {" "}
+                <a href="/pricing" className="underline">
+                  View plans →
+                </a>
+              </>
+            )}
+          </p>
         )}
         <button type="submit" disabled={status === "checking" || !code.trim()}
           className="w-full rounded-xl py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50"

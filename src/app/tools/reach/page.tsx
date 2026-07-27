@@ -408,6 +408,7 @@ const REASON_MSG:Record<string,string>={
   invalid:"That code is not recognised. Please check and try again.",
   revoked:"This access code has been revoked. Please contact Prowess Digital Solutions.",
   expired:"This access code has expired. Please contact Prowess Digital Solutions to renew.",
+  not_included:"Your current plan does not include this tool. Upgrade your membership to unlock it.",
 };
 
 export default function ReachPage(){
@@ -425,16 +426,16 @@ export default function ReachPage(){
   },[]);
 
   async function silentVerify(savedCode:string){
-    try{const res=await fetch("/api/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:savedCode})});
+    try{const res=await fetch("/api/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:savedCode,tool:"reach"})});
       const data=await res.json();
       if(data.valid){setGrantedCode(savedCode);setStatus("granted");localStorage.setItem("pds-access-reach",JSON.stringify({code:savedCode}));}
-      else{localStorage.removeItem("pds-access-reach");}
+      else if(data.reason==="not_included"){setCode(savedCode);setReason("not_included");setStatus("denied");}else{localStorage.removeItem("pds-access-reach");}
     }catch{localStorage.removeItem("pds-access-reach");}
   }
 
   async function verify(){
     setStatus("checking");
-    try{const res=await fetch("/api/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code.trim()})});
+    try{const res=await fetch("/api/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code.trim(),tool:"reach"})});
       const data=await res.json();
       if(data.valid){const c=code.trim().toUpperCase();setGrantedCode(c);setStatus("granted");localStorage.setItem("pds-access-reach",JSON.stringify({code:c}));}
       else{setReason(data.reason??"invalid");setStatus("denied");localStorage.removeItem("pds-access-reach");}
@@ -548,7 +549,7 @@ export default function ReachPage(){
               <div className="g-card-sub">Enter your Prowess Digital Solutions access code to unlock.</div>
               <span className="g-code-label">Your access code</span>
               <input value={code} placeholder="PDS-XXXX-XXXX" onChange={e=>{setCode(e.target.value.toUpperCase());setStatus("idle");}} onKeyDown={e=>e.key==="Enter"&&verify()} disabled={status==="checking"} autoComplete="off" className={`g-code-input${status==="denied"?" err":""}`}/>
-              <div className="g-err-txt">{status==="denied"?(REASON_MSG[reason]??REASON_MSG.invalid):""}</div>
+              <div className="g-err-txt">{status==="denied"?(<>{REASON_MSG[reason]??REASON_MSG.invalid}{reason==="not_included"&&<> <a href="/pricing" style={{color:"inherit",textDecoration:"underline"}}>View plans →</a></>}</>):""}</div>
               <button onClick={verify} disabled={status==="checking"||!code.trim()} className="g-submit">{status==="checking"?"Verifying your code...":"Unlock Growth Planner →"}</button>
               <p className="g-hint">Your access code was provided when you engaged with Prowess Digital Solutions.</p>
               <div className="g-sep"/>

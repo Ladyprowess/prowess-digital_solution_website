@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { TOOL_MIN_TIER } from "@/lib/tools/tierAccess";
 
 const ICON_PATHS: Record<string, string> = {
   calculator: "M8.25 3v1.5M4.5 8.25h15M5.25 21h13.5A2.25 2.25 0 0021 18.75V5.25A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25v13.5A2.25 2.25 0 005.25 21zM9.75 15h.008v.008H9.75V15zm0 3h.008v.008H9.75V18zm3-3h.008v.008H12.75V15zm0 3h.008v.008H12.75V18zm3-3h.008v.008H15.75V15zm0 3h.008v.008H15.75V18zM9.75 11.25h4.5",
@@ -23,11 +24,11 @@ function ToolIcon({ iconKey }: { iconKey: string }) {
 }
 
 const TOOLS = [
-  {key:"calculator",href:"/tools/calculator",badge:"Premium",title:"Startup Cost & Break-Even Calculator",desc:"Know exactly how much it costs to launch. Set the right price. Find your break-even point before you spend a single dollar.",detail:"Startup costs · Pricing · Break-even · Funding tracker",gated:true},
-  {key:"tracker",href:"/tools/tracker",badge:"Premium",title:"Profit & Cashflow Tracker",desc:"Track every dollar in and out. Monthly summaries, annual overview, and cashflow forecasting so you always know where your business stands.",detail:"Monthly tracking · Annual view · Cashflow forecast",gated:true},
-  {key:"invoice",href:"/tools/invoice",badge:"Premium",title:"Invoice Manager",desc:"Create professional invoices, track who has paid and who has not, and send payment reminders directly to clients via WhatsApp or email.",detail:"Invoice creation · Payment tracking · WhatsApp reminders",gated:true},
-  {key:"inventory",href:"/tools/inventory",badge:"Premium",title:"Inventory Manager",desc:"Track your stock levels in real time. Get low stock alerts before you run out. Works for both product and service businesses.",detail:"Stock tracking · Low stock alerts · Service availability",gated:true},
-  {key:"reach",href:"/tools/reach",badge:"Premium",title:"Reach & Growth Planner",desc:"A full growth toolkit; content ideas for every platform, an ad campaign tracker, a social media calendar, and a practical marketing guide.",detail:"Content ideas · Ad planner · Social calendar · Growth guide",gated:true},
+  {key:"calculator",href:"/tools/calculator",badge:`From ${TOOL_MIN_TIER.calculator}`,title:"Startup Cost & Break-Even Calculator",desc:"Know exactly how much it costs to launch. Set the right price. Find your break-even point before you spend a single dollar.",detail:"Startup costs · Pricing · Break-even · Funding tracker",gated:true},
+  {key:"tracker",href:"/tools/tracker",badge:`From ${TOOL_MIN_TIER.tracker}`,title:"Profit & Cashflow Tracker",desc:"Track every dollar in and out. Monthly summaries, annual overview, and cashflow forecasting so you always know where your business stands.",detail:"Monthly tracking · Annual view · Cashflow forecast",gated:true},
+  {key:"invoice",href:"/tools/invoice",badge:`From ${TOOL_MIN_TIER.invoice}`,title:"Invoice Manager",desc:"Create professional invoices, track who has paid and who has not, and send payment reminders directly to clients via WhatsApp or email.",detail:"Invoice creation · Payment tracking · WhatsApp reminders",gated:true},
+  {key:"inventory",href:"/tools/inventory",badge:`From ${TOOL_MIN_TIER.inventory}`,title:"Inventory Manager",desc:"Track your stock levels in real time. Get low stock alerts before you run out. Works for both product and service businesses.",detail:"Stock tracking · Low stock alerts · Service availability",gated:true},
+  {key:"reach",href:"/tools/reach",badge:`From ${TOOL_MIN_TIER.reach}`,title:"Reach & Growth Planner",desc:"A full growth toolkit; content ideas for every platform, an ad campaign tracker, a social media calendar, and a practical marketing guide.",detail:"Content ideas · Ad planner · Social calendar · Growth guide",gated:true},
   {key:"business-helper",href:"/tools/business-helper",badge:"Free",title:"Business Helper",desc:"Tell us what is happening in your business. Get a structured diagnostic report with a Business Health Score and clear next steps powered by AI.",detail:"AI diagnostic · Health score · Action plan",gated:false},
   {key:"business-health-check",href:"/tools/business-health-check",badge:"Free",title:"Operational Health Self-Audit",desc:"Work through the foundational things every business must have before chasing growth. Check off what you have. See where the gaps are.",detail:"36 checkpoints · 6 categories · Progress tracking",gated:false},
   {key:"business-structure",href:"/tools/business-structure",badge:"Free",title:"Business Structure Template",desc:"Map out your business structure step by step. Define roles, responsibilities, decision making, and communication flow.",detail:"Role mapping · Decision flow · Downloadable output",gated:false},
@@ -97,11 +98,11 @@ export default function ToolsPage() {
           <div className="orb orb-b"/>
           <p className="eyebrow">Prowess Digital Solutions &nbsp;·&nbsp; Business Tools</p>
           <h1 className="htitle">Everything your business<br/>needs, <span className="acc">in one place</span></h1>
-          <p className="hsub">Nine tools built for African entrepreneurs. From startup planning to invoicing, stock management, and growth; the right tool for every stage.</p>
+          <p className="hsub">Nine tools built for founders everywhere. From startup planning to invoicing, stock management, and growth; the right tool for every stage.</p>
           <div className="statbar">
             <div><div className="statnum">9</div><div className="statlabel">Business tools</div></div>
             <div className="sdiv"/>
-            <div><div className="statnum">54</div><div className="statlabel">African currencies</div></div>
+            <div><div className="statnum">5</div><div className="statlabel">Premium tools</div></div>
             <div className="sdiv"/>
             <div><div className="statnum">4</div><div className="statlabel">Free tools</div></div>
           </div>

@@ -5,7 +5,7 @@ import Container from "@/components/Container";
 import Link from "next/link";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
-import { packages, annualMonthlyPrice, annualTotalPrice } from "@/content/site";
+import { packages, addOns, annualMonthlyPrice, annualTotalPrice } from "@/content/site";
 import MembershipIntakeModal from "@/components/MembershipIntakeModal";
 import type { BillingInterval } from "@/lib/payments/paystack";
 
@@ -339,6 +339,52 @@ export default function PricingPage() {
             </div>
           </div>
           </Reveal>
+        </Container>
+      </section>
+
+      {/* ── ADD-ONS ───────────────────────────────────────────────────────── */}
+      <section className="section bg-card">
+        <Container>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="h2">Need something extra?</h2>
+              <p className="lead mt-4">
+                A few one-off items that come up alongside a membership. Ask us and we will
+                add them to your setup.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2">
+            {[
+              {
+                title: addOns[0],
+                desc: "Get your business properly registered and named so you can operate, invoice, and open accounts with confidence.",
+              },
+              {
+                title: addOns[1],
+                desc: "A professional domain and business email set up and connected, so you look established from day one.",
+              },
+            ].map((item, i) => (
+              <Reveal key={item.title} delay={i * 90}>
+                <div className="flex h-full flex-col rounded-2xl border border-border bg-background p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                  </div>
+                  <div className="mt-4 font-bold text-foreground">{item.title}</div>
+                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
+                  <Link
+                    href="/contact"
+                    className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:opacity-80"
+                  >
+                    Ask about this →
+                  </Link>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </Container>
       </section>
 

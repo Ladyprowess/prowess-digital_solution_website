@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export async function POST(req: NextRequest) {
-  const { code } = await req.json();
+  const { code, tool } = await req.json();
   if (!code) return NextResponse.json({ valid: false, reason: "invalid" });
 
   const { data, error } = await supabase
@@ -20,6 +20,18 @@ export async function POST(req: NextRequest) {
   if (data.status === "revoked") return NextResponse.json({ valid: false, reason: "revoked" });
   if (data.type !== "forever" && data.expires_at && Date.now() > data.expires_at)
     return NextResponse.json({ valid: false, reason: "expired" });
+
+  // Null/empty allowed_tools means full access (legacy codes and admin-
+  // created codes with every tool checked) - only reject when the list is
+  // non-empty and specifically excludes the tool being requested.
+  if (
+    tool &&
+    Array.isArray(data.allowed_tools) &&
+    data.allowed_tools.length > 0 &&
+    !data.allowed_tools.includes(tool)
+  ) {
+    return NextResponse.json({ valid: false, reason: "not_included" });
+  }
 
   return NextResponse.json({
     valid: true,
