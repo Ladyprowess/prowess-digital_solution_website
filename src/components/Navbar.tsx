@@ -174,11 +174,20 @@ export default function Navbar() {
                 </svg>
               </button>
 
-              {/* ✅ MOBILE DROPDOWN (clean + soft background) */}
+              {/* MOBILE DROPDOWN */}
               {mobileOpen ? (
-                <div className="absolute left-0 top-[80px] w-full bg-primary/10 border-t border-border shadow-lg">
-                  <div className="mx-auto w-full max-w-6xl px-4 py-5">
-                    <div className="rounded-3xl bg-card/70 backdrop-blur border border-border p-4 shadow-sm">
+                <>
+                  {/* Dimming backdrop over page content behind the menu */}
+                  <div
+                    aria-hidden="true"
+                    onClick={() => setMobileOpen(false)}
+                    className="fixed inset-x-0 bottom-0 top-20 z-40 bg-black/40 lg:hidden"
+                  />
+
+                  {/* Solid, fully opaque menu panel - no see-through content behind text */}
+                  <div className="fixed inset-x-0 top-20 z-50 border-t border-border bg-background shadow-xl lg:hidden">
+                    <div className="mx-auto w-full max-w-6xl px-4 py-5">
+                      <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
                       {/* Primary links in a 2-column grid */}
                       <div className="grid grid-cols-2 gap-3">
                         {primaryLinks.map((item) => {
@@ -247,6 +256,7 @@ export default function Navbar() {
                     </div>
                   </div>
                 </div>
+                </>
               ) : null}
             </div>
           </div>
