@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
+import { Reveal } from "@/components/Reveal";
 import {
   GraduationCap,
   Users,
@@ -42,47 +43,55 @@ export default function AboutPage() {
       {/* ── WHY WE EXIST ──────────────────────────────────────────────────── */}
       <section className="section">
         <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="h2">Why Prowess Digital Solutions Exists</h2>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              We are a business consulting company that started in Nigeria and now works with
-              founders everywhere. We help people build structured, sustainable businesses through
-              fixed scope diagnostics, practical tools, and hands on documentation. Not quick fixes.
-              Not empty advice. Real support that stays with you as you grow.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="h2">Why Prowess Digital Solutions Exists</h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+                We are a business consulting company that started in Nigeria and now works with
+                founders everywhere. We help people build structured, sustainable businesses through
+                fixed scope diagnostics, practical tools, and hands on documentation. Not quick fixes.
+                Not empty advice. Real support that stays with you as you grow.
+              </p>
+            </div>
+          </Reveal>
 
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <ValueCard
-              icon="lightbulb"
-              title="Clarity Before Anything Else"
-              desc="Every successful business starts with clear thinking. We help you understand exactly what your business needs and why, before you invest more time or money into the wrong things."
-            />
-            <ValueCard
-              icon="building"
-              title="Foundations Built Properly"
-              desc="Shortcuts create expensive problems later. We help you build the operational structure, systems, and processes that support real growth, not just the appearance of it."
-            />
-            <ValueCard
-              icon="chart"
-              title="Long-Term Thinking"
-              desc="We are not interested in what works for three months. Our approach focuses on sustainable systems and decisions that compound and hold up as your business grows."
-            />
-            <ValueCard
-              icon="people"
-              title="Tools That Actually Work"
-              desc="We built a suite of practical digital tools to help founders track numbers, manage cash, handle invoices, and plan growth without the guesswork."
-            />
-            <ValueCard
-              icon="shield"
-              title="Honest Guidance"
-              desc="Sometimes the most valuable advice is to slow down, fix the foundation, or take a different path. We tell you what you need to hear, not what feels comfortable."
-            />
-            <ValueCard
-              icon="settings"
-              title="Structure Over Chaos"
-              desc="Business is not chaos; it is a series of systems working together. We bring order to the complexity through clear frameworks, defined roles, and documented processes."
-            />
+            {[
+              {
+                icon: "lightbulb" as const,
+                title: "Clarity Before Anything Else",
+                desc: "Every successful business starts with clear thinking. We help you understand exactly what your business needs and why, before you invest more time or money into the wrong things.",
+              },
+              {
+                icon: "building" as const,
+                title: "Foundations Built Properly",
+                desc: "Shortcuts create expensive problems later. We help you build the operational structure, systems, and processes that support real growth, not just the appearance of it.",
+              },
+              {
+                icon: "chart" as const,
+                title: "Long-Term Thinking",
+                desc: "We are not interested in what works for three months. Our approach focuses on sustainable systems and decisions that compound and hold up as your business grows.",
+              },
+              {
+                icon: "people" as const,
+                title: "Tools That Actually Work",
+                desc: "We built a suite of practical digital tools to help founders track numbers, manage cash, handle invoices, and plan growth without the guesswork.",
+              },
+              {
+                icon: "shield" as const,
+                title: "Honest Guidance",
+                desc: "Sometimes the most valuable advice is to slow down, fix the foundation, or take a different path. We tell you what you need to hear, not what feels comfortable.",
+              },
+              {
+                icon: "settings" as const,
+                title: "Structure Over Chaos",
+                desc: "Business is not chaos; it is a series of systems working together. We bring order to the complexity through clear frameworks, defined roles, and documented processes.",
+              },
+            ].map((v, i) => (
+              <Reveal key={v.title} delay={i * 70}>
+                <ValueCard icon={v.icon} title={v.title} desc={v.desc} />
+              </Reveal>
+            ))}
           </div>
         </Container>
       </section>
@@ -91,7 +100,7 @@ export default function AboutPage() {
       <section id="our-story" className="section">
         <Container>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-            <div>
+            <Reveal as="div">
               <h2 className="h2">The Story Behind Prowess Digital Solutions</h2>
               <div className="mt-5 space-y-5 leading-relaxed text-muted-foreground">
                 <p>
@@ -117,7 +126,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md">
                 <p className="italic leading-relaxed text-foreground">
                   &ldquo;Before I do anything in business, I speak to Prowess Digital Solutions.&rdquo;
                   We will save you from countless expensive mistakes and help you build
@@ -128,17 +137,19 @@ export default function AboutPage() {
                   <p className="text-sm text-muted-foreground">Founder, Prowess Digital Solutions</p>
                 </div>
               </div>
-            </div>
+            </Reveal>
 
-            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <Image
-                src="/images/ngozi-peace-okafor-2.png"
-                alt="Ngozi Peace Okafor"
-                fill
-                className="object-cover object-center"
-                priority
-              />
-            </div>
+            <Reveal delay={120} y={30}>
+              <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <Image
+                  src="/images/ngozi-peace-okafor-2.png"
+                  alt="Ngozi Peace Okafor"
+                  fill
+                  className="object-cover object-center"
+                  priority
+                />
+              </div>
+            </Reveal>
           </div>
         </Container>
       </section>
@@ -146,99 +157,92 @@ export default function AboutPage() {
       {/* ── MISSION ───────────────────────────────────────────────────────── */}
       <section className="section">
         <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="h2">Our Mission</h2>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              To help founders everywhere build structured, sustainable businesses by giving
-              them the fixed scope support, practical tools, and documentation they need to
-              grow with confidence and without chaos.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="h2">Our Mission</h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+                To help founders everywhere build structured, sustainable businesses by giving
+                them the fixed scope support, practical tools, and documentation they need to
+                grow with confidence and without chaos.
+              </p>
+            </div>
+          </Reveal>
         </Container>
       </section>
 
       {/* ── VALUES ────────────────────────────────────────────────────────── */}
       <section className="bg-background py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-              Our Values
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Simple thinking, clear steps, and long-term business growth.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
+                Our Values
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Simple thinking, clear steps, and long-term business growth.
+              </p>
+            </div>
+          </Reveal>
 
           <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
-            {values.map((value) => (
-              <div
-                key={value}
-                className="group inline-flex items-center gap-3 rounded-full border-2 border-primary/20 bg-card px-8 py-4 shadow-sm transition hover:border-primary hover:shadow-lg"
-              >
-                <div className="h-2 w-2 rounded-full bg-primary transition group-hover:scale-125" />
-                <span className="text-base font-semibold text-foreground">{value}</span>
-              </div>
+            {values.map((value, i) => (
+              <Reveal key={value} delay={i * 60} y={12}>
+                <div className="group inline-flex items-center gap-3 rounded-full border-2 border-primary/20 bg-card px-8 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-lg">
+                  <div className="h-2 w-2 rounded-full bg-primary transition group-hover:scale-125" />
+                  <span className="text-base font-semibold text-foreground">{value}</span>
+                </div>
+              </Reveal>
             ))}
           </div>
 
-          <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background p-10 text-center shadow-xl">
-            <p className="text-lg leading-relaxed text-foreground sm:text-xl">
-              <span className="font-bold text-foreground">The feeling we aim for:</span>
-              <br />
-              <em>This place understands business properly.</em>
-            </p>
-          </div>
+          <Reveal delay={150}>
+            <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background p-10 text-center shadow-xl">
+              <p className="text-lg leading-relaxed text-foreground sm:text-xl">
+                <span className="font-bold text-foreground">The feeling we aim for:</span>
+                <br />
+                <em>This place understands business properly.</em>
+              </p>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ── FRAMEWORK IMAGE ───────────────────────────────────────────────── */}
-      <section className="section">
-        <Container>
-          <div className="mx-auto max-w-6xl">
-            <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-              <Image
-                src="/images/prowess-clarity-framework.png"
-                alt="Prowess Digital Solutions framework: Diagnostic, SOP Vault, Go To Market Playbook, and Financial Dashboard"
-                width={1600}
-                height={900}
-                className="h-auto w-full object-contain"
-                priority
-              />
-            </div>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              A simple view of how we guide business owners from confusion to clarity.
-            </p>
-          </div>
-        </Container>
-      </section>
-
+      
       {/* ── WHY THEY TRUST US ─────────────────────────────────────────────── */}
       <section className="section">
         <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="h2">Why Business Owners Trust Us</h2>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="h2">Why Business Owners Trust Us</h2>
+            </div>
+          </Reveal>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <TrustCard
-              icon={<GraduationCap size={28} />}
-              title="Structured Expertise"
-              desc="Years of business strategy experience with practical frameworks that hold up in any market."
-            />
-            <TrustCard
-              icon={<Users size={28} />}
-              title="Long-Term Relationships"
-              desc="Most of our clients come back, because building a business is ongoing and consistent support makes a real difference."
-            />
-            <TrustCard
-              icon={<Globe size={28} />}
-              title="Built From Real Experience"
-              desc="Tested first in one of the hardest markets to build a business in. What holds up there holds up anywhere."
-            />
-            <TrustCard
-              icon={<ShieldCheck size={28} />}
-              title="Honest Guidance"
-              desc="A reputation built on telling clients what they need to hear, not what they want to hear."
-            />
+            {[
+              {
+                icon: <GraduationCap size={28} />,
+                title: "Structured Expertise",
+                desc: "Years of business strategy experience with practical frameworks that hold up in any market.",
+              },
+              {
+                icon: <Users size={28} />,
+                title: "Long-Term Relationships",
+                desc: "Most of our clients come back, because building a business is ongoing and consistent support makes a real difference.",
+              },
+              {
+                icon: <Globe size={28} />,
+                title: "Built From Real Experience",
+                desc: "Tested first in one of the hardest markets to build a business in. What holds up there holds up anywhere.",
+              },
+              {
+                icon: <ShieldCheck size={28} />,
+                title: "Honest Guidance",
+                desc: "A reputation built on telling clients what they need to hear, not what they want to hear.",
+              },
+            ].map((t, i) => (
+              <Reveal key={t.title} delay={i * 80}>
+                <TrustCard icon={t.icon} title={t.title} desc={t.desc} />
+              </Reveal>
+            ))}
           </div>
         </Container>
       </section>
@@ -259,9 +263,9 @@ function ValueCard({
   icon?: "lightbulb" | "building" | "chart" | "people" | "shield" | "settings";
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <div className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md">
       <div className="mb-4 flex items-center gap-3">
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-border/60 transition group-hover:bg-gradient-to-br group-hover:from-primary/15 group-hover:to-primary/5 group-hover:text-primary group-hover:ring-primary/10">
           {iconEmoji(icon)}
         </span>
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Container from "@/components/Container";
 import Link from "next/link";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
+import { Reveal } from "@/components/Reveal";
 import { packages, annualMonthlyPrice, annualTotalPrice } from "@/content/site";
 import MembershipIntakeModal from "@/components/MembershipIntakeModal";
 import type { BillingInterval } from "@/lib/payments/paystack";
@@ -108,9 +109,9 @@ export default function PricingPage() {
       />
 
       {/* ── TRUST STRIP ───────────────────────────────────────────────────── */}
-      <section className="border-b border-border bg-card py-10">
+      <section className="bg-background pb-24 pt-2 sm:pb-32">
         <Container>
-          <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-3">
+          <div className="mx-auto grid max-w-4xl gap-10 sm:grid-cols-3">
             {[
               {
                 icon: (
@@ -129,58 +130,64 @@ export default function PricingPage() {
                 title: "Start where you are",
                 desc: "Every tier has a clear entry point. Move up when your business is ready.",
               },
-            ].map((item) => (
-              <div key={item.title} className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-                    {item.icon}
-                  </svg>
+            ].map((item, i) => (
+              <Reveal key={item.title} delay={i * 90}>
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                      {item.icon}
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="font-bold text-foreground">{item.title}</div>
+                    <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-bold text-foreground">{item.title}</div>
-                  <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</div>
-                </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </Container>
       </section>
 
       {/* ── PACKAGES ──────────────────────────────────────────────────────── */}
-      <section id="packages" className="section bg-muted">
+      <section id="packages" className="section bg-muted/60">
         <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="h2">Choose your starting point</h2>
-            <p className="lead mt-4">
-              Each tier is a level of ongoing support. Start with what your business needs
-              right now. You can always upgrade.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="h2">Choose your starting point</h2>
+              <p className="lead mt-4">
+                Each tier is a level of ongoing support. Start with what your business needs
+                right now. You can always upgrade.
+              </p>
+            </div>
+          </Reveal>
 
           {/* Monthly / Yearly toggle */}
-          <div className="mx-auto mt-8 flex w-fit items-center gap-1 rounded-full border border-border bg-card p-1">
-            <button
-              type="button"
-              onClick={() => setInterval("monthly")}
-              className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
-                interval === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              onClick={() => setInterval("annually")}
-              className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition ${
-                interval === "annually" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-              }`}
-            >
-              Yearly
-              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
-                Save 20%
-              </span>
-            </button>
-          </div>
+          <Reveal delay={80}>
+            <div className="mx-auto mt-8 flex w-fit items-center gap-1 rounded-full border border-border bg-card p-1">
+              <button
+                type="button"
+                onClick={() => setInterval("monthly")}
+                className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
+                  interval === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setInterval("annually")}
+                className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition ${
+                  interval === "annually" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                }`}
+              >
+                Yearly
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                  Save 20%
+                </span>
+              </button>
+            </div>
+          </Reveal>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-4">
             {packages.map((p, idx) => {
@@ -191,10 +198,10 @@ export default function PricingPage() {
                   : `${formatUSD(annualMonthlyPrice(p.monthlyPrice))}/mo`;
 
               return (
+                <Reveal key={p.slug} delay={idx * 100} className="h-full">
                 <div
-                  key={p.slug}
                   id={p.slug}
-                  className={`relative flex scroll-mt-24 flex-col rounded-2xl border bg-card p-6 shadow-sm transition hover:shadow-md ${
+                  className={`relative flex h-full scroll-mt-24 flex-col rounded-2xl border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${
                     isPopular ? "border-primary" : "border-border"
                   }`}
                 >
@@ -259,6 +266,7 @@ export default function PricingPage() {
                     Get Started
                   </button>
                 </div>
+                </Reveal>
               );
             })}
           </div>
@@ -282,13 +290,16 @@ export default function PricingPage() {
       {/* ── COMPARISON TABLE ──────────────────────────────────────────────── */}
       <section className="section bg-card">
         <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="h2">What is in each tier</h2>
-            <p className="lead mt-4">
-              A full breakdown so you can see exactly what you are getting at each level.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="h2">What is in each tier</h2>
+              <p className="lead mt-4">
+                A full breakdown so you can see exactly what you are getting at each level.
+              </p>
+            </div>
+          </Reveal>
 
+          <Reveal delay={100}>
           <div className="mt-12 overflow-hidden rounded-2xl border border-border">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px] text-left">
@@ -329,32 +340,36 @@ export default function PricingPage() {
               </table>
             </div>
           </div>
+          </Reveal>
         </Container>
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────────────── */}
       <section className="section bg-muted">
         <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="h2">Questions we get asked</h2>
-            <p className="lead mt-4">
-              Straight answers to the things most people want to know before they start.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="h2">Questions we get asked</h2>
+              <p className="lead mt-4">
+                Straight answers to the things most people want to know before they start.
+              </p>
+            </div>
+          </Reveal>
           <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-2xl border border-border">
             {faqItems.map((item, i) => (
-              <details
-                key={item.q}
-                className={`group bg-card ${i !== faqItems.length - 1 ? "border-b border-border" : ""}`}
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5">
-                  <span className="text-sm font-semibold text-foreground">{item.q}</span>
-                  <span className="flex-shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180">
-                    ▾
-                  </span>
-                </summary>
-                <div className="px-6 pb-6 text-sm leading-relaxed text-muted-foreground">{item.a}</div>
-              </details>
+              <Reveal key={item.q} delay={i * 50} as="div">
+                <details
+                  className={`group bg-card ${i !== faqItems.length - 1 ? "border-b border-border" : ""}`}
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5">
+                    <span className="text-sm font-semibold text-foreground">{item.q}</span>
+                    <span className="flex-shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180">
+                      ▾
+                    </span>
+                  </summary>
+                  <div className="px-6 pb-6 text-sm leading-relaxed text-muted-foreground">{item.a}</div>
+                </details>
+              </Reveal>
             ))}
           </div>
         </Container>
@@ -363,28 +378,30 @@ export default function PricingPage() {
       {/* ── CTA ───────────────────────────────────────────────────────────── */}
       <section className="section bg-primary">
         <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl lg:text-5xl">
-              Ready to build your business properly?
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-primary-foreground/80">
-              Every membership starts with the Business Structure Diagnostic, so you know
-              exactly what is holding your business back before anything else happens.
-              No pressure. No sales pitch. Just honest, structured guidance.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="#packages">
-                <button className="w-full rounded-xl bg-card px-10 py-4 text-base font-semibold text-primary shadow-lg transition hover:scale-[1.02] sm:w-auto">
-                  Choose Your Tier
-                </button>
-              </Link>
-              <Link href="/contact">
-                <button className="w-full rounded-xl border-2 border-primary-foreground/40 bg-transparent px-10 py-4 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/10 sm:w-auto">
-                  Talk to Us First
-                </button>
-              </Link>
+          <Reveal>
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl lg:text-5xl">
+                Ready to build your business properly?
+              </h2>
+              <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-primary-foreground/80">
+                Every membership starts with the Business Structure Diagnostic, so you know
+                exactly what is holding your business back before anything else happens.
+                No pressure. No sales pitch. Just honest, structured guidance.
+              </p>
+              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Link href="#packages">
+                  <button className="w-full rounded-xl bg-card px-10 py-4 text-base font-semibold text-primary shadow-lg transition hover:scale-[1.02] sm:w-auto">
+                    Choose Your Tier
+                  </button>
+                </Link>
+                <Link href="/contact">
+                  <button className="w-full rounded-xl border-2 border-primary-foreground/40 bg-transparent px-10 py-4 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/10 sm:w-auto">
+                    Talk to Us First
+                  </button>
+                </Link>
+              </div>
             </div>
-          </div>
+          </Reveal>
         </Container>
       </section>
 

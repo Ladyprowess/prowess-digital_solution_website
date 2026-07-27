@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AgencyPageHeader from "@/components/AgencyPageHeader";
+import Container from "@/components/Container";
+import { Reveal } from "@/components/Reveal";
 
 type ResultItem = { label: string; value: string };
 
@@ -147,355 +150,330 @@ export default function CaseStudiesPage() {
   }, [pagination.page, pagination.totalPages]);
 
   return (
-    <main className="bg-[#eaf6f6]">
-      {/* HERO */}
-      <section className="px-4 py-20">
-        <div className="mx-auto max-w-5xl text-center">
-          <div className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white border border-[#dbe9e8] shadow-sm">
-            {/* ✅ FIXED ICON: uses currentColor so it always shows */}
-            <svg
-  width="18"
-  height="18"
-  viewBox="0 0 24 24"
-  fill="none"
-  className="text-[#223433]"
->
-  <path
-    d="M3 17l6-6 4 4 7-7"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  />
-  <path
-    d="M14 4h7v7"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  />
-</svg>
-
-          </div>
-
-          <h1 className="text-4xl font-semibold text-[#223433] md:text-6xl">
-            Client Success Stories
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-[#4d5f5e] md:text-xl">
-            Real transformations from businesses who started with a
-            single Business Clarity Session. See how clear thinking and simple
-            systems lead to steady, measurable growth.
-          </p>
-        </div>
-      </section>
+    <div className="pb-16">
+      <AgencyPageHeader
+        eyebrow="Case Studies"
+        title={
+          <>
+            Client success <span className="text-primary">stories.</span>
+          </>
+        }
+        description="Real transformations from businesses who started with a single Business Structure Diagnostic. See how clear thinking and simple systems lead to steady, measurable growth."
+        primaryAction={{ label: "See Success Stories", href: "#results" }}
+        secondaryAction={{ label: "Start the Diagnostic", href: "/services/business-structure-diagnostic" }}
+        proof={[
+          "Real client challenges and solutions",
+          "Measured results, not vague promises",
+          "Across categories and business sizes",
+        ]}
+      />
 
       {/* CONTENT */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-        {/* Filter */}
-        <div className="mb-8 rounded-2xl border border-[#dbe9e8] bg-white shadow-sm">
-          <button
-            onClick={() => setIsFilterOpen((prev) => !prev)}
-            className="flex w-full items-center justify-between px-6 py-5 text-left font-semibold text-[#223433]"
-          >
-            <span className="flex items-center gap-3">
-              <span className="text-[#507c80]">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <section id="results" className="py-12 sm:py-16">
+        <Container>
+          {/* Filter */}
+          <Reveal>
+            <div className="mb-8 rounded-2xl border border-border bg-card shadow-sm">
+              <button
+                onClick={() => setIsFilterOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between px-6 py-5 text-left font-semibold text-foreground"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="text-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M4 5h16l-6 7v6l-4 2v-8L4 5z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  </span>
+                  Filter Case Studies
+                </span>
+
+                <svg
+                  className={`h-5 w-5 transition-transform ${
+                    isFilterOpen ? "rotate-180" : ""
+                  }`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path
-                    d="M4 5h16l-6 7v6l-4 2v-8L4 5z"
-                    stroke="currentColor"
-                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 9l6 6 6-6"
                   />
                 </svg>
-              </span>
-              Filter Case Studies
-            </span>
+              </button>
 
-            <svg
-              className={`h-5 w-5 transition-transform ${
-                isFilterOpen ? "rotate-180" : ""
-              }`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 9l6 6 6-6"
-              />
-            </svg>
-          </button>
-
-          {isFilterOpen && (
-            <div className="border-t border-[#dbe9e8] px-6 py-5">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <label className="text-xs font-semibold tracking-widest text-[#6b7d7b]">
-                    CATEGORY
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-[#dbe9e8] bg-white px-4 py-3 text-sm text-[#223433]"
-                  >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold tracking-widest text-[#6b7d7b]">
-                    BUSINESS SIZE
-                  </label>
-                  <select
-                    value={size}
-                    onChange={(e) => setSize(e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-[#dbe9e8] bg-white px-4 py-3 text-sm text-[#223433]"
-                  >
-                    {sizes.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCategory("All");
-                      setSize("All");
-                    }}
-                    className="w-full rounded-lg border border-[#dbe9e8] bg-white px-4 py-3 text-sm font-semibold text-[#223433] hover:bg-[#f6fbfb]"
-                  >
-                    Clear
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsFilterOpen(false)}
-                    className="w-full rounded-lg bg-[#507c80] px-4 py-3 text-sm font-semibold text-white hover:bg-[#3d5f62]"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Grid + Accordion */}
-        {loading ? (
-          <p className="text-sm text-[#4d5f5e]">Loading case studies…</p>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-[#dbe9e8] bg-white p-10 text-center">
-            <h3 className="text-xl font-semibold text-[#223433]">
-              No case studies found
-            </h3>
-            <p className="mt-2 text-sm text-[#4d5f5e]">
-              Try changing the filters or clear them.
-            </p>
-          </div>
-        ) : (
-          <>
-            <section className="grid gap-6 md:grid-cols-2">
-              {filtered.map((cs) => {
-                const results = normaliseResults(cs.results);
-
-                return (
-                  <article
-                    key={cs.id}
-                    className="overflow-hidden rounded-2xl border border-[#dbe9e8] bg-white"
-                  >
-                    <div className="relative h-56 w-full bg-[#eaf6f6]">
-                      {cs.image_url ? (
-                        <img
-                          src={cs.image_url}
-                          alt={cs.title}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : null}
-
-                      <div className="absolute left-4 top-4 flex gap-2">
-                        <span className="rounded-full bg-[#223433]/90 px-3 py-1 text-xs font-semibold text-white">
-                          {cs.category}
-                        </span>
-                        <span className="rounded-full bg-[#223433]/90 px-3 py-1 text-xs font-semibold text-white">
-                          {cs.business_size}
-                        </span>
-                      </div>
+              {isFilterOpen && (
+                <div className="border-t border-border px-6 py-5">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div>
+                      <label className="text-xs font-semibold tracking-widest text-muted-foreground">
+                        CATEGORY
+                      </label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground"
+                      >
+                        {categories.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
-                    <div className="p-6">
-                      <h2 className="text-2xl font-semibold text-[#223433]">
-                        {cs.title}
-                      </h2>
+                    <div>
+                      <label className="text-xs font-semibold tracking-widest text-muted-foreground">
+                        BUSINESS SIZE
+                      </label>
+                      <select
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
+                        className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground"
+                      >
+                        {sizes.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                      <div className="mt-6">
-                        <h3 className="text-sm font-semibold tracking-widest text-[#6b7d7b]">
-                          CHALLENGE
-                        </h3>
-                        <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-[#4d5f5e]">
-  {cs.challenge}
-</p>
+                    <div className="flex items-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCategory("All");
+                          setSize("All");
+                        }}
+                        className="w-full rounded-lg border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                      >
+                        Clear
+                      </button>
 
+                      <button
+                        type="button"
+                        onClick={() => setIsFilterOpen(false)}
+                        className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Reveal>
 
-                      </div>
+          {/* Grid + Accordion */}
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading case studies…</p>
+          ) : filtered.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-10 text-center">
+              <h3 className="text-xl font-semibold text-foreground">
+                No case studies found
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Try changing the filters or clear them.
+              </p>
+            </div>
+          ) : (
+            <>
+              <section className="grid gap-6 md:grid-cols-2">
+                {filtered.map((cs, i) => {
+                  const results = normaliseResults(cs.results);
 
-                      <details className="group mt-6">
-                        <summary className="flex cursor-pointer list-none items-center justify-center gap-3 rounded-xl bg-[#eaf6f6] px-5 py-4 text-sm font-semibold text-[#223433] hover:bg-[#dff1f1]">
-                          <span className="group-open:hidden">
-                            View Full Case Study
-                          </span>
-                          <span className="hidden group-open:inline">
-                            Hide Case Study
-                          </span>
-
-                          <svg
-                            className="h-5 w-5 transition-transform group-open:rotate-180"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M6 9l6 6 6-6"
+                  return (
+                    <Reveal key={cs.id} delay={i * 80}>
+                      <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                        <div className="relative h-56 w-full bg-muted">
+                          {cs.image_url ? (
+                            <img
+                              src={cs.image_url}
+                              alt={cs.title}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
                             />
-                          </svg>
-                        </summary>
-
-                        <div className="mt-6 space-y-8">
-                          {cs.solution ? (
-                            <div>
-                              <h3 className="text-sm font-semibold tracking-widest text-[#6b7d7b]">
-                                SOLUTION
-                              </h3>
-                              <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-[#4d5f5e]">
-  {cs.solution}
-</p>
-
-                            </div>
                           ) : null}
 
-                          {results.length > 0 ? (
-                            <div>
-                              <h3 className="text-sm font-semibold tracking-widest text-[#6b7d7b]">
-                                RESULTS ACHIEVED
-                              </h3>
-
-                              <div className="mt-4 grid gap-3">
-                                {results.map((r, idx) => (
-                                  <div
-                                    key={`${r.label}-${idx}`}
-                                    className="flex items-center justify-between rounded-xl bg-[#eaf6f6] px-4 py-4"
-                                  >
-                                    <span className="text-sm text-[#223433]">
-                                      {r.label}
-                                    </span>
-                                    <span className="text-sm font-semibold text-[#507c80]">
-                                      {r.value}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-
-                          {cs.testimonial ? (
-                            <div className="rounded-xl border border-[#dbe9e8] bg-white p-5">
-                              <p className="italic leading-relaxed text-[#223433]">
-                                “{cs.testimonial}”
-                              </p>
-                            </div>
-                          ) : null}
-
-                          {typeof cs.timeline_months === "number" ? (
-                            <div className="flex items-center gap-2 text-sm text-[#4d5f5e]">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span>
-                                Timeline: {cs.timeline_months} months
-                              </span>
-                            </div>
-                          ) : null}
-
-                          <div className="pt-2">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                const details = e.currentTarget.closest(
-                                  "details"
-                                ) as HTMLDetailsElement | null;
-                                if (details) details.open = false;
-                              }}
-                              className="text-sm font-semibold text-[#507c80] hover:underline"
-                            >
-                              Show Less
-                            </button>
+                          <div className="absolute left-4 top-4 flex gap-2">
+                            <span className="rounded-full bg-foreground/90 px-3 py-1 text-xs font-semibold text-background">
+                              {cs.category}
+                            </span>
+                            <span className="rounded-full bg-foreground/90 px-3 py-1 text-xs font-semibold text-background">
+                              {cs.business_size}
+                            </span>
                           </div>
                         </div>
-                      </details>
-                    </div>
-                  </article>
-                );
-              })}
-            </section>
 
-            {/* Pagination (6 per page) */}
-            <div className="mt-10 flex flex-col items-center gap-4">
-              <p className="text-sm text-[#4d5f5e]">
-                Page {pagination.page} of {pagination.totalPages} •{" "}
-                {pagination.total} total
-              </p>
+                        <div className="p-6">
+                          <h2 className="text-2xl font-semibold text-foreground">
+                            {cs.title}
+                          </h2>
 
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => goToPage(pagination.page - 1)}
-                  disabled={pagination.page <= 1}
-                  className="rounded-lg border border-[#dbe9e8] bg-white px-4 py-2 text-sm font-semibold text-[#223433] disabled:opacity-50"
-                >
-                  Prev
-                </button>
+                          <div className="mt-6">
+                            <h3 className="text-sm font-semibold tracking-widest text-muted-foreground">
+                              CHALLENGE
+                            </h3>
+                            <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-muted-foreground">
+                              {cs.challenge}
+                            </p>
+                          </div>
 
-                {pageButtons.map((p) => (
+                          <details className="group mt-6">
+                            <summary className="flex cursor-pointer list-none items-center justify-center gap-3 rounded-xl bg-primary/10 px-5 py-4 text-sm font-semibold text-foreground transition hover:bg-primary/15">
+                              <span className="group-open:hidden">
+                                View Full Case Study
+                              </span>
+                              <span className="hidden group-open:inline">
+                                Hide Case Study
+                              </span>
+
+                              <svg
+                                className="h-5 w-5 transition-transform group-open:rotate-180"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M6 9l6 6 6-6"
+                                />
+                              </svg>
+                            </summary>
+
+                            <div className="mt-6 space-y-8">
+                              {cs.solution ? (
+                                <div>
+                                  <h3 className="text-sm font-semibold tracking-widest text-muted-foreground">
+                                    SOLUTION
+                                  </h3>
+                                  <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-muted-foreground">
+                                    {cs.solution}
+                                  </p>
+                                </div>
+                              ) : null}
+
+                              {results.length > 0 ? (
+                                <div>
+                                  <h3 className="text-sm font-semibold tracking-widest text-muted-foreground">
+                                    RESULTS ACHIEVED
+                                  </h3>
+
+                                  <div className="mt-4 grid gap-3">
+                                    {results.map((r, idx) => (
+                                      <div
+                                        key={`${r.label}-${idx}`}
+                                        className="flex items-center justify-between rounded-xl bg-primary/10 px-4 py-4"
+                                      >
+                                        <span className="text-sm text-foreground">
+                                          {r.label}
+                                        </span>
+                                        <span className="text-sm font-semibold text-primary">
+                                          {r.value}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+
+                              {cs.testimonial ? (
+                                <div className="rounded-xl border border-border bg-background p-5">
+                                  <p className="italic leading-relaxed text-foreground">
+                                    “{cs.testimonial}”
+                                  </p>
+                                </div>
+                              ) : null}
+
+                              {typeof cs.timeline_months === "number" ? (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <span>
+                                    Timeline: {cs.timeline_months} months
+                                  </span>
+                                </div>
+                              ) : null}
+
+                              <div className="pt-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    const details = e.currentTarget.closest(
+                                      "details"
+                                    ) as HTMLDetailsElement | null;
+                                    if (details) details.open = false;
+                                  }}
+                                  className="text-sm font-semibold text-primary hover:underline"
+                                >
+                                  Show Less
+                                </button>
+                              </div>
+                            </div>
+                          </details>
+                        </div>
+                      </article>
+                    </Reveal>
+                  );
+                })}
+              </section>
+
+              {/* Pagination (6 per page) */}
+              <div className="mt-10 flex flex-col items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Page {pagination.page} of {pagination.totalPages} •{" "}
+                  {pagination.total} total
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-2">
                   <button
-                    key={p}
                     type="button"
-                    onClick={() => goToPage(p)}
-                    className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-                      p === pagination.page
-                        ? "bg-[#507c80] text-white"
-                        : "border border-[#dbe9e8] bg-white text-[#223433]"
-                    }`}
+                    onClick={() => goToPage(pagination.page - 1)}
+                    disabled={pagination.page <= 1}
+                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-50"
                   >
-                    {p}
+                    Prev
                   </button>
-                ))}
 
-                <button
-                  type="button"
-                  onClick={() => goToPage(pagination.page + 1)}
-                  disabled={pagination.page >= pagination.totalPages}
-                  className="rounded-lg border border-[#dbe9e8] bg-white px-4 py-2 text-sm font-semibold text-[#223433] disabled:opacity-50"
-                >
-                  Next
-                </button>
+                  {pageButtons.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => goToPage(p)}
+                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                        p === pagination.page
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border bg-card text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => goToPage(pagination.page + 1)}
+                    disabled={pagination.page >= pagination.totalPages}
+                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </Container>
       </section>
-    </main>
+    </div>
   );
 }

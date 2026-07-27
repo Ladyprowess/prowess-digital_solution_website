@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import Container from "@/components/Container";
 import { navPrimary, navMore } from "@/content/site";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const BOOKING_URL = "/services/business-structure-diagnostic";
 
@@ -141,6 +142,8 @@ export default function Navbar() {
                   </div>
                 ) : null}
               </div>
+
+              <ThemeToggle />
             </nav>
 
             {/* Desktop CTA */}
@@ -154,7 +157,8 @@ export default function Navbar() {
             </div>
 
             {/* Mobile toggle */}
-            <div className="flex justify-end lg:hidden" ref={mobileWrapRef}>
+            <div className="flex items-center justify-end gap-2 lg:hidden" ref={mobileWrapRef}>
+              <ThemeToggle />
               <button
                 type="button"
                 aria-label={mobileOpen ? "Close menu" : "Open menu"}

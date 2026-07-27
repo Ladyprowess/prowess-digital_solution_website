@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Container from "@/components/Container";
 import Button from "@/components/Button";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
+import { Reveal } from "@/components/Reveal";
 import {
   Mail,
   MapPin,
@@ -33,8 +34,6 @@ const INQUIRY_TYPES = [
   "Partnership",
   "Support",
 ];
-
-const STEEL_TEAL = "#507c80";
 
 export default function ContactPage() {
   const [form, setForm] = useState<FormState>({
@@ -152,8 +151,9 @@ export default function ContactPage() {
         <Container>
           <div className="grid gap-8 lg:grid-cols-2">
             {/* LEFT: FORM CARD */}
-            <div className="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
-              <h2 className="font-serif text-2xl font-semibold text-black/85">
+            <Reveal>
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+              <h2 className="font-serif text-2xl font-semibold text-foreground">
                 Send Us a Message
               </h2>
 
@@ -173,11 +173,11 @@ export default function ContactPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium text-black/70">
+                  <label className="text-sm font-medium text-foreground">
                     Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
-                    className="h-12 w-full rounded-xl border border-black/10 bg-white px-4 text-black/80 outline-none ring-0 focus:border-black/20"
+                    className="h-12 w-full rounded-xl border border-border bg-card px-4 text-foreground outline-none ring-0 focus:border-primary"
                     placeholder="Your full name"
                     value={form.full_name}
                     onChange={(e) => set("full_name", e.target.value)}
@@ -186,11 +186,11 @@ export default function ContactPage() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-black/70">
+                    <label className="text-sm font-medium text-foreground">
                       Email Address <span className="text-red-500">*</span>
                     </label>
                     <input
-                      className="h-12 w-full rounded-xl border border-black/10 bg-white px-4 text-black/80 outline-none focus:border-black/20"
+                      className="h-12 w-full rounded-xl border border-border bg-card px-4 text-foreground outline-none focus:border-primary"
                       placeholder="you@example.com"
                       type="email"
                       value={form.email}
@@ -199,9 +199,9 @@ export default function ContactPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-black/70">Phone Number</label>
+                    <label className="text-sm font-medium text-foreground">Phone Number</label>
                     <input
-                      className="h-12 w-full rounded-xl border border-black/10 bg-white px-4 text-black/80 outline-none focus:border-black/20"
+                      className="h-12 w-full rounded-xl border border-border bg-card px-4 text-foreground outline-none focus:border-primary"
                       placeholder="+234 XXX XXX XXXX"
                       value={form.phone}
                       onChange={(e) => set("phone", e.target.value)}
@@ -211,9 +211,9 @@ export default function ContactPage() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-black/70">Business Stage</label>
+                    <label className="text-sm font-medium text-foreground">Business Stage</label>
                     <select
-                      className="h-12 w-full rounded-xl border border-black/10 bg-white px-4 text-black/70 outline-none focus:border-black/20"
+                      className="h-12 w-full rounded-xl border border-border bg-card px-4 text-foreground outline-none focus:border-primary"
                       value={form.business_stage}
                       onChange={(e) => set("business_stage", e.target.value)}
                     >
@@ -227,11 +227,11 @@ export default function ContactPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-black/70">
+                    <label className="text-sm font-medium text-foreground">
                       Inquiry Type <span className="text-red-500">*</span>
                     </label>
                     <select
-                      className="h-12 w-full rounded-xl border border-black/10 bg-white px-4 text-black/70 outline-none focus:border-black/20"
+                      className="h-12 w-full rounded-xl border border-border bg-card px-4 text-foreground outline-none focus:border-primary"
                       value={form.inquiry_type}
                       onChange={(e) => set("inquiry_type", e.target.value)}
                     >
@@ -246,11 +246,11 @@ export default function ContactPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium text-black/70">
+                  <label className="text-sm font-medium text-foreground">
                     Message <span className="text-red-500">*</span>
                   </label>
                   <textarea
-                    className="min-h-[160px] w-full resize-y rounded-xl border border-black/10 bg-white px-4 py-3 text-black/80 outline-none focus:border-black/20"
+                    className="min-h-[160px] w-full resize-y rounded-xl border border-border bg-card px-4 py-3 text-foreground outline-none focus:border-primary"
                     placeholder="Tell us about your business challenges or questions..."
                     value={form.message}
                     onChange={(e) => set("message", e.target.value)}
@@ -272,56 +272,61 @@ export default function ContactPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="h-12 w-full rounded-xl font-semibold text-white"
-                  style={{ backgroundColor: STEEL_TEAL }}
+                  className="h-12 w-full rounded-xl bg-primary font-semibold text-primary-foreground transition hover:opacity-90"
                 >
                   {loading ? "Sending..." : "Send Message"}
                 </Button>
 
-                <p className="text-sm text-black/55">
+                <p className="text-sm text-muted-foreground">
                   We typically respond within 24 hours during business days (Mon–Fri, 9AM–5PM WAT)
                 </p>
               </form>
             </div>
+            </Reveal>
 
             {/* RIGHT: CONTACT OPTIONS */}
             <div className="space-y-6">
-              <div>
-                <h2 className="font-serif text-3xl font-semibold text-black/85">
-                  Get In Touch
-                </h2>
-                <p className="mt-2 max-w-xl text-base leading-relaxed text-black/60">
-                  We&apos;re here to help you gain clarity and build a better business. Choose the
-                  contact method that works best for you.
-                </p>
-              </div>
+              <Reveal delay={80}>
+                <div>
+                  <h2 className="font-serif text-3xl font-semibold text-foreground">
+                    Get In Touch
+                  </h2>
+                  <p className="mt-2 max-w-xl text-base leading-relaxed text-muted-foreground">
+                    We&apos;re here to help you gain clarity and build a better business. Choose the
+                    contact method that works best for you.
+                  </p>
+                </div>
+              </Reveal>
 
               {/* Email */}
-              <div className="rounded-2xl border border-black/10 bg-white p-6">
+              <Reveal delay={140}>
+              <div className="rounded-2xl border border-border bg-card p-6 transition hover:shadow-sm">
                 <div className="flex gap-4">
-                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-black/[0.03]">
-                    <Mail className="h-5 w-5 text-black/60" />
+                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary">
+                    <Mail className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-serif text-xl font-semibold text-black/85">Email</h3>
-                    <p className="mt-1 text-base font-medium text-black/70">{CONTACT_EMAIL}</p>
-                    <p className="mt-1 text-sm text-black/55">
+                    <h3 className="font-serif text-xl font-semibold text-foreground">Email</h3>
+                    <p className="mt-1 text-base font-medium text-foreground">{CONTACT_EMAIL}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Send us an email anytime. We respond within 24 hours.
                     </p>
                   </div>
                 </div>
               </div>
+              </Reveal>
 
               {/* WhatsApp */}
-              <div className="rounded-2xl border border-black/10 bg-white p-6">
+              <Reveal delay={200}>
+              <div className="rounded-2xl border border-border bg-card p-6 transition hover:shadow-sm">
                 <div className="flex gap-4">
-                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-black/[0.03]">
-                    <Phone className="h-5 w-5 text-black/60" />
+                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary">
+                    <Phone className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-serif text-xl font-semibold text-black/85">WhatsApp</h3>
-                    <p className="mt-1 text-base font-medium text-black/70">{WHATSAPP_NUMBER}</p>
-                    <p className="mt-1 text-sm text-black/55">
+                    <h3 className="font-serif text-xl font-semibold text-foreground">WhatsApp</h3>
+                    <p className="mt-1 text-base font-medium text-foreground">{WHATSAPP_NUMBER}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Quick questions? Chat with us on WhatsApp.
                     </p>
 
@@ -329,7 +334,7 @@ export default function ContactPage() {
                       href={whatsappLink}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl font-semibold text-white"
+                      className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl font-semibold text-white transition hover:opacity-90"
                       style={{ backgroundColor: "#4f7f60" }}
                     >
                       <MessageCircle className="h-5 w-5" />
@@ -338,59 +343,66 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
+              </Reveal>
 
               {/* Location */}
-              <div className="rounded-2xl border border-black/10 bg-white p-6">
+              <Reveal delay={260}>
+              <div className="rounded-2xl border border-border bg-card p-6 transition hover:shadow-sm">
                 <div className="flex gap-4">
-                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-black/[0.03]">
-                    <MapPin className="h-5 w-5 text-black/60" />
+                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary">
+                    <MapPin className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-serif text-xl font-semibold text-black/85">Location</h3>
-                    <p className="mt-1 text-base font-medium text-black/70">{BUSINESS_LOCATION}</p>
-                    <p className="mt-1 text-sm text-black/55">
-                      Africa based with remote collaboration worldwide.
+                    <h3 className="font-serif text-xl font-semibold text-foreground">Location</h3>
+                    <p className="mt-1 text-base font-medium text-foreground">{BUSINESS_LOCATION}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Based in Nigeria, with remote collaboration worldwide.
                     </p>
                   </div>
                 </div>
               </div>
+              </Reveal>
 
               {/* Business Hours */}
-              <div className="rounded-2xl border border-black/10 bg-white p-6">
+              <Reveal delay={320}>
+              <div className="rounded-2xl border border-border bg-card p-6 transition hover:shadow-sm">
                 <div className="flex gap-4">
-                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-black/[0.03]">
-                    <Clock className="h-5 w-5 text-black/60" />
+                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary">
+                    <Clock className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-serif text-xl font-semibold text-black/85">
+                    <h3 className="font-serif text-xl font-semibold text-foreground">
                       Business Hours
                     </h3>
-                    <p className="mt-1 text-base font-medium text-black/70">{BUSINESS_HOURS}</p>
-                    <p className="mt-1 text-sm text-black/55">
+                    <p className="mt-1 text-base font-medium text-foreground">{BUSINESS_HOURS}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Available for consultations and support calls.
                     </p>
                   </div>
                 </div>
               </div>
+              </Reveal>
 
               {/* Info box like screenshot */}
-              <div className="rounded-2xl bg-[#eef6f6] p-6">
+              <Reveal delay={380}>
+              <div className="rounded-2xl bg-primary/10 p-6">
                 <div className="flex gap-4">
-                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-black/[0.03]">
-                    <Info className="h-5 w-5 text-black/60" />
+                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-card text-primary">
+                    <Info className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="font-serif text-lg font-semibold text-black/80">
+                    <h4 className="font-serif text-lg font-semibold text-foreground">
                       Remote-Friendly Services
                     </h4>
-                    <p className="mt-2 text-sm leading-relaxed text-black/60">
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                       All our services are available remotely via video calls, with in-person options
-                      available for Lagos-based clients. We work with businesses across Africa and
+                      available for Lagos-based clients. We work with founders across Africa and
                       internationally.
                     </p>
                   </div>
                 </div>
               </div>
+              </Reveal>
             </div>
           </div>
         </Container>

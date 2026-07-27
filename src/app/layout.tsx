@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import SiteShell from "@/components/SiteShell";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { brand } from "@/content/site";
 import Script from "next/script";
 import { Geist } from "next/font/google";
@@ -95,9 +96,9 @@ const websiteSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={cn("font-sans", geist.variable)}>
+    <html lang="en-GB" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
       <head>
-        <meta name="color-scheme" content="light" />
+        <meta name="color-scheme" content="light dark" />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-N9N42PJ7YT"
           strategy="afterInteractive"
@@ -134,9 +135,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
 
-        <Suspense>
-          <SiteShell>{children}</SiteShell>
-        </Suspense>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <Suspense>
+            <SiteShell>{children}</SiteShell>
+          </Suspense>
+        </ThemeProvider>
       </body>
     </html>
   );

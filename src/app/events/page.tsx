@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
+import { Reveal } from "@/components/Reveal";
 
 function CalendarIcon() {
   return (
@@ -404,14 +405,15 @@ export default function EventsPage() {
       {/* FILTER BAR */}
       <section className="py-6">
         <Container>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <Reveal>
+          <div className="rounded-2xl border border-border bg-card p-5">
             <div className="grid gap-4 lg:grid-cols-3">
               <div>
-                <label className="text-sm font-semibold text-slate-900">Event Type</label>
+                <label className="text-sm font-semibold text-foreground">Event Type</label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm"
                 >
                   {EVENT_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -422,11 +424,11 @@ export default function EventsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-slate-900">Month</label>
+                <label className="text-sm font-semibold text-foreground">Month</label>
                 <select
                   value={month}
                   onChange={(e) => setMonth(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm"
                 >
                   {months.map((m) => (
                     <option key={m.value} value={m.value}>
@@ -437,16 +439,17 @@ export default function EventsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-slate-900">Search</label>
+                <label className="text-sm font-semibold text-foreground">Search</label>
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Search by title..."
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm"
                 />
               </div>
             </div>
           </div>
+          </Reveal>
         </Container>
       </section>
 
@@ -454,12 +457,12 @@ export default function EventsPage() {
       <section className="py-10">
         <Container>
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-3xl font-semibold text-slate-900">Upcoming Events</h2>
+            <h2 className="text-3xl font-semibold text-foreground">Upcoming Events</h2>
 
             <button
               type="button"
               onClick={() => setShowPast((v) => !v)}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
             >
               {showPast ? "Hide past events" : "View past events"}
             </button>
@@ -469,34 +472,34 @@ export default function EventsPage() {
             {upcomingError ? (
               <div className="text-sm text-red-600">{upcomingError}</div>
             ) : loadingUpcoming ? (
-              <div className="text-sm text-slate-600">Loading events…</div>
+              <div className="text-sm text-muted-foreground">Loading events…</div>
             ) : upcoming.length === 0 ? (
-              <div className="text-sm text-slate-600">No upcoming events right now.</div>
+              <div className="text-sm text-muted-foreground">No upcoming events right now.</div>
             ) : (
-              upcoming.map((e) => (
+              upcoming.map((e, i) => (
+                <Reveal key={e.id} delay={i * 70}>
                 <button
-                  key={e.id}
                   type="button"
                   onClick={() => openModal(e)}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:shadow-sm"
+                  className="group w-full overflow-hidden rounded-2xl border border-border bg-card text-left transition hover:-translate-y-1 hover:shadow-md"
                 >
-                  <div className="relative h-44 bg-slate-100">
+                  <div className="relative h-44 bg-muted">
                     {e.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={e.cover_url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-slate-400">No image</div>
+                      <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
                     )}
 
-                    <div className="absolute left-4 top-4 rounded-full bg-[var(--steel-teal)] px-3 py-1 text-xs font-semibold text-white">
+                    <div className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
                       {e.type}
                     </div>
                   </div>
 
                   <div className="p-6">
-                    <h3 className="text-xl font-semibold text-slate-900">{e.title}</h3>
+                    <h3 className="text-xl font-semibold text-foreground">{e.title}</h3>
 
-                    <div className="mt-4 space-y-2 text-sm text-slate-700">
+                    <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                       <div><CalendarIcon />{formatDate(e.date)}</div>
                       {e.time ? (
                         <div>
@@ -507,14 +510,15 @@ export default function EventsPage() {
                       {e.location ? <div><LaptopIcon />{e.location}</div> : null}
                     </div>
 
-                    <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-5">
-                      <div className="text-lg font-semibold text-slate-900">
+                    <div className="mt-6 flex items-center justify-between border-t border-border pt-5">
+                      <div className="text-lg font-semibold text-foreground">
                         {e.price && e.price > 0 ? `₦${e.price.toLocaleString()}` : "Free"}
                       </div>
-                      <span className="text-sm font-medium text-[var(--steel-teal)]">View details →</span>
+                      <span className="text-sm font-medium text-primary">View details →</span>
                     </div>
                   </div>
                 </button>
+                </Reveal>
               ))
             )}
           </div>
@@ -525,18 +529,18 @@ export default function EventsPage() {
               type="button"
               onClick={() => setUpcomingPage((p) => Math.max(1, p - 1))}
               disabled={upcomingPage === 1 || loadingUpcoming}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
             >
               Prev
             </button>
 
-            <div className="text-sm font-medium text-slate-700">Page {upcomingPage}</div>
+            <div className="text-sm font-medium text-muted-foreground">Page {upcomingPage}</div>
 
             <button
               type="button"
               onClick={() => setUpcomingPage((p) => p + 1)}
               disabled={loadingUpcoming || isUpcomingLastPage}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
             >
               Next
             </button>
@@ -548,44 +552,45 @@ export default function EventsPage() {
       {showPast && (
         <section id="past-events" className="py-10">
           <Container>
-            <h2 className="text-2xl font-semibold text-slate-900">Past Events</h2>
+            <h2 className="text-2xl font-semibold text-foreground">Past Events</h2>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-3">
               {pastError ? (
                 <div className="text-sm text-red-600">{pastError}</div>
               ) : loadingPast ? (
-                <div className="text-sm text-slate-600">Loading past events…</div>
+                <div className="text-sm text-muted-foreground">Loading past events…</div>
               ) : past.length === 0 ? (
-                <div className="text-sm text-slate-600">No past events found.</div>
+                <div className="text-sm text-muted-foreground">No past events found.</div>
               ) : (
-                past.map((e) => (
+                past.map((e, i) => (
+                  <Reveal key={e.id} delay={i * 70}>
                   <button
-                    key={e.id}
                     type="button"
                     onClick={() => openModal(e)}
-                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:shadow-sm"
+                    className="w-full overflow-hidden rounded-2xl border border-border bg-card text-left transition hover:-translate-y-1 hover:shadow-md"
                   >
-                    <div className="relative h-44 bg-slate-100">
+                    <div className="relative h-44 bg-muted">
                       {e.cover_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={e.cover_url} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-slate-400">No image</div>
+                        <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
                       )}
 
-                      <div className="absolute left-4 top-4 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white">
+                      <div className="absolute left-4 top-4 rounded-full bg-foreground/80 px-3 py-1 text-xs font-semibold text-white">
                         Past event
                       </div>
                     </div>
 
                     <div className="p-6">
-                      <h3 className="text-xl font-semibold text-slate-900">{e.title}</h3>
-                      <div className="mt-3 flex items-center text-sm text-slate-700"><CalendarIcon />{formatDate(e.date)}</div>
-                      <div className="mt-6 border-t border-slate-200 pt-5 text-sm font-medium text-[var(--steel-teal)]">
+                      <h3 className="text-xl font-semibold text-foreground">{e.title}</h3>
+                      <div className="mt-3 flex items-center text-sm text-muted-foreground"><CalendarIcon />{formatDate(e.date)}</div>
+                      <div className="mt-6 border-t border-border pt-5 text-sm font-medium text-primary">
                         View details →
                       </div>
                     </div>
                   </button>
+                  </Reveal>
                 ))
               )}
             </div>
@@ -596,18 +601,18 @@ export default function EventsPage() {
                 type="button"
                 onClick={() => setPastPage((p) => Math.max(1, p - 1))}
                 disabled={pastPage === 1 || loadingPast}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Prev
               </button>
 
-              <div className="text-sm font-medium text-slate-700">Page {pastPage}</div>
+              <div className="text-sm font-medium text-muted-foreground">Page {pastPage}</div>
 
               <button
                 type="button"
                 onClick={() => setPastPage((p) => p + 1)}
                 disabled={loadingPast || isPastLastPage}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Next
               </button>
@@ -619,15 +624,16 @@ export default function EventsPage() {
       {/* NEVER MISS AN EVENT */}
       <section className="py-14 sm:py-20">
         <Container>
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 sm:p-10">
+          <Reveal>
+          <div className="rounded-3xl border border-border bg-card p-8 sm:p-10">
             <div className="flex items-start gap-4">
-              <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50">
+              <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary">
                 <BellIcon />
               </div>
 
               <div className="flex-1">
-                <h2 className="text-3xl font-semibold text-slate-900 sm:text-5xl">Never Miss an Event</h2>
-                <p className="mt-3 max-w-3xl text-base text-slate-600 sm:text-lg">
+                <h2 className="text-3xl font-semibold text-foreground sm:text-5xl">Never Miss an Event</h2>
+                <p className="mt-3 max-w-3xl text-base text-muted-foreground sm:text-lg">
                   Subscribe to get updates about upcoming events, early-bird pricing, and useful community resources.
                 </p>
 
@@ -636,24 +642,25 @@ export default function EventsPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email address"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm"
+                    className="w-full rounded-2xl border border-border bg-background px-5 py-4 text-sm text-foreground"
                   />
                   <button
                     disabled={submitting}
-                    className="rounded-2xl bg-[var(--steel-teal)] px-8 py-4 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                    className="rounded-2xl bg-primary px-8 py-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
                   >
                     {submitting ? "Subscribing…" : "Subscribe Now"}
                   </button>
                 </form>
 
-                <p className="mt-4 text-sm text-slate-600">
+                <p className="mt-4 text-sm text-muted-foreground">
                   We respect your privacy. Unsubscribe at any time. No spam, just useful business guidance.
                 </p>
 
-                {subMsg ? <p className="mt-3 text-sm text-slate-700">{subMsg}</p> : null}
+                {subMsg ? <p className="mt-3 text-sm text-muted-foreground">{subMsg}</p> : null}
               </div>
             </div>
           </div>
+          </Reveal>
         </Container>
       </section>
 
@@ -669,32 +676,32 @@ export default function EventsPage() {
         >
           <div className="absolute inset-0 bg-black/40" />
 
-          <div className="relative z-[61] w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-xl">
-            <div className="relative h-52 bg-slate-100">
+          <div className="relative z-[61] w-full max-w-2xl overflow-hidden rounded-3xl bg-card shadow-xl">
+            <div className="relative h-52 bg-muted">
               {selected.cover_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selected.cover_url} alt="" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full items-center justify-center text-slate-400">No image</div>
+                <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
               )}
 
               <button
                 type="button"
                 onClick={closeModal}
-                className="absolute right-4 top-4 rounded-xl bg-white/90 px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-white"
+                className="absolute right-4 top-4 rounded-xl bg-card/90 px-3 py-2 text-sm font-semibold text-foreground hover:bg-card"
               >
                 Close
               </button>
 
-              <div className="absolute left-4 top-4 rounded-full bg-[var(--steel-teal)] px-3 py-1 text-xs font-semibold text-white">
+              <div className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
                 {selected.type}
               </div>
             </div>
 
             <div className="p-6 sm:p-8">
-              <h3 className="text-2xl font-semibold text-slate-900">{selected.title}</h3>
+              <h3 className="text-2xl font-semibold text-foreground">{selected.title}</h3>
 
-              <div className="mt-4 space-y-2 text-sm text-slate-700">
+              <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <div><CalendarIcon />{formatDate(selected.date)}</div>
                 {selected.time ? (
                   <div>
@@ -706,11 +713,11 @@ export default function EventsPage() {
               </div>
 
               {selected.description ? (
-                <p className="mt-5 text-sm leading-6 text-slate-600">{selected.description}</p>
+                <p className="mt-5 text-sm leading-6 text-muted-foreground">{selected.description}</p>
               ) : null}
 
-              <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-lg font-semibold text-slate-900">
+              <div className="mt-6 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-lg font-semibold text-foreground">
                   {selected.price && selected.price > 0
                     ? `₦${selected.price.toLocaleString()}`
                     : "Free"}
@@ -720,7 +727,7 @@ export default function EventsPage() {
                   <button
                     type="button"
                     onClick={() => goToInternalEventPage(selected)}
-                    className="rounded-2xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
+                    className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
                   >
                     {isPastEvent(selected.date) ? "View event" : "Register for event"}
                   </button>
@@ -728,7 +735,7 @@ export default function EventsPage() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                    className="rounded-2xl border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
                   >
                     Done
                   </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import Container from "@/components/Container";
+import { Reveal } from "@/components/Reveal";
 
 export default function TermsOfServicePage() {
   return (
@@ -8,31 +9,34 @@ export default function TermsOfServicePage() {
       {/* HEADER */}
       <section className="section">
         <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="pill mx-auto w-fit">
-              <span className="text-sm uppercase tracking-wider text-slate-600">
-                Legal
-              </span>
-            </p>
+          <Reveal>
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="pill mx-auto w-fit">
+                <span className="text-sm uppercase tracking-wider text-muted-foreground">
+                  Legal
+                </span>
+              </p>
 
-            <h1 className="h1 mt-6">Terms of Service</h1>
+              <h1 className="h1 mt-6">Terms of Service</h1>
 
-            <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg">
-              These terms outline the conditions under which you use our website
-              and services. By engaging with Prowess Digital Solutions, you agree
-              to the terms described below.
-            </p>
+              <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
+                These terms outline the conditions under which you use our website
+                and services. By engaging with Prowess Digital Solutions, you agree
+                to the terms described below.
+              </p>
 
-            <p className="mt-2 text-sm text-slate-500">
-              Last updated: March 2, 2026
-            </p>
-          </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Last updated: March 2, 2026
+              </p>
+            </div>
+          </Reveal>
         </Container>
       </section>
 
       {/* CONTENT */}
       <section className="section">
         <Container>
+          <Reveal>
           <div className="mx-auto max-w-3xl space-y-12">
             {/* OVERVIEW */}
             <TermsSection title="Overview">
@@ -45,7 +49,7 @@ export default function TermsOfServicePage() {
                 of our website at{" "}
                 <a
                   href="https://prowessdigitalsolutions.com"
-                  className="text-[#507c80] underline"
+                  className="text-primary underline"
                 >
                   prowessdigitalsolutions.com
                 </a>
@@ -260,32 +264,33 @@ export default function TermsOfServicePage() {
                 contact us:
               </p>
 
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <p className="font-semibold text-slate-900">
+              <div className="mt-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <p className="font-semibold text-foreground">
                   Prowess Digital Solutions
                 </p>
-                <p className="mt-2 text-slate-600">
+                <p className="mt-2 text-muted-foreground">
                   Email:{" "}
                   <a
                     href="mailto:info@prowessdigitalsolutions.com"
-                    className="text-[#507c80] underline"
+                    className="text-primary underline"
                   >
                     info@prowessdigitalsolutions.com
                   </a>
                 </p>
-                <p className="text-slate-600">
+                <p className="text-muted-foreground">
                   WhatsApp:{" "}
                   <a
                     href="https://wa.me/2348162174443"
-                    className="text-[#507c80] underline"
+                    className="text-primary underline"
                   >
                     +234 816 217 4443
                   </a>
                 </p>
-                <p className="text-slate-600">Location: Lagos, Nigeria (Remote friendly)</p>
+                <p className="text-muted-foreground">Location: Lagos, Nigeria (Remote friendly)</p>
               </div>
             </TermsSection>
           </div>
+          </Reveal>
         </Container>
       </section>
     </div>
@@ -303,19 +308,19 @@ function TermsSection({
 }) {
   return (
     <div>
-      <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+      <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
         {title}
       </h2>
-      <div className="mt-4 leading-relaxed text-slate-600">{children}</div>
+      <div className="mt-4 leading-relaxed text-muted-foreground">{children}</div>
     </div>
   );
 }
 
 function TermsItem({ label, text }: { label: string; text: string }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-      <p className="font-medium text-slate-900">{label}</p>
-      <p className="mt-1 text-sm leading-relaxed text-slate-600">{text}</p>
+    <div className="rounded-xl border border-border bg-muted p-4">
+      <p className="font-medium text-foreground">{label}</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text}</p>
     </div>
   );
 }
@@ -323,8 +328,8 @@ function TermsItem({ label, text }: { label: string; text: string }) {
 function TermsListItem({ text }: { text: string }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#507c80]" />
-      <p className="text-slate-600">{text}</p>
+      <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+      <p className="text-muted-foreground">{text}</p>
     </div>
   );
 }

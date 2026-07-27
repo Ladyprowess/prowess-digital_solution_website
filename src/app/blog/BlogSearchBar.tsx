@@ -7,8 +7,6 @@ export default function BlogSearchBar() {
   const router = useRouter();
   const sp = useSearchParams();
 
-  const BRAND = "#507c80";
-
   const initialQ = sp.get("q") ?? "";
   const [value, setValue] = useState(initialQ);
 
@@ -30,40 +28,18 @@ export default function BlogSearchBar() {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: "flex", gap: 10, marginTop: 12 }}>
+    <form onSubmit={onSubmit} className="mt-4 flex gap-3">
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search blog posts…"
         aria-label="Search blog posts"
-        style={{
-          flex: 1,
-          padding: "10px 12px",
-          borderRadius: 12,
-          border: "1px solid #e5e5e5",
-          outline: "none",
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = BRAND;
-          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(80,124,128,0.15)";
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#e5e5e5";
-          e.currentTarget.style.boxShadow = "none";
-        }}
+        className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
       />
 
       <button
         type="submit"
-        style={{
-          padding: "10px 14px",
-          borderRadius: 12,
-          border: `1px solid ${BRAND}`,
-          background: BRAND,
-          color: "white",
-          fontWeight: 800,
-          cursor: "pointer",
-        }}
+        className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:opacity-90"
       >
         Search
       </button>
@@ -72,15 +48,7 @@ export default function BlogSearchBar() {
         <button
           type="button"
           onClick={clear}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 12,
-            border: `1px solid ${BRAND}`,
-            background: "white",
-            color: BRAND,
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
+          className="rounded-xl border border-primary px-5 py-3 text-sm font-bold text-primary transition hover:bg-primary/10"
         >
           Clear
         </button>

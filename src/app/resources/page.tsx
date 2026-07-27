@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
 import ResourcesBrowser from "@/components/resources/ResourcesBrowser";
+import { Reveal } from "@/components/Reveal";
 import Link from "next/link";
 
 const youtubeUrl = "https://www.youtube.com/@ProwessDigitalSolutions";
@@ -105,133 +106,135 @@ export default function ResourcesPage() {
         ]}
       />
 
-    <section className="py-12 sm:py-16 bg-slate-50/40">
+    <section className="py-12 sm:py-16 bg-muted/40">
       <Container>
 
         {/* CONTENT CARDS */}
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Blog */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold">Blog</h3>
-            <p className="mt-2 text-slate-600">
-              Articles that help you build structure, make better decisions, and
-              think long-term about your business.
-            </p>
-            <div className="mt-4">
-              <Link
-                href="/blog"
-                className="inline-flex items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
-              >
-                View Blog
-              </Link>
-            </div>
-          </div>
-
-          {/* Videos */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold">Videos</h3>
-            <p className="mt-2 text-slate-600">
-              Short, practical videos on business structure, clarity, and
-              building systems that actually work.
-            </p>
-            <div className="mt-4">
-              <a
-                href={youtubeUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
-              >
-                Visit YouTube
-              </a>
-            </div>
-          </div>
-
-          {/* Events */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold">Events</h3>
-            <p className="mt-2 text-slate-600">
-              Workshops, sessions, and learning events designed for African
-              business owners at every stage.
-            </p>
-            <div className="mt-4">
-              <Link
-                href="/events"
-                className="inline-flex items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
-              >
-                View Events
-              </Link>
-            </div>
-          </div>
+          {[
+            {
+              title: "Blog",
+              desc: "Articles that help you build structure, make better decisions, and think long-term about your business.",
+              href: "/blog",
+              cta: "View Blog",
+              external: false,
+            },
+            {
+              title: "Videos",
+              desc: "Short, practical videos on business structure, clarity, and building systems that actually work.",
+              href: youtubeUrl,
+              cta: "Visit YouTube",
+              external: true,
+            },
+            {
+              title: "Events",
+              desc: "Workshops, sessions, and learning events designed for business owners at every stage.",
+              href: "/events",
+              cta: "View Events",
+              external: false,
+            },
+          ].map((card, i) => (
+            <Reveal key={card.title} delay={i * 90}>
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                <h3 className="text-lg font-semibold text-foreground">{card.title}</h3>
+                <p className="mt-2 text-muted-foreground">{card.desc}</p>
+                <div className="mt-4">
+                  {card.external ? (
+                    <a
+                      href={card.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                    >
+                      {card.cta}
+                    </a>
+                  ) : (
+                    <Link
+                      href={card.href}
+                      className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                    >
+                      {card.cta}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </Reveal>
+          ))}
         </div>
 
         {/* ---------------------------------------------------------- */}
         {/*  FREE TOOLS SECTION                                        */}
         {/* ---------------------------------------------------------- */}
         <section id="tools" className="mt-24">
-          <div className="max-w-2xl mb-10">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#507c80]/10 px-3 py-1 text-xs font-semibold text-[#507c80] mb-4">
-              Free Tools
+          <Reveal>
+            <div className="max-w-2xl mb-10">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary mb-4">
+                Free Tools
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Tools that do the thinking with you
+              </h2>
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Practical tools built for business owners, to help you grow the right way.
+              </p>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Tools that do the thinking with you
-            </h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">
-              Tools built for African business owners. To help businesses grow the right way.
-            </p>
-          </div>
+          </Reveal>
 
           <div className="grid gap-5 sm:grid-cols-2">
-            {TOOLS.map((tool) => (
-              <div
-                key={tool.href}
-                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-[#507c80]/40 hover:shadow-md transition-all duration-200"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#507c80]/08 text-[#507c80] border border-slate-100">
-                    {tool.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-slate-900">{tool.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
-                      {tool.desc}
-                    </p>
-                    <div className="mt-4">
-                      <a
-                        href={tool.href}
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#507c80] hover:text-[#3a5c60] transition-colors"
-                      >
-                        {tool.cta}
-                        <span className="transition-transform group-hover:translate-x-1">→</span>
-                      </a>
+            {TOOLS.map((tool, i) => (
+              <Reveal key={tool.href} delay={i * 80}>
+                <div className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                      {tool.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-foreground">{tool.title}</h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                        {tool.desc}
+                      </p>
+                      <div className="mt-4">
+                        <a
+                          href={tool.href}
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:opacity-80"
+                        >
+                          {tool.cta}
+                          <span className="transition-transform group-hover:translate-x-1">→</span>
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
 
-          <div className="mt-8 flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex-wrap gap-4">
-            <div>
-              <p className="font-semibold text-slate-900">
-                Need to see other tools?
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Those tools are available to Prowess Digital Solutions clients.
-              </p>
+          <Reveal delay={TOOLS.length * 80}>
+            <div className="mt-8 flex items-center justify-between rounded-2xl border border-border bg-card p-6 shadow-sm flex-wrap gap-4">
+              <div>
+                <p className="font-semibold text-foreground">
+                  Need to see other tools?
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Those tools are available to Prowess Digital Solutions clients.
+                </p>
+              </div>
+              <Link
+                href="/tools"
+                className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 whitespace-nowrap"
+              >
+                View all tools →
+              </Link>
             </div>
-            <Link
-              href="/tools"
-              className="inline-flex items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 whitespace-nowrap"
-            >
-              View all tools →
-            </Link>
-          </div>
+          </Reveal>
         </section>
 
         {/* RESOURCE BROWSER */}
-        <div className="mt-16">
-          <ResourcesBrowser />
-        </div>
+        <Reveal delay={80}>
+          <div className="mt-16">
+            <ResourcesBrowser />
+          </div>
+        </Reveal>
       </Container>
     </section>
     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Container from "@/components/Container";
+import { Reveal } from "@/components/Reveal";
 
 type EventRow = {
   id: string;
@@ -105,7 +106,7 @@ export default function EventRegistrationPage() {
   if (loading) {
     return (
       <Container>
-        <div className="py-14 text-sm text-slate-600">Loading event…</div>
+        <div className="py-14 text-sm text-muted-foreground">Loading event…</div>
       </Container>
     );
   }
@@ -121,7 +122,7 @@ export default function EventRegistrationPage() {
   if (!event) {
     return (
       <Container>
-        <div className="py-14 text-sm text-slate-600">Event not found.</div>
+        <div className="py-14 text-sm text-muted-foreground">Event not found.</div>
       </Container>
     );
   }
@@ -134,62 +135,66 @@ export default function EventRegistrationPage() {
       <section className="py-14">
         <Container>
           <div className="mx-auto max-w-2xl">
-            <h1 className="text-3xl font-semibold text-slate-900">{event.title}</h1>
+            <Reveal>
+              <h1 className="text-3xl font-semibold text-foreground">{event.title}</h1>
 
-            {event.description ? (
-              <p className="mt-3 text-sm leading-6 text-slate-600">{event.description}</p>
-            ) : null}
+              {event.description ? (
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.description}</p>
+              ) : null}
 
-            <div className="mt-5 space-y-2 text-sm text-slate-700">
-              <div>
-                <b>Date:</b> {new Date(event.start_datetime).toLocaleString("en-GB")}
+              <div className="mt-5 space-y-2 text-sm text-muted-foreground">
+                <div>
+                  <b className="text-foreground">Date:</b> {new Date(event.start_datetime).toLocaleString("en-GB")}
+                </div>
+                <div>
+                  <b className="text-foreground">Type:</b> {isPaid ? "Paid" : "Free"} • <b className="text-foreground">Price:</b> {priceText}
+                </div>
               </div>
-              <div>
-                <b>Type:</b> {isPaid ? "Paid" : "Free"} • <b>Price:</b> {priceText}
+            </Reveal>
+
+            <Reveal delay={100}>
+              <div className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-foreground">Register</h2>
+
+                <div className="mt-4">
+                  <label className="text-sm font-semibold text-foreground">Full name</label>
+                  <input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <label className="text-sm font-semibold text-foreground">Email</label>
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <label className="text-sm font-semibold text-foreground">Phone (optional)</label>
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRegister}
+                  disabled={submitting}
+                  className="mt-6 w-full rounded-2xl bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+                >
+                  {submitting ? "Please wait…" : isPaid ? "Pay & Register" : "Register"}
+                </button>
+
+                {msg ? <p className="mt-4 text-sm text-muted-foreground">{msg}</p> : null}
               </div>
-            </div>
-
-            <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-slate-900">Register</h2>
-
-              <div className="mt-4">
-                <label className="text-sm font-semibold text-slate-900">Full name</label>
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
-                />
-              </div>
-
-              <div className="mt-4">
-                <label className="text-sm font-semibold text-slate-900">Email</label>
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
-                />
-              </div>
-
-              <div className="mt-4">
-                <label className="text-sm font-semibold text-slate-900">Phone (optional)</label>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={handleRegister}
-                disabled={submitting}
-                className="mt-6 w-full rounded-2xl bg-[var(--steel-teal)] px-6 py-4 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-              >
-                {submitting ? "Please wait…" : isPaid ? "Pay & Register" : "Register"}
-              </button>
-
-              {msg ? <p className="mt-4 text-sm text-slate-700">{msg}</p> : null}
-            </div>
+            </Reveal>
           </div>
         </Container>
       </section>

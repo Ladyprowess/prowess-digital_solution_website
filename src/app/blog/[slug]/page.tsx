@@ -3,13 +3,13 @@ import Container from "@/components/Container";
 import Link from "next/link";
 import Script from "next/script";
 import WrapBlogTables from "@/components/WrapBlogTables";
+import { Reveal } from "@/components/Reveal";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 const WP_SITE = "prowessdigitalsolutions.wordpress.com";
-const BRAND = "#507c80";
 
 type WPPost = {
   ID: number;
@@ -117,9 +117,9 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   if (!slug) {
     return (
-      <main style={{ padding: 24 }}>
-        <p>Post not found.</p>
-      </main>
+      <Container>
+        <div className="py-14 text-foreground">Post not found.</div>
+      </Container>
     );
   }
 
@@ -127,12 +127,14 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   if (!post) {
     return (
-      <main style={{ padding: 24 }}>
-        <p>Post not found.</p>
-        <Link href="/blog" style={{ color: BRAND, fontWeight: 700, textDecoration: "none" }}>
-          ← Back to Blog
-        </Link>
-      </main>
+      <Container>
+        <div className="py-14">
+          <p className="text-foreground">Post not found.</p>
+          <Link href="/blog" className="mt-3 inline-flex font-bold text-primary hover:opacity-80">
+            ← Back to Blog
+          </Link>
+        </div>
+      </Container>
     );
   }
 
@@ -159,75 +161,84 @@ return (
       strategy="afterInteractive"
     />
     {/* HERO */}
-    <section className="section bg-[#eef6f6]">
+    <section className="section bg-primary/5">
       <Container>
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold tracking-wide text-slate-500">
-            {date} • {readTime} • By {authorName}
-          </p>
+        <Reveal>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold tracking-wide text-muted-foreground">
+              {date} • {readTime} • By {authorName}
+            </p>
 
-          <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-            {title}
-          </h1>
+            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+              {title}
+            </h1>
 
-          <div className="mt-6">
-            <Link
-              href="/blog"
-              className="inline-flex items-center gap-2 font-semibold text-[#507c80] hover:opacity-80"
-            >
-              <span aria-hidden>←</span> Back to Blog
-            </Link>
+            <div className="mt-6">
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-2 font-semibold text-primary hover:opacity-80"
+              >
+                <span aria-hidden>←</span> Back to Blog
+              </Link>
+            </div>
           </div>
-        </div>
+        </Reveal>
       </Container>
     </section>
 
     {/* BODY */}
-    <section className="section bg-white">
+    <section className="section bg-background">
       <Container>
         <div className="mx-auto max-w-3xl">
           {post.featured_image ? (
-            <img
-              src={post.featured_image}
-              alt=""
-              className="mb-8 w-full rounded-2xl border border-slate-200 object-cover"
-              loading="lazy"
-            />
+            <Reveal>
+              <img
+                src={post.featured_image}
+                alt=""
+                className="mb-8 w-full rounded-2xl border border-border object-cover"
+                loading="lazy"
+              />
+            </Reveal>
           ) : null}
 
-          {/* ✅ Clean typography wrapper */}
+          {/* Clean typography wrapper */}
           <WrapBlogTables />
 
-<article className="blog-content">
-  <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
-</article>
+          <Reveal delay={60}>
+            <article className="blog-content">
+              <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
+            </article>
+          </Reveal>
 
-          {/* ✅ CTA block (matches your services positioning) */}
-          <div className="mt-10 rounded-2xl border border-slate-200 bg-[#eef6f6] p-6 sm:p-8">
-            <h3 className="text-xl font-bold text-slate-900">
-              Need clarity and structure in your business?
-            </h3>
-            <p className="mt-2 text-slate-700 leading-relaxed">
-              If you are overwhelmed or unsure of your next step, start with a Business Clarity Session.
-              We’ll help you organise your thinking, identify priorities, and decide what to do next.
-            </p>
+          {/* CTA block */}
+          <Reveal delay={120}>
+            <div className="mt-10 rounded-2xl border border-border bg-primary/5 p-6 sm:p-8">
+              <h3 className="text-xl font-bold text-foreground">
+                Need clarity and structure in your business?
+              </h3>
+              <p className="mt-2 leading-relaxed text-muted-foreground">
+                If you are overwhelmed or unsure of your next step, start with the Business Structure
+                Diagnostic. We&apos;ll help you organise your thinking, identify priorities, and decide
+                what to do next.
+              </p>
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/services/business-clarity-session"
-                className="inline-flex items-center justify-center rounded-xl bg-[#507c80] px-6 py-3 font-semibold text-white hover:opacity-95"
-              >
-                Start with a Clarity Session
-              </Link>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/services/business-structure-diagnostic"
+                  className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-95"
+                >
+                  Start the Diagnostic
+                </Link>
 
-              <Link
-                href="/services"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-900 hover:bg-slate-50"
-              >
-                View All Services
-              </Link>
+                <Link
+                  href="/services"
+                  className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 font-semibold text-foreground transition hover:bg-muted"
+                >
+                  View All Services
+                </Link>
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </Container>
     </section>

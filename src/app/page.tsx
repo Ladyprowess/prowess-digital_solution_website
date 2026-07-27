@@ -141,7 +141,7 @@ export default function ModernHomePage() {
       </section>
 
       {/* HOW WE HELP - carousel */}
-      <section className="bg-white py-20 sm:py-28">
+      <section className="bg-background py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <Reveal>
             <div className="mx-auto max-w-2xl text-center">
@@ -160,7 +160,7 @@ export default function ModernHomePage() {
               type="button"
               onClick={() => scrollHelp(-1)}
               aria-label="Scroll left"
-              className="absolute -left-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white text-muted-foreground shadow-md transition hover:text-foreground sm:flex lg:hidden"
+              className="absolute -left-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-md transition hover:text-foreground sm:flex lg:hidden"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -170,7 +170,7 @@ export default function ModernHomePage() {
               type="button"
               onClick={() => scrollHelp(1)}
               aria-label="Scroll right"
-              className="absolute -right-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white text-muted-foreground shadow-md transition hover:text-foreground sm:flex lg:hidden"
+              className="absolute -right-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-md transition hover:text-foreground sm:flex lg:hidden"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -186,9 +186,9 @@ export default function ModernHomePage() {
                 <Reveal key={item.title} delay={(idx % 3) * 90} className="snap-start">
                   <Link
                     href={item.href}
-                    className="group block h-full rounded-3xl border border-border bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
+                    className="group block h-full rounded-3xl border border-border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
                   >
-                    <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
+                    <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
                       <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         {item.icon}
                       </svg>
@@ -226,7 +226,7 @@ export default function ModernHomePage() {
                 </p>
                 <Link
                   href="/about#our-story"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:opacity-90"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90"
                 >
                   <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
@@ -242,7 +242,7 @@ export default function ModernHomePage() {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
                   {impactSteps.map((s) => (
                     <div key={s.step} className="relative text-center">
-                      <div className="relative z-10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-primary/20 bg-white text-primary shadow-sm">
+                      <div className="relative z-10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-primary/20 bg-card text-primary shadow-sm">
                         <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           {s.icon}
                         </svg>
@@ -331,7 +331,7 @@ export default function ModernHomePage() {
       <ManualGoogleReviews />
 
       {/* VALUES */}
-      <section className="bg-white py-20 sm:py-28">
+      <section className="bg-background py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <Reveal>
             <div className="mx-auto max-w-2xl text-center">
@@ -347,7 +347,7 @@ export default function ModernHomePage() {
           <Reveal delay={80}>
             <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
               {values.map((value, idx) => (
-                <div key={idx} className="group inline-flex items-center gap-3 rounded-full border-2 border-primary/20 bg-white px-8 py-4 shadow-sm transition hover:border-primary hover:shadow-lg">
+                <div key={idx} className="group inline-flex items-center gap-3 rounded-full border-2 border-primary/20 bg-card px-8 py-4 shadow-sm transition hover:border-primary hover:shadow-lg">
                   <div className="h-2 w-2 rounded-full bg-primary transition group-hover:scale-125" />
                   <span className="text-base font-semibold text-foreground">{value}</span>
                 </div>
@@ -356,8 +356,8 @@ export default function ModernHomePage() {
           </Reveal>
 
           <Reveal delay={160}>
-            <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-primary/20 bg-white p-10 text-center shadow-xl">
-              <p className="text-lg leading-relaxed text-slate-700 sm:text-xl">
+            <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-primary/20 bg-card p-10 text-center shadow-xl">
+              <p className="text-lg leading-relaxed text-foreground sm:text-xl">
                 <span className="font-bold text-foreground">Our Promise:</span>
               </p>
               <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
@@ -393,7 +393,7 @@ export default function ModernHomePage() {
             </Reveal>
 
             <Reveal delay={120}>
-              <div className="relative mx-auto max-w-md overflow-hidden rounded-3xl border border-border bg-white p-6 shadow-xl">
+              <div className="relative mx-auto max-w-md overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-xl">
                 <Image
                   src="/images/prowess-clarity-framework.png"
                   alt="Prowess Digital Solutions clarity framework"

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
+import { Reveal } from "@/components/Reveal";
 
 type Role = {
   id: string;
@@ -88,7 +89,7 @@ export default function CareersPage() {
             Work with us. <span className="text-primary">Build with purpose.</span>
           </>
         }
-        description="At Prowess Digital Solutions, we help African entrepreneurs build properly. If you think clearly, communicate well, and take quality seriously, you will fit in here."
+        description="At Prowess Digital Solutions, we help founders everywhere build properly. If you think clearly, communicate well, and take quality seriously, you will fit in here."
         primaryAction={{ label: "See Open Roles", href: "#openings" }}
         secondaryAction={{ label: "Our Work Culture", href: "#culture" }}
         proof={[
@@ -99,88 +100,92 @@ export default function CareersPage() {
       />
 
       {/* ── WHAT YOU CAN EXPECT ───────────────────────────────────────────── */}
-      <section id="culture" className="bg-white py-20 sm:py-24">
+      <section id="culture" className="bg-background py-20 sm:py-24">
         <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#507c80]">
-              Work Culture
-            </p>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              What you can expect
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-slate-600">
-              We keep work structured and clear so people can do their best without confusion.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
+                Work Culture
+              </p>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                What you can expect
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                We keep work structured and clear so people can do their best without confusion.
+              </p>
+            </div>
+          </Reveal>
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {perks.map((p) => (
-              <div
-                key={p.title}
-                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#507c80]/40 hover:shadow-md"
-              >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#507c80]/10 text-[#507c80]">
-                  {p.icon}
+            {perks.map((p, i) => (
+              <Reveal key={p.title} delay={i * 70}>
+                <div className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-md">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    {p.icon}
+                  </div>
+                  <h3 className="font-bold text-foreground">{p.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.desc}</p>
                 </div>
-                <h3 className="font-bold text-slate-900">{p.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{p.desc}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
 
-          <div className="mx-auto mt-12 max-w-3xl rounded-2xl border border-[#507c80]/20 bg-[#507c80]/5 p-8 text-center">
-            <p className="text-base font-semibold text-slate-900">
-              We value clarity over noise.
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Every role here is an opportunity to do real, meaningful work that helps African businesses grow properly.
-            </p>
-          </div>
+          <Reveal delay={150}>
+            <div className="mx-auto mt-12 max-w-3xl rounded-2xl border border-primary/20 bg-primary/5 p-8 text-center">
+              <p className="text-base font-semibold text-foreground">
+                We value clarity over noise.
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Every role here is an opportunity to do real, meaningful work that helps businesses grow properly.
+              </p>
+            </div>
+          </Reveal>
         </Container>
       </section>
 
       {/* ── OPEN ROLES ────────────────────────────────────────────────────── */}
-      <section id="openings" className="bg-[#f5f9f9] py-20 sm:py-24">
+      <section id="openings" className="bg-muted py-20 sm:py-24">
         <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#507c80]">
-              Open Positions
-            </p>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Current openings
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-slate-600">
-              If a role fits you, apply. We like people who think clearly and do work properly.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
+                Open Positions
+              </p>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Current openings
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                If a role fits you, apply. We like people who think clearly and do work properly.
+              </p>
+            </div>
+          </Reveal>
 
           <div className="mt-12">
             {loadingRoles ? (
-              <div className="rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center">
-                <p className="text-sm text-slate-500">Loading openings…</p>
+              <div className="rounded-2xl border border-border bg-card px-6 py-14 text-center">
+                <p className="text-sm text-muted-foreground">Loading openings…</p>
               </div>
             ) : hasOpenings ? (
               <div className="grid gap-5 md:grid-cols-2">
-                {roles.map((r) => (
-                  <article
-                    key={r.id}
-                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
+                {roles.map((r, i) => (
+                  <Reveal key={r.id} delay={i * 90} as="article"
+                    className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                   >
                     <div className="p-7">
                       {/* Tags row */}
                       <div className="mb-4 flex flex-wrap gap-2">
                         {r.level && (
-                          <span className="rounded-full bg-[#507c80]/10 px-3 py-1 text-xs font-semibold text-[#507c80]">
+                          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                             {r.level}
                           </span>
                         )}
                         {r.job_type && (
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                          <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
                             {r.job_type}
                           </span>
                         )}
                         {r.location && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -190,36 +195,36 @@ export default function CareersPage() {
                         )}
                       </div>
 
-                      <h3 className="text-xl font-bold text-slate-900">{r.title}</h3>
+                      <h3 className="text-xl font-bold text-foreground">{r.title}</h3>
 
                       {r.summary && (
-                        <p className="mt-3 text-sm leading-relaxed text-slate-600">{r.summary}</p>
+                        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{r.summary}</p>
                       )}
 
                       <details className="group mt-6">
-                        <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-slate-200 px-5 py-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                        <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-border px-5 py-3.5 text-sm font-semibold text-foreground hover:bg-muted">
                           <span className="group-open:hidden">View role details</span>
                           <span className="hidden group-open:inline">Hide details</span>
                           {CHEVRON}
                         </summary>
 
-                        <div className="mt-5 space-y-5 border-t border-slate-100 pt-5">
+                        <div className="mt-5 space-y-5 border-t border-border pt-5">
                           {r.responsibilities && (
                             <div>
-                              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                                 Responsibilities
                               </p>
-                              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
+                              <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
                                 {r.responsibilities}
                               </p>
                             </div>
                           )}
                           {r.requirements && (
                             <div>
-                              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                                 Requirements
                               </p>
-                              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
+                              <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
                                 {r.requirements}
                               </p>
                             </div>
@@ -229,76 +234,80 @@ export default function CareersPage() {
                               href={r.apply_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="block w-full rounded-xl bg-[#507c80] px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#3a5c60]"
+                              className="block w-full rounded-xl bg-primary px-6 py-3 text-center text-sm font-semibold text-primary-foreground transition hover:opacity-90"
                             >
                               Apply now →
                             </a>
                           ) : (
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                            <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
                               Application link coming soon.
                             </div>
                           )}
                         </div>
                       </details>
                     </div>
-                  </article>
+                  </Reveal>
                 ))}
               </div>
             ) : (
-              <div className="overflow-hidden rounded-3xl bg-[#0c1a1b]">
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 opacity-30"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(rgba(80,124,128,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(80,124,128,.1) 1px, transparent 1px)",
-                    backgroundSize: "40px 40px",
-                  }}
-                />
-                <div className="relative px-8 py-16 text-center sm:px-14">
-                  <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#507c80]/20 text-[#507c80]">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white sm:text-3xl">
-                    No open roles right now
-                  </h3>
-                  <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/60">
-                    We do not have any open positions at the moment. Drop your email below and we will notify you as soon as something opens up.
-                  </p>
-                  <div className="mx-auto mt-8 max-w-sm">
-                    <CareersNotifyModal />
+              <Reveal>
+                <div className="relative overflow-hidden rounded-3xl bg-foreground">
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 opacity-20"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(color-mix(in oklch, var(--primary) 40%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklch, var(--primary) 40%, transparent) 1px, transparent 1px)",
+                      backgroundSize: "40px 40px",
+                    }}
+                  />
+                  <div className="relative px-8 py-16 text-center sm:px-14">
+                    <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20 text-primary">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-background sm:text-3xl">
+                      No open roles right now
+                    </h3>
+                    <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-background/60">
+                      We do not have any open positions at the moment. Drop your email below and we will notify you as soon as something opens up.
+                    </p>
+                    <div className="mx-auto mt-8 max-w-sm">
+                      <CareersNotifyModal />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Reveal>
             )}
           </div>
         </Container>
       </section>
 
       {/* ── CLOSING CTA ───────────────────────────────────────────────────── */}
-      <section className="bg-[#3a5c60] py-20">
+      <section className="bg-primary py-20">
         <Container>
+          <Reveal>
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
+            <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl">
               Do not see your role listed?
             </h2>
-            <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-white/80">
+            <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-primary-foreground/80">
               If you believe you can add real value to what we are building, reach out anyway.
               We always consider strong, thoughtful applicants.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <a
                 href="/contact"
-                className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-3.5 font-semibold text-[#2e5659] shadow-lg transition hover:scale-[1.02]"
+                className="inline-flex items-center justify-center rounded-xl bg-card px-8 py-3.5 font-semibold text-primary shadow-lg transition hover:scale-[1.02]"
               >
                 Get in Touch
               </a>
               <CareersNotifyInline />
             </div>
           </div>
+          </Reveal>
         </Container>
       </section>
 
@@ -370,18 +379,18 @@ function NotifyModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
+      <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h4 className="text-xl font-bold text-slate-900">Get notified</h4>
-            <p className="mt-1 text-sm text-slate-600">
+            <h4 className="text-xl font-bold text-foreground">Get notified</h4>
+            <p className="mt-1 text-sm text-muted-foreground">
               Drop your email. We will reach out when a role opens.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100"
+            className="rounded-lg px-2 py-1 text-muted-foreground hover:bg-muted"
             aria-label="Close"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
@@ -397,7 +406,7 @@ function NotifyModal({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="mt-5 w-full rounded-xl bg-[#507c80] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#3a5c60]"
+              className="mt-5 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
             >
               Done
             </button>
@@ -405,14 +414,14 @@ function NotifyModal({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-400">
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 Email address
               </label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#507c80]"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
               />
               {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
             </div>
@@ -420,7 +429,7 @@ function NotifyModal({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted"
               >
                 Cancel
               </button>
@@ -428,7 +437,7 @@ function NotifyModal({ onClose }: { onClose: () => void }) {
                 type="button"
                 onClick={submit}
                 disabled={loading}
-                className="w-full rounded-xl bg-[#507c80] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#3a5c60] disabled:opacity-60"
+                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
               >
                 {loading ? "Saving…" : "Notify me"}
               </button>

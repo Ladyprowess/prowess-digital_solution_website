@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Container from "@/components/Container";
+import { Reveal } from "@/components/Reveal";
 import { services, packages, offerToPackageSlug } from "@/content/site";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
@@ -58,43 +59,70 @@ export default async function ServicePage({ params }: PageProps) {
   return (
     <div className="page-wrap">
       {/* HERO */}
-      <section className="section bg-accent">
+      <section className="relative overflow-hidden border-b border-border bg-background">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-70"
+          style={{
+            backgroundImage:
+              "linear-gradient(color-mix(in oklch, var(--primary) 5%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklch, var(--primary) 5%, transparent) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+            maskImage: "linear-gradient(to bottom, #000 0%, transparent 78%)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute right-[-180px] top-[-260px] h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"
+        />
+
         <Container>
-          <div className="mx-auto max-w-3xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">
-              Offer
-            </p>
+          <div className="relative mx-auto max-w-3xl py-16 sm:py-20">
+            <Reveal delay={0} y={14}>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                Offer
+              </p>
+            </Reveal>
 
-            <h1 className="h1">{service.title}</h1>
+            <Reveal delay={80} y={18}>
+              <h1 className="text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
+                {service.title}
+              </h1>
+            </Reveal>
 
-            <p className="mt-5 text-lg leading-relaxed text-muted-foreground sm:text-xl">
-              {service.short}
-            </p>
+            <Reveal delay={160} y={18}>
+              <p className="mt-5 text-lg leading-relaxed text-muted-foreground sm:text-xl">
+                {service.short}
+              </p>
+            </Reveal>
 
             {includedInPlan ? (
-              <div className="mt-6 text-foreground">
-                <span className="text-muted-foreground">Included in the </span>
-                <span className="font-semibold">{includedInPlan.title}</span>
-                <span className="text-muted-foreground"> membership, from </span>
-                <span className="font-semibold">${includedInPlan.monthlyPrice.toLocaleString("en-US")}/mo</span>
-              </div>
+              <Reveal delay={220} y={14}>
+                <div className="mt-6 text-foreground">
+                  <span className="text-muted-foreground">Included in the </span>
+                  <span className="font-semibold">{includedInPlan.title}</span>
+                  <span className="text-muted-foreground"> membership, from </span>
+                  <span className="font-semibold">${includedInPlan.monthlyPrice.toLocaleString("en-US")}/mo</span>
+                </div>
+              </Reveal>
             ) : null}
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href={includedInPlan ? `/pricing#${includedInPlan.slug}` : "/pricing"}
-                className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground hover:opacity-95"
-              >
-                {service.cta}
-              </Link>
+            <Reveal delay={280} y={18}>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href={includedInPlan ? `/pricing#${includedInPlan.slug}` : "/pricing"}
+                  className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:opacity-95 hover:shadow-md"
+                >
+                  {service.cta}
+                </Link>
 
-              <Link
-                href="/services"
-                className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 font-semibold text-foreground hover:bg-muted"
-              >
-                Back to Offers
-              </Link>
-            </div>
+                <Link
+                  href="/services"
+                  className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 font-semibold text-foreground transition hover:-translate-y-0.5 hover:bg-muted"
+                >
+                  Back to Offers
+                </Link>
+              </div>
+            </Reveal>
           </div>
         </Container>
       </section>
@@ -103,69 +131,79 @@ export default async function ServicePage({ params }: PageProps) {
       <section className="section bg-background">
         <Container>
           <div className="mx-auto max-w-3xl space-y-12">
-            <div className="text-foreground">
-              <h2 className="text-2xl font-bold text-foreground">What this offer covers</h2>
-              <div className="mt-4">
-                {service.details.description.split("\n\n").map((p, i) => (
-                  <p key={i} className="mb-4 last:mb-0">
-                    {p}
-                  </p>
-                ))}
+            <Reveal>
+              <div className="text-foreground">
+                <h2 className="text-2xl font-bold text-foreground">What this offer covers</h2>
+                <div className="mt-4">
+                  {service.details.description.split("\n\n").map((p, i) => (
+                    <p key={i} className="mb-4 last:mb-0">
+                      {p}
+                    </p>
+                  ))}
+                </div>
               </div>
-            </div>
+            </Reveal>
 
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">Who it is for</h2>
-              <ul className="mt-4 list-disc pl-5 text-foreground">
-                {service.details.whoFor.map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">What you get</h2>
-              <ul className="mt-4 list-disc pl-5 text-foreground">
-                {service.details.whatYouGet.map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-            </div>
-
-            {service.details.notes?.length ? (
+            <Reveal delay={60}>
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Notes</h2>
+                <h2 className="text-2xl font-bold text-foreground">Who it is for</h2>
                 <ul className="mt-4 list-disc pl-5 text-foreground">
-                  {service.details.notes.map((x) => (
+                  {service.details.whoFor.map((x) => (
                     <li key={x}>{x}</li>
                   ))}
                 </ul>
               </div>
+            </Reveal>
+
+            <Reveal delay={120}>
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">What you get</h2>
+                <ul className="mt-4 list-disc pl-5 text-foreground">
+                  {service.details.whatYouGet.map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+
+            {service.details.notes?.length ? (
+              <Reveal delay={180}>
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Notes</h2>
+                  <ul className="mt-4 list-disc pl-5 text-foreground">
+                    {service.details.notes.map((x) => (
+                      <li key={x}>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
             ) : null}
 
-            <div className="rounded-2xl border border-border bg-muted p-6">
-              <h3 className="text-xl font-bold text-foreground">Not sure this is the right one to start with?</h3>
-              <p className="mt-2 text-foreground">
-                Start with the Business Structure Diagnostic. It gives us both a clear, honest
-                picture of your business before you commit to anything bigger.
-              </p>
+            <Reveal delay={220}>
+              <div className="rounded-2xl border border-border bg-muted p-6 transition hover:shadow-sm">
+                <h3 className="text-xl font-bold text-foreground">Not sure this is the right one to start with?</h3>
+                <p className="mt-2 text-foreground">
+                  Start with the Business Structure Diagnostic. It gives us both a clear, honest
+                  picture of your business before you commit to anything bigger.
+                </p>
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground hover:opacity-95"
-                >
-                  Contact Us
-                </Link>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="/contact"
+                    className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:-translate-y-0.5 hover:opacity-95"
+                  >
+                    Contact Us
+                  </Link>
 
-                <Link
-                  href="/services/business-structure-diagnostic"
-                  className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 font-semibold text-foreground hover:bg-muted"
-                >
-                  Start with the Diagnostic
-                </Link>
+                  <Link
+                    href="/services/business-structure-diagnostic"
+                    className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 font-semibold text-foreground transition hover:-translate-y-0.5 hover:bg-muted"
+                  >
+                    Start with the Diagnostic
+                  </Link>
+                </div>
               </div>
-            </div>
+            </Reveal>
           </div>
         </Container>
       </section>

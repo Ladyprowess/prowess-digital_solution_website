@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
+import { Reveal } from "@/components/Reveal";
 import { services } from "@/content/site";
 
 // ── Four things Prowess does ────────────────────────────────────────────────
@@ -122,19 +123,20 @@ export default function ServicesPage() {
       {/* ── FOUR PILLARS ──────────────────────────────────────────────────── */}
       <section id="our-services" className="section bg-background">
         <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="h2">Everything we offer, in one place</h2>
-            <p className="lead mt-4">
-              From free tools you can use today, to fixed scope offers, practical tools, and
-              ongoing support, there is a starting point here for every stage of your business.
-            </p>
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="h2">Everything we offer, in one place</h2>
+              <p className="lead mt-4">
+                From free tools you can use today, to fixed scope offers, practical tools, and
+                ongoing support, there is a starting point here for every stage of your business.
+              </p>
+            </div>
+          </Reveal>
 
           <div className="mt-16 space-y-5">
-            {pillars.map((p) => (
-              <div
-                key={p.number}
-                className={`group relative overflow-hidden rounded-2xl border bg-card p-8 transition hover:shadow-lg sm:p-10 ${
+            {pillars.map((p, i) => (
+              <Reveal key={p.number} delay={i * 90} as="div"
+                className={`group relative overflow-hidden rounded-2xl border bg-card p-8 transition hover:-translate-y-1 hover:shadow-lg sm:p-10 ${
                   p.free ? "border-primary/30 hover:border-primary/60" : "border-border hover:border-primary/40"
                 }`}
               >
@@ -182,7 +184,7 @@ export default function ServicesPage() {
                     </ul>
                   </div>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </Container>
@@ -191,6 +193,7 @@ export default function ServicesPage() {
       {/* ── TOOLS CALLOUT ─────────────────────────────────────────────────── */}
       <section className="section bg-background">
         <Container>
+          <Reveal>
           <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-primary/20 shadow-sm">
             <div className="grid lg:grid-cols-2">
               <div className="dark bg-background p-10 lg:p-14">
@@ -257,6 +260,7 @@ export default function ServicesPage() {
               </div>
             </div>
           </div>
+          </Reveal>
         </Container>
       </section>
 
@@ -265,7 +269,7 @@ export default function ServicesPage() {
         <Container>
           <div className="mx-auto max-w-5xl">
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-              <div>
+              <Reveal as="div">
                 <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
                   Who This Is For
                 </p>
@@ -284,13 +288,12 @@ export default function ServicesPage() {
                 >
                   Talk to us →
                 </Link>
-              </div>
+              </Reveal>
 
               <div className="space-y-4">
-                {whoWeWork.map((w) => (
-                  <div
-                    key={w.label}
-                    className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
+                {whoWeWork.map((w, i) => (
+                  <Reveal key={w.label} delay={100 + i * 80} as="div"
+                    className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 transition hover:border-primary/30 hover:shadow-sm"
                   >
                     <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
                       <span className="h-2 w-2 rounded-full bg-primary" />
@@ -299,7 +302,7 @@ export default function ServicesPage() {
                       <div className="font-bold text-foreground">{w.label}</div>
                       <div className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{w.desc}</div>
                     </div>
-                  </div>
+                  </Reveal>
                 ))}
               </div>
             </div>
@@ -311,19 +314,23 @@ export default function ServicesPage() {
       <div>
         <section className="section bg-muted">
           <Container>
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold text-foreground sm:text-4xl">How we work</h2>
-              <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-                The same three principles apply to every engagement, regardless of the offer.
-              </p>
-            </div>
+            <Reveal>
+              <div className="mx-auto max-w-2xl text-center">
+                <h2 className="text-3xl font-bold text-foreground sm:text-4xl">How we work</h2>
+                <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+                  The same three principles apply to every engagement, regardless of the offer.
+                </p>
+              </div>
+            </Reveal>
             <div className="mt-14 grid gap-6 sm:grid-cols-3">
-              {process.map((item) => (
-                <div key={item.step} className="relative rounded-2xl border border-border bg-card p-8">
+              {process.map((item, i) => (
+                <Reveal key={item.step} delay={i * 100} as="div"
+                  className="relative rounded-2xl border border-border bg-card p-8 transition hover:-translate-y-1 hover:shadow-md"
+                >
                   <div className="text-4xl font-black leading-none text-muted-foreground/30">{item.step}</div>
                   <h3 className="mt-4 text-lg font-bold text-foreground">{item.title}</h3>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
-                </div>
+                </Reveal>
               ))}
             </div>
           </Container>
@@ -333,28 +340,30 @@ export default function ServicesPage() {
       {/* ── CTA ───────────────────────────────────────────────────────────── */}
       <section className="section bg-primary">
         <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl lg:text-5xl">
-              Not sure where to start?
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-primary-foreground/80">
-              Start with the Business Structure Diagnostic. In 48 to 72 hours we will look at your
-              current situation, identify what is actually holding you back, and map out the
-              clearest path forward. No pressure, no sales pitch, just honest, structured guidance.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/services/business-structure-diagnostic">
-                <button className="w-full rounded-xl bg-primary-foreground px-10 py-4 text-base font-semibold text-primary shadow-lg transition hover:scale-[1.02] sm:w-auto">
-                  Start the Diagnostic
-                </button>
-              </Link>
-              <Link href="/pricing">
-                <button className="w-full rounded-xl border-2 border-primary-foreground/40 bg-transparent px-10 py-4 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/10 sm:w-auto">
-                  View Pricing
-                </button>
-              </Link>
+          <Reveal>
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl lg:text-5xl">
+                Not sure where to start?
+              </h2>
+              <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-primary-foreground/80">
+                Start with the Business Structure Diagnostic. In 48 to 72 hours we will look at your
+                current situation, identify what is actually holding you back, and map out the
+                clearest path forward. No pressure, no sales pitch, just honest, structured guidance.
+              </p>
+              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Link href="/services/business-structure-diagnostic">
+                  <button className="w-full rounded-xl bg-primary-foreground px-10 py-4 text-base font-semibold text-primary shadow-lg transition hover:scale-[1.02] sm:w-auto">
+                    Start the Diagnostic
+                  </button>
+                </Link>
+                <Link href="/pricing">
+                  <button className="w-full rounded-xl border-2 border-primary-foreground/40 bg-transparent px-10 py-4 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/10 sm:w-auto">
+                    View Pricing
+                  </button>
+                </Link>
+              </div>
             </div>
-          </div>
+          </Reveal>
         </Container>
       </section>
 

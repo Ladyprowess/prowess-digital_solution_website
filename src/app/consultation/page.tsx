@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Container from "@/components/Container";
+import AgencyPageHeader from "@/components/AgencyPageHeader";
+import { Reveal } from "@/components/Reveal";
 
 type Service = {
   id: string;
@@ -152,19 +154,36 @@ export default function ConsultationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
-      <Container>
+    <div className="pb-16">
+      <AgencyPageHeader
+        eyebrow="Book a Call"
+        title={
+          <>
+            Book a <span className="text-primary">consultation.</span>
+          </>
+        }
+        description="Choose a time that works for you. Pay and confirm instantly."
+        proof={[
+          "Business days only, Mon-Fri 10:00-17:00",
+          "Instant confirmation by email",
+          "Pay securely, reschedule if needed",
+        ]}
+      />
+
+      <section className="py-10 sm:py-14">
+        <Container>
         <div className="mx-auto max-w-4xl">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-10">
+          <Reveal>
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-10">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-slate-900">Book a Consultation</h1>
-                <p className="mt-1 text-sm text-slate-600">
+                <h2 className="text-2xl font-semibold text-foreground">Book a Consultation</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Choose a time that works for you. Pay and confirm instantly.
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <div className="rounded-2xl bg-muted px-4 py-3 text-sm text-foreground">
                 <span className="font-semibold">Business Hours:</span> Mon–Fri, 10:00–17:00
               </div>
             </div>
@@ -172,11 +191,11 @@ export default function ConsultationPage() {
             {/* Service */}
             <div className="mt-8 grid gap-5 lg:grid-cols-2">
               <div>
-                <label className="text-sm font-semibold text-slate-900">Consultation type</label>
+                <label className="text-sm font-semibold text-foreground">Consultation type</label>
                 <select
                   value={serviceId}
                   onChange={(e) => setServiceId(e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-300"
+                  className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -185,7 +204,7 @@ export default function ConsultationPage() {
                   ))}
                 </select>
                 {selectedService ? (
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-muted-foreground">
                     Duration: <b>{selectedService.duration_minutes} mins</b>
                   </p>
                 ) : null}
@@ -194,32 +213,32 @@ export default function ConsultationPage() {
               {/* Contact */}
               <div className="grid gap-4">
                 <div>
-                  <label className="text-sm font-semibold text-slate-900">Full name</label>
+                  <label className="text-sm font-semibold text-foreground">Full name</label>
                   <input
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-300"
+                    className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
                     placeholder="Your name"
                   />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="text-sm font-semibold text-slate-900">Email</label>
+                    <label className="text-sm font-semibold text-foreground">Email</label>
                     <input
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-300"
+                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
                       placeholder="you@email.com"
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-semibold text-slate-900">Phone (optional)</label>
+                    <label className="text-sm font-semibold text-foreground">Phone (optional)</label>
                     <input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-300"
+                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
                       placeholder="080…"
                     />
                   </div>
@@ -228,7 +247,7 @@ export default function ConsultationPage() {
 
               {/* Date */}
               <div>
-                <label className="text-sm font-semibold text-slate-900">Pick a date</label>
+                <label className="text-sm font-semibold text-foreground">Pick a date</label>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {days.map((d) => {
                     const iso = toISODate(d);
@@ -245,10 +264,10 @@ export default function ConsultationPage() {
                           setSelectedTime("");
                         }}
                         className={cn(
-                          "rounded-2xl border px-3 py-3 text-sm font-semibold",
+                          "rounded-2xl border px-3 py-3 text-sm font-semibold transition",
                           active
-                            ? "border-[var(--steel-teal)] bg-[rgba(80,124,128,0.10)] text-slate-900"
-                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            ? "border-primary bg-primary/10 text-foreground"
+                            : "border-border bg-background text-foreground hover:bg-muted"
                         )}
                       >
                         {label}
@@ -256,14 +275,14 @@ export default function ConsultationPage() {
                     );
                   })}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-muted-foreground">
                   We only show business days (Mon–Fri).
                 </p>
               </div>
 
               {/* Time */}
               <div>
-                <label className="text-sm font-semibold text-slate-900">Pick a time</label>
+                <label className="text-sm font-semibold text-foreground">Pick a time</label>
                 <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
                   {slots.map((t) => {
                     const active = t === selectedTime;
@@ -273,10 +292,10 @@ export default function ConsultationPage() {
                         type="button"
                         onClick={() => setSelectedTime(t)}
                         className={cn(
-                          "rounded-2xl border px-3 py-3 text-sm font-semibold",
+                          "rounded-2xl border px-3 py-3 text-sm font-semibold transition",
                           active
-                            ? "border-[var(--steel-teal)] bg-[rgba(80,124,128,0.10)] text-slate-900"
-                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            ? "border-primary bg-primary/10 text-foreground"
+                            : "border-border bg-background text-foreground hover:bg-muted"
                         )}
                       >
                         {t}
@@ -284,18 +303,18 @@ export default function ConsultationPage() {
                     );
                   })}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-muted-foreground">
                   If a slot is taken, the system will tell you to pick another.
                 </p>
               </div>
 
               {/* Notes */}
               <div className="lg:col-span-2">
-                <label className="text-sm font-semibold text-slate-900">Notes (optional)</label>
+                <label className="text-sm font-semibold text-foreground">Notes (optional)</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-300"
+                  className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
                   rows={4}
                   placeholder="What do you want to discuss?"
                 />
@@ -304,7 +323,7 @@ export default function ConsultationPage() {
 
             {/* Footer */}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className={cn("text-sm", msg ? "text-rose-700" : "text-slate-600")}>
+              <p className={cn("text-sm", msg ? "text-rose-600" : "text-muted-foreground")}>
                 {msg || "Select a date/time and submit to confirm your booking."}
               </p>
 
@@ -312,7 +331,7 @@ export default function ConsultationPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="rounded-2xl bg-[var(--steel-teal)] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                className="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
               >
                 {loading
                   ? "Processing…"
@@ -322,8 +341,10 @@ export default function ConsultationPage() {
               </button>
             </div>
           </div>
+          </Reveal>
         </div>
-      </Container>
+        </Container>
+      </section>
     </div>
   );
 }

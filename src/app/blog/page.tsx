@@ -2,14 +2,11 @@ import Link from "next/link";
 import BlogSearchBar from "./BlogSearchBar";
 import Script from "next/script";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
+import Container from "@/components/Container";
+import { Reveal } from "@/components/Reveal";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0; // always fetch fresh
-
-
-
-// ✅ ADD THIS HERE (TOP LEVEL)
-const BRAND = "#507c80";
 
 type WPPost = {
   ID: number;
@@ -43,10 +40,8 @@ function makeExcerpt(p: WPPost) {
     : clean;
 }
 
-
 async function fetchWpPosts(page: number, perPage: number, q?: string) {
   const site = "prowessdigitalsolutions.wordpress.com";
-  
 
   const params = new URLSearchParams({
     number: String(perPage),
@@ -61,14 +56,11 @@ async function fetchWpPosts(page: number, perPage: number, q?: string) {
     next: { revalidate },
     headers: { "user-agent": "Mozilla/5.0" },
   });
-  
-  
 
   if (!res.ok) throw new Error(`WP API error: ${res.status}`);
 
   return (await res.json()) as { posts: WPPost[]; found: number };
 }
-
 
 function PageLink({
   page,
@@ -90,17 +82,11 @@ function PageLink({
     <Link
       href={`/blog?${params.toString()}`}
       aria-current={isActive ? "page" : undefined}
-      style={{
-        padding: "8px 10px",
-        borderRadius: 10,
-        border: `1px solid ${isActive ? BRAND : "#e5e5e5"}`,
-        textDecoration: "none",
-        fontWeight: 700,
-        opacity: 1,
-        color: isActive ? BRAND : "inherit",
-        background: isActive ? "rgba(80,124,128,0.08)" : "white",
-      }}
-      
+      className={`rounded-xl border px-3 py-2 text-sm font-bold transition ${
+        isActive
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border bg-card text-foreground hover:bg-muted"
+      }`}
     >
       {label}
     </Link>
@@ -112,7 +98,6 @@ export default async function BlogPage({
 }: {
   searchParams: Promise<{ page?: string; q?: string }>;
 }) {
-
   const perPage = 6;
 
   const sp = (await searchParams) ?? {};
@@ -121,10 +106,7 @@ export default async function BlogPage({
 
   const q = sp.q?.trim() || "";
 
-
-
-
-  // ✅ Fetch ONCE (and include q)
+  // Fetch once (and include q)
   const { posts, found } = await fetchWpPosts(currentPage, perPage, q);
   const totalPages = Math.max(1, Math.ceil(found / perPage));
 
@@ -134,139 +116,119 @@ export default async function BlogPage({
   const pageNumbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
 
   return (
-    <>
-    <Script
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7888248635786937"
-      crossOrigin="anonymous"
-      strategy="afterInteractive"
-    />
+    <div className="pb-16">
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7888248635786937"
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
 
-    <AgencyPageHeader
-      eyebrow="Blog"
-      title={
-        <>
-          Practical business <span className="text-primary">thinking and guides.</span>
-        </>
-      }
-      description="Articles that help you build structure, make better decisions, and think long term about your business."
-      proof={[
-        "Business structure and operations",
-        "Founder decision making",
-        "Practical guides you can apply",
-      ]}
-    />
+      <AgencyPageHeader
+        eyebrow="Blog"
+        title={
+          <>
+            Practical business <span className="text-primary">thinking and guides.</span>
+          </>
+        }
+        description="Articles that help you build structure, make better decisions, and think long term about your business."
+        proof={[
+          "Business structure and operations",
+          "Founder decision making",
+          "Practical guides you can apply",
+        ]}
+      />
 
-    <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-      <header style={{ marginBottom: 18 }}>
-        <p style={{ marginTop: 8, opacity: 0.8 }}>
-          Latest Articles From Prowess Digital Solutions.
-        </p>
-
-        <BlogSearchBar />
-
-        {q ? (
-          <p style={{ marginTop: 10, opacity: 0.75 }}>
-            Showing results for: <strong>{q}</strong>
-          </p>
-        ) : null}
-      </header>
-
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: 14,
-        }}
-      >
-        {posts.map((p) => {
-          const title = stripHtml(p.title) || "Untitled";
-          const date = formatDate(p.date);
-          const excerpt = makeExcerpt(p);
-          const image = p.featured_image || null;
-
-          return (
-            <article
-              key={p.ID}
-              style={{
-                border: "1px solid #e5e5e5",
-                borderRadius: 14,
-                padding: 14,
-                background: "white",
-              }}
-            >
-              {image ? (
-                <div style={{ marginBottom: 10 }}>
-                  <img
-                    src={image}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: 160,
-                      objectFit: "cover",
-                      borderRadius: 12,
-                      display: "block",
-                    }}
-                    loading="lazy"
-                  />
-                </div>
-              ) : null}
-
-              <div style={{ fontSize: 13, opacity: 0.7 }}>{date}</div>
-
-              <h2 style={{ marginTop: 8, fontSize: 18, fontWeight: 700 }}>
-                {title}
-              </h2>
-
-              <p style={{ marginTop: 8, opacity: 0.85, lineHeight: 1.5 }}>
-                {excerpt}
+      <section className="py-12 sm:py-16">
+        <Container>
+          <Reveal>
+            <header className="mb-8">
+              <p className="text-base leading-relaxed text-muted-foreground">
+                Latest Articles From Prowess Digital Solutions.
               </p>
 
-              <Link
-  href={`/blog/${new URL(p.URL).pathname.split("/").filter(Boolean).pop()}`}
-  style={{
-    display: "inline-block",
-    marginTop: 10,
-    fontWeight: 700,
-    textDecoration: "none",
-    color: BRAND,
-  }}
->
-  Read Blog →
-</Link>
+              <BlogSearchBar />
 
-            </article>
-          );
-        })}
+              {q ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Showing results for: <strong className="text-foreground">{q}</strong>
+                </p>
+              ) : null}
+            </header>
+          </Reveal>
+
+          <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {posts.map((p, i) => {
+              const title = stripHtml(p.title) || "Untitled";
+              const date = formatDate(p.date);
+              const excerpt = makeExcerpt(p);
+              const image = p.featured_image || null;
+              const slug = new URL(p.URL).pathname.split("/").filter(Boolean).pop();
+
+              return (
+                <Reveal key={p.ID} delay={i * 70}>
+                  <article className="group h-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                    {image ? (
+                      <div className="h-40 w-full overflow-hidden bg-muted">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={image}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                    ) : null}
+
+                    <div className="p-5">
+                      <div className="text-xs font-medium text-muted-foreground">{date}</div>
+
+                      <h2 className="mt-2 text-lg font-bold leading-snug text-foreground">
+                        {title}
+                      </h2>
+
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                        {excerpt}
+                      </p>
+
+                      <Link
+                        href={`/blog/${slug}`}
+                        className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-primary transition group-hover:opacity-80"
+                      >
+                        Read Blog
+                        <span className="transition-transform group-hover:translate-x-1">→</span>
+                      </Link>
+                    </div>
+                  </article>
+                </Reveal>
+              );
+            })}
+          </section>
+
+          <Reveal delay={120}>
+            <nav
+              aria-label="Pagination"
+              className="mt-10 flex flex-wrap items-center gap-2"
+            >
+              <span className="mr-2 text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              {currentPage > 1 ? (
+                <PageLink page={currentPage - 1} current={currentPage} label="← Prev" q={q} />
+              ) : null}
+
+              {pageNumbers.map((n) => (
+                <PageLink key={n} page={n} current={currentPage} label={n} q={q} />
+              ))}
+
+              {currentPage < totalPages ? (
+                <PageLink page={currentPage + 1} current={currentPage} label="Next →" q={q} />
+              ) : null}
+            </nav>
+          </Reveal>
+        </Container>
       </section>
-
-      <nav
-        aria-label="Pagination"
-        style={{
-          display: "flex",
-          gap: 8,
-          flexWrap: "wrap",
-          alignItems: "center",
-          marginTop: 18,
-        }}
-      >
-        <span style={{ opacity: 0.7, marginRight: 8 }}>
-          Page {currentPage} of {totalPages}
-        </span>
-
-        {currentPage > 1 ? (
-          <PageLink page={currentPage - 1} current={currentPage} label="← Prev" q={q} />
-        ) : null}
-
-        {pageNumbers.map((n) => (
-          <PageLink key={n} page={n} current={currentPage} label={n} q={q} />
-        ))}
-
-        {currentPage < totalPages ? (
-          <PageLink page={currentPage + 1} current={currentPage} label="Next →" q={q} />
-        ) : null}
-      </nav>
-    </main>
-    </>
+    </div>
   );
 }
