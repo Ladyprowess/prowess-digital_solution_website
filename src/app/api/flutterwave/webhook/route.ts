@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { markMembershipPaid, markMembershipRenewalFailed, markMembershipCancelled } from "@/lib/payments/membership";
 import { markConsultationPaid } from "@/lib/payments/consultation";
+import { markSkillToBusinessPaid } from "@/lib/payments/skillToBusiness";
 
 export const runtime = "nodejs";
 
@@ -76,6 +77,12 @@ async function handleSuccessfulCharge(data: Record<string, unknown>, metadata: R
 
   if (metadata?.type === "event") {
     await handleEventPayment(reference, metadata);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (metadata?.type === "skill_to_business") {
+    const purchaseId = metadata?.purchase_id as string | undefined;
+    if (purchaseId) await markSkillToBusinessPaid(purchaseId, reference);
     return NextResponse.json({ ok: true });
   }
 

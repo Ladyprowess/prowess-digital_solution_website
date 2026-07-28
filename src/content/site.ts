@@ -16,6 +16,7 @@ export const navPrimary = [
 export const navMore = [
   { href: "/events", label: "Events" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/skill-to-business", label: "Skill to Business" },
   { href: "/careers", label: "Career" },
   { href: "/contact", label: "Contact Us" },
 ] as const;
