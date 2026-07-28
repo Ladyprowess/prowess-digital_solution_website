@@ -368,9 +368,9 @@ export default function SkillToBusinessPage() {
         <Container>
           <Reveal>
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="h2">Real Graduates, Real Results</h2>
+              <h2 className="h2">Testimonials</h2>
               <p className="lead mt-4">
-                Hairdressers, tailors, bakers, photographers, makeup artists, barbers, in their own
+              Real Graduates, Real Results
                 words.
               </p>
             </div>
