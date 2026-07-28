@@ -8,12 +8,13 @@ import { Reveal } from "@/components/Reveal";
 import SkillToBusinessIntakeModal from "@/components/SkillToBusinessIntakeModal";
 
 const graduateSpotlights = [
-  { src: "/images/skill to business/review 1.png", name: "Iledayo Adeyemi" },
-  { src: "/images/skill to business/review 2.png", name: "Chioma Eze" },
-  { src: "/images/skill to business/review 3.png", name: "Ngozi Daniels" },
-  { src: "/images/skill to business/review 4.png", name: "Temilade Abiola" },
-  { src: "/images/skill to business/review 5.png", name: "David Okonkwo" },
-  { src: "/images/skill to business/review 6.png", name: "Emeka Nwosu" },
+  { src: "/images/skill to business/review 1.png", name: "Bolu Adebayo" },
+  { src: "/images/skill to business/review 2.png", name: "Ngozi Eze" },
+  { src: "/images/skill to business/review 3.png", name: "Fatima Musa" },
+  { src: "/images/skill to business/review 4.png", name: "Amina Yusuf" },
+  { src: "/images/skill to business/review 5.png", name: "Kunle Akinyemi" },
+  { src: "/images/skill to business/review 6.png", name: "Chinedu Okoro" },
+  { src: "/images/skill to business/review 7.png", name: "Grace Nwankwo" },
 ];
 
 const gapCards = [
@@ -406,11 +407,18 @@ export default function SkillToBusinessPage() {
                 style={{ transform: `translateX(-${spotlightIndex * 100}%)` }}
               >
                 {spotlightSlides.map((slide, slideIdx) => (
-                  <div key={slideIdx} className="grid w-full flex-shrink-0 gap-6 px-1 sm:grid-cols-2">
+                  <div
+                    key={slideIdx}
+                    className={`w-full flex-shrink-0 gap-6 px-1 ${
+                      slide.length === 2 ? "grid sm:grid-cols-2" : "flex justify-center"
+                    }`}
+                  >
                     {slide.map((g) => (
                       <div
                         key={g.src}
-                        className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-background shadow-sm"
+                        className={`relative aspect-[3/2] w-full overflow-hidden rounded-2xl border border-border bg-background shadow-sm ${
+                          slide.length === 1 ? "sm:w-1/2" : ""
+                        }`}
                       >
                         <Image
                           src={g.src}
