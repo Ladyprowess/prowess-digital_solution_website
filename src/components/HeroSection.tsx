@@ -144,7 +144,7 @@ export function HeroSection() {
               className="flex-wrap justify-center lg:justify-start"
               style={{ display: "flex", gap: "10px 22px", animation: "fadeUp 0.65s ease 0.4s both" }}
             >
-              {["Practical Solutions", "Founder-Led Guidance", "Real Results"].map((item) => (
+              {["Practical Solutions", "Hands-On Guidance", "Real Results"].map((item) => (
                 <div key={item} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: T, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={3.5}>
@@ -174,7 +174,7 @@ export function HeroSection() {
             >
               <Image
                 src="/images/peace.png"
-                alt="Founder of Prowess Digital Solutions at work"
+                alt="Prowess Digital Solutions consultant at work"
                 fill
                 priority
                 sizes="(max-width: 1024px) 90vw, 460px"
