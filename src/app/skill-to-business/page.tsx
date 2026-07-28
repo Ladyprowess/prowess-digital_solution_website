@@ -127,10 +127,11 @@ export default function SkillToBusinessPage() {
 
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [spotlightPaused, setSpotlightPaused] = useState(false);
-  const spotlightSlides = [];
-  for (let i = 0; i < graduateSpotlights.length; i += 2) {
-    spotlightSlides.push(graduateSpotlights.slice(i, i + 2));
-  }
+  const spotlightCount = graduateSpotlights.length;
+  const spotlightSlides = Array.from({ length: Math.ceil(spotlightCount / 2) }, (_, i) => [
+    graduateSpotlights[(i * 2) % spotlightCount],
+    graduateSpotlights[(i * 2 + 1) % spotlightCount],
+  ]);
   const spotlightTotal = spotlightSlides.length;
 
   const goToSpotlight = (i: number) =>
@@ -407,18 +408,11 @@ export default function SkillToBusinessPage() {
                 style={{ transform: `translateX(-${spotlightIndex * 100}%)` }}
               >
                 {spotlightSlides.map((slide, slideIdx) => (
-                  <div
-                    key={slideIdx}
-                    className={`w-full flex-shrink-0 gap-6 px-1 ${
-                      slide.length === 2 ? "grid sm:grid-cols-2" : "flex justify-center"
-                    }`}
-                  >
-                    {slide.map((g) => (
+                  <div key={slideIdx} className="grid w-full flex-shrink-0 gap-6 px-1 sm:grid-cols-2">
+                    {slide.map((g, i) => (
                       <div
-                        key={g.src}
-                        className={`relative aspect-[3/2] w-full overflow-hidden rounded-2xl border border-border bg-background shadow-sm ${
-                          slide.length === 1 ? "sm:w-1/2" : ""
-                        }`}
+                        key={`${g.src}-${i}`}
+                        className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl border border-border bg-background shadow-sm"
                       >
                         <Image
                           src={g.src}
