@@ -13,6 +13,7 @@ const ICON_PATHS: Record<string, string> = {
   "business-health-check": "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z",
   "business-structure": "M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21",
   "customer-support": "M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5",
+  "career-generic": "M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z",
 };
 
 function ToolIcon({ iconKey }: { iconKey: string }) {
@@ -35,8 +36,20 @@ const TOOLS = [
   {key:"customer-support",href:"/tools/customer-support",badge:"Free",title:"Customer Service Guide",desc:"A practical guide to handling client communication, complaints, and retention.",detail:"Response scripts · Complaint handling · Retention",gated:false},
 ];
 
+// Nothing here is a working tool yet - this is a preview of what's coming,
+// shown honestly as "coming soon" rather than pretending it exists. Once a
+// real career tool is built, it moves into a TOOLS-style entry with a real
+// href and gated status, same as the business tools above.
+const CAREER_TOOLS_PREVIEW = [
+  { title: "CV Builder", desc: "Build a clean, professional CV in minutes." },
+  { title: "CV Checker", desc: "Get feedback on an existing CV before you send it out." },
+  { title: "Interview Prep", desc: "Practice answers to common interview questions." },
+  { title: "Portfolio Builder", desc: "Put your work together into a shareable portfolio." },
+];
+
 export default function ToolsPage() {
   const [visible, setVisible] = useState(false);
+  const [category, setCategory] = useState<"career" | "business">("career");
   useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
 
   const premium = TOOLS.filter(t => t.gated);
@@ -47,7 +60,7 @@ export default function ToolsPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600&display=swap');
         .tr{font-family:'DM Sans',sans-serif;min-height:100vh;background:#0c1a1b;color:#fff}
-        .hero{position:relative;padding:80px 24px 72px;overflow:hidden;text-align:center}
+        .hero{position:relative;padding:80px 24px 56px;overflow:hidden;text-align:center}
         .orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none}
         .orb-a{width:520px;height:520px;background:radial-gradient(circle,rgba(80,124,128,.55) 0%,transparent 70%);top:-180px;left:50%;transform:translateX(-50%);animation:orbA 8s ease-in-out infinite}
         .orb-b{width:320px;height:320px;background:radial-gradient(circle,rgba(58,92,96,.4) 0%,transparent 70%);bottom:-80px;right:10%;animation:orbB 11s ease-in-out infinite reverse}
@@ -56,11 +69,11 @@ export default function ToolsPage() {
         .eyebrow{font-size:11px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#6a9ea3;margin-bottom:18px;position:relative}
         .htitle{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(36px,6vw,66px);font-weight:800;line-height:1.08;letter-spacing:-1.5px;position:relative;margin:0 auto;max-width:780px}
         .acc{background:linear-gradient(135deg,#6ab8bd 0%,#507c80 60%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .hsub{margin:22px auto 0;max-width:540px;font-size:16px;line-height:1.75;color:rgba(255,255,255,.52);position:relative}
-        .statbar{display:flex;align-items:center;justify-content:center;gap:32px;margin-top:44px;position:relative;flex-wrap:wrap}
-        .statnum{font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800;color:#fff}
-        .statlabel{font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;text-align:center}
-        .sdiv{width:1px;height:36px;background:rgba(255,255,255,.1)}
+        .hsub{margin:22px auto 0;max-width:560px;font-size:16px;line-height:1.75;color:rgba(255,255,255,.52);position:relative}
+        .catTabs{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:36px;position:relative;flex-wrap:wrap}
+        .catTab{padding:13px 30px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:rgba(255,255,255,.62);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s ease;font-family:'DM Sans',sans-serif}
+        .catTab.active{background:#507c80;border-color:#507c80;color:#fff;box-shadow:0 8px 24px rgba(80,124,128,.35)}
+        .catTab:hover:not(.active){border-color:rgba(80,124,128,.5);color:#fff}
         .gsec{padding:0 20px 80px;max-width:1160px;margin:0 auto}
         .sec-group{margin-bottom:44px}
         .slabel{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:20px;padding-left:4px}
@@ -71,18 +84,24 @@ export default function ToolsPage() {
         .tc.prem{background:linear-gradient(145deg,rgba(58,92,96,.18) 0%,rgba(80,124,128,.08) 100%);border-color:rgba(80,124,128,.25)}
         .tc.prem::before{content:'';position:absolute;top:0;left:20px;right:20px;height:1px;background:linear-gradient(90deg,transparent,rgba(80,124,128,.8),transparent)}
         .tc.prem:hover{border-color:rgba(106,158,163,.6);box-shadow:0 20px 60px rgba(0,0,0,.4),0 0 40px rgba(80,124,128,.15)}
+        .tc.soon{cursor:default;opacity:1;transform:none;border-style:dashed}
+        .tc.soon:hover{transform:none;border-color:rgba(255,255,255,.14);background:rgba(255,255,255,.04);box-shadow:none}
         .ctop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
         .cicon{width:50px;height:50px;background:rgba(255,255,255,.07);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform .3s ease}
         .tc:hover .cicon{transform:scale(1.12) rotate(-4deg)}
         .cbadge{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:4px 10px;border-radius:20px}
         .bfree{background:rgba(46,160,67,.15);color:#4cba6f;border:1px solid rgba(46,160,67,.25)}
         .bprem{background:rgba(80,124,128,.25);color:#7ec8cd;border:1px solid rgba(80,124,128,.4);animation:pp 3s ease-in-out infinite}
+        .bsoon{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.14)}
         @keyframes pp{0%,100%{box-shadow:none}50%{box-shadow:0 0 10px rgba(80,124,128,.3)}}
         .ctitle{font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;color:#fff;line-height:1.25;margin-bottom:10px;letter-spacing:-.3px}
         .cdesc{font-size:14px;line-height:1.7;color:rgba(255,255,255,.48);margin-bottom:18px}
         .cdetail{font-size:11px;color:rgba(80,124,128,.8);font-weight:600;letter-spacing:.5px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)}
         .carrow{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;font-weight:600;color:rgba(255,255,255,.25);transition:color .2s,gap .2s}
         .tc:hover .carrow{color:#7ec8cd;gap:10px}
+        .meanwhile{margin-top:8px;font-size:14px;line-height:1.7;color:rgba(255,255,255,.5)}
+        .meanwhile a{color:#7ec8cd;font-weight:600;text-decoration:none}
+        .meanwhile a:hover{text-decoration:underline}
         .bcta{margin:0 auto;max-width:1160px;padding:0 20px 80px}
         .ctacard{border-radius:24px;padding:40px 44px;background:linear-gradient(135deg,rgba(58,92,96,.35) 0%,rgba(15,38,39,.6) 100%);border:1px solid rgba(80,124,128,.25);display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;position:relative;overflow:hidden}
         .ctacard::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(80,124,128,.6),transparent)}
@@ -90,71 +109,97 @@ export default function ToolsPage() {
         .ctasub{font-size:14px;color:rgba(255,255,255,.45);line-height:1.6;max-width:480px}
         .ctabtn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:12px;background:#507c80;color:#fff;font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .2s,transform .2s;flex-shrink:0}
         .ctabtn:hover{background:#3a5c60;transform:translateY(-2px)}
-        @media(max-width:640px){.hero{padding:60px 20px 52px}.tgrid{grid-template-columns:1fr}.ctacard{padding:28px 22px}.statbar{gap:20px}}
+        @media(max-width:640px){.hero{padding:60px 20px 52px}.tgrid{grid-template-columns:1fr}.ctacard{padding:28px 22px}.catTabs{gap:8px}.catTab{padding:11px 22px;font-size:13px}}
       `}</style>
       <div className="tr">
         <div className="hero">
           <div className="orb orb-a"/>
           <div className="orb orb-b"/>
-          <p className="eyebrow">Prowess Digital Solutions &nbsp;·&nbsp; Business Tools</p>
-          <h1 className="htitle">Everything your business<br/>needs, <span className="acc">in one place</span></h1>
-          <p className="hsub">Nine tools built for founders everywhere. From startup planning to invoicing, stock management, and growth; the right tool for every stage.</p>
-          <div className="statbar">
-            <div><div className="statnum">9</div><div className="statlabel">Business tools</div></div>
-            <div className="sdiv"/>
-            <div><div className="statnum">5</div><div className="statlabel">Premium tools</div></div>
-            <div className="sdiv"/>
-            <div><div className="statnum">4</div><div className="statlabel">Free tools</div></div>
+          <p className="eyebrow">Prowess Digital Solutions &nbsp;·&nbsp; Tools</p>
+          <h1 className="htitle">Tools to help you<br/><span className="acc">move forward</span></h1>
+          <p className="hsub">Career tools and business tools, in one place. Pick the ones built for you.</p>
+          <div className="catTabs">
+            <button type="button" className={`catTab ${category === "career" ? "active" : ""}`} onClick={() => setCategory("career")}>
+              Career &amp; CV
+            </button>
+            <button type="button" className={`catTab ${category === "business" ? "active" : ""}`} onClick={() => setCategory("business")}>
+              Business
+            </button>
           </div>
         </div>
 
         <div className="gsec">
-          <div className="sec-group">
-            <p className="slabel">Premium; Access Code Required</p>
-            <div className="tgrid">
-              {premium.map((tool, i) => (
-                <Link key={tool.key} href={tool.href} className={`tc prem ${visible ? "vis" : ""}`} style={{ transitionDelay: visible ? `${i * 75}ms` : "0ms" }}>
-                  <div className="ctop">
-                    <div className="cicon"><ToolIcon iconKey={tool.key} /></div>
-                    <span className="cbadge bprem">{tool.badge}</span>
+          {category === "career" ? (
+            <div className="sec-group">
+              <p className="slabel">Coming Soon</p>
+              <div className="tgrid">
+                {CAREER_TOOLS_PREVIEW.map((tool, i) => (
+                  <div key={tool.title} className={`tc soon ${visible ? "vis" : ""}`} style={{ transitionDelay: visible ? `${i * 75}ms` : "0ms" }}>
+                    <div className="ctop">
+                      <div className="cicon"><ToolIcon iconKey="career-generic" /></div>
+                      <span className="cbadge bsoon">Coming Soon</span>
+                    </div>
+                    <div className="ctitle">{tool.title}</div>
+                    <div className="cdesc">{tool.desc}</div>
                   </div>
-                  <div className="ctitle">{tool.title}</div>
-                  <div className="cdesc">{tool.desc}</div>
-                  <div className="cdetail">{tool.detail}</div>
-                  <div className="carrow">Open tool <span>→</span></div>
-                </Link>
-              ))}
+                ))}
+              </div>
+              <p className="meanwhile">
+                While these are being built, explore <Link href="/career-paths">Career Paths</Link>, <Link href="/learn">Learn</Link>, or <Link href="/jobs">Jobs</Link>.
+              </p>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="sec-group">
+                <p className="slabel">Premium; Access Code Required</p>
+                <div className="tgrid">
+                  {premium.map((tool, i) => (
+                    <Link key={tool.key} href={tool.href} className={`tc prem ${visible ? "vis" : ""}`} style={{ transitionDelay: visible ? `${i * 75}ms` : "0ms" }}>
+                      <div className="ctop">
+                        <div className="cicon"><ToolIcon iconKey={tool.key} /></div>
+                        <span className="cbadge bprem">{tool.badge}</span>
+                      </div>
+                      <div className="ctitle">{tool.title}</div>
+                      <div className="cdesc">{tool.desc}</div>
+                      <div className="cdetail">{tool.detail}</div>
+                      <div className="carrow">Open tool <span>→</span></div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
 
-          <div className="sec-group">
-            <p className="slabel">Free; No Code Needed</p>
-            <div className="tgrid">
-              {free.map((tool, i) => (
-                <Link key={tool.key} href={tool.href} className={`tc ${visible ? "vis" : ""}`} style={{ transitionDelay: visible ? `${(i + 5) * 75}ms` : "0ms" }}>
-                  <div className="ctop">
-                    <div className="cicon"><ToolIcon iconKey={tool.key} /></div>
-                    <span className="cbadge bfree">{tool.badge}</span>
-                  </div>
-                  <div className="ctitle">{tool.title}</div>
-                  <div className="cdesc">{tool.desc}</div>
-                  <div className="cdetail">{tool.detail}</div>
-                  <div className="carrow">Open tool <span>→</span></div>
-                </Link>
-              ))}
-            </div>
-          </div>
+              <div className="sec-group">
+                <p className="slabel">Free; No Code Needed</p>
+                <div className="tgrid">
+                  {free.map((tool, i) => (
+                    <Link key={tool.key} href={tool.href} className={`tc ${visible ? "vis" : ""}`} style={{ transitionDelay: visible ? `${(i + 5) * 75}ms` : "0ms" }}>
+                      <div className="ctop">
+                        <div className="cicon"><ToolIcon iconKey={tool.key} /></div>
+                        <span className="cbadge bfree">{tool.badge}</span>
+                      </div>
+                      <div className="ctitle">{tool.title}</div>
+                      <div className="cdesc">{tool.desc}</div>
+                      <div className="cdetail">{tool.detail}</div>
+                      <div className="carrow">Open tool <span>→</span></div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="bcta">
-          <div className="ctacard">
-            <div>
-              <div className="ctatitle">Need a Premium access code?</div>
-              <div className="ctasub">The five premium tools are available to Prowess Digital Solutions clients. Reach out to get your code and unlock the full suite.</div>
+        {category === "business" && (
+          <div className="bcta">
+            <div className="ctacard">
+              <div>
+                <div className="ctatitle">Need a Premium access code?</div>
+                <div className="ctasub">The five premium tools are available to Prowess Digital Solutions clients. Reach out to get your code and unlock the full suite.</div>
+              </div>
+              <a href="/contact" className="ctabtn">Get access →</a>
             </div>
-            <a href="/contact" className="ctabtn">Get access →</a>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

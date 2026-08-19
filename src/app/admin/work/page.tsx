@@ -21,6 +21,22 @@ type JobRow = {
   companies: { name: string } | null;
   job_categories: { name: string } | null;
   job_types: { name: string } | null;
+  job_sources: { name: string } | null;
+};
+
+type SourceRow = {
+  id: string;
+  slug: string;
+  name: string;
+  source_type: string;
+  connector: string | null;
+  feed_url: string | null;
+  active: boolean;
+  auto_publish: boolean;
+  import_frequency_minutes: number;
+  last_imported_at: string | null;
+  last_import_error: string | null;
+  last_import_count: number | null;
 };
 
 const LOCATION_TYPES = ["remote", "hybrid", "on_site"] as const;
@@ -42,6 +58,9 @@ function WorkAdmin() {
   const [types, setTypes] = useState<Lookup[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [jobs, setJobs] = useState<JobRow[]>([]);
+  const [sources, setSources] = useState<SourceRow[]>([]);
+  const [importingSlug, setImportingSlug] = useState<string | null>(null);
+  const [importMsg, setImportMsg] = useState("");
   const [loadingLists, setLoadingLists] = useState(true);
 
   const [title, setTitle] = useState("");
@@ -71,19 +90,25 @@ function WorkAdmin() {
 
   const loadLists = useCallback(async () => {
     setLoadingLists(true);
-    const [{ data: cats }, { data: jobTypes }, { data: skillRows }, { data: jobRows }] = await Promise.all([
+    const [{ data: cats }, { data: jobTypes }, { data: skillRows }, { data: jobRows }, { data: sourceRows }] = await Promise.all([
       supabase.from("job_categories").select("id, slug, name").order("name"),
       supabase.from("job_types").select("id, slug, name").order("name"),
       supabase.from("skills").select("id, slug, name").order("name"),
       supabase
         .from("jobs")
-        .select("id, slug, title, status, location_type, country, city, deadline_at, companies(name), job_categories(name), job_types(name)")
+        .select("id, slug, title, status, location_type, country, city, deadline_at, companies(name), job_categories(name), job_types(name), job_sources(name)")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("job_sources")
+        .select("id, slug, name, source_type, connector, feed_url, active, auto_publish, import_frequency_minutes, last_imported_at, last_import_error, last_import_count")
+        .eq("source_type", "external")
+        .order("name"),
     ]);
     setCategories(cats || []);
     setTypes(jobTypes || []);
     setSkills(skillRows || []);
     setJobs(((jobRows as unknown as JobRow[]) || []));
+    setSources(((sourceRows as unknown as SourceRow[]) || []));
     setLoadingLists(false);
   }, []);
 
@@ -191,6 +216,37 @@ function WorkAdmin() {
     if (!confirm("Delete this job? This can't be undone.")) return;
     await supabase.from("jobs").delete().eq("id", id);
     setJobs((prev) => prev.filter((j) => j.id !== id));
+  }
+
+  async function toggleSourceField(id: string, field: "active" | "auto_publish", value: boolean) {
+    await supabase.from("job_sources").update({ [field]: value }).eq("id", id);
+    setSources((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  }
+
+  async function importNow(slug: string) {
+    setImportingSlug(slug);
+    setImportMsg("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Your session expired - refresh and try again.");
+
+      const res = await fetch("/api/admin/jobs/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ sourceSlug: slug }),
+      });
+      const body = await res.json();
+      const result = body?.results?.[0];
+      if (!res.ok || result?.error) throw new Error(result?.error || body?.error || "Import failed.");
+
+      setImportMsg(`${result.source}: fetched ${result.fetched}, imported ${result.imported} new, ${result.skippedExisting} already had, ${result.errors} skipped with errors.`);
+      loadLists();
+    } catch (e) {
+      setImportMsg(e instanceof Error ? e.message : "Import failed.");
+    } finally {
+      setImportingSlug(null);
+    }
   }
 
   return (
@@ -318,6 +374,54 @@ function WorkAdmin() {
         </div>
 
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
+          <h2 className="text-xl font-semibold text-foreground">Job Sources</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            External feeds that can fill this list automatically. Imported jobs land as drafts here for you to review before &ldquo;All Jobs&rdquo; below shows them as published - turn on &ldquo;Auto-publish&rdquo; only once you trust a source.
+          </p>
+
+          {sources.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">No external sources configured. Run supabase/job_sources_import.sql.</p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {sources.map((s) => (
+                <div key={s.id} className="rounded-xl border border-border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-foreground">{s.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {s.last_imported_at
+                          ? `Last imported ${new Date(s.last_imported_at).toLocaleString()} - ${s.last_import_count ?? 0} new job${s.last_import_count === 1 ? "" : "s"}`
+                          : "Never imported yet"}
+                        {s.last_import_error ? ` - error: ${s.last_import_error}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <label className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                        <input type="checkbox" checked={s.active} onChange={(e) => toggleSourceField(s.id, "active", e.target.checked)} />
+                        Active (auto-runs hourly)
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                        <input type="checkbox" checked={s.auto_publish} onChange={(e) => toggleSourceField(s.id, "auto_publish", e.target.checked)} />
+                        Auto-publish
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => importNow(s.slug)}
+                        disabled={importingSlug === s.slug}
+                        className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
+                      >
+                        {importingSlug === s.slug ? "Importing..." : "Import now"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {importMsg ? <p className="mt-3 text-sm text-muted-foreground">{importMsg}</p> : null}
+        </div>
+
+        <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
           <h2 className="text-xl font-semibold text-foreground">All Jobs</h2>
           {loadingLists ? (
             <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
@@ -330,6 +434,7 @@ function WorkAdmin() {
                   <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="py-2 pr-4">Title</th>
                     <th className="py-2 pr-4">Company</th>
+                    <th className="py-2 pr-4">Source</th>
                     <th className="py-2 pr-4">Status</th>
                     <th className="py-2 pr-4">Deadline</th>
                     <th className="py-2 pr-4"></th>
@@ -340,6 +445,7 @@ function WorkAdmin() {
                     <tr key={j.id} className="border-b border-border/60">
                       <td className="py-2 pr-4 font-medium text-foreground">{j.title}</td>
                       <td className="py-2 pr-4 text-muted-foreground">{j.companies?.name || "-"}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">{j.job_sources?.name || "-"}</td>
                       <td className="py-2 pr-4">
                         <select
                           value={j.status}

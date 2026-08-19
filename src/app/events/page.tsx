@@ -389,16 +389,16 @@ export default function EventsPage() {
         eyebrow="Events and Training"
         title={
           <>
-            Business events and <span className="text-primary">training.</span>
+            Events and <span className="text-primary">training.</span>
           </>
         }
-        description="Practical sessions that help you build structure, make better decisions, and run your business properly."
+        description="Practical sessions that help you build structure, make better decisions, and move forward — whether you're building a career or a business."
         primaryAction={{ label: "See Upcoming Events", href: "#upcoming-events" }}
         secondaryAction={{ label: "Get Event Updates", href: "#subscribe" }}
         proof={[
-          "Practical business training",
+          "Practical, hands-on sessions",
           "Clear topics and registration steps",
-          "Sessions built for owners and teams",
+          "Sessions built for individuals and teams",
         ]}
       />
 

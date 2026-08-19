@@ -13,7 +13,7 @@ export const pillars = [
   { key: "work", label: "Work", desc: "Jobs, internships & remote roles", href: "/jobs" },
   { key: "opportunities", label: "Opportunities", desc: "Grants, scholarships & fellowships", href: "/opportunities" },
   { key: "learn", label: "Learn", desc: "Courses & skill paths", href: "/learn" },
-  { key: "build", label: "Build", desc: "CV, portfolio & tools", href: "/tools" },
+  { key: "build", label: "Build", desc: "Tools & templates", href: "/tools" },
   { key: "connect", label: "Connect", desc: "Events & community", href: "/events" },
 ] as const;
 
