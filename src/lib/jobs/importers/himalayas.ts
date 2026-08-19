@@ -14,7 +14,10 @@ export async function fetchHimalayasListings(feedUrl: string): Promise<Normalize
       title: (item.title || "").trim(),
       companyName: item.companyName?.trim() || "Unknown",
       companyLogoUrl: null,
-      descriptionText: item.contentSnippet || (item.content ? htmlToText(item.content) : ""),
+      // htmlToText(content) over contentSnippet - see remoteFirstJobs.ts for
+      // why: rss-parser's snippet extraction handles paragraph breaks
+      // inconsistently, htmlToText always inserts one at every </p>.
+      descriptionText: item.content ? htmlToText(item.content) : (item.contentSnippet || ""),
       applyUrl: item.link || "",
       locationType: "remote" as const,
       country: null,

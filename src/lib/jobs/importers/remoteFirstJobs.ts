@@ -23,7 +23,12 @@ export async function fetchRemoteFirstJobsListings(feedUrl: string): Promise<Nor
         title,
         companyName: company,
         companyLogoUrl: null,
-        descriptionText: item.contentSnippet || (item.content ? htmlToText(item.content) : ""),
+        // htmlToText(content) over contentSnippet: rss-parser's own snippet
+        // extraction handles paragraph breaks inconsistently (depends on
+        // incidental whitespace in the source HTML), while htmlToText
+        // deterministically inserts a real break at every </p> - confirmed
+        // by comparing both against live feed data.
+        descriptionText: item.content ? htmlToText(item.content) : (item.contentSnippet || ""),
         applyUrl: item.link || "",
         locationType: "remote" as const,
         country: null,

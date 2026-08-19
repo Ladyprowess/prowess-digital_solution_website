@@ -35,7 +35,10 @@ export async function fetchGenericOpportunityRss(feedUrl: string): Promise<Norma
       externalId: item.guid || item.link || item.title || "",
       title: (item.title || "").trim(),
       organisationName: null,
-      descriptionText: cleanOpportunityDescription(item.contentSnippet || (item.content ? htmlToText(item.content) : "")),
+      // htmlToText(content) over contentSnippet - see the jobs connectors
+      // for why: rss-parser's snippet extraction handles paragraph breaks
+      // inconsistently, htmlToText always inserts one at every </p>.
+      descriptionText: cleanOpportunityDescription(item.content ? htmlToText(item.content) : (item.contentSnippet || "")),
       applyUrl: item.link || "",
       locationType: "any" as const,
       country: null,
