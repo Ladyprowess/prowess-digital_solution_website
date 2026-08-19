@@ -202,8 +202,12 @@ export default function Navbar() {
                     className="fixed inset-x-0 bottom-0 top-20 z-40 bg-black/40 lg:hidden"
                   />
 
-                  {/* Solid, fully opaque menu panel - no see-through content behind text */}
-                  <div className="fixed inset-x-0 top-20 z-50 border-t border-border bg-background shadow-xl lg:hidden">
+                  {/* Solid, fully opaque menu panel - no see-through content behind text.
+                      max-h + overflow-y-auto is load-bearing: this menu has enough
+                      links + buttons to be taller than a real phone screen, and
+                      without a scroll, whatever's last (the Sign In button) gets
+                      pushed off the bottom of the screen with no way to reach it. */}
+                  <div className="fixed inset-x-0 top-20 z-50 max-h-[calc(100vh-5rem)] overflow-y-auto border-t border-border bg-background shadow-xl lg:hidden">
                     <div className="mx-auto w-full max-w-6xl px-4 py-5">
                       <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
                       {/* Primary links in a 2-column grid */}

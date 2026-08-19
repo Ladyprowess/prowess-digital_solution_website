@@ -57,6 +57,7 @@ export default function AccountDashboardPage() {
   const [learning, setLearning] = useState<LearningRow[]>([]);
   const [interests, setInterests] = useState<InterestRow[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -71,15 +72,25 @@ export default function AccountDashboardPage() {
 
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
+    const userId = session?.user?.id;
 
-    const [savedRows, learningRows, interestRows, purchasesRes] = await Promise.all([
+    const [savedRows, learningRows, interestRows, purchasesRes, staffRow] = await Promise.all([
       supabase.from("saved_items").select("id, item_type, item_id").order("created_at", { ascending: false }),
       supabase.from("learning_progress").select("id, course_id, status, progress_percent").order("updated_at", { ascending: false }),
       supabase.from("user_career_interests").select("career_path_id"),
       token
         ? fetch("/api/account/purchases", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => null)
         : Promise.resolve(null),
+      // Same account, different table: this checks whether this signed-in
+      // person is also Prowess Digital Solutions staff with admin rights
+      // (the internal `profiles` table, unrelated to member_profiles above)
+      // so we can show a way into the admin tools right here instead of
+      // them having to know/type the admin URLs by hand.
+      userId
+        ? supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
+    setIsAdmin(staffRow?.data?.role === "admin");
 
     setSaved(await attachTitles((savedRows.data || []) as SavedItem[]));
 
@@ -146,6 +157,26 @@ export default function AccountDashboardPage() {
             Sign out
           </button>
         </div>
+
+        {isAdmin && (
+          <div className="mb-6 rounded-2xl border-2 border-primary/30 bg-primary/5 p-6">
+            <p className="text-sm font-bold text-primary">You&rsquo;re signed in as an admin</p>
+            <p className="mt-1 text-sm text-muted-foreground">This is your regular account page. Use these links to manage site content.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {[
+                { label: "Jobs", href: "/admin/work" },
+                { label: "Opportunities", href: "/admin/opportunities" },
+                { label: "Career Paths", href: "/admin/career-paths" },
+                { label: "Learn", href: "/admin/learn" },
+                { label: "Resources", href: "/admin/resources" },
+              ].map((l) => (
+                <Link key={l.href} href={l.href} className="rounded-xl border border-primary/30 bg-card px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10">
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Section title="My Profile">
