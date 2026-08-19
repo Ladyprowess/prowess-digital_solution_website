@@ -17,8 +17,10 @@ export const pillars = [
   { key: "connect", label: "Connect", desc: "Events & community", href: "/events" },
 ] as const;
 
+// No separate "Home" link - the logo already goes there, same as every
+// other site. Removing the duplicate also gives the five real pillars more
+// breathing room in the nav bar.
 export const navPrimary = [
-  { href: "/", label: "Home" },
   { href: "/jobs", label: "Work" },
   { href: "/opportunities", label: "Opportunities" },
   { href: "/learn", label: "Learn" },
