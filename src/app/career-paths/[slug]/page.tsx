@@ -5,7 +5,9 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { CareerInterestButton } from "@/components/CareerInterestButton";
-import { getCareerPathGraph } from "@/lib/careerPathGraph";
+import { getSkillGraph } from "@/lib/careerPathGraph";
+import { RichText } from "@/components/RichText";
+import { stripHtmlForMeta } from "@/lib/stripHtml";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -39,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!path) return { title: "Career path not found" };
   return {
     title: `${path.title} Career Path`,
-    description: path.description?.slice(0, 155) || `Skills, courses, resources, jobs and opportunities for a career in ${path.title}.`,
+    description: (path.description ? stripHtmlForMeta(path.description) : "") || `Skills, courses, resources, jobs and opportunities for a career in ${path.title}.`,
   };
 }
 
@@ -68,7 +70,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
 
   const skills = path.career_path_skill_map?.map((m) => m.skills).filter(Boolean) || [];
   const skillIds = skills.map((s) => s.id);
-  const graph = await getCareerPathGraph(skillIds);
+  const graph = await getSkillGraph(skillIds, { limit: 4 });
 
   return (
     <div className="min-h-screen bg-background py-16">
@@ -91,7 +93,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
             </div>
           </div>
 
-          {path.description && <p className="mt-4 leading-relaxed text-muted-foreground">{path.description}</p>}
+          {path.description && <RichText html={path.description} className="mt-4" />}
 
           {skills.length > 0 && (
             <div className="mt-6">

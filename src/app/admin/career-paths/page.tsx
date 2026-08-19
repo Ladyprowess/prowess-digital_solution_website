@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -44,6 +45,9 @@ function CareerPathsAdmin() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
+  const [editingPathId, setEditingPathId] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
   const loadAll = useCallback(async () => {
     setLoadingList(true);
     const [{ data: skillRows }, { data: pathRows }] = await Promise.all([
@@ -72,9 +76,39 @@ function CareerPathsAdmin() {
   }
 
   const resetForm = () => {
+    setEditingPathId(null);
     setTitle(""); setDescription(""); setSelectedSkillIds([]);
     setAccess("free"); setPrice(""); setPublishNow(false);
   };
+
+  async function startEditPath(id: string) {
+    setErr(""); setMsg("");
+    setLoadingEdit(true);
+    const { data, error } = await supabase
+      .from("career_paths")
+      .select("id, title, description, access, price, price_currency, status, career_path_skill_map(skill_id)")
+      .eq("id", id)
+      .single();
+    setLoadingEdit(false);
+    if (error || !data) { setErr(error?.message || "Could not load this career path."); return; }
+
+    const path = data as unknown as {
+      id: string; title: string; description: string | null; access: "free" | "premium";
+      price: number | null; price_currency: string | null; status: CareerPathRow["status"];
+      career_path_skill_map: { skill_id: string }[];
+    };
+
+    setEditingPathId(path.id);
+    setTitle(path.title);
+    setDescription(path.description || "");
+    setAccess(path.access);
+    setPrice(path.price?.toString() || "");
+    setCurrency(path.price_currency || "NGN");
+    setPublishNow(path.status === "published");
+    setSelectedSkillIds(path.career_path_skill_map.map((m) => m.skill_id));
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   const submit = async () => {
     setErr(""); setMsg("");
@@ -82,25 +116,35 @@ function CareerPathsAdmin() {
 
     setSaving(true);
     try {
-      const slug = await getUniqueSlug(slugify(title));
-      const { data: created, error } = await supabase
-        .from("career_paths")
-        .insert({
-          slug,
-          title: title.trim(),
-          description: description.trim() || null,
-          access,
-          price: access === "premium" && price ? Number(price) : null,
-          price_currency: access === "premium" && price ? currency : null,
-          status: publishNow ? "published" : "draft",
-        })
-        .select("id")
-        .single();
-      if (error || !created) throw new Error(error?.message || "Could not save the career path.");
+      const basePayload = {
+        title: title.trim(),
+        description: description.trim() || null,
+        access,
+        price: access === "premium" && price ? Number(price) : null,
+        price_currency: access === "premium" && price ? currency : null,
+        status: publishNow ? "published" as const : "draft" as const,
+      };
 
-      await saveSkillMap("career_path_skill_map", "career_path_id", created.id, selectedSkillIds);
+      let pathId = editingPathId;
 
-      setMsg("Career path saved.");
+      if (editingPathId) {
+        const { error } = await supabase.from("career_paths").update(basePayload).eq("id", editingPathId);
+        if (error) throw new Error(error.message);
+        await supabase.from("career_path_skill_map").delete().eq("career_path_id", editingPathId);
+      } else {
+        const slug = await getUniqueSlug(slugify(title));
+        const { data: created, error } = await supabase
+          .from("career_paths")
+          .insert({ ...basePayload, slug })
+          .select("id")
+          .single();
+        if (error || !created) throw new Error(error?.message || "Could not save the career path.");
+        pathId = created.id;
+      }
+
+      await saveSkillMap("career_path_skill_map", "career_path_id", pathId!, selectedSkillIds);
+
+      setMsg(editingPathId ? "Career path updated." : "Career path saved.");
       resetForm();
       loadAll();
     } catch (e) {
@@ -125,17 +169,18 @@ function CareerPathsAdmin() {
     <div>
       <div>
         <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h1 className="text-3xl font-semibold text-foreground">Add Career Path</h1>
+          <h1 className="text-3xl font-semibold text-foreground">{editingPathId ? "Edit Career Path" : "Add Career Path"}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            e.g. Digital Marketing, Cybersecurity. Tag it with the skills it needs so jobs, resources and courses tagged with the same skills connect to it automatically.
+            {editingPathId ? "Update this career path." : "e.g. Digital Marketing, Cybersecurity. Tag it with the skills it needs so jobs, resources and courses tagged with the same skills connect to it automatically."}
           </p>
+          {loadingEdit && <p className="mt-2 text-sm text-muted-foreground">Loading career path…</p>}
 
           <div className="mt-8 grid gap-4">
             <Field label="Title *">
               <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} placeholder="e.g. Cybersecurity" />
             </Field>
             <Field label="Description">
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} className={`${inputCls} min-h-[100px]`} placeholder="What is this career? Who is it suitable for?" />
+              <RichTextEditor key={`desc-${editingPathId || "new"}`} value={description} onChange={setDescription} placeholder="What is this career? Who is it suitable for? What's the roadmap to get there?" />
             </Field>
 
             <Field label="Skills needed">
@@ -159,14 +204,25 @@ function CareerPathsAdmin() {
             {err ? <p className="text-sm text-red-600">{err}</p> : null}
             {msg ? <p className="text-sm text-green-700">{msg}</p> : null}
 
-            <button
-              type="button"
-              onClick={submit}
-              disabled={saving}
-              className="mt-2 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
-            >
-              {saving ? "Saving..." : "Save career path"}
-            </button>
+            <div className="mt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={submit}
+                disabled={saving}
+                className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
+              >
+                {saving ? "Saving..." : editingPathId ? "Update career path" : "Save career path"}
+              </button>
+              {editingPathId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-shrink-0 rounded-xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -205,6 +261,7 @@ function CareerPathsAdmin() {
                         </select>
                       </td>
                       <td className="py-2 pr-4">
+                        <button onClick={() => startEditPath(p.id)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>
                         <button onClick={() => deletePath(p.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
                       </td>
                     </tr>

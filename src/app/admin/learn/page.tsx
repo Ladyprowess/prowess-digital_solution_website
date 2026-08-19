@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -49,6 +50,9 @@ function LearnAdmin() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
   const loadCourses = useCallback(async () => {
     setLoadingList(true);
     const [{ data }, { data: skillRows }] = await Promise.all([
@@ -76,29 +80,74 @@ function LearnAdmin() {
     }
   }
 
+  const resetForm = () => {
+    setEditingCourseId(null);
+    setTitle(""); setDescription(""); setLevel(""); setAccess("free"); setPrice(""); setPublishNow(false); setSelectedSkillIds([]);
+  };
+
+  async function startEditCourse(id: string) {
+    setErr(""); setMsg("");
+    setLoadingEdit(true);
+    const { data, error } = await supabase
+      .from("courses")
+      .select("id, title, description, level, access, price, price_currency, status, course_skill_map(skill_id)")
+      .eq("id", id)
+      .single();
+    setLoadingEdit(false);
+    if (error || !data) { setErr(error?.message || "Could not load this course."); return; }
+
+    const course = data as unknown as {
+      id: string; title: string; description: string | null; level: (typeof LEVELS)[number] | null;
+      access: "free" | "premium"; price: number | null; price_currency: string | null;
+      status: CourseRow["status"]; course_skill_map: { skill_id: string }[];
+    };
+
+    setEditingCourseId(course.id);
+    setTitle(course.title);
+    setDescription(course.description || "");
+    setLevel(course.level || "");
+    setAccess(course.access);
+    setPrice(course.price?.toString() || "");
+    setCurrency(course.price_currency || "NGN");
+    setPublishNow(course.status === "published");
+    setSelectedSkillIds(course.course_skill_map.map((m) => m.skill_id));
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   const submit = async () => {
     setErr(""); setMsg("");
     if (!title.trim()) return setErr("Title is required.");
 
     setSaving(true);
     try {
-      const slug = await getUniqueSlug(slugify(title));
-      const { data: created, error } = await supabase.from("courses").insert({
-        slug,
+      const basePayload = {
         title: title.trim(),
         description: description.trim() || null,
         level: level || null,
         access,
         price: access === "premium" && price ? Number(price) : null,
         price_currency: access === "premium" && price ? currency : null,
-        status: publishNow ? "published" : "draft",
-      }).select("id").single();
-      if (error || !created) throw new Error(error?.message || "Could not save the course.");
+        status: publishNow ? "published" as const : "draft" as const,
+      };
 
-      await saveSkillMap("course_skill_map", "course_id", created.id, selectedSkillIds);
+      let courseId = editingCourseId;
 
-      setMsg("Course saved.");
-      setTitle(""); setDescription(""); setLevel(""); setAccess("free"); setPrice(""); setPublishNow(false); setSelectedSkillIds([]);
+      if (editingCourseId) {
+        const { error } = await supabase.from("courses").update(basePayload).eq("id", editingCourseId);
+        if (error) throw new Error(error.message);
+        await supabase.from("course_skill_map").delete().eq("course_id", editingCourseId);
+      } else {
+        const slug = await getUniqueSlug(slugify(title));
+        const { data: created, error } = await supabase.from("courses").insert({ ...basePayload, slug }).select("id").single();
+        if (error || !created) throw new Error(error?.message || "Could not save the course.");
+        courseId = created.id;
+      }
+
+      await saveSkillMap("course_skill_map", "course_id", courseId!, selectedSkillIds);
+
+      setMsg(editingCourseId ? "Course updated." : "Course saved.");
+      resetForm();
       loadCourses();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong.");
@@ -122,17 +171,18 @@ function LearnAdmin() {
     <div>
       <div>
         <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h1 className="text-3xl font-semibold text-foreground">Add Course</h1>
+          <h1 className="text-3xl font-semibold text-foreground">{editingCourseId ? "Edit Course" : "Add Course"}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Short, practical courses for the Learn section. Keep it minimal for now - a title and description is enough to list it as coming soon.
+            {editingCourseId ? "Update this course. Manage its modules and lessons separately." : "Short, practical courses for the Learn section. Keep it minimal for now - a title and description is enough to list it as coming soon."}
           </p>
+          {loadingEdit && <p className="mt-2 text-sm text-muted-foreground">Loading course…</p>}
 
           <div className="mt-8 grid gap-4">
             <Field label="Title *">
               <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} placeholder="e.g. How to Get Your First Remote Job" />
             </Field>
             <Field label="Description">
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} className={`${inputCls} min-h-[100px]`} />
+              <RichTextEditor key={`desc-${editingCourseId || "new"}`} value={description} onChange={setDescription} placeholder="What the course covers, who it's for, what they'll learn..." />
             </Field>
 
             <Field label="Level">
@@ -163,14 +213,25 @@ function LearnAdmin() {
             {err ? <p className="text-sm text-red-600">{err}</p> : null}
             {msg ? <p className="text-sm text-green-700">{msg}</p> : null}
 
-            <button
-              type="button"
-              onClick={submit}
-              disabled={saving}
-              className="mt-2 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
-            >
-              {saving ? "Saving..." : "Save course"}
-            </button>
+            <div className="mt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={submit}
+                disabled={saving}
+                className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
+              >
+                {saving ? "Saving..." : editingCourseId ? "Update course" : "Save course"}
+              </button>
+              {editingCourseId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-shrink-0 rounded-xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -211,6 +272,7 @@ function LearnAdmin() {
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-3">
                           <Link href={`/admin/learn/${c.id}`} className="text-xs font-semibold text-primary hover:underline">Manage</Link>
+                          <button onClick={() => startEditCourse(c.id)} className="text-xs font-semibold text-primary hover:underline">Edit</button>
                           <button onClick={() => deleteCourse(c.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
                         </div>
                       </td>

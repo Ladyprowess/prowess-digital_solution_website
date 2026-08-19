@@ -4,6 +4,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
+import { RichText } from "@/components/RichText";
+import { stripHtmlForMeta } from "@/lib/stripHtml";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -51,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const company = job.companies?.name || "Prowess Digital Solutions";
   return {
     title: `${job.title} at ${company}`,
-    description: job.description?.slice(0, 155) || `${job.title} - apply on Prowess Digital Solutions.`,
+    description: (job.description ? stripHtmlForMeta(job.description) : "") || `${job.title} - apply on Prowess Digital Solutions.`,
   };
 }
 
@@ -139,7 +141,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
           <Reveal delay={80}>
             <section className="mt-10">
               <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">DESCRIPTION</h2>
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground">{job.description}</p>
+              <RichText html={job.description} className="mt-3" />
             </section>
           </Reveal>
         )}
@@ -148,7 +150,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
           <Reveal delay={120}>
             <section className="mt-8">
               <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">RESPONSIBILITIES</h2>
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground">{job.responsibilities}</p>
+              <RichText html={job.responsibilities} className="mt-3" />
             </section>
           </Reveal>
         )}
@@ -157,7 +159,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
           <Reveal delay={160}>
             <section className="mt-8">
               <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">REQUIREMENTS</h2>
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground">{job.requirements}</p>
+              <RichText html={job.requirements} className="mt-3" />
             </section>
           </Reveal>
         )}

@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { CourseContent } from "@/components/CourseContent";
+import { RichText } from "@/components/RichText";
+import { stripHtmlForMeta } from "@/lib/stripHtml";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -39,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!course) return { title: "Course not found" };
   return {
     title: course.title,
-    description: course.description?.slice(0, 155) || `Learn ${course.title} on Prowess Digital Solutions.`,
+    description: (course.description ? stripHtmlForMeta(course.description) : "") || `Learn ${course.title} on Prowess Digital Solutions.`,
   };
 }
 
@@ -69,7 +71,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             <SaveButton itemType="course" itemId={course.id} className="flex-shrink-0" />
           </div>
 
-          {course.description && <p className="mt-4 leading-relaxed text-muted-foreground">{course.description}</p>}
+          {course.description && <RichText html={course.description} className="mt-4" />}
 
           {skills.length > 0 && (
             <div className="mt-6 flex flex-wrap gap-2">

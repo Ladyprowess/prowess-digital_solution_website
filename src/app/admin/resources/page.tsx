@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -61,6 +62,9 @@ function ResourcesAdmin() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
+  const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
   const loadResources = useCallback(async () => {
     setLoadingList(true);
     const [{ data }, { data: skillRows }] = await Promise.all([
@@ -89,11 +93,53 @@ function ResourcesAdmin() {
   }
 
   const resetForm = () => {
+    setEditingResourceId(null);
     setTitle(""); setAudience("consumer"); setResourceType("guide"); setCategory(""); setLevel("");
     setSource("prowess"); setExternalUrl(""); setThumbnailUrl("");
     setSummary(""); setContent(""); setFileUrl("");
     setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
   };
+
+  async function startEditResource(id: string) {
+    setErr(""); setMsg("");
+    setLoadingEdit(true);
+    const { data, error } = await supabase
+      .from("resources")
+      .select("id, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, access, price, price_currency, featured, status, resource_skill_map(skill_id)")
+      .eq("id", id)
+      .single();
+    setLoadingEdit(false);
+    if (error || !data) { setErr(error?.message || "Could not load this resource."); return; }
+
+    const r = data as unknown as {
+      id: string; title: string; audience: (typeof AUDIENCES)[number]; resource_type: (typeof RESOURCE_TYPES)[number] | null;
+      category: string | null; level: (typeof LEVELS)[number] | null; source: Source; external_url: string | null;
+      thumbnail_url: string | null; description: string | null; content: string | null; file_url: string | null;
+      access: "free" | "premium"; price: number | null; price_currency: string | null; featured: boolean;
+      status: ResourceRow["status"]; resource_skill_map: { skill_id: string }[];
+    };
+
+    setEditingResourceId(r.id);
+    setTitle(r.title);
+    setAudience(r.audience);
+    setResourceType(r.resource_type || "guide");
+    setCategory(r.category || "");
+    setLevel(r.level || "");
+    setSource(r.source);
+    setExternalUrl(r.external_url || "");
+    setThumbnailUrl(r.thumbnail_url || "");
+    setSummary(r.description || "");
+    setContent(r.content || "");
+    setFileUrl(r.file_url || "");
+    setAccess(r.access);
+    setPrice(r.price?.toString() || "");
+    setCurrency(r.price_currency || "NGN");
+    setFeatured(r.featured);
+    setPublishNow(r.status === "published");
+    setSelectedSkillIds(r.resource_skill_map.map((m) => m.skill_id));
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   const submit = async () => {
     setErr(""); setMsg("");
@@ -102,10 +148,8 @@ function ResourcesAdmin() {
 
     setSaving(true);
     try {
-      const slug = await getUniqueSlug(slugify(title));
       const now = new Date().toISOString();
-      const { data: created, error } = await supabase.from("resources").insert({
-        slug,
+      const basePayload = {
         title: title.trim(),
         audience,
         resource_type: resourceType,
@@ -124,15 +168,30 @@ function ResourcesAdmin() {
         price: access === "premium" && price ? Number(price) : null,
         price_currency: access === "premium" && price ? currency : null,
         featured,
-        status: publishNow ? "published" : "draft",
+        status: publishNow ? "published" as const : "draft" as const,
         is_published: publishNow,
-        published_at: publishNow ? now : null,
-      }).select("id").single();
-      if (error || !created) throw new Error(error?.message || "Could not save the resource.");
+      };
 
-      await saveSkillMap("resource_skill_map", "resource_id", created.id, selectedSkillIds);
+      let resourceId = editingResourceId;
 
-      setMsg("Resource saved.");
+      if (editingResourceId) {
+        const { error } = await supabase.from("resources").update(basePayload).eq("id", editingResourceId);
+        if (error) throw new Error(error.message);
+        await supabase.from("resource_skill_map").delete().eq("resource_id", editingResourceId);
+      } else {
+        const slug = await getUniqueSlug(slugify(title));
+        const { data: created, error } = await supabase.from("resources").insert({
+          ...basePayload,
+          slug,
+          published_at: publishNow ? now : null,
+        }).select("id").single();
+        if (error || !created) throw new Error(error?.message || "Could not save the resource.");
+        resourceId = created.id;
+      }
+
+      await saveSkillMap("resource_skill_map", "resource_id", resourceId!, selectedSkillIds);
+
+      setMsg(editingResourceId ? "Resource updated." : "Resource saved.");
       resetForm();
       loadResources();
     } catch (e) {
@@ -160,10 +219,11 @@ function ResourcesAdmin() {
     <div>
       <div>
         <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h1 className="text-3xl font-semibold text-foreground">Add Resource</h1>
+          <h1 className="text-3xl font-semibold text-foreground">{editingResourceId ? "Edit Resource" : "Add Resource"}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Articles, e-books, videos, podcasts, guides, checklists, templates and curated external courses.
+            {editingResourceId ? "Update this resource." : "Articles, e-books, videos, podcasts, guides, checklists, templates and curated external courses."}
           </p>
+          {loadingEdit && <p className="mt-2 text-sm text-muted-foreground">Loading resource…</p>}
 
           <div className="mt-8 grid gap-4">
             <Field label="Title *">
@@ -221,7 +281,7 @@ function ResourcesAdmin() {
             {source === "prowess" && (
               <>
                 <Field label="Content">
-                  <textarea value={content} onChange={(e) => setContent(e.target.value)} className={`${inputCls} min-h-[140px]`} />
+                  <RichTextEditor key={`content-${editingResourceId || "new"}`} value={content} onChange={setContent} placeholder="The actual guide/article/checklist content..." />
                 </Field>
                 <Field label="File link (for downloadable templates, optional)">
                   <input value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} className={inputCls} placeholder="https://..." />
@@ -256,14 +316,25 @@ function ResourcesAdmin() {
             {err ? <p className="text-sm text-red-600">{err}</p> : null}
             {msg ? <p className="text-sm text-green-700">{msg}</p> : null}
 
-            <button
-              type="button"
-              onClick={submit}
-              disabled={saving}
-              className="mt-2 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
-            >
-              {saving ? "Saving..." : "Save resource"}
-            </button>
+            <div className="mt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={submit}
+                disabled={saving}
+                className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
+              >
+                {saving ? "Saving..." : editingResourceId ? "Update resource" : "Save resource"}
+              </button>
+              {editingResourceId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-shrink-0 rounded-xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -307,6 +378,7 @@ function ResourcesAdmin() {
                         </select>
                       </td>
                       <td className="py-2 pr-4">
+                        <button onClick={() => startEditResource(r.id)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>
                         <button onClick={() => deleteResource(r.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
                       </td>
                     </tr>

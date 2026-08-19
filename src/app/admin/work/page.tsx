@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { SourcesPanel } from "@/components/admin/SourcesPanel";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -80,6 +81,9 @@ function WorkAdmin() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
 
   const loadLists = useCallback(async () => {
     setLoadingLists(true);
@@ -179,12 +183,59 @@ function WorkAdmin() {
   }
 
   const resetForm = () => {
+    setEditingJobId(null);
     setTitle(""); setCompanyName(""); setCategoryId(""); setTypeId("");
     setLocationType("remote"); setCountry(""); setCity(""); setRemoteRegions("");
     setSalaryMin(""); setSalaryMax(""); setSalaryCurrency("USD"); setExperienceLevel("");
     setDescription(""); setRequirements(""); setResponsibilities("");
     setApplyUrl(""); setDeadlineAt(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
   };
+
+  async function startEditJob(id: string) {
+    setErr(""); setMsg("");
+    setLoadingEdit(true);
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("id, title, category_id, type_id, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, experience_level, description, requirements, responsibilities, apply_url, deadline_at, featured, status, companies(name), job_skill_map(skill_id)")
+      .eq("id", id)
+      .single();
+    setLoadingEdit(false);
+    if (error || !data) { setErr(error?.message || "Could not load this job."); return; }
+
+    const job = data as unknown as {
+      id: string; title: string; category_id: string; type_id: string;
+      location_type: (typeof LOCATION_TYPES)[number]; country: string | null; city: string | null;
+      remote_regions: string[] | null; salary_min: number | null; salary_max: number | null;
+      salary_currency: string | null; experience_level: (typeof EXPERIENCE_LEVELS)[number] | null;
+      description: string | null; requirements: string | null; responsibilities: string | null;
+      apply_url: string; deadline_at: string | null; featured: boolean; status: JobRow["status"];
+      companies: { name: string } | null; job_skill_map: { skill_id: string }[];
+    };
+
+    setEditingJobId(job.id);
+    setTitle(job.title);
+    setCompanyName(job.companies?.name || "");
+    setCategoryId(job.category_id);
+    setTypeId(job.type_id);
+    setLocationType(job.location_type);
+    setCountry(job.country || "");
+    setCity(job.city || "");
+    setRemoteRegions((job.remote_regions || []).join(", "));
+    setSalaryMin(job.salary_min?.toString() || "");
+    setSalaryMax(job.salary_max?.toString() || "");
+    setSalaryCurrency(job.salary_currency || "USD");
+    setExperienceLevel(job.experience_level || "");
+    setDescription(job.description || "");
+    setRequirements(job.requirements || "");
+    setResponsibilities(job.responsibilities || "");
+    setApplyUrl(job.apply_url);
+    setDeadlineAt(job.deadline_at ? job.deadline_at.slice(0, 10) : "");
+    setFeatured(job.featured);
+    setPublishNow(job.status === "published");
+    setSelectedSkillIds(job.job_skill_map.map((m) => m.skill_id));
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   const submit = async () => {
     setErr(""); setMsg("");
@@ -196,15 +247,10 @@ function WorkAdmin() {
 
     setSaving(true);
     try {
-      const [companyId, sourceId, slug] = await Promise.all([
-        getOrCreateCompany(companyName.trim()),
-        getManualSourceId(),
-        getUniqueJobSlug(slugify(title)),
-      ]);
-
+      const companyId = await getOrCreateCompany(companyName.trim());
       const now = new Date().toISOString();
-      const { data: created, error } = await supabase.from("jobs").insert({
-        slug,
+
+      const basePayload = {
         title: title.trim(),
         company_id: companyId,
         category_id: categoryId,
@@ -221,17 +267,42 @@ function WorkAdmin() {
         requirements: requirements.trim() || null,
         responsibilities: responsibilities.trim() || null,
         apply_url: applyUrl.trim(),
-        source_id: sourceId,
         featured,
         status: publishNow ? "published" : "draft",
-        published_at: publishNow ? now : null,
         deadline_at: deadlineAt || null,
-      }).select("id").single();
-      if (error || !created) throw new Error(error?.message || "Could not save the job.");
+      };
 
-      await saveSkillMap("job_skill_map", "job_id", created.id, selectedSkillIds);
+      let jobId = editingJobId;
 
-      setMsg("Job saved.");
+      if (editingJobId) {
+        // Slug and source stay untouched on edit - regenerating the slug
+        // would change the job's live URL, and an imported job keeps its
+        // real source attribution instead of silently becoming "manual"
+        // just because an admin edited it.
+        const { error } = await supabase.from("jobs").update({
+          ...basePayload,
+          published_at: publishNow ? now : null,
+        }).eq("id", editingJobId);
+        if (error) throw new Error(error.message);
+        await supabase.from("job_skill_map").delete().eq("job_id", editingJobId);
+      } else {
+        const [sourceId, slug] = await Promise.all([
+          getManualSourceId(),
+          getUniqueJobSlug(slugify(title)),
+        ]);
+        const { data: created, error } = await supabase.from("jobs").insert({
+          ...basePayload,
+          slug,
+          source_id: sourceId,
+          published_at: publishNow ? now : null,
+        }).select("id").single();
+        if (error || !created) throw new Error(error?.message || "Could not save the job.");
+        jobId = created.id;
+      }
+
+      await saveSkillMap("job_skill_map", "job_id", jobId!, selectedSkillIds);
+
+      setMsg(editingJobId ? "Job updated." : "Job saved.");
       resetForm();
       loadJobs();
     } catch (e) {
@@ -258,10 +329,11 @@ function WorkAdmin() {
       <p className="mt-1 text-sm text-muted-foreground">Manage job listings and the sources that feed them.</p>
 
       <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h2 className="text-xl font-semibold text-foreground">Add Job</h2>
+          <h2 className="text-xl font-semibold text-foreground">{editingJobId ? "Edit Job" : "Add Job"}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Create a job listing here and publish it to show on the Work board.
+            {editingJobId ? "Update this job listing." : "Create a job listing here and publish it to show on the Work board."}
           </p>
+          {loadingEdit && <p className="mt-2 text-sm text-muted-foreground">Loading job…</p>}
 
           <div className="mt-8 grid gap-4">
             <Field label="Job title *">
@@ -337,13 +409,13 @@ function WorkAdmin() {
             </div>
 
             <Field label="Description">
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} className={`${inputCls} min-h-[100px]`} />
+              <RichTextEditor key={`desc-${editingJobId || "new"}`} value={description} onChange={setDescription} placeholder="What the role is about..." />
             </Field>
             <Field label="Responsibilities">
-              <textarea value={responsibilities} onChange={(e) => setResponsibilities(e.target.value)} className={`${inputCls} min-h-[100px]`} />
+              <RichTextEditor key={`resp-${editingJobId || "new"}`} value={responsibilities} onChange={setResponsibilities} placeholder="What the person will actually do..." />
             </Field>
             <Field label="Requirements">
-              <textarea value={requirements} onChange={(e) => setRequirements(e.target.value)} className={`${inputCls} min-h-[100px]`} />
+              <RichTextEditor key={`req-${editingJobId || "new"}`} value={requirements} onChange={setRequirements} placeholder="What's required to apply..." />
             </Field>
 
             <Field label="Skills">
@@ -367,14 +439,25 @@ function WorkAdmin() {
             {err ? <p className="text-sm text-red-600">{err}</p> : null}
             {msg ? <p className="text-sm text-green-700">{msg}</p> : null}
 
-            <button
-              type="button"
-              onClick={submit}
-              disabled={saving}
-              className="mt-2 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
-            >
-              {saving ? "Saving..." : "Save job"}
-            </button>
+            <div className="mt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={submit}
+                disabled={saving}
+                className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
+              >
+                {saving ? "Saving..." : editingJobId ? "Update job" : "Save job"}
+              </button>
+              {editingJobId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-shrink-0 rounded-xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -467,6 +550,7 @@ function WorkAdmin() {
                       </td>
                       <td className="py-2 pr-4 text-muted-foreground">{j.deadline_at ? new Date(j.deadline_at).toLocaleDateString() : "-"}</td>
                       <td className="py-2 pr-4">
+                        <button onClick={() => startEditJob(j.id)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>
                         <button onClick={() => deleteJob(j.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
                       </td>
                     </tr>

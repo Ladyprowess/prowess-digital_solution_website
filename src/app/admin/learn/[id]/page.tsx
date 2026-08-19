@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 type Course = { id: string; title: string };
 type Module = { id: string; title: string; position: number };
@@ -34,26 +35,43 @@ function ModuleCard({ module, lessons, onChange }: { module: Module; lessons: Le
   const [contentUrl, setContentUrl] = useState("");
   const [contentText, setContentText] = useState("");
   const [err, setErr] = useState("");
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
 
-  const addLesson = async () => {
+  const resetLessonForm = () => {
+    setEditingLessonId(null);
+    setTitle(""); setContentType("text"); setContentUrl(""); setContentText("");
+  };
+
+  function startEditLesson(lesson: Lesson) {
+    setErr("");
+    setEditingLessonId(lesson.id);
+    setTitle(lesson.title);
+    setContentType(lesson.content_type);
+    setContentUrl(lesson.content_url || "");
+    setContentText(lesson.content_text || "");
+  }
+
+  const saveLesson = async () => {
     setErr("");
     if (!title.trim()) return setErr("Lesson title is required.");
-    const { error } = await supabase.from("course_lessons").insert({
-      module_id: module.id,
+    const payload = {
       title: title.trim(),
       content_type: contentType,
       content_url: contentType !== "text" ? contentUrl.trim() || null : null,
       content_text: contentType === "text" ? contentText.trim() || null : null,
-      position: lessons.length,
-    });
+    };
+    const { error } = editingLessonId
+      ? await supabase.from("course_lessons").update(payload).eq("id", editingLessonId)
+      : await supabase.from("course_lessons").insert({ ...payload, module_id: module.id, position: lessons.length });
     if (error) return setErr(error.message);
-    setTitle(""); setContentUrl(""); setContentText("");
+    resetLessonForm();
     onChange();
   };
 
   const deleteLesson = async (id: string) => {
     if (!confirm("Delete this lesson?")) return;
     await supabase.from("course_lessons").delete().eq("id", id);
+    if (editingLessonId === id) resetLessonForm();
     onChange();
   };
 
@@ -75,14 +93,17 @@ function ModuleCard({ module, lessons, onChange }: { module: Module; lessons: Le
           {lessons.map((l) => (
             <li key={l.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2 text-sm">
               <span className="text-foreground">{l.title} <span className="text-muted-foreground">({l.content_type})</span></span>
-              <button onClick={() => deleteLesson(l.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
+              <span className="flex-shrink-0">
+                <button onClick={() => startEditLesson(l)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>
+                <button onClick={() => deleteLesson(l.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
+              </span>
             </li>
           ))}
         </ul>
       )}
 
       <div className="mt-4 grid gap-3 rounded-xl bg-muted p-4">
-        <p className="text-xs font-semibold tracking-widest text-muted-foreground">ADD LESSON</p>
+        <p className="text-xs font-semibold tracking-widest text-muted-foreground">{editingLessonId ? "EDIT LESSON" : "ADD LESSON"}</p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Title">
             <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} placeholder="e.g. What is SEO?" />
@@ -95,7 +116,7 @@ function ModuleCard({ module, lessons, onChange }: { module: Module; lessons: Le
         </div>
         {contentType === "text" ? (
           <Field label="Content">
-            <textarea value={contentText} onChange={(e) => setContentText(e.target.value)} className={`${inputCls} min-h-[80px]`} />
+            <RichTextEditor key={`lesson-${editingLessonId || "new"}`} value={contentText} onChange={setContentText} placeholder="The lesson content..." />
           </Field>
         ) : (
           <Field label={contentType === "youtube" ? "YouTube URL" : contentType === "pdf" ? "PDF link" : contentType === "video" ? "Video URL" : "External link"}>
@@ -103,13 +124,24 @@ function ModuleCard({ module, lessons, onChange }: { module: Module; lessons: Le
           </Field>
         )}
         {err ? <p className="text-sm text-red-600">{err}</p> : null}
-        <button
-          type="button"
-          onClick={addLesson}
-          className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
-        >
-          Add lesson
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={saveLesson}
+            className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            {editingLessonId ? "Update lesson" : "Add lesson"}
+          </button>
+          {editingLessonId && (
+            <button
+              type="button"
+              onClick={resetLessonForm}
+              className="flex-shrink-0 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeVideoId } from "@/lib/youtube";
+import { RichText } from "@/components/RichText";
 
 type ResourceBodyData = {
   content: string | null;
@@ -86,7 +87,7 @@ export function ResourceBody({
       )}
 
       {data?.content && (
-        <p className="whitespace-pre-line leading-relaxed text-foreground">{data.content}</p>
+        <RichText html={data.content} />
       )}
 
       {data?.external_url && !youtubeId && (

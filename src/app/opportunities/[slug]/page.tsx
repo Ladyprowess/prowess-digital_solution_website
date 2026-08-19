@@ -4,6 +4,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
+import { RichText } from "@/components/RichText";
+import { stripHtmlForMeta } from "@/lib/stripHtml";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -45,7 +47,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!opp) return { title: "Opportunity not found" };
   return {
     title: opp.title,
-    description: opp.description?.slice(0, 155) || `${opp.title} - apply on Prowess Digital Solutions.`,
+    description: (opp.description ? stripHtmlForMeta(opp.description) : "") || `${opp.title} - apply on Prowess Digital Solutions.`,
   };
 }
 
@@ -120,7 +122,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
           <Reveal delay={80}>
             <section className="mt-10">
               <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">WHO CAN APPLY</h2>
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground">{opp.eligibility}</p>
+              <RichText html={opp.eligibility} className="mt-3" />
             </section>
           </Reveal>
         )}
@@ -129,7 +131,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
           <Reveal delay={120}>
             <section className="mt-8">
               <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">BENEFITS</h2>
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground">{opp.benefits}</p>
+              <RichText html={opp.benefits} className="mt-3" />
             </section>
           </Reveal>
         )}
@@ -138,7 +140,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
           <Reveal delay={160}>
             <section className="mt-8">
               <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">DESCRIPTION</h2>
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground">{opp.description}</p>
+              <RichText html={opp.description} className="mt-3" />
             </section>
           </Reveal>
         )}

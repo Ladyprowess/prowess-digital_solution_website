@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { SourcesPanel } from "@/components/admin/SourcesPanel";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -60,6 +61,9 @@ function OpportunitiesAdmin() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+
+  const [editingOppId, setEditingOppId] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
 
   const loadLists = useCallback(async () => {
     setLoadingLists(true);
@@ -144,11 +148,51 @@ function OpportunitiesAdmin() {
   }
 
   const resetForm = () => {
+    setEditingOppId(null);
     setTitle(""); setTypeId(""); setOrganisationName(""); setDescription("");
     setEligibility(""); setBenefits(""); setLocationType("any"); setCountry("");
     setCity(""); setRemoteRegions(""); setApplyUrl(""); setDeadlineAt(""); setFeatured(false); setPublishNow(true);
     setSelectedSkillIds([]);
   };
+
+  async function startEditOpp(id: string) {
+    setErr(""); setMsg("");
+    setLoadingEdit(true);
+    const { data, error } = await supabase
+      .from("opportunities")
+      .select("id, title, type_id, organisation_name, description, eligibility, benefits, location_type, country, city, remote_regions, apply_url, deadline_at, featured, status, opportunity_skill_map(skill_id)")
+      .eq("id", id)
+      .single();
+    setLoadingEdit(false);
+    if (error || !data) { setErr(error?.message || "Could not load this opportunity."); return; }
+
+    const opp = data as unknown as {
+      id: string; title: string; type_id: string; organisation_name: string | null;
+      description: string | null; eligibility: string | null; benefits: string | null;
+      location_type: (typeof LOCATION_TYPES)[number]; country: string | null; city: string | null;
+      remote_regions: string[] | null; apply_url: string; deadline_at: string | null;
+      featured: boolean; status: OpportunityRow["status"]; opportunity_skill_map: { skill_id: string }[];
+    };
+
+    setEditingOppId(opp.id);
+    setTitle(opp.title);
+    setTypeId(opp.type_id);
+    setOrganisationName(opp.organisation_name || "");
+    setDescription(opp.description || "");
+    setEligibility(opp.eligibility || "");
+    setBenefits(opp.benefits || "");
+    setLocationType(opp.location_type);
+    setCountry(opp.country || "");
+    setCity(opp.city || "");
+    setRemoteRegions((opp.remote_regions || []).join(", "));
+    setApplyUrl(opp.apply_url);
+    setDeadlineAt(opp.deadline_at ? opp.deadline_at.slice(0, 10) : "");
+    setFeatured(opp.featured);
+    setPublishNow(opp.status === "published");
+    setSelectedSkillIds(opp.opportunity_skill_map.map((m) => m.skill_id));
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   const submit = async () => {
     setErr(""); setMsg("");
@@ -158,14 +202,8 @@ function OpportunitiesAdmin() {
 
     setSaving(true);
     try {
-      const [sourceId, slug] = await Promise.all([
-        getManualSourceId(),
-        getUniqueSlug(slugify(title)),
-      ]);
-
       const now = new Date().toISOString();
-      const { data: created, error } = await supabase.from("opportunities").insert({
-        slug,
+      const basePayload = {
         title: title.trim(),
         type_id: typeId,
         organisation_name: organisationName.trim() || null,
@@ -177,17 +215,38 @@ function OpportunitiesAdmin() {
         city: city.trim() || null,
         remote_regions: remoteRegions.trim() ? remoteRegions.split(",").map((r) => r.trim()).filter(Boolean) : null,
         apply_url: applyUrl.trim(),
-        source_id: sourceId,
         featured,
         status: publishNow ? "published" : "draft",
-        published_at: publishNow ? now : null,
         deadline_at: deadlineAt || null,
-      }).select("id").single();
-      if (error || !created) throw new Error(error?.message || "Could not save the opportunity.");
+      };
 
-      await saveSkillMap("opportunity_skill_map", "opportunity_id", created.id, selectedSkillIds);
+      let oppId = editingOppId;
 
-      setMsg("Opportunity saved.");
+      if (editingOppId) {
+        const { error } = await supabase.from("opportunities").update({
+          ...basePayload,
+          published_at: publishNow ? now : null,
+        }).eq("id", editingOppId);
+        if (error) throw new Error(error.message);
+        await supabase.from("opportunity_skill_map").delete().eq("opportunity_id", editingOppId);
+      } else {
+        const [sourceId, slug] = await Promise.all([
+          getManualSourceId(),
+          getUniqueSlug(slugify(title)),
+        ]);
+        const { data: created, error } = await supabase.from("opportunities").insert({
+          ...basePayload,
+          slug,
+          source_id: sourceId,
+          published_at: publishNow ? now : null,
+        }).select("id").single();
+        if (error || !created) throw new Error(error?.message || "Could not save the opportunity.");
+        oppId = created.id;
+      }
+
+      await saveSkillMap("opportunity_skill_map", "opportunity_id", oppId!, selectedSkillIds);
+
+      setMsg(editingOppId ? "Opportunity updated." : "Opportunity saved.");
       resetForm();
       loadOpportunities();
     } catch (e) {
@@ -212,10 +271,11 @@ function OpportunitiesAdmin() {
     <div>
       <div>
         <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h1 className="text-3xl font-semibold text-foreground">Add Opportunity</h1>
+          <h1 className="text-3xl font-semibold text-foreground">{editingOppId ? "Edit Opportunity" : "Add Opportunity"}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Scholarships, grants, fellowships, internships, competitions and more.
+            {editingOppId ? "Update this opportunity." : "Scholarships, grants, fellowships, internships, competitions and more."}
           </p>
+          {loadingEdit && <p className="mt-2 text-sm text-muted-foreground">Loading opportunity…</p>}
 
           <div className="mt-8 grid gap-4">
             <Field label="Title *">
@@ -259,13 +319,13 @@ function OpportunitiesAdmin() {
             </Field>
 
             <Field label="Who can apply / eligibility">
-              <textarea value={eligibility} onChange={(e) => setEligibility(e.target.value)} className={`${inputCls} min-h-[90px]`} />
+              <RichTextEditor key={`elig-${editingOppId || "new"}`} value={eligibility} onChange={setEligibility} placeholder="Who this is open to..." />
             </Field>
             <Field label="Benefits">
-              <textarea value={benefits} onChange={(e) => setBenefits(e.target.value)} className={`${inputCls} min-h-[90px]`} />
+              <RichTextEditor key={`ben-${editingOppId || "new"}`} value={benefits} onChange={setBenefits} placeholder="What applicants get out of it..." />
             </Field>
             <Field label="Description">
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} className={`${inputCls} min-h-[100px]`} />
+              <RichTextEditor key={`desc-${editingOppId || "new"}`} value={description} onChange={setDescription} placeholder="What this opportunity is..." />
             </Field>
 
             <Field label="Deadline">
@@ -293,14 +353,25 @@ function OpportunitiesAdmin() {
             {err ? <p className="text-sm text-red-600">{err}</p> : null}
             {msg ? <p className="text-sm text-green-700">{msg}</p> : null}
 
-            <button
-              type="button"
-              onClick={submit}
-              disabled={saving}
-              className="mt-2 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
-            >
-              {saving ? "Saving..." : "Save opportunity"}
-            </button>
+            <div className="mt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={submit}
+                disabled={saving}
+                className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
+              >
+                {saving ? "Saving..." : editingOppId ? "Update opportunity" : "Save opportunity"}
+              </button>
+              {editingOppId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-shrink-0 rounded-xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -390,6 +461,7 @@ function OpportunitiesAdmin() {
                       </td>
                       <td className="py-2 pr-4 text-muted-foreground">{o.deadline_at ? new Date(o.deadline_at).toLocaleDateString() : "-"}</td>
                       <td className="py-2 pr-4">
+                        <button onClick={() => startEditOpp(o.id)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>
                         <button onClick={() => deleteOpp(o.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
                       </td>
                     </tr>

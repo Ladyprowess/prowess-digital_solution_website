@@ -20,6 +20,15 @@ const nextConfig: NextConfig = {
       { source: "/tools/customer-support", destination: "/tools/customer-support.html" },
     ];
   },
+
+  async redirects() {
+    return [
+      // /careers is now reserved for the consumer career-path system - the
+      // internal "join our team" page moved to /work-with-us. Permanent so
+      // search engines transfer ranking instead of treating it as a 404.
+      { source: "/careers", destination: "/work-with-us", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

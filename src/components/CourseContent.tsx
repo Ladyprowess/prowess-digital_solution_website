@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeThumbnail } from "@/lib/youtube";
+import { RichText } from "@/components/RichText";
 
 type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; position: number };
 type Module = { id: string; title: string; position: number; course_lessons: Lesson[] };
@@ -125,7 +126,7 @@ export function CourseContent({
                   )}
                 </div>
                 {l.content_type === "text" && l.content_text && (
-                  <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{l.content_text}</p>
+                  <RichText html={l.content_text} className="mt-2" />
                 )}
                 {l.content_type === "youtube" && l.content_url && (() => {
                   const thumb = getYoutubeThumbnail(l.content_url);

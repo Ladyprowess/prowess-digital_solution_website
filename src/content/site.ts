@@ -33,9 +33,10 @@ export const navMore = [
   { href: "/videos", label: "Videos" },
   { href: "/resources", label: "Resources" },
   { href: "/career-paths", label: "Career Paths" },
+  { href: "/skills", label: "Skills" },
   { href: "/about", label: "About Us" },
   { href: "/services", label: "For Businesses" },
-  { href: "/careers", label: "Work With Us" },
+  { href: "/work-with-us", label: "Work With Us" },
   { href: "/contact", label: "Contact Us" },
 ] as const;
 
