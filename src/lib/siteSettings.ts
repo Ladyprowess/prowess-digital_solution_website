@@ -42,15 +42,20 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
       .eq("id", 1)
       .maybeSingle();
 
+    // No row at all (table not migrated yet) - use the defaults wholesale.
+    // Once a row exists, a null field means an admin deliberately cleared
+    // it (e.g. "leave blank to hide that social icon" in /admin/settings),
+    // so it must be respected as empty, not silently replaced with the
+    // original hardcoded value.
     if (!data) return FALLBACK;
 
     return {
       contactEmail: data.contact_email || FALLBACK.contactEmail,
       contactPhone: data.contact_phone || FALLBACK.contactPhone,
       contactLocation: data.contact_location || FALLBACK.contactLocation,
-      socialLinkedin: data.social_linkedin ?? FALLBACK.socialLinkedin,
-      socialInstagram: data.social_instagram ?? FALLBACK.socialInstagram,
-      socialTwitter: data.social_twitter ?? FALLBACK.socialTwitter,
+      socialLinkedin: data.social_linkedin ?? null,
+      socialInstagram: data.social_instagram ?? null,
+      socialTwitter: data.social_twitter ?? null,
       seoTitle: data.seo_title || FALLBACK.seoTitle,
       seoDescription: data.seo_description || FALLBACK.seoDescription,
     };

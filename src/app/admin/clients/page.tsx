@@ -158,23 +158,33 @@ function ClientRow({ client, onUpdate, onDelete }: { client: Client; onUpdate: (
   const [conf, setConf] = useState(false);
 
   async function act(action: Action) {
-    const token = await getToken();
-    const res = await fetch("/api/admin/clients", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ code: client.code, action }),
-    });
-    if (res.ok) onUpdate(await res.json());
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/clients", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code: client.code, action }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error || "Could not update this client.");
+      onUpdate(await res.json());
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Could not update this client.");
+    }
   }
 
   async function remove() {
-    const token = await getToken();
-    const res = await fetch("/api/admin/clients", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ code: client.code }),
-    });
-    if (res.ok) onDelete(client.code);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/clients", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code: client.code }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error || "Could not delete this client.");
+      onDelete(client.code);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Could not delete this client.");
+    }
   }
 
   return (
