@@ -26,13 +26,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Tells the browser this page has an intentional light design, so Chrome's
-   auto-dark-mode-for-web-content (and similar OS-level force-dark behavior)
-   stops algorithmically re-coloring it when the device is in dark mode.
-   There's no working dark mode toggle yet, so the site should always render
-   its own light theme regardless of device/browser theme preference. */
+/* Tells the browser (and native form controls/scrollbars) which palette is
+   actually active, so it stops algorithmically re-coloring content against
+   the wrong scheme. Flips with the .dark class next-themes applies to
+   <html> - the dark mode toggle in the navbar is real and working. */
 :root {
   color-scheme: light;
+}
+:root.dark {
+  color-scheme: dark;
 }
 
 /* Legacy custom properties - still used by pages not yet migrated to the
@@ -154,8 +156,11 @@ body {
 }
 
 body {
-  background: var(--bg);
-  color: var(--ink);
+  /* Deliberately no background/color here: this is an unlayered rule, so it
+     would always beat the theme-aware `@apply bg-background text-foreground`
+     in @layer base above regardless of source order (that's how CSS cascade
+     layers work) - which is exactly why dark mode never visibly changed the
+     page background/text before. Font stays here since it isn't themed. */
   font-family: "Proxima Nova", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, Helvetica, Arial, sans-serif;
 }

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "@/components/Container";
 import { navPrimary, navMore } from "@/content/site";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { supabase } from "@/lib/supabase";
 
 const BOOKING_URL = "/#launch";
 
@@ -16,6 +17,17 @@ export default function Navbar() {
 
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+
+  // Detect-only, never redirects (unlike useMemberSession, which is for
+  // /account/* pages that require a session) - the navbar renders on every
+  // page, including for anonymous visitors who should never be bounced to
+  // login just because it checked.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setSignedIn(!!session));
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const moreRef = useRef<HTMLDivElement | null>(null);
   const mobileWrapRef = useRef<HTMLDivElement | null>(null);
@@ -147,10 +159,16 @@ export default function Navbar() {
             </nav>
 
             {/* Desktop CTA */}
-            <div className="hidden lg:flex justify-end">
+            <div className="hidden lg:flex items-center justify-end gap-3">
+              <Link
+                href={signedIn ? "/account" : "/account/login"}
+                className="text-sm font-semibold text-foreground hover:text-primary transition whitespace-nowrap"
+              >
+                {signedIn ? "My Prowess" : "Sign In"}
+              </Link>
               <Link
                 href={BOOKING_URL}
-                className="inline-flex w-[220px] items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition whitespace-nowrap"
+                className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition whitespace-nowrap"
               >
                 Get Job Alerts
               </Link>
@@ -252,6 +270,13 @@ export default function Navbar() {
                         className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-primary px-6 py-5 text-lg font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition"
                       >
                         Get Job Alerts
+                      </Link>
+                      <Link
+                        href={signedIn ? "/account" : "/account/login"}
+                        onClick={() => setMobileOpen(false)}
+                        className="mt-3 inline-flex w-full items-center justify-center rounded-3xl border border-border bg-card px-6 py-4 text-base font-semibold text-foreground hover:bg-muted transition"
+                      >
+                        {signedIn ? "My Prowess" : "Sign In"}
                       </Link>
                     </div>
                   </div>

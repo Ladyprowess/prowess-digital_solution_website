@@ -24,15 +24,15 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="mt-24 bg-[#507c80]/10 border-t border-slate-200">
+    <footer className="mt-24 bg-primary/10 border-t border-border">
       <Container>
         <div className="py-12 grid gap-10 md:grid-cols-4">
           {/* Brand */}
           <div>
-            <p className="text-lg font-semibold text-slate-900">
+            <p className="text-lg font-semibold text-foreground">
               {brand.name}
             </p>
-            <p className="mt-2 text-sm text-slate-600 max-w-sm">
+            <p className="mt-2 text-sm text-muted-foreground max-w-sm">
               Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction.
             </p>
             <div className="mt-5 flex items-center gap-3">
@@ -43,7 +43,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.name}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition hover:border-[#507c80] hover:text-[#507c80]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary hover:text-primary"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d={s.path} />
@@ -55,48 +55,48 @@ export default function Footer() {
 
           {/* For Individuals */}
           <div>
-            <p className="text-sm font-semibold tracking-wide text-slate-900">
+            <p className="text-sm font-semibold tracking-wide text-foreground">
               For Individuals
             </p>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><Link href="/jobs" className="text-slate-600 hover:text-slate-900">Work</Link></li>
-              <li><Link href="/opportunities" className="text-slate-600 hover:text-slate-900">Opportunities</Link></li>
-              <li><Link href="/career-paths" className="text-slate-600 hover:text-slate-900">Career Paths</Link></li>
-              <li><Link href="/learn" className="text-slate-600 hover:text-slate-900">Learn</Link></li>
-              <li><Link href="/resources" className="text-slate-600 hover:text-slate-900">Resources</Link></li>
-              <li><Link href="/tools" className="text-slate-600 hover:text-slate-900">Tools</Link></li>
-              <li><Link href="/events" className="text-slate-600 hover:text-slate-900">Events</Link></li>
+              <li><Link href="/jobs" className="text-muted-foreground hover:text-foreground">Work</Link></li>
+              <li><Link href="/opportunities" className="text-muted-foreground hover:text-foreground">Opportunities</Link></li>
+              <li><Link href="/career-paths" className="text-muted-foreground hover:text-foreground">Career Paths</Link></li>
+              <li><Link href="/learn" className="text-muted-foreground hover:text-foreground">Learn</Link></li>
+              <li><Link href="/resources" className="text-muted-foreground hover:text-foreground">Resources</Link></li>
+              <li><Link href="/tools" className="text-muted-foreground hover:text-foreground">Tools</Link></li>
+              <li><Link href="/events" className="text-muted-foreground hover:text-foreground">Events</Link></li>
             </ul>
           </div>
 
           {/* For Businesses */}
           <div>
-            <p className="text-sm font-semibold tracking-wide text-slate-900">
+            <p className="text-sm font-semibold tracking-wide text-foreground">
               For Businesses
             </p>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><Link href="/tools" className="text-slate-600 hover:text-slate-900">Business Tools</Link></li>
-              <li><Link href="/resources" className="text-slate-600 hover:text-slate-900">Business Resources</Link></li>
-              <li><Link href="/services" className="text-slate-600 hover:text-slate-900">Services</Link></li>
-              <li><Link href="/case-studies" className="text-slate-600 hover:text-slate-900">Case Studies</Link></li>
-              <li><Link href="/consultation" className="text-slate-600 hover:text-slate-900">Consultation</Link></li>
-              <li><Link href="/contact" className="text-slate-600 hover:text-slate-900">Contact</Link></li>
+              <li><Link href="/tools" className="text-muted-foreground hover:text-foreground">Business Tools</Link></li>
+              <li><Link href="/resources" className="text-muted-foreground hover:text-foreground">Business Resources</Link></li>
+              <li><Link href="/services" className="text-muted-foreground hover:text-foreground">Services</Link></li>
+              <li><Link href="/case-studies" className="text-muted-foreground hover:text-foreground">Case Studies</Link></li>
+              <li><Link href="/consultation" className="text-muted-foreground hover:text-foreground">Consultation</Link></li>
+              <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link></li>
             </ul>
           </div>
 
           {/* Prowess Digital Solutions */}
           <div>
-            <p className="text-sm font-semibold tracking-wide text-slate-900">
+            <p className="text-sm font-semibold tracking-wide text-foreground">
               {brand.name}
             </p>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><Link href="/about" className="text-slate-600 hover:text-slate-900">About</Link></li>
-              <li><Link href="/blog" className="text-slate-600 hover:text-slate-900">Blog</Link></li>
-              <li><Link href="/careers" className="text-slate-600 hover:text-slate-900">Work With Us</Link></li>
-              <li><Link href="/privacy-policy" className="text-slate-600 hover:text-slate-900">Privacy Policy</Link></li>
-              <li><Link href="/terms-of-service" className="text-slate-600 hover:text-slate-900">Terms of Service</Link></li>
+              <li><Link href="/about" className="text-muted-foreground hover:text-foreground">About</Link></li>
+              <li><Link href="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link></li>
+              <li><Link href="/careers" className="text-muted-foreground hover:text-foreground">Work With Us</Link></li>
+              <li><Link href="/privacy-policy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
+              <li><Link href="/terms-of-service" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
             </ul>
-            <div className="mt-4 space-y-1 text-xs text-slate-500">
+            <div className="mt-4 space-y-1 text-xs text-muted-foreground">
               <p>{contact.email}</p>
               <p>{contact.whatsapp}</p>
             </div>
@@ -104,14 +104,14 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-200 py-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-slate-500">
+        <div className="border-t border-border py-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} {brand.name}. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-4 text-xs text-slate-500">
-            <Link href="/privacy-policy" className="hover:text-slate-900">Privacy Policy</Link>
-            <Link href="/terms-of-service" className="hover:text-slate-900">Terms of Service</Link>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <Link href="/privacy-policy" className="hover:text-foreground">Privacy Policy</Link>
+            <Link href="/terms-of-service" className="hover:text-foreground">Terms of Service</Link>
           </div>
         </div>
       </Container>

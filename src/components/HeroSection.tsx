@@ -4,11 +4,14 @@ import Link from "next/link";
 import React from "react";
 import { pillars } from "@/content/site";
 
-const T = "#507c80";
-const TDark = "#3d5f62";
-const ink = "#0A0A0F";
-const muted = "#496167";
-const border = "#E7E7EC";
+// Theme-aware: every color here is a CSS custom property (see globals.css'
+// @layer base tokens + .dark overrides), not a hardcoded hex, so this
+// section actually responds to the dark mode toggle instead of staying
+// pinned to a light palette regardless of theme.
+const T = "var(--primary)";
+const ink = "var(--foreground)";
+const muted = "var(--muted-foreground)";
+const border = "var(--border)";
 
 const CSS = `
 @keyframes fadeUp {
@@ -25,10 +28,10 @@ const CSS = `
 `;
 
 const quickFilters = [
-  { label: "Jobs", href: "/#launch" },
-  { label: "Grants", href: "/#launch" },
-  { label: "Scholarships", href: "/#launch" },
-  { label: "Courses", href: "/#launch" },
+  { label: "Jobs", href: "/jobs" },
+  { label: "Grants", href: "/opportunities" },
+  { label: "Scholarships", href: "/opportunities" },
+  { label: "Courses", href: "/learn" },
   { label: "Events", href: "/events" },
   { label: "Tools", href: "/tools" },
 ];
@@ -37,7 +40,7 @@ export function HeroSection() {
   return (
     <section
       style={{
-        background: "#F5F5F7",
+        background: "var(--muted)",
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' fill='none' stroke='%23507c80' stroke-opacity='0.04' stroke-width='0.6'/%3E%3C/svg%3E")`,
         position: "relative",
         overflowX: "clip",
@@ -83,14 +86,15 @@ export function HeroSection() {
                   type="text"
                   name="q"
                   placeholder="What are you looking for?"
-                  style={{ width: "100%", padding: "14px 16px 14px 44px", borderRadius: 12, border: `1.5px solid ${border}`, fontSize: "0.95rem", color: ink, background: "#fff" }}
+                  style={{ width: "100%", padding: "14px 16px 14px 44px", borderRadius: 12, border: `1.5px solid ${border}`, fontSize: "0.95rem", color: ink, background: "var(--card)" }}
                 />
               </div>
               <button
                 type="submit"
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: T, color: "#fff", fontWeight: 600, fontSize: "0.9rem", padding: "14px 26px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: `0 4px 22px rgba(80,124,128,0.32)`, transition: "background 0.15s ease", whiteSpace: "nowrap" }}
-                onMouseEnter={e => (e.currentTarget.style.background = TDark)}
-                onMouseLeave={e => (e.currentTarget.style.background = T)}
+                className="hero-search-btn"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: T, color: "var(--primary-foreground)", fontWeight: 600, fontSize: "0.9rem", padding: "14px 26px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: `0 4px 22px rgba(80,124,128,0.32)`, transition: "filter 0.15s ease", whiteSpace: "nowrap" }}
+                onMouseEnter={e => (e.currentTarget.style.filter = "brightness(0.9)")}
+                onMouseLeave={e => (e.currentTarget.style.filter = "none")}
               >
                 Search
               </button>
@@ -104,7 +108,7 @@ export function HeroSection() {
                 <Link
                   key={item.label}
                   href={item.href}
-                  style={{ fontSize: "0.82rem", fontWeight: 600, color: T, background: "rgba(80,124,128,0.08)", border: `1px solid rgba(80,124,128,0.18)`, borderRadius: 999, padding: "7px 14px", transition: "background 0.15s ease" }}
+                  style={{ fontSize: "0.82rem", fontWeight: 600, color: T, background: "color-mix(in oklch, var(--primary) 10%, transparent)", border: `1px solid color-mix(in oklch, var(--primary) 20%, transparent)`, borderRadius: 999, padding: "7px 14px", transition: "background 0.15s ease" }}
                 >
                   {item.label}
                 </Link>
@@ -118,7 +122,7 @@ export function HeroSection() {
               {["Free to browse", "Africa + Remote focus", "New opportunities weekly"].map((item) => (
                 <div key={item} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: T, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={3.5}>
+                    <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="var(--primary-foreground)" strokeWidth={3.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -137,7 +141,7 @@ export function HeroSection() {
               style={{
                 borderRadius: 28,
                 border: `1px solid ${border}`,
-                background: "#fff",
+                background: "var(--card)",
                 boxShadow: "0 24px 60px rgba(10,10,15,0.12), 0 4px 14px rgba(10,10,15,0.05)",
                 padding: 28,
               }}
