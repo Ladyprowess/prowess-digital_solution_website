@@ -6,10 +6,6 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { brand } from "@/content/site";
 import Script from "next/script";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
@@ -118,7 +114,7 @@ const websiteSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
+    <html lang="en-GB" className="font-sans" suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="light dark" />
         <Script

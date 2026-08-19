@@ -9,6 +9,7 @@ export type MemberProfile = {
   full_name: string | null;
   avatar_url: string | null;
   headline: string | null;
+  created_at: string;
 };
 
 // Guards the /account/* pages (B2C member dashboard) - deliberately separate
@@ -34,7 +35,7 @@ export function useMemberSession() {
 
     let { data: profileRow } = await supabase
       .from("member_profiles")
-      .select("id, full_name, avatar_url, headline")
+      .select("id, full_name, avatar_url, headline, created_at")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -42,7 +43,7 @@ export function useMemberSession() {
       const { data: created } = await supabase
         .from("member_profiles")
         .insert({ id: user.id, full_name: user.user_metadata?.full_name || null })
-        .select("id, full_name, avatar_url, headline")
+        .select("id, full_name, avatar_url, headline, created_at")
         .single();
       profileRow = created ?? null;
     }

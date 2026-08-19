@@ -6,10 +6,10 @@ import Container from "@/components/Container";
 import { useMemberSession } from "@/lib/useMemberSession";
 import { supabase } from "@/lib/supabase";
 
-type SavedItem = { id: string; item_type: string; item_id: string; title?: string };
+type SavedItem = { id: string; item_type: string; item_id: string; title?: string; slug?: string };
 type Purchase = { id: string; item_type: string; item_id: string; amount: number; currency: string; title: string; slug: string | null; created_at: string };
-type LearningRow = { id: string; course_id: string; status: string; progress_percent: number; title?: string };
-type InterestRow = { career_path_id: string; title?: string };
+type LearningRow = { id: string; course_id: string; status: string; progress_percent: number; title?: string; slug?: string };
+type InterestRow = { career_path_id: string; title?: string; slug?: string };
 
 const ITEM_TABLE: Record<string, string> = {
   job: "jobs",
@@ -19,28 +19,77 @@ const ITEM_TABLE: Record<string, string> = {
   career_path: "career_paths",
 };
 
-async function attachTitles<T extends { item_type: string; item_id: string }>(rows: T[]): Promise<(T & { title?: string })[]> {
+const ITEM_LABEL: Record<string, string> = {
+  job: "Job",
+  opportunity: "Opportunity",
+  resource: "Resource",
+  course: "Course",
+  career_path: "Career Path",
+};
+
+function hrefFor(itemType: string, slug?: string | null): string | null {
+  if (!slug) return null;
+  switch (itemType) {
+    case "job": return `/jobs/${slug}`;
+    case "opportunity": return `/opportunities/${slug}`;
+    case "resource": return `/resources/${slug}`;
+    case "course": return `/learn/${slug}`;
+    case "career_path": return `/career-paths/${slug}`;
+    default: return null;
+  }
+}
+
+async function attachTitles<T extends { item_type: string; item_id: string }>(rows: T[]): Promise<(T & { title?: string; slug?: string })[]> {
   const byType: Record<string, string[]> = {};
   for (const r of rows) (byType[r.item_type] ||= []).push(r.item_id);
 
-  const titleMap: Record<string, string> = {};
+  const infoMap: Record<string, { title: string; slug: string }> = {};
   await Promise.all(
     Object.entries(byType).map(async ([type, ids]) => {
       const table = ITEM_TABLE[type];
       if (!table) return;
-      const { data } = await supabase.from(table).select("id, title").in("id", ids);
-      (data || []).forEach((row: { id: string; title: string }) => { titleMap[row.id] = row.title; });
+      const { data } = await supabase.from(table).select("id, title, slug").in("id", ids);
+      (data || []).forEach((row: { id: string; title: string; slug: string }) => { infoMap[row.id] = { title: row.title, slug: row.slug }; });
     })
   );
 
-  return rows.map((r) => ({ ...r, title: titleMap[r.item_id] || "Untitled" }));
+  return rows.map((r) => ({ ...r, title: infoMap[r.item_id]?.title || "Untitled", slug: infoMap[r.item_id]?.slug }));
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function initials(name: string | null, email: string | null): string {
+  const source = (name || email || "?").trim();
+  if (!source) return "?";
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-bold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function Card({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
-      <h2 className="text-lg font-bold text-foreground">{title}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-foreground">{title}</h2>
+        {action}
+      </div>
       <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
+function EmptyState({ text, ctaLabel, ctaHref }: { text: string; ctaLabel: string; ctaHref: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-border p-5 text-center">
+      <p className="text-sm text-muted-foreground">{text}</p>
+      <Link href={ctaHref} className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">{ctaLabel} →</Link>
     </div>
   );
 }
@@ -51,6 +100,7 @@ export default function AccountDashboardPage() {
   const [fullName, setFullName] = useState("");
   const [headline, setHeadline] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   const [saved, setSaved] = useState<SavedItem[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -96,16 +146,16 @@ export default function AccountDashboardPage() {
 
     const learningWithTitles = await Promise.all(
       (learningRows.data || []).map(async (row) => {
-        const { data: course } = await supabase.from("courses").select("title").eq("id", row.course_id).maybeSingle();
-        return { ...row, title: course?.title || "Untitled course" };
+        const { data: course } = await supabase.from("courses").select("title, slug").eq("id", row.course_id).maybeSingle();
+        return { ...row, title: course?.title || "Untitled course", slug: course?.slug };
       })
     );
     setLearning(learningWithTitles);
 
     const interestsWithTitles = await Promise.all(
       (interestRows.data || []).map(async (row) => {
-        const { data: path } = await supabase.from("career_paths").select("title").eq("id", row.career_path_id).maybeSingle();
-        return { ...row, title: path?.title || "Untitled" };
+        const { data: path } = await supabase.from("career_paths").select("title, slug").eq("id", row.career_path_id).maybeSingle();
+        return { ...row, title: path?.title || "Untitled", slug: path?.slug };
       })
     );
     setInterests(interestsWithTitles);
@@ -124,6 +174,7 @@ export default function AccountDashboardPage() {
       .update({ full_name: fullName.trim() || null, headline: headline.trim() || null, updated_at: new Date().toISOString() })
       .eq("id", profile.id);
     setSavingProfile(false);
+    setEditingProfile(false);
     reload();
   }
 
@@ -145,34 +196,35 @@ export default function AccountDashboardPage() {
   }
   if (status === "signed-out") return null;
 
+  const learningInProgress = learning.filter((l) => l.status !== "completed").length;
+  const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : null;
+
   return (
-    <div className="min-h-screen bg-muted py-16">
+    <div className="min-h-screen bg-muted py-12 sm:py-16">
       <Container>
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">My Account</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{email}</p>
+        {/* Hero */}
+        <div className="flex flex-wrap items-start justify-between gap-6 rounded-2xl border border-border bg-card p-6 sm:p-8">
+          <div className="flex items-start gap-4">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
+              {initials(profile?.full_name || null, email)}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{profile?.full_name || "My Account"}</h1>
+              {profile?.headline && <p className="mt-0.5 text-sm text-muted-foreground">{profile.headline}</p>}
+              <p className="mt-1 text-sm text-muted-foreground">{email}{memberSince ? ` · Member since ${memberSince}` : ""}</p>
+              <button onClick={() => setEditingProfile((v) => !v)} className="mt-2 text-sm font-semibold text-primary hover:underline">
+                {editingProfile ? "Cancel" : "Edit profile"}
+              </button>
+            </div>
           </div>
-          <button onClick={signOut} className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted">
+          <button onClick={signOut} className="flex-shrink-0 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted">
             Sign out
           </button>
         </div>
 
-        {isAdmin && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-primary/30 bg-primary/5 p-6">
-            <div>
-              <p className="text-sm font-bold text-primary">You&rsquo;re signed in as an admin</p>
-              <p className="mt-1 text-sm text-muted-foreground">Manage jobs, opportunities, courses, users, purchases and more from one dashboard.</p>
-            </div>
-            <Link href="/admin" className="flex-shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-              Open Admin Dashboard →
-            </Link>
-          </div>
-        )}
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Section title="My Profile">
-            <div className="grid gap-3">
+        {editingProfile && (
+          <div className="mt-4 rounded-2xl border border-border bg-card p-6">
+            <div className="grid gap-3 sm:grid-cols-2">
               <input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -185,88 +237,142 @@ export default function AccountDashboardPage() {
                 placeholder="Headline, e.g. Aspiring Product Designer"
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground"
               />
-              <button
-                onClick={saveProfile}
-                disabled={savingProfile}
-                className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-              >
-                {savingProfile ? "Saving..." : "Save profile"}
-              </button>
             </div>
-          </Section>
+            <button
+              onClick={saveProfile}
+              disabled={savingProfile}
+              className="mt-3 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+            >
+              {savingProfile ? "Saving..." : "Save profile"}
+            </button>
+          </div>
+        )}
 
-          <Section title="My Career Interests">
-            {loadingData ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
-            ) : interests.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No career interests saved yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {interests.map((i) => (
-                  <li key={i.career_path_id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2 text-sm">
-                    <span className="text-foreground">{i.title}</span>
-                    <button onClick={() => removeInterest(i.career_path_id)} className="text-xs font-semibold text-red-600 hover:underline">Remove</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Section>
+        {isAdmin && (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-primary/30 bg-primary/5 p-6">
+            <div>
+              <p className="text-sm font-bold text-primary">You&rsquo;re signed in as an admin</p>
+              <p className="mt-1 text-sm text-muted-foreground">Manage jobs, opportunities, courses, users, purchases and more from one dashboard.</p>
+            </div>
+            <Link href="/admin" className="flex-shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+              Open Admin Dashboard →
+            </Link>
+          </div>
+        )}
 
-          <Section title="Saved">
-            {loadingData ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
-            ) : saved.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing saved yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {saved.map((s) => (
-                  <li key={s.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2 text-sm">
-                    <span className="text-foreground">{s.title} <span className="text-muted-foreground">({s.item_type})</span></span>
-                    <button onClick={() => removeSaved(s.id)} className="text-xs font-semibold text-red-600 hover:underline">Remove</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Section>
+        {/* Stats */}
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StatCard label="Saved" value={saved.length} />
+          <StatCard label="Learning in Progress" value={learningInProgress} />
+          <StatCard label="Purchases" value={purchases.length} />
+          <StatCard label="Career Interests" value={interests.length} />
+        </div>
 
-          <Section title="Continue Learning">
+        {/* Content */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <Card title="Continue Learning" action={<Link href="/learn" className="text-sm font-semibold text-primary hover:underline">Browse →</Link>}>
             {loadingData ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
             ) : learning.length === 0 ? (
-              <p className="text-sm text-muted-foreground">You haven&rsquo;t started a course yet.</p>
+              <EmptyState text="You haven't started a course yet." ctaLabel="Explore courses" ctaHref="/learn" />
             ) : (
               <ul className="space-y-2">
-                {learning.map((l) => (
-                  <li key={l.id} className="rounded-xl border border-border/60 px-4 py-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-foreground">{l.title}</span>
-                      <span className="text-xs text-muted-foreground">{l.status.replace("_", " ")}</span>
-                    </div>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div className="h-full bg-primary" style={{ width: `${l.progress_percent}%` }} />
-                    </div>
-                  </li>
-                ))}
+                {learning.map((l) => {
+                  const href = hrefFor("course", l.slug);
+                  return (
+                    <li key={l.id} className="rounded-xl border border-border/60 px-4 py-3 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        {href ? (
+                          <Link href={href} className="font-medium text-foreground hover:text-primary hover:underline">{l.title}</Link>
+                        ) : (
+                          <span className="font-medium text-foreground">{l.title}</span>
+                        )}
+                        <span className="flex-shrink-0 text-xs text-muted-foreground">{l.status.replace("_", " ")}</span>
+                      </div>
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div className="h-full bg-primary" style={{ width: `${l.progress_percent}%` }} />
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
-          </Section>
+          </Card>
 
-          <Section title="My Purchases">
+          <Card title="My Purchases">
             {loadingData ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
             ) : purchases.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No purchases yet.</p>
+              <EmptyState text="No purchases yet." ctaLabel="Browse premium content" ctaHref="/resources" />
             ) : (
               <ul className="space-y-2">
-                {purchases.map((p) => (
-                  <li key={p.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2 text-sm">
-                    <span className="text-foreground">{p.title}</span>
-                    <span className="text-xs text-muted-foreground">{p.currency} {p.amount}</span>
-                  </li>
-                ))}
+                {purchases.map((p) => {
+                  const href = hrefFor(p.item_type, p.slug);
+                  return (
+                    <li key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-4 py-3 text-sm">
+                      {href ? (
+                        <Link href={href} className="font-medium text-foreground hover:text-primary hover:underline">{p.title}</Link>
+                      ) : (
+                        <span className="font-medium text-foreground">{p.title}</span>
+                      )}
+                      <span className="flex-shrink-0 text-xs text-muted-foreground">{p.currency} {p.amount.toLocaleString()}</span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
-          </Section>
+          </Card>
+
+          <Card title="Saved">
+            {loadingData ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : saved.length === 0 ? (
+              <EmptyState text="Nothing saved yet." ctaLabel="Browse jobs" ctaHref="/jobs" />
+            ) : (
+              <ul className="space-y-2">
+                {saved.map((s) => {
+                  const href = hrefFor(s.item_type, s.slug);
+                  return (
+                    <li key={s.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-4 py-3 text-sm">
+                      <div className="min-w-0">
+                        {href ? (
+                          <Link href={href} className="font-medium text-foreground hover:text-primary hover:underline">{s.title}</Link>
+                        ) : (
+                          <span className="font-medium text-foreground">{s.title}</span>
+                        )}
+                        <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{ITEM_LABEL[s.item_type] || s.item_type}</span>
+                      </div>
+                      <button onClick={() => removeSaved(s.id)} className="flex-shrink-0 text-xs font-semibold text-red-600 hover:underline">Remove</button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
+          <Card title="My Career Interests" action={<Link href="/career-paths" className="text-sm font-semibold text-primary hover:underline">Browse →</Link>}>
+            {loadingData ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : interests.length === 0 ? (
+              <EmptyState text="No career interests saved yet." ctaLabel="Explore career paths" ctaHref="/career-paths" />
+            ) : (
+              <ul className="space-y-2">
+                {interests.map((i) => {
+                  const href = hrefFor("career_path", i.slug);
+                  return (
+                    <li key={i.career_path_id} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-4 py-3 text-sm">
+                      {href ? (
+                        <Link href={href} className="font-medium text-foreground hover:text-primary hover:underline">{i.title}</Link>
+                      ) : (
+                        <span className="font-medium text-foreground">{i.title}</span>
+                      )}
+                      <button onClick={() => removeInterest(i.career_path_id)} className="flex-shrink-0 text-xs font-semibold text-red-600 hover:underline">Remove</button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
         </div>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
