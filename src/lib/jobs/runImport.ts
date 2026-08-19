@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { slugify } from "@/lib/slugify";
 import type { NormalizedListing } from "./importers/types";
@@ -104,7 +105,13 @@ export async function runImportForSource(
         companyId = createdCompany.id;
       }
 
-      const jobSlug = `${slugify(listing.title)}-${slugify(listing.companyName)}-${listing.externalId}`;
+      // externalId is a full URL for every RSS-based connector (RemoteFirstJobs,
+      // Himalayas, WeWorkRemotely all use item.guid || item.link) - appending it
+      // raw put slashes and colons straight into the URL slug, breaking the
+      // /jobs/[slug] route entirely (a 404 on every affected job). Hashing it
+      // keeps the slug short, URL-safe, and still stable/unique per listing.
+      const externalIdHash = createHash("md5").update(listing.externalId).digest("hex").slice(0, 10);
+      const jobSlug = `${slugify(listing.title)}-${slugify(listing.companyName)}-${externalIdHash}`;
 
       const matchedSkillIds = skillList
         .filter((s) => listing.tags.some((tag) => tag.toLowerCase() === s.slug.toLowerCase() || tag.toLowerCase() === s.name.toLowerCase()))
