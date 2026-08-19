@@ -164,7 +164,7 @@ export default function Navbar() {
                 href={signedIn ? "/account" : "/account/login"}
                 className="text-sm font-semibold text-foreground hover:text-primary transition whitespace-nowrap"
               >
-                {signedIn ? "My Prowess" : "Sign In"}
+                {signedIn ? "My Account" : "Sign In"}
               </Link>
               <Link
                 href={BOOKING_URL}
@@ -276,7 +276,7 @@ export default function Navbar() {
                         onClick={() => setMobileOpen(false)}
                         className="mt-3 inline-flex w-full items-center justify-center rounded-3xl border border-border bg-card px-6 py-4 text-base font-semibold text-foreground hover:bg-muted transition"
                       >
-                        {signedIn ? "My Prowess" : "Sign In"}
+                        {signedIn ? "My Account" : "Sign In"}
                       </Link>
                     </div>
                   </div>

@@ -290,7 +290,7 @@ function ResourcesAdmin() {
                     <tr key={r.id} className="border-b border-border/60">
                       <td className="py-2 pr-4 font-medium text-foreground">{r.title}</td>
                       <td className="py-2 pr-4 text-muted-foreground">{r.audience}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">{r.resource_type ? r.resource_type.replace("_", " ") : "—"}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">{r.resource_type ? r.resource_type.replace("_", " ") : "-"}</td>
                       <td className="py-2 pr-4 text-muted-foreground">
                         {r.access === "premium" ? `Premium${r.price ? ` (${r.price})` : ""}` : "Free"}
                       </td>

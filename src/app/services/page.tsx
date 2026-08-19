@@ -76,7 +76,7 @@ const whoWeWork = [
   },
   {
     label: "African SMEs",
-    desc: "Where Prowess started. Business owners building properly, with real support and no shortcuts.",
+    desc: "Where Prowess Digital Solutions started. Business owners building properly, with real support and no shortcuts.",
   },
 ];
 
@@ -252,7 +252,7 @@ export default function ServicesPage() {
                   ))}
                 </div>
                 <p className="mt-8 text-xs text-muted-foreground">
-                  Tools are available to Prowess clients with a valid access code.{" "}
+                  Tools are available to Prowess Digital Solutions clients with a valid access code.{" "}
                   <Link href="/tools" className="font-semibold text-primary hover:underline">
                     Learn more →
                   </Link>

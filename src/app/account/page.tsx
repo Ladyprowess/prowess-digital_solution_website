@@ -139,7 +139,7 @@ export default function AccountDashboardPage() {
       <Container>
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">My Prowess</h1>
+            <h1 className="text-3xl font-bold text-foreground">My Account</h1>
             <p className="mt-1 text-sm text-muted-foreground">{email}</p>
           </div>
           <button onClick={signOut} className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted">

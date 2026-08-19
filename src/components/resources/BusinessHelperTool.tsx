@@ -215,7 +215,7 @@ export default function BusinessHelperTool() {
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Prowess_Business_Diagnostic_Report.pdf";
+      a.download = "Prowess_Digital_Solutions_Business_Diagnostic_Report.pdf";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -235,7 +235,7 @@ export default function BusinessHelperTool() {
       {/* TOOL INTRO */}
       <div className="flex flex-col gap-2">
         <div className="inline-flex w-fit items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-          Prowess Tool
+          Prowess Digital Solutions Tool
         </div>
 
         <h2 className="text-xl font-semibold">Business Helper</h2>

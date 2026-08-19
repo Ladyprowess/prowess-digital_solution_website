@@ -126,7 +126,7 @@ function LearnAdmin() {
         <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
           <h1 className="text-3xl font-semibold text-foreground">Add Course</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Short, practical courses for the Learn section. Keep it minimal for now — a title and description is enough to list it as coming soon.
+            Short, practical courses for the Learn section. Keep it minimal for now - a title and description is enough to list it as coming soon.
           </p>
 
           <div className="mt-8 grid gap-4">

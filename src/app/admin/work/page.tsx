@@ -339,7 +339,7 @@ function WorkAdmin() {
                   {jobs.map((j) => (
                     <tr key={j.id} className="border-b border-border/60">
                       <td className="py-2 pr-4 font-medium text-foreground">{j.title}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">{j.companies?.name || "—"}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">{j.companies?.name || "-"}</td>
                       <td className="py-2 pr-4">
                         <select
                           value={j.status}
@@ -352,7 +352,7 @@ function WorkAdmin() {
                           <option value="expired">Expired</option>
                         </select>
                       </td>
-                      <td className="py-2 pr-4 text-muted-foreground">{j.deadline_at ? new Date(j.deadline_at).toLocaleDateString() : "—"}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">{j.deadline_at ? new Date(j.deadline_at).toLocaleDateString() : "-"}</td>
                       <td className="py-2 pr-4">
                         <button onClick={() => deleteJob(j.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
                       </td>

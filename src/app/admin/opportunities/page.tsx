@@ -276,7 +276,7 @@ function OpportunitiesAdmin() {
                   {opportunities.map((o) => (
                     <tr key={o.id} className="border-b border-border/60">
                       <td className="py-2 pr-4 font-medium text-foreground">{o.title}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">{o.opportunity_types?.name || "—"}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">{o.opportunity_types?.name || "-"}</td>
                       <td className="py-2 pr-4">
                         <select
                           value={o.status}
@@ -289,7 +289,7 @@ function OpportunitiesAdmin() {
                           <option value="expired">Expired</option>
                         </select>
                       </td>
-                      <td className="py-2 pr-4 text-muted-foreground">{o.deadline_at ? new Date(o.deadline_at).toLocaleDateString() : "—"}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">{o.deadline_at ? new Date(o.deadline_at).toLocaleDateString() : "-"}</td>
                       <td className="py-2 pr-4">
                         <button onClick={() => deleteOpp(o.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
                       </td>

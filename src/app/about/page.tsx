@@ -24,7 +24,7 @@ export default function AboutPage() {
     <div className="page-wrap">
 
       <AgencyPageHeader
-        eyebrow="About Prowess"
+        eyebrow="About Prowess Digital Solutions"
         title={
           <>
             Structure first. <span className="text-primary">Growth follows.</span>

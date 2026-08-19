@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import SiteShell from "@/components/SiteShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { brand } from "@/content/site";
 import Script from "next/script";
 import { Geist } from "next/font/google";
@@ -35,6 +36,20 @@ export const metadata: Metadata = {
     },
   },
   applicationName: brand.name,
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: brand.name,
+  },
   category: "Careers",
   keywords: [
     "career platform Africa",
@@ -69,6 +84,13 @@ export const metadata: Metadata = {
       "Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction, all on Prowess Digital Solutions.",
     images: ["/og-image.png"],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5F5F7" },
+    { media: "(prefers-color-scheme: dark)", color: "#161d1e" },
+  ],
 };
 
 const orgSchema = {
@@ -140,6 +162,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SiteShell>{children}</SiteShell>
           </Suspense>
         </ThemeProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

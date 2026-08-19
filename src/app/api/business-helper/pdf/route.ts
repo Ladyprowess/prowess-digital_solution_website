@@ -314,7 +314,7 @@ export async function POST(req: Request) {
     return new NextResponse(buffer as any, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="Prowess_Business_Diagnostic_Report.pdf"',
+        "Content-Disposition": 'attachment; filename="Prowess_Digital_Solutions_Business_Diagnostic_Report.pdf"',
       },
     });
 

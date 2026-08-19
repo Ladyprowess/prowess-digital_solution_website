@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:28px;">
               <div style="font-size:13px;color:#64748b;line-height:1.7;">
-                Out of ${teamSize} team member${teamSize !== 1 ? "s" : ""}, you stood out the most this month through your dedication, consistency, and hard work. The entire Prowess team is proud of you - keep shining! 🎉
+                Out of ${teamSize} team member${teamSize !== 1 ? "s" : ""}, you stood out the most this month through your dedication, consistency, and hard work. The entire Prowess Digital Solutions team is proud of you - keep shining! 🎉
               </div>
             </div>
 
