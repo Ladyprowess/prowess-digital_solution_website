@@ -38,7 +38,7 @@ export default function Footer() {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, preference: "general", source: "footer" }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -65,8 +65,7 @@ export default function Footer() {
               {brand.name}
             </p>
             <p className="mt-2 text-sm text-slate-600 max-w-sm">
-              Clarity, structure, and guidance for people building businesses
-              that last.
+              Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction.
             </p>
             <div className="mt-5 flex items-center gap-3">
               {socials.map((s) => (
@@ -93,8 +92,28 @@ export default function Footer() {
             </p>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <Link href="/services" className="text-slate-600 hover:text-slate-900">
-                  Services
+                <Link href="/#launch" className="text-slate-600 hover:text-slate-900">
+                  Work &amp; Opportunities
+                </Link>
+              </li>
+              <li>
+                <Link href="/#launch" className="text-slate-600 hover:text-slate-900">
+                  Learn
+                </Link>
+              </li>
+              <li>
+                <Link href="/tools" className="text-slate-600 hover:text-slate-900">
+                  Tools
+                </Link>
+              </li>
+              <li>
+                <Link href="/resources" className="text-slate-600 hover:text-slate-900">
+                  Resources
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-slate-600 hover:text-slate-900">
+                  Blog
                 </Link>
               </li>
               <li>
@@ -103,8 +122,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/resources" className="text-slate-600 hover:text-slate-900">
-                  Resources
+                <Link href="/services" className="text-slate-600 hover:text-slate-900">
+                  For Businesses
+                </Link>
+              </li>
+              <li>
+                <Link href="/careers" className="text-slate-600 hover:text-slate-900">
+                  Work With Us
                 </Link>
               </li>
               <li>
@@ -133,7 +157,7 @@ export default function Footer() {
               Stay Updated
             </p>
             <p className="mt-3 text-sm text-slate-600">
-              Join our newsletter for business insights and tips.
+              Get notified about new jobs, opportunities, and career resources.
             </p>
             <form onSubmit={handleSubscribe} className="mt-3 flex gap-2">
               <input

@@ -297,7 +297,7 @@ export default function EventsPage() {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: clean, source: "events_page" }),
+        body: JSON.stringify({ email: clean, preference: "events", source: "events_page" }),
       });
 
       const json = await res.json().catch(() => null);

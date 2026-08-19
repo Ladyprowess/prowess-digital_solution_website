@@ -1,24 +1,128 @@
 export const brand = {
   name: "Prowess Digital Solutions",
+  tagline: "Discover opportunities. Build your career.",
   colour: "#507c80",
   tone: "Calm, clear, professional, honest, supportive",
 };
 
+// The five pillars. Jobs (Work) is one of five, not the identity of the
+// whole platform - see the homepage restructure for why. Reused by the nav,
+// the hero's category grid, and the homepage pillar section.
+export const pillars = [
+  { key: "work", label: "Work", desc: "Jobs, internships & remote roles", href: "/#launch" },
+  { key: "opportunities", label: "Opportunities", desc: "Grants, scholarships & fellowships", href: "/#launch" },
+  { key: "learn", label: "Learn", desc: "Courses & skill paths", href: "/#launch" },
+  { key: "build", label: "Build", desc: "CV, portfolio & tools", href: "/tools" },
+  { key: "connect", label: "Connect", desc: "Events & community", href: "/events" },
+] as const;
+
 export const navPrimary = [
   { href: "/", label: "Home" },
-  { href: "/about", label: "About Us" },
-  { href: "/services", label: "Services" },
-  { href: "/case-studies", label: "Case Studies" },
-  { href: "/resources", label: "Resources" },
-  { href: "/blog", label: "Blog" },
+  { href: "/#launch", label: "Work" },
+  { href: "/#launch", label: "Opportunities" },
+  { href: "/#launch", label: "Learn" },
+  { href: "/tools", label: "Build" },
+  { href: "/events", label: "Connect" },
 ] as const;
 
 export const navMore = [
-  { href: "/events", label: "Events" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/skill-to-business", label: "Skill to Business" },
-  { href: "/careers", label: "Career" },
+  { href: "/blog", label: "Blog" },
+  { href: "/resources", label: "Resources" },
+  { href: "/about", label: "About Us" },
+  { href: "/services", label: "For Businesses" },
+  { href: "/careers", label: "Work With Us" },
   { href: "/contact", label: "Contact Us" },
+] as const;
+
+// Job/opportunity categories shown on the homepage while the Jobs and
+// Opportunities boards are being built. Descriptive scope only - no listing
+// counts or performance numbers until those are real.
+export const jobCategories = [
+  "Tech", "Remote", "Design", "Marketing", "Writing", "Customer Support", "Sales", "Web3",
+] as const;
+
+export const opportunityTypes = [
+  { title: "Internships", desc: "For students and entry-level candidates." },
+  { title: "Freelance", desc: "Contract and project-based work." },
+  { title: "Scholarships", desc: "Education opportunities." },
+  { title: "Grants", desc: "Funding for ideas and ventures." },
+  { title: "Fellowships", desc: "Professional development programmes." },
+  { title: "Competitions", desc: "Hackathons, pitch and design challenges." },
+] as const;
+
+export const learnPreview = [
+  "How to Get Your First Remote Job",
+  "How to Build a Portfolio Without Experience",
+  "How to Start Freelancing",
+  "How to Use AI to Improve Your Job Search",
+] as const;
+
+// Cross-pillar on purpose - not all jobs. Real destinations link out
+// directly; not-yet-built ones fall back to the waitlist section.
+export const popularSearches = [
+  { label: "Remote Jobs", href: "/#launch" },
+  { label: "Scholarships", href: "/#launch" },
+  { label: "Grants", href: "/#launch" },
+  { label: "Free Courses", href: "/#launch" },
+  { label: "Events", href: "/events" },
+  { label: "Free Tools", href: "/tools" },
+] as const;
+
+export const careerPaths = [
+  "Technology", "Business", "Marketing", "Design", "Writing", "Finance", "Web3", "Customer Support",
+] as const;
+
+// The five homepage entry-point cards. Titles match the pillars above but
+// are framed as actions, and Build/Connect/Explore point at real, live
+// pages today while Work+Opportunities and Learn are still pre-launch.
+export const homeSections = [
+  {
+    title: "Find an Opportunity",
+    badge: "Coming Soon",
+    desc: "Jobs, internships, grants, scholarships, fellowships and more.",
+    tags: ["Tech", "Remote", "Internships", "Scholarships", "Grants", "Web3"],
+    cta: "Get notified",
+    href: "/#launch",
+  },
+  {
+    title: "Learn Something Useful",
+    badge: "Coming Soon",
+    desc: "Courses, guides, skill paths and practical resources.",
+    tags: learnPreview.slice(0, 4) as unknown as string[],
+    cta: "Get notified",
+    href: "/#launch",
+  },
+  {
+    title: "Build Your Career",
+    badge: "Live",
+    desc: "Free tools to save time today. CV, portfolio and interview tools are next.",
+    links: [
+      { label: "Business Tools", href: "/tools" },
+      { label: "CV Builder (soon)", href: "/#launch" },
+      { label: "Portfolio Tools (soon)", href: "/#launch" },
+      { label: "Interview Prep (soon)", href: "/#launch" },
+    ],
+    cta: "Explore tools",
+    href: "/tools",
+  },
+  {
+    title: "Discover What's Happening",
+    badge: "Live",
+    desc: "Webinars, clinics and career events worth carving out time for.",
+    cta: "See events",
+    href: "/events",
+  },
+  {
+    title: "Explore Prowess",
+    badge: "Live",
+    desc: "Career advice, guides and resources already on the site.",
+    links: [
+      { label: "Blog", href: "/blog" },
+      { label: "Resources", href: "/resources" },
+    ],
+    cta: "Start exploring",
+    href: "/blog",
+  },
 ] as const;
 
 export type Service = {

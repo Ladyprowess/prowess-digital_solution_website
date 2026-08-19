@@ -14,11 +14,11 @@ const SITE_URL = "https://prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: {
-    default: `${brand.name} | Business Structure and Diagnostics for Founders Everywhere`,
+    default: `${brand.name} | Discover Opportunities, Learn Skills, Build Your Career`,
     template: `%s | ${brand.name}`,
   },
   description:
-    "Prowess Digital Solutions provides fixed scope diagnostics, SOP documentation, and practical tools to help founders and business owners gain clarity, build strong systems, and run organised, sustainable businesses, wherever they are.",
+    "Prowess Digital Solutions helps Africans discover jobs and opportunities, learn useful skills, build their careers with free tools, and connect through events and community.",
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: `${SITE_URL}/`,
@@ -35,21 +35,21 @@ export const metadata: Metadata = {
     },
   },
   applicationName: brand.name,
-  category: "Business consulting",
+  category: "Careers",
   keywords: [
-    "business structure diagnostic",
-    "SOP documentation",
-    "go to market playbook",
-    "business systems",
-    "small business support",
-    "business consulting for solopreneurs",
-    "business consulting Nigeria",
-    "business operations guidance",
+    "career platform Africa",
+    "remote jobs Africa",
+    "jobs for Nigerians",
+    "internships for Africans",
+    "scholarships and grants",
+    "online courses Africa",
+    "career tools",
+    "career resources Nigeria",
   ],
   openGraph: {
     title: `${brand.name}`,
     description:
-      "Prowess Digital Solutions helps business owners gain clarity, build structure, and implement systems so they can run organised, sustainable businesses with confidence.",
+      "Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction, all on Prowess Digital Solutions.",
     type: "website",
     url: SITE_URL,
     siteName: brand.name,
@@ -66,20 +66,20 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: brand.name,
     description:
-      "Prowess Digital Solutions helps business owners gain clarity, build structure, and implement systems so they can run organised, sustainable businesses with confidence.",
+      "Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction, all on Prowess Digital Solutions.",
     images: ["/og-image.png"],
   },
 };
 
 const orgSchema = {
   "@context": "https://schema.org",
-  "@type": "ProfessionalService",
+  "@type": "Organization",
   name: brand.name,
   url: SITE_URL,
   logo: `${SITE_URL}/og-image.png`,
   image: `${SITE_URL}/og-image.png`,
   description:
-    "Prowess Digital Solutions provides clear strategies, structured processes, and practical guidance to help business owners stay organised, improve operations, and achieve long-term success.",
+    "Prowess Digital Solutions helps Africans discover jobs and opportunities, learn useful skills, build their careers with free tools, and connect through events and community.",
   sameAs: [
     "https://www.instagram.com/prowessdigitalsolutions",
     "https://twitter.com/prowessDS",

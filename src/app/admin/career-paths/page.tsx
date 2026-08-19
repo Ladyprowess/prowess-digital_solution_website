@@ -1,0 +1,284 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Container from "@/components/Container";
+import { AdminGate } from "@/components/admin/AdminGate";
+import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
+import { supabase } from "@/lib/supabase";
+import { slugify } from "@/lib/slugify";
+
+type Skill = { id: string; slug: string; name: string };
+
+type CareerPathRow = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  access: "free" | "premium";
+  price: number | null;
+  status: "draft" | "published";
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold tracking-widest text-muted-foreground">{label.toUpperCase()}</p>
+      <div className="mt-2">{children}</div>
+    </div>
+  );
+}
+
+const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground";
+
+function CareerPathsAdmin() {
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [paths, setPaths] = useState<CareerPathRow[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [access, setAccess] = useState<"free" | "premium">("free");
+  const [price, setPrice] = useState("");
+  const [currency, setCurrency] = useState("NGN");
+  const [publishNow, setPublishNow] = useState(false);
+
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+
+  const loadAll = useCallback(async () => {
+    setLoadingList(true);
+    const [{ data: skillRows }, { data: pathRows }] = await Promise.all([
+      supabase.from("skills").select("id, slug, name").order("name"),
+      supabase
+        .from("career_paths")
+        .select("id, slug, title, description, access, price, status")
+        .order("created_at", { ascending: false }),
+    ]);
+    setSkills(skillRows || []);
+    setPaths(pathRows || []);
+    setLoadingList(false);
+  }, []);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  async function getUniqueSlug(base: string): Promise<string> {
+    let candidate = base;
+    let suffix = 1;
+    while (true) {
+      const { data } = await supabase.from("career_paths").select("id").eq("slug", candidate).maybeSingle();
+      if (!data) return candidate;
+      suffix += 1;
+      candidate = `${base}-${suffix}`;
+    }
+  }
+
+  async function addSkill() {
+    const name = newSkillName.trim();
+    if (!name) return;
+    const slug = slugify(name);
+    const { data: existing } = await supabase.from("skills").select("id").eq("slug", slug).maybeSingle();
+    if (existing) {
+      setSelectedSkillIds((prev) => (prev.includes(existing.id) ? prev : [...prev, existing.id]));
+      setNewSkillName("");
+      return;
+    }
+    const { data: created, error } = await supabase.from("skills").insert({ slug, name }).select("id, slug, name").single();
+    if (error || !created) {
+      setErr(error?.message || "Could not add the skill.");
+      return;
+    }
+    setSkills((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+    setSelectedSkillIds((prev) => [...prev, created.id]);
+    setNewSkillName("");
+  }
+
+  function toggleSkill(id: string) {
+    setSelectedSkillIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  }
+
+  const resetForm = () => {
+    setTitle(""); setDescription(""); setSelectedSkillIds([]); setNewSkillName("");
+    setAccess("free"); setPrice(""); setPublishNow(false);
+  };
+
+  const submit = async () => {
+    setErr(""); setMsg("");
+    if (!title.trim()) return setErr("Title is required.");
+
+    setSaving(true);
+    try {
+      const slug = await getUniqueSlug(slugify(title));
+      const { data: created, error } = await supabase
+        .from("career_paths")
+        .insert({
+          slug,
+          title: title.trim(),
+          description: description.trim() || null,
+          access,
+          price: access === "premium" && price ? Number(price) : null,
+          price_currency: access === "premium" && price ? currency : null,
+          status: publishNow ? "published" : "draft",
+        })
+        .select("id")
+        .single();
+      if (error || !created) throw new Error(error?.message || "Could not save the career path.");
+
+      if (selectedSkillIds.length > 0) {
+        await supabase.from("career_path_skill_map").insert(
+          selectedSkillIds.map((skillId) => ({ career_path_id: created.id, skill_id: skillId }))
+        );
+      }
+
+      setMsg("Career path saved.");
+      resetForm();
+      loadAll();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  async function setPathStatus(id: string, status: CareerPathRow["status"]) {
+    await supabase.from("career_paths").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+    setPaths((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+  }
+
+  async function deletePath(id: string) {
+    if (!confirm("Delete this career path? This can't be undone.")) return;
+    await supabase.from("career_paths").delete().eq("id", id);
+    setPaths((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  return (
+    <main className="bg-muted py-16">
+      <Container>
+        <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
+          <h1 className="text-3xl font-semibold text-foreground">Add Career Path</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            e.g. Digital Marketing, Cybersecurity. Tag it with the skills it needs so jobs, resources and courses tagged with the same skills connect to it automatically.
+          </p>
+
+          <div className="mt-8 grid gap-4">
+            <Field label="Title *">
+              <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} placeholder="e.g. Cybersecurity" />
+            </Field>
+            <Field label="Description">
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} className={`${inputCls} min-h-[100px]`} placeholder="What is this career? Who is it suitable for?" />
+            </Field>
+
+            <Field label="Skills needed">
+              <div className="flex flex-wrap gap-2">
+                {skills.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => toggleSkill(s.id)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                      selectedSkillIds.includes(s.id)
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={newSkillName}
+                  onChange={(e) => setNewSkillName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
+                  className={inputCls}
+                  placeholder="Add a new skill and press Enter"
+                />
+                <button type="button" onClick={addSkill} className="flex-shrink-0 rounded-xl border border-border px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted">
+                  Add
+                </button>
+              </div>
+            </Field>
+
+            <AccessPriceFields
+              access={access} onAccessChange={setAccess}
+              price={price} onPriceChange={setPrice}
+              currency={currency} onCurrencyChange={setCurrency}
+            />
+
+            <label className="mt-2 flex items-center gap-3 text-sm font-semibold text-foreground">
+              <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />
+              Publish immediately
+            </label>
+
+            {err ? <p className="text-sm text-red-600">{err}</p> : null}
+            {msg ? <p className="text-sm text-green-700">{msg}</p> : null}
+
+            <button
+              type="button"
+              onClick={submit}
+              disabled={saving}
+              className="mt-2 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
+            >
+              {saving ? "Saving..." : "Save career path"}
+            </button>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
+          <h2 className="text-xl font-semibold text-foreground">All Career Paths</h2>
+          {loadingList ? (
+            <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
+          ) : paths.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">No career paths yet.</p>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[480px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-4">Title</th>
+                    <th className="py-2 pr-4">Access</th>
+                    <th className="py-2 pr-4">Status</th>
+                    <th className="py-2 pr-4"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paths.map((p) => (
+                    <tr key={p.id} className="border-b border-border/60">
+                      <td className="py-2 pr-4 font-medium text-foreground">{p.title}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">
+                        {p.access === "premium" ? `Premium${p.price ? ` (${p.price})` : ""}` : "Free"}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <select
+                          value={p.status}
+                          onChange={(e) => setPathStatus(p.id, e.target.value as CareerPathRow["status"])}
+                          className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
+                        >
+                          <option value="draft">Draft</option>
+                          <option value="published">Published</option>
+                        </select>
+                      </td>
+                      <td className="py-2 pr-4">
+                        <button onClick={() => deletePath(p.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </Container>
+    </main>
+  );
+}
+
+export default function AdminCareerPathsPage() {
+  return (
+    <AdminGate>
+      <CareerPathsAdmin />
+    </AdminGate>
+  );
+}

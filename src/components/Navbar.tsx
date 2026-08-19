@@ -9,7 +9,7 @@ import Container from "@/components/Container";
 import { navPrimary, navMore } from "@/content/site";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-const BOOKING_URL = "/services/business-structure-diagnostic";
+const BOOKING_URL = "/#launch";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -99,7 +99,7 @@ export default function Navbar() {
                 }
 
                 return (
-                  <Link key={item.href} href={item.href} className={`${base} ${underline}`}>
+                  <Link key={item.label} href={item.href} className={`${base} ${underline}`}>
                     {item.label}
                   </Link>
                 );
@@ -152,7 +152,7 @@ export default function Navbar() {
                 href={BOOKING_URL}
                 className="inline-flex w-[220px] items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition whitespace-nowrap"
               >
-                Start the Diagnostic
+                Get Job Alerts
               </Link>
             </div>
 
@@ -214,7 +214,7 @@ export default function Navbar() {
 
                           return (
                             <Link
-                              key={item.href}
+                              key={item.label}
                               href={item.href}
                               className={cls}
                               onClick={() => setMobileOpen(false)}
@@ -251,7 +251,7 @@ export default function Navbar() {
                         onClick={() => setMobileOpen(false)}
                         className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-primary px-6 py-5 text-lg font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition"
                       >
-                        Start the Diagnostic
+                        Get Job Alerts
                       </Link>
                     </div>
                   </div>
