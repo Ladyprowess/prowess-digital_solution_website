@@ -8,9 +8,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "@/components/Container";
 import { navPrimary, navMore } from "@/content/site";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { JobAlertsModal } from "@/components/JobAlertsModal";
 import { supabase } from "@/lib/supabase";
-
-const BOOKING_URL = "/#launch";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -18,6 +17,7 @@ export default function Navbar() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
 
   // Detect-only, never redirects (unlike useMemberSession, which is for
   // /account/* pages that require a session) - the navbar renders on every
@@ -69,6 +69,7 @@ export default function Navbar() {
   }, [pathname]);
 
   return (
+    <>
     <header className="sticky top-0 z-50">
       <div className="border-b border-border bg-background/95 backdrop-blur">
         <Container>
@@ -166,12 +167,13 @@ export default function Navbar() {
               >
                 {signedIn ? "My Account" : "Sign In"}
               </Link>
-              <Link
-                href={BOOKING_URL}
+              <button
+                type="button"
+                onClick={() => setAlertsOpen(true)}
                 className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition whitespace-nowrap"
               >
                 Get Job Alerts
-              </Link>
+              </button>
             </div>
 
             {/* Mobile toggle */}
@@ -268,13 +270,13 @@ export default function Navbar() {
                       </div>
 
                       {/* Mobile CTA button */}
-                      <Link
-                        href={BOOKING_URL}
-                        onClick={() => setMobileOpen(false)}
+                      <button
+                        type="button"
+                        onClick={() => { setMobileOpen(false); setAlertsOpen(true); }}
                         className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-primary px-6 py-5 text-lg font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition"
                       >
                         Get Job Alerts
-                      </Link>
+                      </button>
                       <Link
                         href={signedIn ? "/account" : "/account/login"}
                         onClick={() => setMobileOpen(false)}
@@ -294,5 +296,7 @@ export default function Navbar() {
 
       <div className="h-[1px] bg-gradient-to-r from-transparent via-border to-transparent" />
     </header>
+    <JobAlertsModal open={alertsOpen} onClose={() => setAlertsOpen(false)} />
+    </>
   );
 }
