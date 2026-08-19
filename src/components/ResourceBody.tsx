@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
+import { getYoutubeVideoId } from "@/lib/youtube";
 
 type ResourceBodyData = {
   content: string | null;
@@ -68,21 +69,45 @@ export function ResourceBody({
   }
 
   const downloadUrl = data?.signed_file_url || data?.file_url;
+  const youtubeId = data?.source === "youtube" && data.external_url ? getYoutubeVideoId(data.external_url) : null;
 
   return (
     <div className="mt-10 space-y-6">
+      {youtubeId && (
+        <div className="aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black">
+          <iframe
+            src={`https://www.youtube.com/embed/${youtubeId}`}
+            title="YouTube video player"
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      )}
+
       {data?.content && (
         <p className="whitespace-pre-line leading-relaxed text-foreground">{data.content}</p>
       )}
 
-      {data?.external_url && (
+      {data?.external_url && !youtubeId && (
         <a
           href={data.external_url}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90"
         >
-          {data.source === "youtube" ? "Watch on YouTube →" : "Open →"}
+          Open →
+        </a>
+      )}
+
+      {data?.external_url && youtubeId && (
+        <a
+          href={data.external_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block text-sm font-semibold text-primary hover:underline"
+        >
+          Watch on YouTube →
         </a>
       )}
 

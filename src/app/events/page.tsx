@@ -392,7 +392,7 @@ export default function EventsPage() {
             Events and <span className="text-primary">training.</span>
           </>
         }
-        description="Practical sessions that help you build structure, make better decisions, and move forward — whether you're building a career or a business."
+        description="Practical sessions that help you build structure, make better decisions, and move forward - whether you're building a career or a business."
         primaryAction={{ label: "See Upcoming Events", href: "#upcoming-events" }}
         secondaryAction={{ label: "Get Event Updates", href: "#subscribe" }}
         proof={[

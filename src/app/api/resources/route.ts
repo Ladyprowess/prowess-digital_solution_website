@@ -13,8 +13,10 @@ export async function GET(req: Request) {
     const category = (searchParams.get("category") || "").trim();
     const stage = (searchParams.get("stage") || "").trim();
     const type = (searchParams.get("type") || "").trim();
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const pageSize = Math.min(24, Math.max(1, Number(searchParams.get("pageSize")) || 6));
 
-    let query = supabaseAdmin().from("resources").select("*");
+    let query = supabaseAdmin().from("resources").select("*", { count: "exact" });
 
     // filters
     if (category) query = query.eq("category", category);
@@ -39,7 +41,9 @@ export async function GET(req: Request) {
       query = query.order("created_at", { ascending: false });
     }
 
-    const { data, error } = await query;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const { data, error, count } = await query.range(from, to);
 
     if (error) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
@@ -67,7 +71,7 @@ export async function GET(req: Request) {
       })
     );
 
-    return NextResponse.json({ ok: true, items: itemsWithCover }, { status: 200 });
+    return NextResponse.json({ ok: true, items: itemsWithCover, total: count || 0 }, { status: 200 });
   } catch (e: any) {
     return NextResponse.json(
       { ok: false, error: e?.message || "Server error" },

@@ -5,8 +5,6 @@ import ResourcesBrowser from "@/components/resources/ResourcesBrowser";
 import { Reveal } from "@/components/Reveal";
 import Link from "next/link";
 
-const youtubeUrl = "https://www.youtube.com/@ProwessDigitalSolutions";
-
 export const metadata: Metadata = {
   title: "Resources | Prowess Digital Solutions",
   description:
@@ -121,10 +119,10 @@ export default function ResourcesPage() {
             },
             {
               title: "Videos",
-              desc: "Short, practical videos on business structure, clarity, and building systems that actually work.",
-              href: youtubeUrl,
-              cta: "Visit YouTube",
-              external: true,
+              desc: "Practical videos to build real skills, plus motivational videos to keep you going.",
+              href: "/videos",
+              cta: "Watch Videos",
+              external: false,
             },
             {
               title: "Events",

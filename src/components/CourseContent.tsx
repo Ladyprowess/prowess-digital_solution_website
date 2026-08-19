@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
+import { getYoutubeThumbnail } from "@/lib/youtube";
 
 type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; position: number };
 type Module = { id: string; title: string; position: number; course_lessons: Lesson[] };
@@ -126,9 +127,26 @@ export function CourseContent({
                 {l.content_type === "text" && l.content_text && (
                   <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{l.content_text}</p>
                 )}
-                {l.content_type === "youtube" && l.content_url && (
-                  <a href={l.content_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">Watch on YouTube →</a>
-                )}
+                {l.content_type === "youtube" && l.content_url && (() => {
+                  const thumb = getYoutubeThumbnail(l.content_url);
+                  return (
+                    <a href={l.content_url} target="_blank" rel="noopener noreferrer" className="mt-3 block">
+                      {thumb ? (
+                        <span className="group relative block aspect-video w-full max-w-xs overflow-hidden rounded-xl border border-border bg-muted">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- external YouTube-hosted thumbnail, not a local/optimizable asset */}
+                          <img src={thumb} alt={l.title} className="h-full w-full object-cover" />
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/20 transition group-hover:bg-black/35">
+                            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-primary shadow">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                            </span>
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-sm font-semibold text-primary hover:underline">Watch on YouTube →</span>
+                      )}
+                    </a>
+                  );
+                })()}
                 {["video", "pdf", "external"].includes(l.content_type) && l.content_url && (
                   <a href={l.content_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">Open →</a>
                 )}

@@ -169,6 +169,7 @@ export default function AccountDashboardPage() {
                 { label: "Career Paths", href: "/admin/career-paths" },
                 { label: "Learn", href: "/admin/learn" },
                 { label: "Resources", href: "/admin/resources" },
+                { label: "Skills", href: "/admin/skills" },
               ].map((l) => (
                 <Link key={l.href} href={l.href} className="rounded-xl border border-primary/30 bg-card px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10">
                   {l.label}

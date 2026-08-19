@@ -33,17 +33,21 @@ export default function ResourcesBrowser() {
   const [type, setType] = useState("");
 
   const [items, setItems] = useState<ResourceItem[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // ✅ Mobile filters collapse
   const [showFilters, setShowFilters] = useState(false);
 
-  // ✅ View more logic (start with 6)
+  // Fetched a page at a time from the server (not the whole table) so this
+  // stays fast no matter how many resources exist - "View more" fetches the
+  // next page instead of revealing more of an already-fully-loaded list.
   const STEP = 6;
-  const [visibleCount, setVisibleCount] = useState(STEP);
+  const [page, setPage] = useState(1);
 
-  async function load() {
-    setLoading(true);
+  async function load(pageToLoad: number, replace: boolean) {
+    if (replace) setLoading(true); else setLoadingMore(true);
 
     const params = new URLSearchParams();
     if (q) params.set("q", q);
@@ -51,6 +55,8 @@ export default function ResourcesBrowser() {
     if (category) params.set("category", category);
     if (stage) params.set("stage", stage);
     if (type) params.set("type", type);
+    params.set("page", String(pageToLoad));
+    params.set("pageSize", String(STEP));
 
     const res = await fetch(`/api/resources?${params.toString()}`, {
       cache: "no-store",
@@ -58,24 +64,29 @@ export default function ResourcesBrowser() {
 
     const data = await res.json().catch(() => ({}));
 
-    setItems(data?.items || []);
+    setItems((prev) => (replace ? data?.items || [] : [...prev, ...(data?.items || [])]));
+    setTotal(data?.total || 0);
     setLoading(false);
+    setLoadingMore(false);
   }
 
   // Load on first render + when filters change (small debounce for search)
   useEffect(() => {
-    setVisibleCount(STEP); // ✅ reset to first 6 whenever filters/search changes
+    setPage(1);
 
-    const t = setTimeout(() => load(), 250);
+    const t = setTimeout(() => load(1, true), 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, sort, category, stage, type]);
 
-  const total = items.length;
+  const visibleItems = items;
+  const canViewMore = items.length < total;
 
-  // ✅ Only show first N items
-  const visibleItems = items.slice(0, visibleCount);
-  const canViewMore = visibleCount < total;
+  function viewMore() {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    load(nextPage, false);
+  }
 
   const clearFilters = () => {
     setCategory("");
@@ -210,7 +221,7 @@ export default function ResourcesBrowser() {
             <p className="text-slate-700">
               {loading
                 ? "Loading resources..."
-                : `Showing ${Math.min(visibleCount, total)} of ${total} resource${
+                : `Showing ${items.length} of ${total} resource${
                     total === 1 ? "" : "s"
                   }`}
             </p>
@@ -255,12 +266,11 @@ export default function ResourcesBrowser() {
                 <div className="pt-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      setVisibleCount((v) => Math.min(v + STEP, total))
-                    }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+                    onClick={viewMore}
+                    disabled={loadingMore}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
                   >
-                    View more
+                    {loadingMore ? "Loading..." : "View more"}
                   </button>
                 </div>
               )}

@@ -21,6 +21,7 @@ begin
     'companies',
     'jobs',
     'job_skill_map',
+    'skills',
     'job_categories',
     'job_types',
     'job_sources',

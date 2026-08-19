@@ -28,6 +28,7 @@ export const navPrimary = [
 
 export const navMore = [
   { href: "/blog", label: "Blog" },
+  { href: "/videos", label: "Videos" },
   { href: "/resources", label: "Resources" },
   { href: "/career-paths", label: "Career Paths" },
   { href: "/about", label: "About Us" },

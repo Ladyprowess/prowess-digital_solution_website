@@ -365,7 +365,7 @@ export default function ModernHomePage() {
           <div className="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 ring-1 ring-white/15">Tools</div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">Tools to help you move forward</h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/85">
-            Business tools — calculators, trackers, guides and templates — are free to use today. Career tools like CV and interview prep are next.
+            Business tools - calculators, trackers, guides and templates - are free to use today. Career tools like CV and interview prep are next.
           </p>
           <Link href="/tools" className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-primary shadow-2xl transition hover:scale-[1.02] hover:bg-white/95">
             Explore All Tools
