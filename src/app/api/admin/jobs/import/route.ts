@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyAdminOrCron } from "@/lib/auth/verifyAdmin";
 import { fetchRemoteOkListings } from "@/lib/jobs/importers/remoteok";
+import { fetchRemoteFirstJobsListings } from "@/lib/jobs/importers/remoteFirstJobs";
+import { fetchHimalayasListings } from "@/lib/jobs/importers/himalayas";
+import { fetchWeWorkRemotelyListings } from "@/lib/jobs/importers/weWorkRemotely";
+import { fetchArbeitnowListings } from "@/lib/jobs/importers/arbeitnow";
+import { fetchRemotiveListings } from "@/lib/jobs/importers/remotive";
+import { fetchJobicyListings } from "@/lib/jobs/importers/jobicy";
+import { fetchGreenhouseListings } from "@/lib/jobs/importers/greenhouse";
+import { fetchLeverListings } from "@/lib/jobs/importers/lever";
 import { runImportForSource } from "@/lib/jobs/runImport";
 import type { NormalizedListing } from "@/lib/jobs/importers/types";
 
@@ -11,6 +19,14 @@ import type { NormalizedListing } from "@/lib/jobs/importers/types";
 // returns NormalizedListing[], same as fetchRemoteOkListings.
 const CONNECTORS: Record<string, (feedUrl: string) => Promise<NormalizedListing[]>> = {
   remoteok: fetchRemoteOkListings,
+  remotefirstjobs: fetchRemoteFirstJobsListings,
+  himalayas: fetchHimalayasListings,
+  weworkremotely: fetchWeWorkRemotelyListings,
+  arbeitnow: fetchArbeitnowListings,
+  remotive: fetchRemotiveListings,
+  jobicy: fetchJobicyListings,
+  greenhouse: fetchGreenhouseListings,
+  lever: fetchLeverListings,
 };
 
 export async function POST(req: NextRequest) {
@@ -39,14 +55,14 @@ export async function POST(req: NextRequest) {
       if (Date.now() < dueAt) continue;
     }
 
-    if (!source.connector || !source.feed_url) {
-      results.push({ source: source.slug, error: "Source is missing a connector or feed URL." });
-      continue;
-    }
+    const connector = source.connector ? CONNECTORS[source.connector] : null;
+    // Sources whose connector isn't in this route's map belong to the
+    // opportunities importer instead (job_sources is shared between both) -
+    // silently skipped here rather than reported as an error.
+    if (!connector) continue;
 
-    const connector = CONNECTORS[source.connector];
-    if (!connector) {
-      results.push({ source: source.slug, error: `No connector implemented for "${source.connector}".` });
+    if (!source.feed_url) {
+      results.push({ source: source.slug, error: "Source is missing a feed URL." });
       continue;
     }
 

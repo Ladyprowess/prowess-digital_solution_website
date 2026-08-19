@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { SourcesPanel } from "@/components/admin/SourcesPanel";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
 type Lookup = { id: string; slug: string; name: string };
+
+const OPPORTUNITY_CONNECTORS = [
+  { value: "generic_rss_opportunity", label: "Generic RSS (WordPress /feed/, most opportunity sites)" },
+];
 
 type OpportunityRow = {
   id: string;
@@ -251,6 +256,13 @@ function OpportunitiesAdmin() {
             </button>
           </div>
         </div>
+
+        <SourcesPanel
+          title="Opportunity Sources"
+          importApiPath="/api/admin/opportunities/import"
+          connectorOptions={OPPORTUNITY_CONNECTORS}
+          typeOptions={types}
+        />
 
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
           <h2 className="text-xl font-semibold text-foreground">All Opportunities</h2>

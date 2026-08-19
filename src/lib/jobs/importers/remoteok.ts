@@ -1,4 +1,5 @@
 import type { NormalizedListing } from "./types";
+import { htmlToText } from "@/lib/htmlToText";
 
 type RemoteOkApiItem = {
   id?: string | number;
@@ -12,26 +13,6 @@ type RemoteOkApiItem = {
   location?: string;
   tags?: string[];
 };
-
-// Remote OK's description field is raw HTML (<p><strong>...). Job detail
-// pages render description as plain text (whitespace-pre-line, not
-// dangerouslySetInnerHTML - see src/app/jobs/[slug]/page.tsx), so tags have
-// to come out here rather than leaking "<p>" into what a visitor reads.
-function htmlToText(html: string): string {
-  return html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/li>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
 
 export async function fetchRemoteOkListings(feedUrl: string): Promise<NormalizedListing[]> {
   const res = await fetch(feedUrl, {
