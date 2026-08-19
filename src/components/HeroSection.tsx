@@ -74,7 +74,7 @@ export function HeroSection() {
 
             {/* Search bar */}
             <form
-              action="/#launch"
+              action="/search"
               style={{ animation: "fadeUp 0.65s ease 0.28s both" }}
               className="flex flex-col gap-3 sm:flex-row sm:items-center"
             >

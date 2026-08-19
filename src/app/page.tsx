@@ -19,7 +19,7 @@ type OpportunityCard = {
 
 type CareerPathCard = { id: string; slug: string; title: string; description: string | null };
 type LearnCard = { id: string; slug: string; title: string; description: string | null; access: string; price: number | null; price_currency: string | null };
-type ResourceCard = { id: string; slug: string; title: string; summary: string | null; resource_type: string | null; access: string; price: number | null; price_currency: string | null };
+type ResourceCard = { id: string; slug: string; title: string; description: string | null; resource_type: string | null; access: string; price: number | null; price_currency: string | null };
 type EventCard = { id: string; slug: string; title: string; date: string; type: string | null };
 
 function EmptyState({ children }: { children: React.ReactNode }) {
@@ -122,7 +122,7 @@ export default function ModernHomePage() {
         supabase.from("opportunities").select("id, slug, title, organisation_name, created_at, opportunity_types(name)").eq("status", "published").order("created_at", { ascending: false }).limit(4),
         supabase.from("career_paths").select("id, slug, title, description").eq("status", "published").order("created_at", { ascending: false }).limit(6),
         supabase.from("courses").select("id, slug, title, description, access, price, price_currency").eq("status", "published").order("created_at", { ascending: false }).limit(6),
-        supabase.from("resources").select("id, slug, title, summary, resource_type, access, price, price_currency").eq("status", "published").in("audience", ["consumer", "both"]).order("created_at", { ascending: false }).limit(10),
+        supabase.from("resources").select("id, slug, title, description, resource_type, access, price, price_currency").eq("status", "published").in("audience", ["consumer", "both"]).order("created_at", { ascending: false }).limit(10),
         supabase.from("events").select("id, slug, title, date, type").eq("status", "published").gte("date", new Date().toISOString()).order("date", { ascending: true }).limit(3),
       ]);
 

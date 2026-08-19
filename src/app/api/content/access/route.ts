@@ -45,10 +45,25 @@ export async function POST(req: Request) {
     if (itemType === "resource") {
       const { data } = await supabase
         .from("resources")
-        .select("id, title, content, file_url, external_url, source")
+        .select("id, title, content, file_url, external_url, source, file_path")
         .eq("id", itemId)
         .single();
-      return NextResponse.json({ ok: true, resource: data });
+
+      // Older resources (uploaded before the B2C content model existed)
+      // store their file in Supabase Storage via file_path rather than a
+      // plain file_url - same signing approach as the existing
+      // /api/resources/download route, so those older PDFs work through
+      // this same gated pipeline instead of needing a separate one.
+      let signedFileUrl: string | null = null;
+      if (data?.file_path) {
+        const cleanPath = String(data.file_path).replace(/^pdfs\//, "");
+        const { data: signed } = await supabase.storage
+          .from("resources")
+          .createSignedUrl(cleanPath, 60 * 10);
+        signedFileUrl = signed?.signedUrl ?? null;
+      }
+
+      return NextResponse.json({ ok: true, resource: { ...data, signed_file_url: signedFileUrl } });
     }
 
     if (itemType === "course") {

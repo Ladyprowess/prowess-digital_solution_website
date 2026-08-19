@@ -116,7 +116,10 @@ function ResourcesAdmin() {
         source,
         external_url: source !== "prowess" ? externalUrl.trim() : null,
         thumbnail_url: thumbnailUrl.trim() || null,
-        summary: summary.trim() || null,
+        // The real column on `resources` is `description` (pre-existing,
+        // from before the B2C content model) - `summary` is only the local
+        // field/state name here for a clearer form label, not the DB column.
+        description: summary.trim() || null,
         content: content.trim() || null,
         file_url: fileUrl.trim() || null,
         access,
