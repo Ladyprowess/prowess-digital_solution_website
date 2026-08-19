@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { genAccessCode, PREMIUM_TOOL_KEYS } from "@/lib/tools/tierAccess";
+import { verifyAdminOrCron } from "@/lib/auth/verifyAdmin";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-function checkAuth(req: NextRequest): boolean {
-  return req.headers.get("x-admin-token") === process.env.ADMIN_PIN;
-}
 
 function sanitiseAllowedTools(input: unknown): string[] | null {
   if (!Array.isArray(input)) return null;
@@ -20,7 +17,8 @@ function sanitiseAllowedTools(input: unknown): string[] | null {
 
 // GET - list all clients
 export async function GET(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+  const auth = await verifyAdminOrCron(req);
+  if (!auth.ok) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { data, error } = await supabase
     .from("client_codes")
@@ -33,7 +31,8 @@ export async function GET(req: NextRequest) {
 
 // POST - create client
 export async function POST(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+  const auth = await verifyAdminOrCron(req);
+  if (!auth.ok) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { name, phone, email, business, notes, type, allowed_tools } = await req.json();
   if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -65,7 +64,8 @@ export async function POST(req: NextRequest) {
 
 // PATCH - update client
 export async function PATCH(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+  const auth = await verifyAdminOrCron(req);
+  if (!auth.ok) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { code, action } = await req.json();
   if (!code || !action) return NextResponse.json({ error: "Missing code or action" }, { status: 400 });
@@ -94,7 +94,8 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE - remove client
 export async function DELETE(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+  const auth = await verifyAdminOrCron(req);
+  if (!auth.ok) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
   const { code } = await req.json();
   if (!code) return NextResponse.json({ error: "Missing code" }, { status: 400 });

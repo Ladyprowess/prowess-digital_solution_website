@@ -357,12 +357,6 @@ export const events = [
   },
 ];
 
-export const contact = {
-  email: "info@prowessdigitalsolutions.com",
-  whatsapp: "+2348162174443",
-  location: "Remote, worldwide. Based in Nigeria.",
-};
-
 // Real client logos only. Leave empty until actual logo files are supplied -
 // the trust bar hides itself rather than showing placeholder/fake brands.
 export const clientLogos: { name: string; src: string }[] = [];

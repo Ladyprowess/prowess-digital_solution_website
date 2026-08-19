@@ -5,103 +5,89 @@ import SiteShell from "@/components/SiteShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { brand } from "@/content/site";
+import { getSiteSettings } from "@/lib/siteSettings";
 import Script from "next/script";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
-export const metadata: Metadata = {
-  title: {
-    default: `${brand.name} | Discover Opportunities, Learn Skills, Build Your Career`,
-    template: `%s | ${brand.name}`,
-  },
-  description:
-    "Prowess Digital Solutions helps Africans discover jobs and opportunities, learn useful skills, build their careers with free tools, and connect through events and community.",
-  metadataBase: new URL(SITE_URL),
-  alternates: {
-    canonical: `${SITE_URL}/`,
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+
+  return {
+    title: {
+      default: settings.seoTitle,
+      template: `%s | ${brand.name}`,
+    },
+    description: settings.seoDescription,
+    metadataBase: new URL(SITE_URL),
+    alternates: {
+      canonical: `${SITE_URL}/`,
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
-  },
-  applicationName: brand.name,
-  manifest: "/manifest.webmanifest",
-  icons: {
-    icon: [
-      { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: brand.name,
-  },
-  category: "Careers",
-  keywords: [
-    "career platform Africa",
-    "remote jobs Africa",
-    "jobs for Nigerians",
-    "internships for Africans",
-    "scholarships and grants",
-    "online courses Africa",
-    "career tools",
-    "career resources Nigeria",
-  ],
-  openGraph: {
-    title: `${brand.name}`,
-    description:
-      "Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction, all on Prowess Digital Solutions.",
-    type: "website",
-    url: SITE_URL,
-    siteName: brand.name,
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Prowess Digital Solutions",
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
       },
+    },
+    applicationName: brand.name,
+    manifest: "/manifest.webmanifest",
+    icons: {
+      icon: [
+        { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: brand.name,
+    },
+    category: "Careers",
+    keywords: [
+      "career platform Africa",
+      "remote jobs Africa",
+      "jobs for Nigerians",
+      "internships for Africans",
+      "scholarships and grants",
+      "online courses Africa",
+      "career tools",
+      "career resources Nigeria",
     ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: brand.name,
-    description:
-      "Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction, all on Prowess Digital Solutions.",
-    images: ["/og-image.png"],
-  },
-};
+    openGraph: {
+      title: brand.name,
+      description: settings.seoDescription,
+      type: "website",
+      url: SITE_URL,
+      siteName: brand.name,
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: "Prowess Digital Solutions",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: brand.name,
+      description: settings.seoDescription,
+      images: ["/og-image.png"],
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F5F5F7" },
     { media: "(prefers-color-scheme: dark)", color: "#161d1e" },
-  ],
-};
-
-const orgSchema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: brand.name,
-  url: SITE_URL,
-  logo: `${SITE_URL}/og-image.png`,
-  image: `${SITE_URL}/og-image.png`,
-  description:
-    "Prowess Digital Solutions helps Africans discover jobs and opportunities, learn useful skills, build their careers with free tools, and connect through events and community.",
-  sameAs: [
-    "https://www.instagram.com/prowessdigitalsolutions",
-    "https://twitter.com/prowessDS",
-    "https://www.linkedin.com/company/prowess-digital-solutions",
   ],
 };
 
@@ -112,7 +98,22 @@ const websiteSchema = {
   url: SITE_URL,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getSiteSettings();
+
+  const orgSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: brand.name,
+    url: SITE_URL,
+    logo: `${SITE_URL}/og-image.png`,
+    image: `${SITE_URL}/og-image.png`,
+    description: settings.seoDescription,
+    sameAs: [settings.socialInstagram, settings.socialTwitter, settings.socialLinkedin].filter(
+      (v): v is string => Boolean(v)
+    ),
+  };
+
   return (
     <html lang="en-GB" className="font-sans" suppressHydrationWarning>
       <head>

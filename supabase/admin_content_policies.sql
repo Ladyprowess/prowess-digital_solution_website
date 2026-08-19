@@ -39,7 +39,8 @@ begin
     'resource_skill_map',
     'purchases',
     'event_skill_map',
-    'tools'
+    'tools',
+    'site_settings'
   ]
   loop
     execute format('drop policy if exists "admin_full_access" on public.%I', t);

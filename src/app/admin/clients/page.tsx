@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 import { PREMIUM_TOOL_KEYS, PREMIUM_TOOL_NAMES, type PremiumToolKey } from "@/lib/tools/tierAccess";
 
 const B = "#507c80", DARK = "#3a5c60", MID = "#6a9ea3", LITE = "#e8f4f5";
@@ -15,6 +16,13 @@ interface Client {
   type: AccessType; status: "active" | "revoked";
   created_at: number; expires_at: number | null;
   allowed_tools: string[] | null; plan_slug: string | null;
+}
+
+async function getToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error("Your session expired - refresh and try again.");
+  return token;
 }
 
 const fmtDate = (ts: number | null) =>
@@ -49,10 +57,11 @@ function CopyBtn({ text }: { text: string }) {
   );
 }
 
-function CreateModal({ token, onSave, onClose }: { token: string; onSave: (c: Client) => void; onClose: () => void }) {
+function CreateModal({ onSave, onClose }: { onSave: (c: Client) => void; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", phone: "", email: "", business: "", notes: "", type: "1year" as AccessType });
   const [tools, setTools] = useState<PremiumToolKey[]>([...PREMIUM_TOOL_KEYS]);
   const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
   const f = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm(x => ({ ...x, [k]: v }));
 
   function toggleTool(key: PremiumToolKey) {
@@ -62,13 +71,22 @@ function CreateModal({ token, onSave, onClose }: { token: string; onSave: (c: Cl
   async function save() {
     if (!form.name.trim()) return;
     setSaving(true);
-    const res = await fetch("/api/admin/clients", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-token": token },
-      body: JSON.stringify({ ...form, allowed_tools: tools }),
-    });
-    if (res.ok) { onSave(await res.json()); onClose(); }
-    setSaving(false);
+    setErr("");
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ...form, allowed_tools: tools }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error || "Could not create this client.");
+      onSave(await res.json());
+      onClose();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not create this client.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -121,6 +139,7 @@ function CreateModal({ token, onSave, onClose }: { token: string; onSave: (c: Cl
           <textarea value={form.notes} onChange={e => f("notes", e.target.value)} placeholder="Optional internal notes" rows={2}
             style={{ padding: "9px 12px", border: `1.5px solid ${MGRAY}`, borderRadius: 8, fontSize: 16, width: "100%", outline: "none", resize: "vertical", fontFamily: "inherit" }} />
         </div>
+        {err && <div style={{ color: "#c0392b", fontSize: 12, fontWeight: 600, marginBottom: 12 }}>{err}</div>}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <button onClick={onClose} style={{ padding: 11, background: LGRAY, border: "none", borderRadius: 9, fontWeight: 700, fontSize: 13, cursor: "pointer", color: DARK }}>Cancel</button>
           <button onClick={save} disabled={!form.name.trim() || saving}
@@ -133,24 +152,26 @@ function CreateModal({ token, onSave, onClose }: { token: string; onSave: (c: Cl
   );
 }
 
-function ClientRow({ client, token, onUpdate, onDelete }: { client: Client; token: string; onUpdate: (c: Client) => void; onDelete: (code: string) => void }) {
+function ClientRow({ client, onUpdate, onDelete }: { client: Client; onUpdate: (c: Client) => void; onDelete: (code: string) => void }) {
   const status = getStatus(client);
   const [exp, setExp] = useState(false);
   const [conf, setConf] = useState(false);
 
   async function act(action: Action) {
+    const token = await getToken();
     const res = await fetch("/api/admin/clients", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-admin-token": token },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ code: client.code, action }),
     });
     if (res.ok) onUpdate(await res.json());
   }
 
   async function remove() {
+    const token = await getToken();
     const res = await fetch("/api/admin/clients", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json", "x-admin-token": token },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ code: client.code }),
     });
     if (res.ok) onDelete(client.code);
@@ -216,67 +237,30 @@ function ClientRow({ client, token, onUpdate, onDelete }: { client: Client; toke
   );
 }
 
-export default function ToolsAdminPage() {
-  const [token, setToken] = useState<string | null>(null);
-  const [pass, setPass] = useState("");
-  const [authErr, setAuthErr] = useState(false);
+export default function AdminClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [modal, setModal] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | ClientStatus>("all");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
 
-  const load = useCallback(async (t: string) => {
+  const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/clients", { headers: { "x-admin-token": t } });
-    if (res.ok) setClients(await res.json());
-    setLoading(false);
+    setErr("");
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/clients", { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error || "Could not load clients.");
+      setClients(await res.json());
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not load clients.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => {
-    const saved = sessionStorage.getItem("pds-admin-token");
-    if (saved) { setToken(saved); load(saved); }
-  }, [load]);
-
-  async function login() {
-    const res = await fetch("/api/admin/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: pass }),
-    });
-    if (res.ok) {
-      const { token: t } = await res.json();
-      setToken(t); sessionStorage.setItem("pds-admin-token", t); load(t);
-    } else { setAuthErr(true); setPass(""); }
-  }
-
-  if (!token) {
-    return (
-      <div style={{ minHeight: "100vh", background: `linear-gradient(135deg,${DARK},#1a3335)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ background: W, borderRadius: 16, padding: "40px 44px", width: 360, boxShadow: "0 24px 60px rgba(0,0,0,.25)" }}>
-          <div style={{ textAlign: "center", marginBottom: 28 }}>
-            <div style={{ width: 56, height: 56, background: B, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              </svg>
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: MID, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 4 }}>Prowess Digital Solutions</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: DARK }}>Admin Panel</div>
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: DARK, display: "block", marginBottom: 6 }}>Admin Password</label>
-            <input type="password" value={pass} onChange={e => { setPass(e.target.value); setAuthErr(false); }}
-              onKeyDown={e => e.key === "Enter" && login()} placeholder="Enter admin password"
-              style={{ padding: "9px 12px", border: `1.5px solid ${authErr ? "#e74c3c" : MGRAY}`, borderRadius: 8, fontSize: 16, width: "100%", outline: "none", boxSizing: "border-box" }} />
-            {authErr && <div style={{ color: "#c0392b", fontSize: 12, marginTop: 5, fontWeight: 600 }}>Incorrect password.</div>}
-          </div>
-          <button onClick={login} style={{ width: "100%", padding: 11, background: B, color: W, border: "none", borderRadius: 9, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
-            Access Admin Panel
-          </button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => { load(); }, [load]);
 
   const filtered = clients
     .filter(c => {
@@ -297,24 +281,18 @@ export default function ToolsAdminPage() {
   };
 
   return (
-    <div style={{ fontFamily: "'Segoe UI',system-ui,sans-serif", minHeight: "100vh", background: LGRAY }}>
-      <div style={{ background: DARK, padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+    <div style={{ fontFamily: "'Segoe UI',system-ui,sans-serif" }}>
+      <div style={{ background: DARK, padding: "14px 24px", borderRadius: 14, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div>
           <div style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase" }}>Prowess Digital Solutions</div>
           <div style={{ fontSize: 19, fontWeight: 800, color: W, marginTop: 2 }}>Client Access Management</div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={() => setModal(true)} style={{ padding: "9px 18px", background: B, color: W, border: "none", borderRadius: 9, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>New Client</button>
-          <button onClick={() => { sessionStorage.removeItem("pds-admin-token"); setToken(null); }}
-            style={{ padding: "9px 14px", background: "rgba(255,255,255,.15)", color: W, border: "1.5px solid rgba(255,255,255,.3)", borderRadius: 9, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-            Sign Out
-          </button>
-        </div>
+        <button onClick={() => setModal(true)} style={{ padding: "9px 18px", background: B, color: W, border: "none", borderRadius: 9, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>New Client</button>
       </div>
-      <div style={{ background: LITE, borderBottom: `2px solid ${B}`, padding: "12px 24px", fontSize: 13, color: DARK }}>
+      <div style={{ background: LITE, borderRadius: 10, marginTop: 12, padding: "12px 20px", fontSize: 13, color: DARK }}>
         Changes save instantly to Supabase. No export needed. Codes work on all devices within seconds.
       </div>
-      <div style={{ background: W, borderBottom: `1px solid ${MGRAY}`, padding: "10px 24px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+      <div style={{ background: W, border: `1px solid ${MGRAY}`, borderRadius: 10, marginTop: 12, padding: "10px 16px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         {(["all", "active", "forever", "revoked", "expired"] as const).map(k => (
           <button key={k} onClick={() => setFilter(k)}
             style={{ padding: "6px 14px", borderRadius: 20, background: filter === k ? B : "transparent", color: filter === k ? W : MID, border: `1.5px solid ${filter === k ? B : MGRAY}`, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
@@ -324,8 +302,10 @@ export default function ToolsAdminPage() {
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, code, phone..."
           style={{ marginLeft: "auto", padding: "7px 14px", border: `1.5px solid ${MGRAY}`, borderRadius: 20, fontSize: 16, outline: "none", width: 240 }} />
       </div>
-      <div style={{ padding: "20px 24px" }}>
-        {loading ? (
+      <div style={{ marginTop: 16 }}>
+        {err ? (
+          <div style={{ background: "#fdecea", border: "1px solid #f5c6cb", borderRadius: 10, padding: "16px 20px", color: "#c0392b", fontSize: 13, fontWeight: 600 }}>{err}</div>
+        ) : loading ? (
           <div style={{ textAlign: "center", padding: 48, color: MID }}>Loading clients...</div>
         ) : clients.length === 0 ? (
           <div style={{ background: W, borderRadius: 12, padding: "48px 24px", textAlign: "center", border: `1px solid ${MGRAY}` }}>
@@ -352,7 +332,7 @@ export default function ToolsAdminPage() {
                 </thead>
                 <tbody>
                   {filtered.map(c => (
-                    <ClientRow key={c.code} client={c} token={token!}
+                    <ClientRow key={c.code} client={c}
                       onUpdate={u => setClients(prev => prev.map(x => x.code === u.code ? u : x))}
                       onDelete={code => setClients(prev => prev.filter(x => x.code !== code))} />
                   ))}
@@ -362,7 +342,7 @@ export default function ToolsAdminPage() {
           </div>
         )}
       </div>
-      {modal && <CreateModal token={token!} onSave={c => setClients(prev => [c, ...prev])} onClose={() => setModal(false)} />}
+      {modal && <CreateModal onSave={c => setClients(prev => [c, ...prev])} onClose={() => setModal(false)} />}
     </div>
   );
 }
