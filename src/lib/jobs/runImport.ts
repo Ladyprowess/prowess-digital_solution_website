@@ -30,10 +30,14 @@ const TYPE_KEYWORDS: Record<string, string[]> = {
 // Word-boundary match, not a plain substring check - short keywords like
 // "ai", "ui", "ux", "qa" would otherwise false-positive inside unrelated
 // tags ("email" contains "ai", "guideline" contains "ui"), silently
-// misfiling jobs into the wrong category.
+// misfiling jobs into the wrong category. The trailing "s?" matters just as
+// much: real feed tags are almost always plural ("Grants", "Internships"),
+// and a strict \bgrant\b does not match "Grants" - that plain word-boundary
+// version shipped briefly and silently dropped about half of every
+// opportunity import before this was caught.
 function tagMatchesKeyword(tag: string, keyword: string): boolean {
   const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`\\b${escaped}\\b`, "i").test(tag);
+  return new RegExp(`\\b${escaped}s?\\b`, "i").test(tag);
 }
 
 function matchSlugFromTags(tags: string[], keywordMap: Record<string, string[]>): string | null {
@@ -107,6 +111,12 @@ export async function runImportForSource(
         .map((s) => s.id);
 
       const now = new Date().toISOString();
+      // Source feeds don't give a real application deadline, so this isn't
+      // shown to visitors as one (that's deadline_at, left alone) - it's
+      // just how long an imported listing is allowed to stay visible before
+      // it's assumed stale, since these postings get pulled at the source
+      // and there's no way to know that happened without checking.
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: createdJob, error: jobError } = await db
         .from("jobs")
         .insert({
@@ -124,6 +134,7 @@ export async function runImportForSource(
           external_id: listing.externalId,
           status: source.auto_publish ? "published" : "draft",
           published_at: source.auto_publish ? now : null,
+          expires_at: expiresAt,
         })
         .select("id")
         .single();

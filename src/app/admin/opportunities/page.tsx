@@ -63,21 +63,68 @@ function OpportunitiesAdmin() {
 
   const loadLists = useCallback(async () => {
     setLoadingLists(true);
-    const [{ data: typeRows }, { data: skillRows }, { data: oppRows }] = await Promise.all([
+    const [{ data: typeRows }, { data: skillRows }] = await Promise.all([
       supabase.from("opportunity_types").select("id, slug, name").order("name"),
       supabase.from("skills").select("id, slug, name").order("name"),
-      supabase
-        .from("opportunities")
-        .select("id, slug, title, status, organisation_name, deadline_at, opportunity_types(name)")
-        .order("created_at", { ascending: false }),
     ]);
     setTypes(typeRows || []);
     setSkills(skillRows || []);
-    setOpportunities(((oppRows as unknown as OpportunityRow[]) || []));
     setLoadingLists(false);
   }, []);
 
   useEffect(() => { loadLists(); }, [loadLists]);
+
+  const OPPS_PAGE_SIZE = 20;
+  const [oppsPage, setOppsPage] = useState(1);
+  const [oppsTotal, setOppsTotal] = useState(0);
+  const [oppStatusFilter, setOppStatusFilter] = useState<"all" | OpportunityRow["status"]>("all");
+  const [oppSearch, setOppSearch] = useState("");
+  const [loadingOpps, setLoadingOpps] = useState(true);
+  const [selectedOppIds, setSelectedOppIds] = useState<string[]>([]);
+  const [bulkDeletingOpps, setBulkDeletingOpps] = useState(false);
+
+  const loadOpportunities = useCallback(async () => {
+    setLoadingOpps(true);
+    let query = supabase
+      .from("opportunities")
+      .select("id, slug, title, status, organisation_name, deadline_at, opportunity_types(name)", { count: "exact" });
+    if (oppStatusFilter !== "all") query = query.eq("status", oppStatusFilter);
+    if (oppSearch.trim()) query = query.ilike("title", `%${oppSearch.trim()}%`);
+
+    const from = (oppsPage - 1) * OPPS_PAGE_SIZE;
+    const { data, count } = await query.order("created_at", { ascending: false }).range(from, from + OPPS_PAGE_SIZE - 1);
+
+    setOpportunities((data as unknown as OpportunityRow[]) || []);
+    setOppsTotal(count || 0);
+    setSelectedOppIds([]);
+    setLoadingOpps(false);
+  }, [oppsPage, oppStatusFilter, oppSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(loadOpportunities, 200);
+    return () => clearTimeout(t);
+  }, [loadOpportunities]);
+
+  useEffect(() => { setOppsPage(1); }, [oppStatusFilter, oppSearch]);
+
+  const oppsTotalPages = Math.max(1, Math.ceil(oppsTotal / OPPS_PAGE_SIZE));
+
+  function toggleOppSelected(id: string) {
+    setSelectedOppIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  function toggleSelectAllOppsOnPage() {
+    setSelectedOppIds((prev) => (prev.length === opportunities.length ? [] : opportunities.map((o) => o.id)));
+  }
+
+  async function deleteSelectedOpps() {
+    if (selectedOppIds.length === 0) return;
+    if (!confirm(`Delete ${selectedOppIds.length} opportunit${selectedOppIds.length === 1 ? "y" : "ies"}? This can't be undone.`)) return;
+    setBulkDeletingOpps(true);
+    await supabase.from("opportunities").delete().in("id", selectedOppIds);
+    setBulkDeletingOpps(false);
+    loadOpportunities();
+  }
 
   async function getUniqueSlug(base: string): Promise<string> {
     let candidate = base;
@@ -142,7 +189,7 @@ function OpportunitiesAdmin() {
 
       setMsg("Opportunity saved.");
       resetForm();
-      loadLists();
+      loadOpportunities();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -158,7 +205,7 @@ function OpportunitiesAdmin() {
   async function deleteOpp(id: string) {
     if (!confirm("Delete this opportunity? This can't be undone.")) return;
     await supabase.from("opportunities").delete().eq("id", id);
-    setOpportunities((prev) => prev.filter((o) => o.id !== id));
+    loadOpportunities();
   }
 
   return (
@@ -264,17 +311,56 @@ function OpportunitiesAdmin() {
           typeOptions={types}
         />
 
-        <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h2 className="text-xl font-semibold text-foreground">All Opportunities</h2>
-          {loadingLists ? (
+        <div className="mx-auto mt-10 max-w-5xl rounded-2xl border border-border bg-card p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-foreground">All Opportunities</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={oppSearch}
+                onChange={(e) => setOppSearch(e.target.value)}
+                placeholder="Search title..."
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              />
+              <select
+                value={oppStatusFilter}
+                onChange={(e) => setOppStatusFilter(e.target.value as typeof oppStatusFilter)}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="closed">Closed</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+          </div>
+
+          {selectedOppIds.length > 0 && (
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+              <span className="text-sm font-semibold text-foreground">{selectedOppIds.length} selected</span>
+              <button
+                type="button"
+                onClick={deleteSelectedOpps}
+                disabled={bulkDeletingOpps}
+                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60 hover:bg-red-700"
+              >
+                {bulkDeletingOpps ? "Deleting..." : `Delete ${selectedOppIds.length} selected`}
+              </button>
+            </div>
+          )}
+
+          {loadingOpps ? (
             <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
           ) : opportunities.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">No opportunities yet.</p>
+            <p className="mt-4 text-sm text-muted-foreground">No opportunities match this filter.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
+              <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-3">
+                      <input type="checkbox" checked={selectedOppIds.length === opportunities.length} onChange={toggleSelectAllOppsOnPage} />
+                    </th>
                     <th className="py-2 pr-4">Title</th>
                     <th className="py-2 pr-4">Type</th>
                     <th className="py-2 pr-4">Status</th>
@@ -285,6 +371,9 @@ function OpportunitiesAdmin() {
                 <tbody>
                   {opportunities.map((o) => (
                     <tr key={o.id} className="border-b border-border/60">
+                      <td className="py-2 pr-3">
+                        <input type="checkbox" checked={selectedOppIds.includes(o.id)} onChange={() => toggleOppSelected(o.id)} />
+                      </td>
                       <td className="py-2 pr-4 font-medium text-foreground">{o.title}</td>
                       <td className="py-2 pr-4 text-muted-foreground">{o.opportunity_types?.name || "-"}</td>
                       <td className="py-2 pr-4">
@@ -307,6 +396,28 @@ function OpportunitiesAdmin() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {oppsTotalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setOppsPage((p) => Math.max(1, p - 1))}
+                disabled={oppsPage <= 1}
+                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-40 hover:bg-muted"
+              >
+                ← Previous
+              </button>
+              <span className="text-xs text-muted-foreground">Page {oppsPage} of {oppsTotalPages} ({oppsTotal} opportunities)</span>
+              <button
+                type="button"
+                onClick={() => setOppsPage((p) => Math.min(oppsTotalPages, p + 1))}
+                disabled={oppsPage >= oppsTotalPages}
+                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-40 hover:bg-muted"
+              >
+                Next →
+              </button>
             </div>
           )}
         </div>

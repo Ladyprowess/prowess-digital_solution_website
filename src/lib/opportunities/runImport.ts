@@ -13,17 +13,25 @@ const TYPE_KEYWORDS: Record<string, string[]> = {
   scholarships: ["scholarship"],
   grants: ["grant"],
   fellowships: ["fellowship"],
-  internships: ["internship", "intern"],
+  // "Learnership" is common South African terminology for a structured,
+  // work-based training programme - functionally an internship, and a real
+  // tag on real feeds (confirmed against a live source), just not a word
+  // most sources outside the region would think to add.
+  internships: ["internship", "intern", "learnership"],
   competitions: ["competition", "challenge", "hackathon", "award", "prize"],
   freelance: ["freelance"],
 };
 
 // Word-boundary match, not a plain substring check - see the same fix in
 // jobs/runImport.ts for why (short/common words false-positive inside
-// unrelated ones otherwise).
+// unrelated ones otherwise). The trailing "s?" matters just as much here:
+// RSS category tags are almost always plural ("Grants", "Internships",
+// "Scholarships"), and a strict \bgrant\b matches none of them - this
+// silently dropped about half of every real opportunity import as
+// "unclassifiable" until caught.
 function textMatchesKeyword(text: string, keyword: string): boolean {
   const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`\\b${escaped}\\b`, "i").test(text);
+  return new RegExp(`\\b${escaped}s?\\b`, "i").test(text);
 }
 
 function matchTypeSlug(tags: string[], title: string): string | null {
@@ -70,6 +78,11 @@ export async function runOpportunityImportForSource(
 
       const opportunitySlug = `${slugify(listing.title)}-${listing.externalId.slice(-12).replace(/[^a-z0-9]/gi, "")}`;
       const now = new Date().toISOString();
+      // Same reasoning as the jobs importer: no real deadline comes through
+      // these feeds, so this isn't shown as one - it's just a safety net so
+      // an imported listing doesn't stay visible forever after the source
+      // pulls it down.
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
       const { error: insertError } = await db.from("opportunities").insert({
         slug: opportunitySlug,
@@ -85,6 +98,7 @@ export async function runOpportunityImportForSource(
         external_id: listing.externalId,
         status: source.auto_publish ? "published" : "draft",
         published_at: source.auto_publish ? now : null,
+        expires_at: expiresAt,
       });
 
       if (insertError) { summary.errors += 1; continue; }

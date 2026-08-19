@@ -1,0 +1,17 @@
+{
+  "name": "Prowess Admin",
+  "short_name": "PDS Admin",
+  "description": "Admin dashboard for Prowess Digital Solutions.",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#F5F5F7",
+  "theme_color": "#507c80",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

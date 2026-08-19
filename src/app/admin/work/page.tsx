@@ -83,23 +83,70 @@ function WorkAdmin() {
 
   const loadLists = useCallback(async () => {
     setLoadingLists(true);
-    const [{ data: cats }, { data: jobTypes }, { data: skillRows }, { data: jobRows }] = await Promise.all([
+    const [{ data: cats }, { data: jobTypes }, { data: skillRows }] = await Promise.all([
       supabase.from("job_categories").select("id, slug, name").order("name"),
       supabase.from("job_types").select("id, slug, name").order("name"),
       supabase.from("skills").select("id, slug, name").order("name"),
-      supabase
-        .from("jobs")
-        .select("id, slug, title, status, location_type, country, city, deadline_at, companies(name), job_categories(name), job_types(name), job_sources(name)")
-        .order("created_at", { ascending: false }),
     ]);
     setCategories(cats || []);
     setTypes(jobTypes || []);
     setSkills(skillRows || []);
-    setJobs(((jobRows as unknown as JobRow[]) || []));
     setLoadingLists(false);
   }, []);
 
   useEffect(() => { loadLists(); }, [loadLists]);
+
+  const JOBS_PAGE_SIZE = 20;
+  const [jobsPage, setJobsPage] = useState(1);
+  const [jobsTotal, setJobsTotal] = useState(0);
+  const [jobStatusFilter, setJobStatusFilter] = useState<"all" | JobRow["status"]>("all");
+  const [jobSearch, setJobSearch] = useState("");
+  const [loadingJobs, setLoadingJobs] = useState(true);
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const loadJobs = useCallback(async () => {
+    setLoadingJobs(true);
+    let query = supabase
+      .from("jobs")
+      .select("id, slug, title, status, location_type, country, city, deadline_at, companies(name), job_categories(name), job_types(name), job_sources(name)", { count: "exact" });
+    if (jobStatusFilter !== "all") query = query.eq("status", jobStatusFilter);
+    if (jobSearch.trim()) query = query.ilike("title", `%${jobSearch.trim()}%`);
+
+    const from = (jobsPage - 1) * JOBS_PAGE_SIZE;
+    const { data, count } = await query.order("created_at", { ascending: false }).range(from, from + JOBS_PAGE_SIZE - 1);
+
+    setJobs((data as unknown as JobRow[]) || []);
+    setJobsTotal(count || 0);
+    setSelectedJobIds([]);
+    setLoadingJobs(false);
+  }, [jobsPage, jobStatusFilter, jobSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(loadJobs, 200);
+    return () => clearTimeout(t);
+  }, [loadJobs]);
+
+  useEffect(() => { setJobsPage(1); }, [jobStatusFilter, jobSearch]);
+
+  const jobsTotalPages = Math.max(1, Math.ceil(jobsTotal / JOBS_PAGE_SIZE));
+
+  function toggleJobSelected(id: string) {
+    setSelectedJobIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  function toggleSelectAllOnPage() {
+    setSelectedJobIds((prev) => (prev.length === jobs.length ? [] : jobs.map((j) => j.id)));
+  }
+
+  async function deleteSelectedJobs() {
+    if (selectedJobIds.length === 0) return;
+    if (!confirm(`Delete ${selectedJobIds.length} job${selectedJobIds.length === 1 ? "" : "s"}? This can't be undone.`)) return;
+    setBulkDeleting(true);
+    await supabase.from("jobs").delete().in("id", selectedJobIds);
+    setBulkDeleting(false);
+    loadJobs();
+  }
 
   async function getOrCreateCompany(name: string): Promise<string> {
     const slug = slugify(name);
@@ -186,7 +233,7 @@ function WorkAdmin() {
 
       setMsg("Job saved.");
       resetForm();
-      loadLists();
+      loadJobs();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -202,7 +249,7 @@ function WorkAdmin() {
   async function deleteJob(id: string) {
     if (!confirm("Delete this job? This can't be undone.")) return;
     await supabase.from("jobs").delete().eq("id", id);
-    setJobs((prev) => prev.filter((j) => j.id !== id));
+    loadJobs();
   }
 
   return (
@@ -339,17 +386,56 @@ function WorkAdmin() {
           typeOptions={types}
         />
 
-        <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h2 className="text-xl font-semibold text-foreground">All Jobs</h2>
-          {loadingLists ? (
+        <div className="mx-auto mt-10 max-w-5xl rounded-2xl border border-border bg-card p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-foreground">All Jobs</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={jobSearch}
+                onChange={(e) => setJobSearch(e.target.value)}
+                placeholder="Search title..."
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              />
+              <select
+                value={jobStatusFilter}
+                onChange={(e) => setJobStatusFilter(e.target.value as typeof jobStatusFilter)}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="closed">Closed</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+          </div>
+
+          {selectedJobIds.length > 0 && (
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+              <span className="text-sm font-semibold text-foreground">{selectedJobIds.length} selected</span>
+              <button
+                type="button"
+                onClick={deleteSelectedJobs}
+                disabled={bulkDeleting}
+                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60 hover:bg-red-700"
+              >
+                {bulkDeleting ? "Deleting..." : `Delete ${selectedJobIds.length} selected`}
+              </button>
+            </div>
+          )}
+
+          {loadingJobs ? (
             <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
           ) : jobs.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">No jobs yet.</p>
+            <p className="mt-4 text-sm text-muted-foreground">No jobs match this filter.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
+              <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-3">
+                      <input type="checkbox" checked={selectedJobIds.length === jobs.length} onChange={toggleSelectAllOnPage} />
+                    </th>
                     <th className="py-2 pr-4">Title</th>
                     <th className="py-2 pr-4">Company</th>
                     <th className="py-2 pr-4">Source</th>
@@ -361,6 +447,9 @@ function WorkAdmin() {
                 <tbody>
                   {jobs.map((j) => (
                     <tr key={j.id} className="border-b border-border/60">
+                      <td className="py-2 pr-3">
+                        <input type="checkbox" checked={selectedJobIds.includes(j.id)} onChange={() => toggleJobSelected(j.id)} />
+                      </td>
                       <td className="py-2 pr-4 font-medium text-foreground">{j.title}</td>
                       <td className="py-2 pr-4 text-muted-foreground">{j.companies?.name || "-"}</td>
                       <td className="py-2 pr-4 text-muted-foreground">{j.job_sources?.name || "-"}</td>
@@ -384,6 +473,28 @@ function WorkAdmin() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {jobsTotalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setJobsPage((p) => Math.max(1, p - 1))}
+                disabled={jobsPage <= 1}
+                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-40 hover:bg-muted"
+              >
+                ← Previous
+              </button>
+              <span className="text-xs text-muted-foreground">Page {jobsPage} of {jobsTotalPages} ({jobsTotal} jobs)</span>
+              <button
+                type="button"
+                onClick={() => setJobsPage((p) => Math.min(jobsTotalPages, p + 1))}
+                disabled={jobsPage >= jobsTotalPages}
+                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-40 hover:bg-muted"
+              >
+                Next →
+              </button>
             </div>
           )}
         </div>

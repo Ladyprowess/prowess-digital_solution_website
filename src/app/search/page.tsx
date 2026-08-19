@@ -19,8 +19,8 @@ async function runSearch(query: string): Promise<ResultGroup[]> {
   const like = `%${query}%`;
 
   const [jobs, opportunities, careerPaths, courses, resources] = await Promise.all([
-    supabase.from("jobs").select("slug, title, companies(name)").eq("status", "published").ilike("title", like).limit(6),
-    supabase.from("opportunities").select("slug, title, organisation_name").eq("status", "published").ilike("title", like).limit(6),
+    supabase.from("jobs").select("slug, title, companies(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).ilike("title", like).limit(6),
+    supabase.from("opportunities").select("slug, title, organisation_name").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).ilike("title", like).limit(6),
     supabase.from("career_paths").select("slug, title").eq("status", "published").ilike("title", like).limit(6),
     supabase.from("courses").select("slug, title").eq("status", "published").ilike("title", like).limit(6),
     supabase.from("resources").select("slug, title, category").eq("status", "published").ilike("title", like).limit(6),

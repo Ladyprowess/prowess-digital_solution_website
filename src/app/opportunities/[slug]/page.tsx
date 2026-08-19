@@ -34,6 +34,7 @@ async function getOpportunity(slug: string) {
     .select("id, slug, title, organisation_name, description, eligibility, benefits, apply_url, location_type, country, city, remote_regions, deadline_at, opportunity_types(name), opportunity_skill_map(skills(name, slug))")
     .eq("slug", slug)
     .eq("status", "published")
+    .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
     .maybeSingle();
   return data as unknown as OpportunityDetail | null;
 }
@@ -69,6 +70,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
       .select("slug, title, organisation_name")
       .eq("type_id", typeRow.type_id)
       .eq("status", "published")
+      .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
       .neq("id", opp.id)
       .limit(3);
     related = data || [];

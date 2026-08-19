@@ -39,6 +39,7 @@ async function getJob(slug: string) {
     .select("id, slug, title, description, requirements, responsibilities, apply_url, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, experience_level, deadline_at, companies(name, website, description), job_categories(name), job_types(name), job_skill_map(skills(name, slug))")
     .eq("slug", slug)
     .eq("status", "published")
+    .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
     .maybeSingle();
   return data as unknown as JobDetail | null;
 }
@@ -84,6 +85,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
         .select("slug, title, companies(name)")
         .eq("category_id", catRow.category_id)
         .eq("status", "published")
+        .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
         .neq("id", job.id)
         .limit(3);
       relatedJobs = (data as unknown as typeof relatedJobs) || [];

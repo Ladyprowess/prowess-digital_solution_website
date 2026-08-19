@@ -4,9 +4,10 @@ import { brand } from "@/content/site";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: brand.name,
-    // Deliberately the full name, not an abbreviation - the home-screen
-    // label wraps on most devices rather than needing a pre-shortened name.
-    short_name: brand.name,
+    // short_name is what actually shows under the home-screen icon on
+    // Android/Chrome - "PDS" per explicit request, while `name` stays the
+    // full name for the install dialog and app-info screens.
+    short_name: "PDS",
     description: "Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction.",
     start_url: "/",
     scope: "/",

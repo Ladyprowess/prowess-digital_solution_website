@@ -46,6 +46,7 @@ export default function OpportunitiesPage() {
       .from("opportunities")
       .select("id, slug, title, organisation_name, location_type, country, deadline_at, featured, opportunity_types(name)")
       .eq("status", "published")
+      .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false });
 

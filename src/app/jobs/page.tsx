@@ -69,6 +69,10 @@ export default function JobsPage() {
       .from("jobs")
       .select("id, slug, title, location_type, country, city, salary_min, salary_max, salary_currency, deadline_at, featured, companies(name), job_categories(name), job_types(name)")
       .eq("status", "published")
+      // Imported listings get a 30-day expires_at as a staleness safety
+      // net (see runImportForSource) - manually created jobs leave it null
+      // and never get filtered out here.
+      .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false });
 
