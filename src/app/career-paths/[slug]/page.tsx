@@ -81,7 +81,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
           <div className="mt-4 flex items-start justify-between gap-4">
             <div>
               <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${path.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                {path.access === "premium" ? `Premium${path.price ? ` — ${path.price_currency || "NGN"} ${path.price}` : ""}` : "Free"}
+                {path.access === "premium" ? `Premium${path.price ? ` - ${path.price_currency || "NGN"} ${path.price}` : ""}` : "Free"}
               </span>
               <h1 className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">{path.title}</h1>
             </div>
@@ -143,7 +143,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
 
         {skillIds.length === 0 && (
           <p className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">
-            This career path hasn&rsquo;t been tagged with skills yet, so there&rsquo;s nothing to connect it to yet — once it is, related courses, resources, opportunities and jobs will show up here automatically.
+            This career path hasn&rsquo;t been tagged with skills yet, so there&rsquo;s nothing to connect it to yet - once it is, related courses, resources, opportunities and jobs will show up here automatically.
           </p>
         )}
       </div>

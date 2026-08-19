@@ -88,7 +88,7 @@ export default function OpportunitiesPage() {
         ) : opportunities.length === 0 ? (
           <div className="mx-auto max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
             <p className="text-foreground font-semibold">No opportunities match right now.</p>
-            <p className="mt-1 text-sm text-muted-foreground">Try clearing a filter, or check back soon — new opportunities are added regularly.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Try clearing a filter, or check back soon - new opportunities are added regularly.</p>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

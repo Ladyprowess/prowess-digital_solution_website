@@ -44,13 +44,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!opp) return { title: "Opportunity not found" };
   return {
     title: opp.title,
-    description: opp.description?.slice(0, 155) || `${opp.title} — apply on Prowess Digital Solutions.`,
+    description: opp.description?.slice(0, 155) || `${opp.title} - apply on Prowess Digital Solutions.`,
   };
 }
 
 function locationLabel(o: OpportunityDetail) {
   if (!o.location_type || o.location_type === "any") return "Open to anywhere";
-  if (o.location_type === "remote") return o.remote_regions?.length ? `Remote — ${o.remote_regions.join(", ")}` : "Remote";
+  if (o.location_type === "remote") return o.remote_regions?.length ? `Remote - ${o.remote_regions.join(", ")}` : "Remote";
   return [o.location_type === "hybrid" ? "Hybrid" : "On-site", o.city, o.country].filter(Boolean).join(" · ");
 }
 

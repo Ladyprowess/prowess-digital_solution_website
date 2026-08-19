@@ -61,7 +61,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
           <div className="mt-4 flex items-start justify-between gap-4">
             <div>
               <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${course.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                {course.access === "premium" ? `Premium${course.price ? ` — ${course.price_currency || "NGN"} ${course.price}` : ""}` : "Free"}
+                {course.access === "premium" ? `Premium${course.price ? ` - ${course.price_currency || "NGN"} ${course.price}` : ""}` : "Free"}
               </span>
               <h1 className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">{course.title}</h1>
               {course.level && <p className="mt-1 text-sm text-muted-foreground">{course.level[0].toUpperCase() + course.level.slice(1)}</p>}

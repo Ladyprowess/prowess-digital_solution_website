@@ -293,8 +293,6 @@ export default function Navbar() {
           </div>
         </Container>
       </div>
-
-      <div className="h-[1px] bg-gradient-to-r from-transparent via-border to-transparent" />
     </header>
     <JobAlertsModal open={alertsOpen} onClose={() => setAlertsOpen(false)} />
     </>

@@ -53,7 +53,7 @@ export default function LearnPage() {
           <div className="mb-10 text-center">
             <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Learn</div>
             <h1 className="text-4xl font-bold tracking-tight text-foreground">Learn something useful</h1>
-            <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Short, practical courses. Some free, some premium — always clearly marked.</p>
+            <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Short, practical courses. Some free, some premium - always clearly marked.</p>
           </div>
         </Reveal>
 
@@ -82,7 +82,7 @@ export default function LearnPage() {
             {courses.map((c) => (
               <Link key={c.id} href={`/learn/${c.slug}`} className="group block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {c.access === "premium" ? `Premium${c.price ? ` — ${c.price_currency || "NGN"} ${c.price}` : ""}` : "Free"}
+                  {c.access === "premium" ? `Premium${c.price ? ` - ${c.price_currency || "NGN"} ${c.price}` : ""}` : "Free"}
                 </span>
                 <h3 className="mt-3 text-lg font-bold text-foreground">{c.title}</h3>
                 {c.description && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>}
