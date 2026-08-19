@@ -4,10 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import Container from "@/components/Container";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
+import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
-
-type Skill = { id: string; slug: string; name: string };
 
 type CareerPathRow = {
   id: string;
@@ -38,7 +37,6 @@ function CareerPathsAdmin() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
-  const [newSkillName, setNewSkillName] = useState("");
   const [access, setAccess] = useState<"free" | "premium">("free");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("NGN");
@@ -75,32 +73,8 @@ function CareerPathsAdmin() {
     }
   }
 
-  async function addSkill() {
-    const name = newSkillName.trim();
-    if (!name) return;
-    const slug = slugify(name);
-    const { data: existing } = await supabase.from("skills").select("id").eq("slug", slug).maybeSingle();
-    if (existing) {
-      setSelectedSkillIds((prev) => (prev.includes(existing.id) ? prev : [...prev, existing.id]));
-      setNewSkillName("");
-      return;
-    }
-    const { data: created, error } = await supabase.from("skills").insert({ slug, name }).select("id, slug, name").single();
-    if (error || !created) {
-      setErr(error?.message || "Could not add the skill.");
-      return;
-    }
-    setSkills((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
-    setSelectedSkillIds((prev) => [...prev, created.id]);
-    setNewSkillName("");
-  }
-
-  function toggleSkill(id: string) {
-    setSelectedSkillIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
-  }
-
   const resetForm = () => {
-    setTitle(""); setDescription(""); setSelectedSkillIds([]); setNewSkillName("");
+    setTitle(""); setDescription(""); setSelectedSkillIds([]);
     setAccess("free"); setPrice(""); setPublishNow(false);
   };
 
@@ -126,11 +100,7 @@ function CareerPathsAdmin() {
         .single();
       if (error || !created) throw new Error(error?.message || "Could not save the career path.");
 
-      if (selectedSkillIds.length > 0) {
-        await supabase.from("career_path_skill_map").insert(
-          selectedSkillIds.map((skillId) => ({ career_path_id: created.id, skill_id: skillId }))
-        );
-      }
+      await saveSkillMap("career_path_skill_map", "career_path_id", created.id, selectedSkillIds);
 
       setMsg("Career path saved.");
       resetForm();
@@ -171,34 +141,10 @@ function CareerPathsAdmin() {
             </Field>
 
             <Field label="Skills needed">
-              <div className="flex flex-wrap gap-2">
-                {skills.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => toggleSkill(s.id)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                      selectedSkillIds.includes(s.id)
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground"
-                    }`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={newSkillName}
-                  onChange={(e) => setNewSkillName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
-                  className={inputCls}
-                  placeholder="Add a new skill and press Enter"
-                />
-                <button type="button" onClick={addSkill} className="flex-shrink-0 rounded-xl border border-border px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted">
-                  Add
-                </button>
-              </div>
+              <SkillPicker
+                skills={skills} onSkillsChange={setSkills}
+                selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds}
+              />
             </Field>
 
             <AccessPriceFields

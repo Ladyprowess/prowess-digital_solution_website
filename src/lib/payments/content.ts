@@ -25,13 +25,27 @@ export async function markContentPurchasePaid(purchaseId: string, reference: str
   if (purchaseErr || !purchase) return { ok: false as const };
   if (purchase.payment_status === "paid") return { ok: true as const, alreadyPaid: true };
 
-  const { error: updErr } = await supabase
+  // The initial select above is not atomic with this update: the webhook
+  // and the client-side verify route can both read "pending" before either
+  // write lands, and both would pass the check above. .neq("payment_status",
+  // "paid") means at most one of the two concurrent updates actually
+  // changes a row - but without .select() here there's no way to tell
+  // which one that was, so a naive "no error = success" check would let
+  // both callers proceed and send two confirmation emails. Checking the
+  // returned row count is what actually makes this idempotent under a race,
+  // not just under sequential calls.
+  const { data: updatedRows, error: updErr } = await supabase
     .from("purchases")
     .update({ payment_status: "paid", flutterwave_reference: reference })
     .eq("id", purchase.id)
-    .neq("payment_status", "paid");
+    .neq("payment_status", "paid")
+    .select("id");
 
   if (updErr) return { ok: false as const };
+  if (!updatedRows || updatedRows.length === 0) {
+    // Another concurrent call already won the race and marked it paid.
+    return { ok: true as const, alreadyPaid: true };
+  }
 
   const table = ITEM_TABLE[purchase.item_type];
   const { data: item } = table

@@ -18,6 +18,8 @@ const VALID_PREFERENCES = [
   "scholarships",
   "events",
   "courses",
+  "career_resources",
+  "business",
   "general",
 ] as const;
 type Preference = (typeof VALID_PREFERENCES)[number];
@@ -47,6 +49,14 @@ const CONFIRMATIONS: Record<Preference, { subject: string; body: string }> = {
     subject: "You're subscribed to Prowess Digital Solutions course updates",
     body: "We'll email you when new Prowess Digital Solutions courses launch.",
   },
+  career_resources: {
+    subject: "You're subscribed to Prowess Digital Solutions career resources",
+    body: "We'll email you new career guides, roadmaps and resources as they're published.",
+  },
+  business: {
+    subject: "You're subscribed to Prowess Digital Solutions business updates",
+    body: "We'll email you new business tools, resources and services as they're published.",
+  },
   general: {
     subject: "You're subscribed to Prowess Digital Solutions updates",
     body: "We'll keep you posted on new jobs, opportunities and updates from Prowess Digital Solutions.",
@@ -57,11 +67,18 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null);
     const email = String(body?.email || "").trim().toLowerCase();
-    const rawPreference = String(body?.preference || "general").trim().toLowerCase();
-    const preference: Preference = (VALID_PREFERENCES as readonly string[]).includes(rawPreference)
-      ? (rawPreference as Preference)
-      : "general";
     const source = body?.source ? String(body.source).slice(0, 100) : null;
+
+    // Accepts either a single `preference` (back-compat) or a `preferences`
+    // array (for a multi-checkbox form like the homepage newsletter signup)
+    // - both land in the same jsonb object in one write.
+    const rawList: string[] = Array.isArray(body?.preferences)
+      ? body.preferences
+      : [body?.preference || "general"];
+    const requestedPreferences = rawList
+      .map((p) => String(p).trim().toLowerCase())
+      .filter((p): p is Preference => (VALID_PREFERENCES as readonly string[]).includes(p));
+    if (requestedPreferences.length === 0) requestedPreferences.push("general");
 
     if (!email || !email.includes("@")) {
       return NextResponse.json(
@@ -84,8 +101,9 @@ export async function POST(req: Request) {
     }
 
     const existingPreferences: Record<string, boolean> = existing?.preferences ?? {};
-    const alreadyHadPreference = existingPreferences[preference] === true;
-    const mergedPreferences = { ...existingPreferences, [preference]: true };
+    const newlyAddedPreferences = requestedPreferences.filter((p) => existingPreferences[p] !== true);
+    const mergedPreferences = { ...existingPreferences };
+    for (const p of requestedPreferences) mergedPreferences[p] = true;
 
     const { error: upsertError } = await supabase
       .from("newsletter_subscribers")
@@ -101,15 +119,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // Only send a confirmation email the first time someone opts into this
-    // particular preference, not on every repeat signup for it.
-    if (!alreadyHadPreference) {
-      const copy = CONFIRMATIONS[preference];
+    // One confirmation email per request (not one per new preference), only
+    // sent when at least one preference is genuinely new for this address.
+    if (newlyAddedPreferences.length > 0) {
+      const primary = newlyAddedPreferences[0] as Preference;
+      const copy = CONFIRMATIONS[primary];
+      const extra = newlyAddedPreferences.length > 1
+        ? `<p>You're also signed up for: ${newlyAddedPreferences.slice(1).join(", ")}.</p>`
+        : "";
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL!,
         to: email,
         subject: copy.subject,
-        html: `<p>${copy.body}</p>`,
+        html: `<p>${copy.body}</p>${extra}`,
       });
     }
 

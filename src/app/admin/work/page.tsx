@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Container from "@/components/Container";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -39,6 +40,7 @@ const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-
 function WorkAdmin() {
   const [categories, setCategories] = useState<Lookup[]>([]);
   const [types, setTypes] = useState<Lookup[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [loadingLists, setLoadingLists] = useState(true);
 
@@ -46,6 +48,7 @@ function WorkAdmin() {
   const [companyName, setCompanyName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [typeId, setTypeId] = useState("");
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [locationType, setLocationType] = useState<(typeof LOCATION_TYPES)[number]>("remote");
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
@@ -68,9 +71,10 @@ function WorkAdmin() {
 
   const loadLists = useCallback(async () => {
     setLoadingLists(true);
-    const [{ data: cats }, { data: jobTypes }, { data: jobRows }] = await Promise.all([
+    const [{ data: cats }, { data: jobTypes }, { data: skillRows }, { data: jobRows }] = await Promise.all([
       supabase.from("job_categories").select("id, slug, name").order("name"),
       supabase.from("job_types").select("id, slug, name").order("name"),
+      supabase.from("skills").select("id, slug, name").order("name"),
       supabase
         .from("jobs")
         .select("id, slug, title, status, location_type, country, city, deadline_at, companies(name), job_categories(name), job_types(name)")
@@ -78,6 +82,7 @@ function WorkAdmin() {
     ]);
     setCategories(cats || []);
     setTypes(jobTypes || []);
+    setSkills(skillRows || []);
     setJobs(((jobRows as unknown as JobRow[]) || []));
     setLoadingLists(false);
   }, []);
@@ -119,7 +124,7 @@ function WorkAdmin() {
     setLocationType("remote"); setCountry(""); setCity(""); setRemoteRegions("");
     setSalaryMin(""); setSalaryMax(""); setSalaryCurrency("USD"); setExperienceLevel("");
     setDescription(""); setRequirements(""); setResponsibilities("");
-    setApplyUrl(""); setDeadlineAt(""); setFeatured(false); setPublishNow(true);
+    setApplyUrl(""); setDeadlineAt(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
   };
 
   const submit = async () => {
@@ -139,7 +144,7 @@ function WorkAdmin() {
       ]);
 
       const now = new Date().toISOString();
-      const { error } = await supabase.from("jobs").insert({
+      const { data: created, error } = await supabase.from("jobs").insert({
         slug,
         title: title.trim(),
         company_id: companyId,
@@ -162,8 +167,10 @@ function WorkAdmin() {
         status: publishNow ? "published" : "draft",
         published_at: publishNow ? now : null,
         deadline_at: deadlineAt || null,
-      });
-      if (error) throw new Error(error.message);
+      }).select("id").single();
+      if (error || !created) throw new Error(error?.message || "Could not save the job.");
+
+      await saveSkillMap("job_skill_map", "job_id", created.id, selectedSkillIds);
 
       setMsg("Job saved.");
       resetForm();
@@ -276,6 +283,13 @@ function WorkAdmin() {
             </Field>
             <Field label="Requirements">
               <textarea value={requirements} onChange={(e) => setRequirements(e.target.value)} className={`${inputCls} min-h-[100px]`} />
+            </Field>
+
+            <Field label="Skills">
+              <SkillPicker
+                skills={skills} onSkillsChange={setSkills}
+                selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds}
+              />
             </Field>
 
             <div className="mt-2 flex flex-wrap items-center gap-6">

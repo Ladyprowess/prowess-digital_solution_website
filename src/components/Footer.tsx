@@ -1,8 +1,5 @@
-"use client";
-
 import Container from "@/components/Container";
 import Link from "next/link";
-import { useState } from "react";
 import { brand, contact } from "@/content/site";
 
 const socials = [
@@ -26,35 +23,6 @@ const socials = [
 ];
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
-  const [message, setMessage] = useState("");
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("loading");
-    setMessage("");
-    try {
-      const res = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, preference: "general", source: "footer" }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setStatus("ok");
-        setMessage("You're subscribed.");
-        setEmail("");
-      } else {
-        setStatus("error");
-        setMessage(data.error || "Something went wrong.");
-      }
-    } catch {
-      setStatus("error");
-      setMessage("Something went wrong.");
-    }
-  };
-
   return (
     <footer className="mt-24 bg-[#507c80]/10 border-t border-slate-200">
       <Container>
@@ -85,103 +53,53 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation */}
+          {/* For Individuals */}
           <div>
             <p className="text-sm font-semibold tracking-wide text-slate-900">
-              Explore
+              For Individuals
             </p>
             <ul className="mt-3 space-y-2 text-sm">
-              <li>
-                <Link href="/#launch" className="text-slate-600 hover:text-slate-900">
-                  Work &amp; Opportunities
-                </Link>
-              </li>
-              <li>
-                <Link href="/#launch" className="text-slate-600 hover:text-slate-900">
-                  Learn
-                </Link>
-              </li>
-              <li>
-                <Link href="/tools" className="text-slate-600 hover:text-slate-900">
-                  Tools
-                </Link>
-              </li>
-              <li>
-                <Link href="/resources" className="text-slate-600 hover:text-slate-900">
-                  Resources
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="text-slate-600 hover:text-slate-900">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="text-slate-600 hover:text-slate-900">
-                  Events
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="text-slate-600 hover:text-slate-900">
-                  For Businesses
-                </Link>
-              </li>
-              <li>
-                <Link href="/careers" className="text-slate-600 hover:text-slate-900">
-                  Work With Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-slate-600 hover:text-slate-900">
-                  Contact Us
-                </Link>
-              </li>
+              <li><Link href="/jobs" className="text-slate-600 hover:text-slate-900">Work</Link></li>
+              <li><Link href="/opportunities" className="text-slate-600 hover:text-slate-900">Opportunities</Link></li>
+              <li><Link href="/career-paths" className="text-slate-600 hover:text-slate-900">Career Paths</Link></li>
+              <li><Link href="/learn" className="text-slate-600 hover:text-slate-900">Learn</Link></li>
+              <li><Link href="/resources" className="text-slate-600 hover:text-slate-900">Resources</Link></li>
+              <li><Link href="/tools" className="text-slate-600 hover:text-slate-900">Tools</Link></li>
+              <li><Link href="/events" className="text-slate-600 hover:text-slate-900">Events</Link></li>
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* For Businesses */}
           <div>
             <p className="text-sm font-semibold tracking-wide text-slate-900">
-              Contact
+              For Businesses
             </p>
-            <div className="mt-3 space-y-2 text-sm text-slate-600">
-              <p>Email: {contact.email}</p>
-              <p>WhatsApp: {contact.whatsapp}</p>
-              <p>Location: {contact.location}</p>
-            </div>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><Link href="/tools" className="text-slate-600 hover:text-slate-900">Business Tools</Link></li>
+              <li><Link href="/resources" className="text-slate-600 hover:text-slate-900">Business Resources</Link></li>
+              <li><Link href="/services" className="text-slate-600 hover:text-slate-900">Services</Link></li>
+              <li><Link href="/case-studies" className="text-slate-600 hover:text-slate-900">Case Studies</Link></li>
+              <li><Link href="/consultation" className="text-slate-600 hover:text-slate-900">Consultation</Link></li>
+              <li><Link href="/contact" className="text-slate-600 hover:text-slate-900">Contact</Link></li>
+            </ul>
           </div>
 
-          {/* Newsletter */}
+          {/* Prowess Digital Solutions */}
           <div>
             <p className="text-sm font-semibold tracking-wide text-slate-900">
-              Stay Updated
+              {brand.name}
             </p>
-            <p className="mt-3 text-sm text-slate-600">
-              Get notified about new jobs, opportunities, and career resources.
-            </p>
-            <form onSubmit={handleSubscribe} className="mt-3 flex gap-2">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#507c80]"
-              />
-              <button
-                type="submit"
-                disabled={status === "loading"}
-                aria-label="Subscribe"
-                className="flex flex-shrink-0 items-center justify-center rounded-lg bg-[#507c80] px-3 py-2 text-white transition hover:bg-[#3d5f62] disabled:opacity-60"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </button>
-            </form>
-            {message && (
-              <p className={`mt-2 text-xs ${status === "ok" ? "text-[#3d5f62]" : "text-red-600"}`}>{message}</p>
-            )}
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><Link href="/about" className="text-slate-600 hover:text-slate-900">About</Link></li>
+              <li><Link href="/blog" className="text-slate-600 hover:text-slate-900">Blog</Link></li>
+              <li><Link href="/careers" className="text-slate-600 hover:text-slate-900">Work With Us</Link></li>
+              <li><Link href="/privacy-policy" className="text-slate-600 hover:text-slate-900">Privacy Policy</Link></li>
+              <li><Link href="/terms-of-service" className="text-slate-600 hover:text-slate-900">Terms of Service</Link></li>
+            </ul>
+            <div className="mt-4 space-y-1 text-xs text-slate-500">
+              <p>{contact.email}</p>
+              <p>{contact.whatsapp}</p>
+            </div>
           </div>
         </div>
 

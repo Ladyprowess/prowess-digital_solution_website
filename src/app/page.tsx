@@ -1,84 +1,69 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ManualGoogleReviews } from "@/components/ManualGoogleReviews";
 import { HeroSection } from "@/components/HeroSection";
 import { Reveal } from "@/components/Reveal";
-import { homeSections, popularSearches, careerPaths } from "@/content/site";
+import { supabase } from "@/lib/supabase";
+import { goalCards, popularSearches, whyProwess, newsletterPreferences } from "@/content/site";
 
-const scopeStats = [
-  {
-    value: "4.7",
-    label: "Rating on Google",
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-    ),
-  },
-  {
-    value: "5",
-    label: "Ways to Move Forward",
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-    ),
-  },
-  {
-    value: "Remote + Africa",
-    label: "Where We Focus",
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15.3 15.3 0 010 18 15.3 15.3 0 010-18z" />
-    ),
-  },
-  {
-    value: "Free",
-    label: "To Get Started",
-    icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-    ),
-  },
-];
+type OpportunityCard = {
+  id: string;
+  kind: "job" | "opportunity";
+  title: string;
+  subtitle: string;
+  meta: string;
+  href: string;
+};
 
-const forBusinesses = [
-  {
-    title: "Business Services",
-    desc: "Diagnostics, systems, and playbooks to help you run a structured, sustainable business.",
-    href: "/services",
-    cta: "See services",
-  },
-  {
-    title: "Case Studies",
-    desc: "Real work we've done with founders and small businesses.",
-    href: "/case-studies",
-    cta: "View case studies",
-  },
-  {
-    title: "Book a Consultation",
-    desc: "Talk to us directly about what your business needs.",
-    href: "/consultation",
-    cta: "Book a call",
-  },
-];
+type CareerPathCard = { id: string; slug: string; title: string; description: string | null };
+type LearnCard = { id: string; slug: string; title: string; description: string | null; access: string; price: number | null; price_currency: string | null };
+type ResourceCard = { id: string; slug: string; title: string; summary: string | null; resource_type: string | null; access: string; price: number | null; price_currency: string | null };
+type EventCard = { id: string; slug: string; title: string; date: string; type: string | null };
 
-function WaitlistForm({ preference, source }: { preference: string; source: string }) {
+function EmptyState({ children }: { children: React.ReactNode }) {
+  return <p className="rounded-2xl border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">{children}</p>;
+}
+
+function Badge({ premium }: { premium: boolean }) {
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${premium ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+      {premium ? "Premium" : "Free"}
+    </span>
+  );
+}
+
+function NewsletterForm() {
   const [email, setEmail] = useState("");
+  const [checked, setChecked] = useState<string[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
+
+  function toggle(key: string) {
+    setChecked((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
     setMessage("");
+    const preferences = checked.flatMap((key) => {
+      const pref = newsletterPreferences.find((p) => p.key === key);
+      return pref ? [pref.key, ...("also" in pref ? pref.also : [])] : [key];
+    });
     try {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, preference, source }),
+        body: JSON.stringify({ email, preferences: preferences.length ? preferences : ["general"], source: "homepage-newsletter" }),
       });
       const data = await res.json();
       if (data.ok) {
         setStatus("ok");
-        setMessage("You're on the list. We'll email you when it's live.");
+        setMessage("You're on the list.");
         setEmail("");
+        setChecked([]);
       } else {
         setStatus("error");
         setMessage(data.error || "Something went wrong.");
@@ -90,8 +75,8 @@ function WaitlistForm({ preference, source }: { preference: string; source: stri
   };
 
   return (
-    <div className="mx-auto max-w-md">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-lg">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <input
           type="email"
           required
@@ -105,232 +90,383 @@ function WaitlistForm({ preference, source }: { preference: string; source: stri
           disabled={status === "loading"}
           className="inline-flex flex-shrink-0 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90 disabled:opacity-60"
         >
-          {status === "loading" ? "Joining…" : "Notify Me"}
+          {status === "loading" ? "Joining…" : "Get Updates"}
         </button>
-      </form>
-      {message && (
-        <p className={`mt-3 text-sm ${status === "ok" ? "text-primary" : "text-red-600"}`}>{message}</p>
-      )}
-    </div>
-  );
-}
-
-function TagRow({ items }: { items: readonly (string | { label: string; href: string })[] }) {
-  return (
-    <div className="flex flex-wrap justify-center gap-3">
-      {items.map((item) => {
-        const label = typeof item === "string" ? item : item.label;
-        const href = typeof item === "string" ? "/#launch" : item.href;
-        return (
-          <Link
-            key={label}
-            href={href}
-            className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary"
-          >
-            {label}
-          </Link>
-        );
-      })}
-    </div>
+      </div>
+      <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2">
+        {newsletterPreferences.map((p) => (
+          <label key={p.key} className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input type="checkbox" checked={checked.includes(p.key)} onChange={() => toggle(p.key)} />
+            {p.label}
+          </label>
+        ))}
+      </div>
+      {message && <p className={`mt-3 text-center text-sm ${status === "ok" ? "text-primary" : "text-red-600"}`}>{message}</p>}
+    </form>
   );
 }
 
 export default function ModernHomePage() {
+  const [opportunities, setOpportunities] = useState<OpportunityCard[]>([]);
+  const [careerPathCards, setCareerPathCards] = useState<CareerPathCard[]>([]);
+  const [courses, setCourses] = useState<LearnCard[]>([]);
+  const [freeResources, setFreeResources] = useState<ResourceCard[]>([]);
+  const [premiumItems, setPremiumItems] = useState<(LearnCard | ResourceCard)[]>([]);
+  const [events, setEvents] = useState<EventCard[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [jobsRes, oppsRes, pathsRes, coursesRes, resourcesRes, eventsRes] = await Promise.all([
+        supabase.from("jobs").select("id, slug, title, location_type, country, created_at, companies(name)").eq("status", "published").order("created_at", { ascending: false }).limit(4),
+        supabase.from("opportunities").select("id, slug, title, organisation_name, created_at, opportunity_types(name)").eq("status", "published").order("created_at", { ascending: false }).limit(4),
+        supabase.from("career_paths").select("id, slug, title, description").eq("status", "published").order("created_at", { ascending: false }).limit(6),
+        supabase.from("courses").select("id, slug, title, description, access, price, price_currency").eq("status", "published").order("created_at", { ascending: false }).limit(6),
+        supabase.from("resources").select("id, slug, title, summary, resource_type, access, price, price_currency").eq("status", "published").in("audience", ["consumer", "both"]).order("created_at", { ascending: false }).limit(10),
+        supabase.from("events").select("id, slug, title, date, type").eq("status", "published").gte("date", new Date().toISOString()).order("date", { ascending: true }).limit(3),
+      ]);
+
+      type JobQueryRow = { id: string; slug: string; title: string; location_type: string; country: string | null; companies: { name: string } | null };
+      type OppQueryRow = { id: string; slug: string; title: string; organisation_name: string | null; opportunity_types: { name: string } | null };
+
+      const jobCards: OpportunityCard[] = ((jobsRes.data || []) as unknown as JobQueryRow[]).map((j) => ({
+        id: j.id,
+        kind: "job",
+        title: j.title,
+        subtitle: j.companies?.name || "Prowess Digital Solutions",
+        meta: j.location_type === "remote" ? "Remote" : [j.location_type, j.country].filter(Boolean).join(" · ") || "Job",
+        href: `/jobs/${j.slug}`,
+      }));
+      const oppCards: OpportunityCard[] = ((oppsRes.data || []) as unknown as OppQueryRow[]).map((o) => ({
+        id: o.id,
+        kind: "opportunity",
+        title: o.title,
+        subtitle: o.organisation_name || o.opportunity_types?.name || "Opportunity",
+        meta: o.opportunity_types?.name || "Opportunity",
+        href: `/opportunities/${o.slug}`,
+      }));
+      setOpportunities([...jobCards, ...oppCards].slice(0, 6));
+
+      setCareerPathCards(pathsRes.data || []);
+
+      const publishedCourses = (coursesRes.data || []) as LearnCard[];
+      setCourses(publishedCourses.filter((c) => c.access === "free").slice(0, 4));
+
+      const publishedResources = (resourcesRes.data || []) as ResourceCard[];
+      setFreeResources(publishedResources.filter((r) => r.access === "free").slice(0, 6));
+
+      const premium = [
+        ...publishedCourses.filter((c) => c.access === "premium"),
+        ...publishedResources.filter((r) => r.access === "premium"),
+      ].slice(0, 4);
+      setPremiumItems(premium);
+
+      setEvents((eventsRes.data || []) as EventCard[]);
+      setLoading(false);
+    })();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background" id="top">
 
-      {/* HERO SECTION */}
+      {/* HERO */}
       <HeroSection />
 
       {/* POPULAR SEARCHES */}
       <section className="bg-background py-14">
         <div className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
           <p className="mb-5 text-xs font-bold uppercase tracking-widest text-muted-foreground">Popular Searches</p>
-          <TagRow items={popularSearches} />
-        </div>
-      </section>
-
-      {/* SCOPE BAR - honest, no invented numbers */}
-      <section className="border-y border-border bg-background py-10">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <Reveal>
-            <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-              <p className="max-w-[190px] text-sm font-bold uppercase leading-snug tracking-wide text-foreground">
-                Built for people moving their career and business forward
-              </p>
-
-              <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 lg:flex lg:gap-10">
-                {scopeStats.map((stat) => (
-                  <div key={stat.label} className="flex items-start gap-2.5">
-                    <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      {stat.icon}
-                    </svg>
-                    <div>
-                      <div className="text-lg font-extrabold text-foreground">{stat.value}</div>
-                      <div className="text-xs leading-tight text-muted-foreground">{stat.label}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* FIVE PILLARS */}
-      <section id="launch" className="bg-background py-20 sm:py-28 scroll-mt-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <Reveal>
-            <div className="mx-auto max-w-2xl text-center">
-              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Five Ways to Move Forward</div>
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-                Discover, learn, build, and connect.
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Prowess Digital Solutions is a platform for discovering opportunities, building skills, and moving your career or business forward. Jobs are one part of it, not the whole thing.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {homeSections.map((section, idx) => (
-              <Reveal key={section.title} delay={idx * 70}>
-                <div className="flex h-full flex-col rounded-3xl border border-border bg-card p-7 shadow-sm">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-foreground">{section.title}</h3>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
-                        section.badge === "Live"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {section.badge}
-                    </span>
-                  </div>
-                  <p className="mb-5 text-sm text-muted-foreground">{section.desc}</p>
-
-                  {"tags" in section && section.tags && (
-                    <div className="mb-5 flex flex-wrap gap-2">
-                      {section.tags.map((tag) => (
-                        <span key={tag} className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {"links" in section && section.links && (
-                    <div className="mb-5 flex flex-wrap gap-2">
-                      {section.links.map((link) => (
-                        <Link
-                          key={link.label}
-                          href={link.href}
-                          className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground transition hover:border-primary/40 hover:text-primary"
-                        >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-
-                  <Link
-                    href={section.href}
-                    className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
-                  >
-                    {section.cta}
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </Link>
-                </div>
-              </Reveal>
+          <div className="flex flex-wrap justify-center gap-3">
+            {popularSearches.map((s) => (
+              <Link key={s.label} href={s.href} className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary">
+                {s.label}
+              </Link>
             ))}
           </div>
-
-          <Reveal delay={210}>
-            <div className="mx-auto mt-14 max-w-2xl rounded-3xl border-2 border-primary/20 bg-muted p-10 text-center">
-              <h3 className="mb-2 text-xl font-bold text-foreground">Be first to know as new pillars open up</h3>
-              <p className="mb-6 text-sm text-muted-foreground">No spam. Just an email when Work, Opportunities, and Learn go live.</p>
-              <WaitlistForm preference="general" source="homepage-pillars" />
-              <p className="mt-5 text-xs text-muted-foreground">
-                Hiring? <Link href="/services" className="font-semibold text-primary hover:underline">Reach us as a business</Link> in the meantime.
-              </p>
-            </div>
-          </Reveal>
         </div>
       </section>
 
-      {/* EXPLORE BY CAREER */}
-      <section className="bg-background py-20 sm:py-28">
-        <div className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
+      {/* WHAT DO YOU WANT TO DO */}
+      <section className="border-y border-border bg-background py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <Reveal>
-            <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Explore by Career</div>
-            <h2 className="mb-10 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-              Find your path
+            <h2 className="mb-12 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              What are you here to do?
             </h2>
           </Reveal>
-          <Reveal delay={80}>
-            <TagRow items={careerPaths} />
-          </Reveal>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS - real Google reviews */}
-      <ManualGoogleReviews />
-
-      {/* GET NOTIFIED */}
-      <section className="bg-muted py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <Reveal>
-            <div className="mx-auto max-w-2xl text-center">
-              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Ready When You Are</div>
-              <h2 className="mb-5 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-                Be the first to know what&rsquo;s next on Prowess Digital Solutions.
-              </h2>
-              <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
-                Join the list and get notified as new jobs, opportunities, and courses go live.
-              </p>
-              <WaitlistForm preference="general" source="homepage-final-cta" />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* FOR BUSINESSES */}
-      <section className="bg-background py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <Reveal>
-            <div className="mx-auto max-w-2xl text-center">
-              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">For Businesses</div>
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-                Looking to grow your business instead?
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Prowess Digital Solutions also works directly with founders and small businesses on structure, systems, and strategy.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="mt-14 grid gap-6 sm:grid-cols-3">
-            {forBusinesses.map((item, idx) => (
-              <Reveal key={item.title} delay={idx * 90}>
-                <Link
-                  href={item.href}
-                  className="group block h-full rounded-3xl border border-border bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
-                >
-                  <h3 className="mb-2 text-lg font-bold text-foreground">{item.title}</h3>
-                  <p className="mb-4 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
-                    {item.cta}
-                    <svg className="h-4 w-4 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </span>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+            {goalCards.map((g, idx) => (
+              <Reveal key={g.title} delay={idx * 60}>
+                <Link href={g.href} className="group block h-full rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+                  <h3 className="mb-2 text-base font-bold text-foreground">{g.title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{g.desc}</p>
                 </Link>
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* LATEST OPPORTUNITIES */}
+      <section className="bg-muted py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 text-center">
+              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Fresh On Prowess Digital Solutions</div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Opportunities worth knowing about</h2>
+            </div>
+          </Reveal>
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+          ) : opportunities.length === 0 ? (
+            <EmptyState>No opportunities published yet. Check back soon, or <Link href="/#launch" className="font-semibold text-primary hover:underline">get notified</Link> when the first ones go live.</EmptyState>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {opportunities.map((o) => (
+                <Link key={o.id} href={o.href} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-primary">{o.kind === "job" ? "Job" : o.meta}</span>
+                  <h3 className="mt-1 text-base font-bold text-foreground">{o.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{o.subtitle}</p>
+                  <span className="mt-3 inline-block text-sm font-semibold text-primary">View opportunity →</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CAREER PATHS */}
+      <section className="bg-background py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 text-center">
+              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Grow With Intention</div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Where do you want your career to go?</h2>
+            </div>
+          </Reveal>
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+          ) : careerPathCards.length === 0 ? (
+            <EmptyState>Career paths are being built out. This is where guided roadmaps like Cybersecurity or Digital Marketing will live.</EmptyState>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {careerPathCards.map((c) => (
+                <Link key={c.id} href={`/career-paths/${c.slug}`} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                  <h3 className="text-base font-bold text-foreground">{c.title}</h3>
+                  {c.description && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>}
+                </Link>
+              ))}
+            </div>
+          )}
+          {careerPathCards.length > 0 && (
+            <div className="mt-8 text-center">
+              <Link href="/career-paths" className="text-sm font-semibold text-primary hover:underline">Explore all career paths →</Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* LEARN */}
+      <section className="bg-muted py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 text-center">
+              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Learn</div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Learn something useful</h2>
+            </div>
+          </Reveal>
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+          ) : courses.length === 0 ? (
+            <EmptyState>Courses are coming soon.</EmptyState>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {courses.map((c) => (
+                <Link key={c.id} href={`/learn/${c.slug}`} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                  <Badge premium={c.access === "premium"} />
+                  <h3 className="mt-3 text-base font-bold text-foreground">{c.title}</h3>
+                </Link>
+              ))}
+            </div>
+          )}
+          <div className="mt-8 text-center">
+            <Link href="/learn" className="text-sm font-semibold text-primary hover:underline">Explore the learning library →</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FREE RESOURCES */}
+      <section className="bg-background py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 text-center">
+              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Start Here. It&rsquo;s Free.</div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Genuinely useful, no cost</h2>
+            </div>
+          </Reveal>
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+          ) : freeResources.length === 0 ? (
+            <EmptyState>Free resources are on the way.</EmptyState>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {freeResources.map((r) => (
+                <Link key={r.id} href={`/resources/${r.slug}`} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
+                  <h3 className="mt-1 text-base font-bold text-foreground">{r.title}</h3>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* PREMIUM */}
+      <section className="bg-muted py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 text-center">
+              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Go Deeper When You&rsquo;re Ready</div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Premium courses, e-books and guides</h2>
+            </div>
+          </Reveal>
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+          ) : premiumItems.length === 0 ? (
+            <EmptyState>Premium content is on the way. Free content comes first.</EmptyState>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {premiumItems.map((item) => (
+                <Link
+                  key={item.id}
+                  href={"resource_type" in item ? `/resources/${item.slug}` : `/learn/${item.slug}`}
+                  className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <Badge premium />
+                  <h3 className="mt-3 text-base font-bold text-foreground">{item.title}</h3>
+                  {item.price ? <p className="mt-1 text-sm text-muted-foreground">{item.price_currency || "NGN"} {item.price}</p> : null}
+                </Link>
+              ))}
+            </div>
+          )}
+          <div className="mt-8 text-center">
+            <Link href="/learn" className="text-sm font-semibold text-primary hover:underline">Explore premium resources →</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* TOOLS */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/70 py-20 sm:py-24">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+        </div>
+        <div className="relative mx-auto max-w-6xl px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 ring-1 ring-white/15">Tools</div>
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">Tools to help you move forward</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/85">
+            CV tools, career tools, business tools, calculators and generators. Free today, with premium features on the way.
+          </p>
+          <Link href="/tools" className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-primary shadow-2xl transition hover:scale-[1.02] hover:bg-white/95">
+            Explore All Tools
+          </Link>
+        </div>
+      </section>
+
+      {/* EVENTS */}
+      <section className="bg-background py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 text-center">
+              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Connect</div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">What&rsquo;s happening</h2>
+            </div>
+          </Reveal>
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+          ) : events.length === 0 ? (
+            <EmptyState>No upcoming events right now. Check back soon.</EmptyState>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-3">
+              {events.map((e) => (
+                <Link key={e.id} href={`/events/${e.slug}`} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{e.type || "Event"}</span>
+                  <h3 className="mt-1 text-base font-bold text-foreground">{e.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{new Date(e.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                </Link>
+              ))}
+            </div>
+          )}
+          <div className="mt-8 text-center">
+            <Link href="/events" className="text-sm font-semibold text-primary hover:underline">Explore events →</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FOR BUSINESSES */}
+      <section className="bg-muted py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 text-center">
+              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">For Businesses</div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Prowess Digital Solutions also helps businesses grow</h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
+                Practical digital tools, resources and professional services designed to help businesses operate and grow.
+              </p>
+            </div>
+          </Reveal>
+          <div className="grid gap-5 sm:grid-cols-3">
+            <Link href="/tools" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+              <h3 className="text-base font-bold text-foreground">Business Tools</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Tools for everyday business operations.</p>
+            </Link>
+            <Link href="/resources" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+              <h3 className="text-base font-bold text-foreground">Business Resources</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Guides, templates and practical resources.</p>
+            </Link>
+            <Link href="/services" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+              <h3 className="text-base font-bold text-foreground">Digital Solutions</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Professional services for businesses that need extra support.</p>
+            </Link>
+          </div>
+          <div className="mt-8 text-center">
+            <Link href="/services" className="text-sm font-semibold text-primary hover:underline">Explore solutions for businesses →</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* WHY */}
+      <section className="bg-background py-20 sm:py-24">
+        <div className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
+          <Reveal>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">One place to keep moving forward.</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
+              Instead of searching across dozens of websites for jobs, learning resources, career advice and opportunities, Prowess Digital Solutions brings useful things together in one place.
+            </p>
+          </Reveal>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {whyProwess.map((w) => (
+              <div key={w.title}>
+                <h3 className="text-base font-bold text-foreground">{w.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{w.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <ManualGoogleReviews />
+
+      {/* GET UPDATES */}
+      <section className="bg-muted py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
+          <Reveal>
+            <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Stay Connected</div>
+            <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Don&rsquo;t miss your next opportunity.</h2>
+            <p className="mb-8 text-lg text-muted-foreground">Get new opportunities, resources, learning content and Prowess Digital Solutions updates in your inbox.</p>
+            <NewsletterForm />
+          </Reveal>
         </div>
       </section>
 

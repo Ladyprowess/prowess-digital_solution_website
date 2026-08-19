@@ -5,6 +5,7 @@ import Link from "next/link";
 import Container from "@/components/Container";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
+import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -34,9 +35,11 @@ const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-
 
 function LearnAdmin() {
   const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [loadingList, setLoadingList] = useState(true);
 
   const [title, setTitle] = useState("");
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [level, setLevel] = useState<(typeof LEVELS)[number] | "">("");
   const [access, setAccess] = useState<"free" | "premium">("free");
@@ -50,11 +53,15 @@ function LearnAdmin() {
 
   const loadCourses = useCallback(async () => {
     setLoadingList(true);
-    const { data } = await supabase
-      .from("courses")
-      .select("id, slug, title, description, level, access, price, status")
-      .order("created_at", { ascending: false });
+    const [{ data }, { data: skillRows }] = await Promise.all([
+      supabase
+        .from("courses")
+        .select("id, slug, title, description, level, access, price, status")
+        .order("created_at", { ascending: false }),
+      supabase.from("skills").select("id, slug, name").order("name"),
+    ]);
     setCourses(data || []);
+    setSkills(skillRows || []);
     setLoadingList(false);
   }, []);
 
@@ -78,7 +85,7 @@ function LearnAdmin() {
     setSaving(true);
     try {
       const slug = await getUniqueSlug(slugify(title));
-      const { error } = await supabase.from("courses").insert({
+      const { data: created, error } = await supabase.from("courses").insert({
         slug,
         title: title.trim(),
         description: description.trim() || null,
@@ -87,11 +94,13 @@ function LearnAdmin() {
         price: access === "premium" && price ? Number(price) : null,
         price_currency: access === "premium" && price ? currency : null,
         status: publishNow ? "published" : "draft",
-      });
-      if (error) throw new Error(error.message);
+      }).select("id").single();
+      if (error || !created) throw new Error(error?.message || "Could not save the course.");
+
+      await saveSkillMap("course_skill_map", "course_id", created.id, selectedSkillIds);
 
       setMsg("Course saved.");
-      setTitle(""); setDescription(""); setLevel(""); setAccess("free"); setPrice(""); setPublishNow(false);
+      setTitle(""); setDescription(""); setLevel(""); setAccess("free"); setPrice(""); setPublishNow(false); setSelectedSkillIds([]);
       loadCourses();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong.");
@@ -140,6 +149,13 @@ function LearnAdmin() {
               price={price} onPriceChange={setPrice}
               currency={currency} onCurrencyChange={setCurrency}
             />
+
+            <Field label="Skills">
+              <SkillPicker
+                skills={skills} onSkillsChange={setSkills}
+                selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds}
+              />
+            </Field>
 
             <label className="mt-2 flex items-center gap-3 text-sm font-semibold text-foreground">
               <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />

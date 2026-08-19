@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Container from "@/components/Container";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
+import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -37,9 +38,11 @@ const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-
 
 function ResourcesAdmin() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [loadingList, setLoadingList] = useState(true);
 
   const [title, setTitle] = useState("");
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [audience, setAudience] = useState<(typeof AUDIENCES)[number]>("consumer");
   const [resourceType, setResourceType] = useState<(typeof RESOURCE_TYPES)[number]>("guide");
   const [category, setCategory] = useState("");
@@ -62,11 +65,15 @@ function ResourcesAdmin() {
 
   const loadResources = useCallback(async () => {
     setLoadingList(true);
-    const { data } = await supabase
-      .from("resources")
-      .select("id, slug, title, resource_type, category, audience, access, price, status")
-      .order("created_at", { ascending: false });
+    const [{ data }, { data: skillRows }] = await Promise.all([
+      supabase
+        .from("resources")
+        .select("id, slug, title, resource_type, category, audience, access, price, status")
+        .order("created_at", { ascending: false }),
+      supabase.from("skills").select("id, slug, name").order("name"),
+    ]);
     setResources(data || []);
+    setSkills(skillRows || []);
     setLoadingList(false);
   }, []);
 
@@ -87,7 +94,7 @@ function ResourcesAdmin() {
     setTitle(""); setAudience("consumer"); setResourceType("guide"); setCategory(""); setLevel("");
     setSource("prowess"); setExternalUrl(""); setThumbnailUrl("");
     setSummary(""); setContent(""); setFileUrl("");
-    setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true);
+    setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
   };
 
   const submit = async () => {
@@ -99,7 +106,7 @@ function ResourcesAdmin() {
     try {
       const slug = await getUniqueSlug(slugify(title));
       const now = new Date().toISOString();
-      const { error } = await supabase.from("resources").insert({
+      const { data: created, error } = await supabase.from("resources").insert({
         slug,
         title: title.trim(),
         audience,
@@ -119,8 +126,10 @@ function ResourcesAdmin() {
         status: publishNow ? "published" : "draft",
         is_published: publishNow,
         published_at: publishNow ? now : null,
-      });
-      if (error) throw new Error(error.message);
+      }).select("id").single();
+      if (error || !created) throw new Error(error?.message || "Could not save the resource.");
+
+      await saveSkillMap("resource_skill_map", "resource_id", created.id, selectedSkillIds);
 
       setMsg("Resource saved.");
       resetForm();
@@ -224,6 +233,13 @@ function ResourcesAdmin() {
               price={price} onPriceChange={setPrice}
               currency={currency} onCurrencyChange={setCurrency}
             />
+
+            <Field label="Skills">
+              <SkillPicker
+                skills={skills} onSkillsChange={setSkills}
+                selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds}
+              />
+            </Field>
 
             <div className="mt-2 flex flex-wrap items-center gap-6">
               <label className="flex items-center gap-3 text-sm font-semibold text-foreground">

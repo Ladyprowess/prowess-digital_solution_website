@@ -5,22 +5,23 @@ export const brand = {
   tone: "Calm, clear, professional, honest, supportive",
 };
 
-// The five pillars. Jobs (Work) is one of five, not the identity of the
-// whole platform - see the homepage restructure for why. Reused by the nav,
-// the hero's category grid, and the homepage pillar section.
+// The five pillars, now pointing at their real final routes (/jobs,
+// /opportunities, /learn, /career-paths don't exist yet and will 404 until
+// built - accepted deliberately rather than routing through a waitlist
+// anchor forever). Reused by the nav and the hero's category grid.
 export const pillars = [
-  { key: "work", label: "Work", desc: "Jobs, internships & remote roles", href: "/#launch" },
-  { key: "opportunities", label: "Opportunities", desc: "Grants, scholarships & fellowships", href: "/#launch" },
-  { key: "learn", label: "Learn", desc: "Courses & skill paths", href: "/#launch" },
+  { key: "work", label: "Work", desc: "Jobs, internships & remote roles", href: "/jobs" },
+  { key: "opportunities", label: "Opportunities", desc: "Grants, scholarships & fellowships", href: "/opportunities" },
+  { key: "learn", label: "Learn", desc: "Courses & skill paths", href: "/learn" },
   { key: "build", label: "Build", desc: "CV, portfolio & tools", href: "/tools" },
   { key: "connect", label: "Connect", desc: "Events & community", href: "/events" },
 ] as const;
 
 export const navPrimary = [
   { href: "/", label: "Home" },
-  { href: "/#launch", label: "Work" },
-  { href: "/#launch", label: "Opportunities" },
-  { href: "/#launch", label: "Learn" },
+  { href: "/jobs", label: "Work" },
+  { href: "/opportunities", label: "Opportunities" },
+  { href: "/learn", label: "Learn" },
   { href: "/tools", label: "Build" },
   { href: "/events", label: "Connect" },
 ] as const;
@@ -28,101 +29,67 @@ export const navPrimary = [
 export const navMore = [
   { href: "/blog", label: "Blog" },
   { href: "/resources", label: "Resources" },
+  { href: "/career-paths", label: "Career Paths" },
   { href: "/about", label: "About Us" },
   { href: "/services", label: "For Businesses" },
   { href: "/careers", label: "Work With Us" },
   { href: "/contact", label: "Contact Us" },
 ] as const;
 
-// Job/opportunity categories shown on the homepage while the Jobs and
-// Opportunities boards are being built. Descriptive scope only - no listing
-// counts or performance numbers until those are real.
-export const jobCategories = [
-  "Tech", "Remote", "Design", "Marketing", "Writing", "Customer Support", "Sales", "Web3",
-] as const;
-
-export const opportunityTypes = [
-  { title: "Internships", desc: "For students and entry-level candidates." },
-  { title: "Freelance", desc: "Contract and project-based work." },
-  { title: "Scholarships", desc: "Education opportunities." },
-  { title: "Grants", desc: "Funding for ideas and ventures." },
-  { title: "Fellowships", desc: "Professional development programmes." },
-  { title: "Competitions", desc: "Hackathons, pitch and design challenges." },
-] as const;
-
-export const learnPreview = [
-  "How to Get Your First Remote Job",
-  "How to Build a Portfolio Without Experience",
-  "How to Start Freelancing",
-  "How to Use AI to Improve Your Job Search",
-] as const;
-
-// Cross-pillar on purpose - not all jobs. Real destinations link out
-// directly; not-yet-built ones fall back to the waitlist section.
+// Cross-pillar on purpose - not all jobs.
 export const popularSearches = [
-  { label: "Remote Jobs", href: "/#launch" },
-  { label: "Scholarships", href: "/#launch" },
-  { label: "Grants", href: "/#launch" },
-  { label: "Free Courses", href: "/#launch" },
+  { label: "Remote Jobs", href: "/jobs" },
+  { label: "Scholarships", href: "/opportunities" },
+  { label: "Grants", href: "/opportunities" },
+  { label: "Free Courses", href: "/learn" },
   { label: "Events", href: "/events" },
   { label: "Free Tools", href: "/tools" },
 ] as const;
 
-export const careerPaths = [
-  "Technology", "Business", "Marketing", "Design", "Writing", "Finance", "Web3", "Customer Support",
-] as const;
-
-// The five homepage entry-point cards. Titles match the pillars above but
-// are framed as actions, and Build/Connect/Explore point at real, live
-// pages today while Work+Opportunities and Learn are still pre-launch.
-export const homeSections = [
+// "What are you here to do?" - goal-oriented, not category-oriented. Build
+// and Discover point at real, live pages today; the rest 404 until built.
+export const goalCards = [
   {
-    title: "Find an Opportunity",
-    badge: "Coming Soon",
-    desc: "Jobs, internships, grants, scholarships, fellowships and more.",
-    tags: ["Tech", "Remote", "Internships", "Scholarships", "Grants", "Web3"],
-    cta: "Get notified",
-    href: "/#launch",
+    title: "Find an opportunity",
+    desc: "Jobs, internships, scholarships, grants and fellowships.",
+    href: "/jobs",
   },
   {
-    title: "Learn Something Useful",
-    badge: "Coming Soon",
-    desc: "Courses, guides, skill paths and practical resources.",
-    tags: learnPreview.slice(0, 4) as unknown as string[],
-    cta: "Get notified",
-    href: "/#launch",
+    title: "Learn a skill",
+    desc: "Courses, videos, e-books, guides and practical resources.",
+    href: "/learn",
   },
   {
-    title: "Build Your Career",
-    badge: "Live",
-    desc: "Free tools to save time today. CV, portfolio and interview tools are next.",
-    links: [
-      { label: "Business Tools", href: "/tools" },
-      { label: "CV Builder (soon)", href: "/#launch" },
-      { label: "Portfolio Tools (soon)", href: "/#launch" },
-      { label: "Interview Prep (soon)", href: "/#launch" },
-    ],
-    cta: "Explore tools",
+    title: "Build your career",
+    desc: "Career paths, skill roadmaps and professional development.",
+    href: "/career-paths",
+  },
+  {
+    title: "Find useful tools",
+    desc: "Free and premium tools to help you work smarter.",
     href: "/tools",
   },
   {
-    title: "Discover What's Happening",
-    badge: "Live",
-    desc: "Webinars, clinics and career events worth carving out time for.",
-    cta: "See events",
+    title: "Discover what's happening",
+    desc: "Events, workshops, conferences and communities.",
     href: "/events",
   },
-  {
-    title: "Explore Prowess",
-    badge: "Live",
-    desc: "Career advice, guides and resources already on the site.",
-    links: [
-      { label: "Blog", href: "/blog" },
-      { label: "Resources", href: "/resources" },
-    ],
-    cta: "Start exploring",
-    href: "/blog",
-  },
+] as const;
+
+export const whyProwess = [
+  { title: "Curated", desc: "Useful content is selected and organised, not dumped in a directory." },
+  { title: "Practical", desc: "Resources are focused on things you can actually use." },
+  { title: "Accessible", desc: "A large portion of the platform remains free." },
+  { title: "Built for growth", desc: "Follow skills and career paths instead of consuming random content." },
+] as const;
+
+export const newsletterPreferences = [
+  { key: "jobs", label: "Jobs" },
+  { key: "scholarships", label: "Scholarships & Grants", also: ["grants"] },
+  { key: "courses", label: "Learning" },
+  { key: "career_resources", label: "Career Resources" },
+  { key: "events", label: "Events" },
+  { key: "business", label: "Business" },
 ] as const;
 
 export type Service = {

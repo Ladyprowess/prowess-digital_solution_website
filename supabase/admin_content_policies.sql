@@ -35,7 +35,8 @@ begin
     'course_skill_map',
     'resources',
     'resource_skill_map',
-    'purchases'
+    'purchases',
+    'event_skill_map'
   ]
   loop
     execute format('drop policy if exists "admin_full_access" on public.%I', t);

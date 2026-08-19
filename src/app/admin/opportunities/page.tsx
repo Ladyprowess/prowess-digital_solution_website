@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Container from "@/components/Container";
 import { AdminGate } from "@/components/admin/AdminGate";
+import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -33,11 +34,13 @@ const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-
 
 function OpportunitiesAdmin() {
   const [types, setTypes] = useState<Lookup[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [opportunities, setOpportunities] = useState<OpportunityRow[]>([]);
   const [loadingLists, setLoadingLists] = useState(true);
 
   const [title, setTitle] = useState("");
   const [typeId, setTypeId] = useState("");
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [organisationName, setOrganisationName] = useState("");
   const [description, setDescription] = useState("");
   const [eligibility, setEligibility] = useState("");
@@ -57,14 +60,16 @@ function OpportunitiesAdmin() {
 
   const loadLists = useCallback(async () => {
     setLoadingLists(true);
-    const [{ data: typeRows }, { data: oppRows }] = await Promise.all([
+    const [{ data: typeRows }, { data: skillRows }, { data: oppRows }] = await Promise.all([
       supabase.from("opportunity_types").select("id, slug, name").order("name"),
+      supabase.from("skills").select("id, slug, name").order("name"),
       supabase
         .from("opportunities")
         .select("id, slug, title, status, organisation_name, deadline_at, opportunity_types(name)")
         .order("created_at", { ascending: false }),
     ]);
     setTypes(typeRows || []);
+    setSkills(skillRows || []);
     setOpportunities(((oppRows as unknown as OpportunityRow[]) || []));
     setLoadingLists(false);
   }, []);
@@ -92,6 +97,7 @@ function OpportunitiesAdmin() {
     setTitle(""); setTypeId(""); setOrganisationName(""); setDescription("");
     setEligibility(""); setBenefits(""); setLocationType("any"); setCountry("");
     setCity(""); setRemoteRegions(""); setApplyUrl(""); setDeadlineAt(""); setFeatured(false); setPublishNow(true);
+    setSelectedSkillIds([]);
   };
 
   const submit = async () => {
@@ -108,7 +114,7 @@ function OpportunitiesAdmin() {
       ]);
 
       const now = new Date().toISOString();
-      const { error } = await supabase.from("opportunities").insert({
+      const { data: created, error } = await supabase.from("opportunities").insert({
         slug,
         title: title.trim(),
         type_id: typeId,
@@ -126,8 +132,10 @@ function OpportunitiesAdmin() {
         status: publishNow ? "published" : "draft",
         published_at: publishNow ? now : null,
         deadline_at: deadlineAt || null,
-      });
-      if (error) throw new Error(error.message);
+      }).select("id").single();
+      if (error || !created) throw new Error(error?.message || "Could not save the opportunity.");
+
+      await saveSkillMap("opportunity_skill_map", "opportunity_id", created.id, selectedSkillIds);
 
       setMsg("Opportunity saved.");
       resetForm();
@@ -212,6 +220,13 @@ function OpportunitiesAdmin() {
 
             <Field label="Deadline">
               <input value={deadlineAt} onChange={(e) => setDeadlineAt(e.target.value)} className={inputCls} type="date" />
+            </Field>
+
+            <Field label="Skills">
+              <SkillPicker
+                skills={skills} onSkillsChange={setSkills}
+                selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds}
+              />
             </Field>
 
             <div className="mt-2 flex flex-wrap items-center gap-6">
