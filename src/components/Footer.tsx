@@ -1,7 +1,7 @@
 import Container from "@/components/Container";
 import Link from "next/link";
 import { brand } from "@/content/site";
-import { getSiteSettings } from "@/lib/siteSettings";
+import type { SiteSettings } from "@/lib/siteSettings";
 
 const SOCIAL_ICONS = {
   LinkedIn: "M4.98 3.5C4.98 4.88 3.88 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8.5h4V23h-4V8.5zM8.5 8.5h3.83v1.98h.05c.53-1 1.83-2.06 3.77-2.06 4.03 0 4.78 2.65 4.78 6.1V23h-4v-6.75c0-1.61-.03-3.68-2.24-3.68-2.25 0-2.59 1.76-2.59 3.57V23h-4V8.5z",
@@ -9,8 +9,14 @@ const SOCIAL_ICONS = {
   X: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
 };
 
-export default async function Footer() {
-  const settings = await getSiteSettings();
+// Plain sync component: the settings fetch happens once in the RootLayout
+// Server Component (which already needs it for metadata) and is passed
+// down through SiteShell as a prop. Footer must stay non-async - it's
+// imported by SiteShell.tsx, a "use client" file, and React only supports
+// async components when the whole subtree renders on the server; making
+// this async threw "async Client Component" errors in the browser once
+// SiteShell tried to re-render it client-side.
+export default function Footer({ settings }: { settings: SiteSettings }) {
   const socials = [
     settings.socialLinkedin && { name: "LinkedIn", href: settings.socialLinkedin, path: SOCIAL_ICONS.LinkedIn },
     settings.socialInstagram && { name: "Instagram", href: settings.socialInstagram, path: SOCIAL_ICONS.Instagram },

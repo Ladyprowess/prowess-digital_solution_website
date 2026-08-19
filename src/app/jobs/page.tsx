@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
+import { ListingCard, type ListingCardMeta } from "@/components/ListingCard";
 import { supabase } from "@/lib/supabase";
 
 type Lookup = { id: string; slug: string; name: string };
@@ -136,24 +136,26 @@ export default function JobsPage() {
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((j) => (
-              <Link key={j.id} href={`/jobs/${j.slug}`} className="group block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-primary">{j.job_categories?.name || "Job"}</span>
-                  {j.featured && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">Featured</span>}
-                </div>
-                <h3 className="mt-2 text-lg font-bold text-foreground">{j.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{j.companies?.name || "Prowess Digital Solutions"}</p>
-                <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span>{locationLabel(j)}</span>
-                  {j.job_types?.name && <span>· {j.job_types.name}</span>}
-                  {salaryLabel(j) && <span>· {salaryLabel(j)}</span>}
-                </div>
-                {j.deadline_at && (
-                  <p className="mt-3 text-xs text-muted-foreground">Apply by {new Date(j.deadline_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
-                )}
-              </Link>
-            ))}
+            {jobs.map((j) => {
+              const meta: ListingCardMeta[] = [{ icon: "pin", text: locationLabel(j) }];
+              if (j.job_types?.name) meta.push({ icon: "tag", text: j.job_types.name });
+              if (salaryLabel(j)) meta.push({ icon: "cash", text: salaryLabel(j)! });
+
+              return (
+                <ListingCard
+                  key={j.id}
+                  href={`/jobs/${j.slug}`}
+                  icon="briefcase"
+                  colorSeed={j.job_categories?.name || "Job"}
+                  eyebrow={j.job_categories?.name || "Job"}
+                  title={j.title}
+                  subtitle={j.companies?.name || "Prowess Digital Solutions"}
+                  meta={meta}
+                  badge={j.featured ? "Featured" : null}
+                  footer={j.deadline_at ? `Apply by ${new Date(j.deadline_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}` : null}
+                />
+              );
+            })}
           </div>
         )}
       </Container>

@@ -2,9 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 
-export default function SiteShell({ children }: { children: React.ReactNode }) {
+// `footer` is a pre-rendered element (built by the RootLayout Server
+// Component, which passes it in as children/props) rather than a <Footer/>
+// import here - Footer fetches data and must stay async, and an async
+// component can't be imported directly into a "use client" file. See the
+// comment on Footer itself for the full explanation.
+export default function SiteShell({ children, footer }: { children: React.ReactNode; footer: React.ReactNode }) {
   const pathname = usePathname();
   const hideShell = pathname.startsWith("/dashboard") || pathname.startsWith("/login") || pathname.startsWith("/admin");
 
@@ -16,7 +20,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     <>
       <Navbar />
       <main className="min-h-[70vh]">{children}</main>
-      <Footer />
+      {footer}
     </>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import SiteShell from "@/components/SiteShell";
+import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { brand } from "@/content/site";
@@ -156,7 +157,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <Suspense>
-            <SiteShell>{children}</SiteShell>
+            <SiteShell footer={<Footer settings={settings} />}>{children}</SiteShell>
           </Suspense>
         </ThemeProvider>
         <ServiceWorkerRegister />

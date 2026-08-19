@@ -132,11 +132,11 @@ export default function ResourcesPage() {
               external: false,
             },
           ].map((card, i) => (
-            <Reveal key={card.title} delay={i * 90}>
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+            <Reveal key={card.title} delay={i * 90} className="h-full">
+              <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
                 <h3 className="text-lg font-semibold text-foreground">{card.title}</h3>
                 <p className="mt-2 text-muted-foreground">{card.desc}</p>
-                <div className="mt-4">
+                <div className="mt-auto pt-4">
                   {card.external ? (
                     <a
                       href={card.href}
@@ -180,18 +180,18 @@ export default function ResourcesPage() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             {TOOLS.map((tool, i) => (
-              <Reveal key={tool.href} delay={i * 80}>
-                <div className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md">
-                  <div className="flex items-start gap-4">
+              <Reveal key={tool.href} delay={i * 80} className="h-full">
+                <div className="group flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md">
+                  <div className="flex h-full items-start gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
                       {tool.icon}
                     </div>
-                    <div className="min-w-0">
+                    <div className="flex min-w-0 flex-1 flex-col">
                       <h3 className="font-semibold text-foreground">{tool.title}</h3>
                       <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                         {tool.desc}
                       </p>
-                      <div className="mt-4">
+                      <div className="mt-auto pt-4">
                         <a
                           href={tool.href}
                           className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:opacity-80"

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
+import { ListingCard } from "@/components/ListingCard";
 import { supabase } from "@/lib/supabase";
+import { stripHtmlForMeta } from "@/lib/stripHtml";
 
 type CareerPathCard = {
   id: string;
@@ -53,13 +54,15 @@ export default function CareerPathsPage() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {paths.map((p) => (
-              <Link key={p.id} href={`/career-paths/${p.slug}`} className="group block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
-                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${p.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {p.access === "premium" ? "Premium" : "Free"}
-                </span>
-                <h3 className="mt-3 text-lg font-bold text-foreground">{p.title}</h3>
-                {p.description && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{p.description}</p>}
-              </Link>
+              <ListingCard
+                key={p.id}
+                href={`/career-paths/${p.slug}`}
+                icon="path"
+                colorSeed={p.title}
+                eyebrow={p.access === "premium" ? "Premium" : "Free"}
+                title={p.title}
+                description={p.description ? stripHtmlForMeta(p.description, 120) : null}
+              />
             ))}
           </div>
         )}
