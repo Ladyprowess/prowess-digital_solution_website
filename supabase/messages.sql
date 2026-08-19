@@ -10,5 +10,5 @@ create index if not exists messages_created_at_idx
 
 -- Required so the dashboard's chat receives new messages live instead of only
 -- on page refresh. If this errors because the table is already in the
--- publication, that's fine -- ignore it.
+-- publication, that's fine - ignore it.
 alter publication supabase_realtime add table public.messages;
