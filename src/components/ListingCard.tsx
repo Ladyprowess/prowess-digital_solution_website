@@ -21,6 +21,8 @@ function MetaIcon({ name }: { name: keyof typeof ICON_PATHS }) {
 
 export type ListingCardMeta = { icon: keyof typeof ICON_PATHS; text: string };
 
+const MAX_TAGS = 4;
+
 export function ListingCard({
   href,
   icon,
@@ -32,6 +34,7 @@ export function ListingCard({
   footer,
   badge,
   description,
+  tags,
 }: {
   href: string;
   icon: keyof typeof ICON_PATHS;
@@ -43,16 +46,21 @@ export function ListingCard({
   footer?: string | null;
   badge?: string | null;
   description?: string | null;
+  tags?: string[];
 }) {
   const color = colorForSeed(colorSeed);
+  const shownTags = tags?.slice(0, MAX_TAGS) || [];
+  const extraTags = tags && tags.length > MAX_TAGS ? tags.length - MAX_TAGS : 0;
 
   return (
     <Link
       href={href}
-      className={`group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${color.ring}`}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${color.ring}`}
     >
+      <span className={`absolute inset-x-0 top-0 h-1 ${color.bar} opacity-70 transition group-hover:opacity-100`} />
+
       <div className="flex items-start justify-between gap-2">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${color.chip}`}>
+        <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color.chip}`}>
           <MetaIcon name={icon} />
         </div>
         {badge && (
@@ -69,6 +77,21 @@ export function ListingCard({
       <h3 className="mt-3 text-lg font-bold leading-snug text-foreground">{title}</h3>
       {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
       {description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{description}</p>}
+
+      {shownTags.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {shownTags.map((t) => (
+            <span key={t} className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${color.tag}`}>
+              {t}
+            </span>
+          ))}
+          {extraTags > 0 && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+              +{extraTags} more
+            </span>
+          )}
+        </div>
+      )}
 
       {meta && meta.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">

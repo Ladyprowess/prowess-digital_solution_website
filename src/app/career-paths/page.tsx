@@ -15,6 +15,7 @@ type CareerPathCard = {
   access: "free" | "premium";
   price: number | null;
   price_currency: string | null;
+  career_path_skill_map: { skills: { name: string } | null }[];
 };
 
 export default function CareerPathsPage() {
@@ -24,11 +25,11 @@ export default function CareerPathsPage() {
   useEffect(() => {
     supabase
       .from("career_paths")
-      .select("id, slug, title, description, access, price, price_currency")
+      .select("id, slug, title, description, access, price, price_currency, career_path_skill_map(skills(name))")
       .eq("status", "published")
       .order("title")
       .then(({ data }) => {
-        setPaths(data || []);
+        setPaths((data as unknown as CareerPathCard[]) || []);
         setLoading(false);
       });
   }, []);
@@ -62,6 +63,7 @@ export default function CareerPathsPage() {
                 eyebrow={p.access === "premium" ? "Premium" : "Free"}
                 title={p.title}
                 description={p.description ? stripHtmlForMeta(p.description, 120) : null}
+                tags={p.career_path_skill_map.map((m) => m.skills?.name).filter((n): n is string => Boolean(n))}
               />
             ))}
           </div>
