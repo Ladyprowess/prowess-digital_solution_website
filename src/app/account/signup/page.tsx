@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Container from "@/components/Container";
 import { supabase } from "@/lib/supabase";
 
 export default function AccountSignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/account";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +49,7 @@ export default function AccountSignupPage() {
       return;
     }
     if (data.session) {
-      router.push("/account");
+      router.push(redirect);
       return;
     }
     // Email confirmation required before a session exists.
@@ -54,7 +64,7 @@ export default function AccountSignupPage() {
             <h1 className="text-xl font-bold text-foreground">Check your email</h1>
             <p className="mt-3 text-sm text-muted-foreground">
               We sent a confirmation link to <b>{email}</b>. Confirm it, then{" "}
-              <Link href="/account/login" className="font-semibold text-primary hover:underline">sign in</Link>.
+              <Link href={`/account/login${redirect !== "/account" ? `?redirect=${encodeURIComponent(redirect)}` : ""}`} className="font-semibold text-primary hover:underline">sign in</Link>.
             </p>
           </div>
         </Container>
@@ -107,7 +117,7 @@ export default function AccountSignupPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/account/login" className="font-semibold text-primary hover:underline">Sign in</Link>
+            <Link href={`/account/login${redirect !== "/account" ? `?redirect=${encodeURIComponent(redirect)}` : ""}`} className="font-semibold text-primary hover:underline">Sign in</Link>
           </p>
         </div>
       </Container>

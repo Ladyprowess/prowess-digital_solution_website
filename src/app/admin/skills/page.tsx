@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Container from "@/components/Container";
-import { AdminGate } from "@/components/admin/AdminGate";
 import { supabase } from "@/lib/supabase";
 
 type Skill = { id: string; slug: string; name: string };
@@ -155,8 +153,8 @@ function SkillsAdmin() {
   const selectedSkills = skills.filter((s) => selectedIds.includes(s.id));
 
   return (
-    <main className="bg-muted py-16">
-      <Container>
+    <div>
+      <div>
         <div className="mx-auto max-w-4xl rounded-2xl border border-border bg-card p-8">
           <h1 className="text-3xl font-semibold text-foreground">Skills</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -269,15 +267,11 @@ function SkillsAdmin() {
             </div>
           )}
         </div>
-      </Container>
-    </main>
+      </div>
+    </div>
   );
 }
 
 export default function AdminSkillsPage() {
-  return (
-    <AdminGate>
-      <SkillsAdmin />
-    </AdminGate>
-  );
+  return <SkillsAdmin />;
 }

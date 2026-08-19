@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Container from "@/components/Container";
-import { AdminGate } from "@/components/admin/AdminGate";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
@@ -250,10 +248,12 @@ function WorkAdmin() {
   }
 
   return (
-    <main className="bg-muted py-16">
-      <Container>
-        <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h1 className="text-3xl font-semibold text-foreground">Add Job</h1>
+    <div>
+      <h1 className="text-2xl font-bold text-foreground">Jobs</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Manage job listings and the sources that feed them.</p>
+
+      <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-border bg-card p-8">
+          <h2 className="text-xl font-semibold text-foreground">Add Job</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Create a job listing here and publish it to show on the Work board.
           </p>
@@ -469,15 +469,11 @@ function WorkAdmin() {
             </div>
           )}
         </div>
-      </Container>
-    </main>
+      </div>
   );
 }
 
 export default function AdminWorkPage() {
-  return (
-    <AdminGate>
-      <WorkAdmin />
-    </AdminGate>
-  );
+  return <WorkAdmin />;
 }
+

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Container from "@/components/Container";
 
 export default function AdminCareersPage() {
   const [title, setTitle] = useState("");
@@ -77,8 +76,8 @@ export default function AdminCareersPage() {
   };
 
   return (
-    <main className="bg-[#eaf6f6] py-16">
-      <Container>
+    <div>
+      <div>
         <div className="mx-auto max-w-3xl rounded-2xl border border-[#dbe9e8] bg-white p-8">
           <h1 className="text-3xl font-semibold text-[#223433]">
             Add Open Role
@@ -190,8 +189,8 @@ export default function AdminCareersPage() {
             </button>
           </div>
         </div>
-      </Container>
-    </main>
+      </div>
+    </div>
   );
 }
 

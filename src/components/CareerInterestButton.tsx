@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 // Dashboard could only ever remove a career interest, never add one - this
@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 // pattern, hence its own small component instead of reusing that one.
 export function CareerInterestButton({ careerPathId, className = "" }: { careerPathId: string; className?: string }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [interested, setInterested] = useState(false);
   const [checking, setChecking] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -36,7 +37,7 @@ export function CareerInterestButton({ careerPathId, className = "" }: { careerP
   async function toggle() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      router.push("/account/login");
+      router.push(`/account/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
 

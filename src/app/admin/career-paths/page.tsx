@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Container from "@/components/Container";
-import { AdminGate } from "@/components/admin/AdminGate";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { supabase } from "@/lib/supabase";
@@ -124,8 +122,8 @@ function CareerPathsAdmin() {
   }
 
   return (
-    <main className="bg-muted py-16">
-      <Container>
+    <div>
+      <div>
         <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
           <h1 className="text-3xl font-semibold text-foreground">Add Career Path</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -216,15 +214,11 @@ function CareerPathsAdmin() {
             </div>
           )}
         </div>
-      </Container>
-    </main>
+      </div>
+    </div>
   );
 }
 
 export default function AdminCareerPathsPage() {
-  return (
-    <AdminGate>
-      <CareerPathsAdmin />
-    </AdminGate>
-  );
+  return <CareerPathsAdmin />;
 }

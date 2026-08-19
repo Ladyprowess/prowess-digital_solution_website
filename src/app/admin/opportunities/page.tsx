@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Container from "@/components/Container";
-import { AdminGate } from "@/components/admin/AdminGate";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
@@ -159,8 +157,8 @@ function OpportunitiesAdmin() {
   }
 
   return (
-    <main className="bg-muted py-16">
-      <Container>
+    <div>
+      <div>
         <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8">
           <h1 className="text-3xl font-semibold text-foreground">Add Opportunity</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -300,15 +298,11 @@ function OpportunitiesAdmin() {
             </div>
           )}
         </div>
-      </Container>
-    </main>
+      </div>
+    </div>
   );
 }
 
 export default function AdminOpportunitiesPage() {
-  return (
-    <AdminGate>
-      <OpportunitiesAdmin />
-    </AdminGate>
-  );
+  return <OpportunitiesAdmin />;
 }

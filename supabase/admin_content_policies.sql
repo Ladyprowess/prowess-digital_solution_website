@@ -22,6 +22,7 @@ begin
     'jobs',
     'job_skill_map',
     'skills',
+    'member_profiles',
     'job_categories',
     'job_types',
     'job_sources',

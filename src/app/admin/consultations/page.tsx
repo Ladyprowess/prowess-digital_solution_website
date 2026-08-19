@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Container from "@/components/Container";
 
 type BookingRow = {
   id: string;
@@ -57,8 +56,8 @@ export default function AdminConsultationsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
-      <Container>
+    <div>
+      <div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">Admin - Consultation Bookings</h1>
@@ -148,7 +147,7 @@ export default function AdminConsultationsPage() {
             ))}
           </div>
         </div>
-      </Container>
+      </div>
     </div>
   );
 }

@@ -159,23 +159,14 @@ export default function AccountDashboardPage() {
         </div>
 
         {isAdmin && (
-          <div className="mb-6 rounded-2xl border-2 border-primary/30 bg-primary/5 p-6">
-            <p className="text-sm font-bold text-primary">You&rsquo;re signed in as an admin</p>
-            <p className="mt-1 text-sm text-muted-foreground">This is your regular account page. Use these links to manage site content.</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[
-                { label: "Jobs", href: "/admin/work" },
-                { label: "Opportunities", href: "/admin/opportunities" },
-                { label: "Career Paths", href: "/admin/career-paths" },
-                { label: "Learn", href: "/admin/learn" },
-                { label: "Resources", href: "/admin/resources" },
-                { label: "Skills", href: "/admin/skills" },
-              ].map((l) => (
-                <Link key={l.href} href={l.href} className="rounded-xl border border-primary/30 bg-card px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10">
-                  {l.label}
-                </Link>
-              ))}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-primary/30 bg-primary/5 p-6">
+            <div>
+              <p className="text-sm font-bold text-primary">You&rsquo;re signed in as an admin</p>
+              <p className="mt-1 text-sm text-muted-foreground">Manage jobs, opportunities, courses, users, purchases and more from one dashboard.</p>
             </div>
+            <Link href="/admin" className="flex-shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+              Open Admin Dashboard →
+            </Link>
           </div>
         )}
 

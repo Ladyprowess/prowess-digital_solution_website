@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 // Shared bookmark toggle for jobs/opportunities/resources/courses/career
@@ -20,6 +20,7 @@ export function SaveButton({
   className?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [savedRowId, setSavedRowId] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -45,7 +46,7 @@ export function SaveButton({
   async function toggle() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      router.push("/account/login");
+      router.push(`/account/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
 

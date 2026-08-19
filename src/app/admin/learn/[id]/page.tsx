@@ -2,8 +2,6 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import Container from "@/components/Container";
-import { AdminGate } from "@/components/admin/AdminGate";
 import { supabase } from "@/lib/supabase";
 
 type Course = { id: string; title: string };
@@ -167,8 +165,8 @@ function CourseManageAdmin({ courseId }: { courseId: string }) {
   if (!course) return <p className="py-16 text-center text-sm text-muted-foreground">Course not found.</p>;
 
   return (
-    <main className="bg-muted py-16">
-      <Container>
+    <div>
+      <div>
         <Link href="/admin/learn" className="text-sm font-semibold text-primary hover:underline">&larr; All courses</Link>
         <h1 className="mt-3 text-3xl font-semibold text-foreground">{course.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Manage modules and lessons for this course.</p>
@@ -204,16 +202,12 @@ function CourseManageAdmin({ courseId }: { courseId: string }) {
             ))
           )}
         </div>
-      </Container>
-    </main>
+      </div>
+    </div>
   );
 }
 
 export default function AdminCourseManagePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  return (
-    <AdminGate>
-      <CourseManageAdmin courseId={id} />
-    </AdminGate>
-  );
+  return <CourseManageAdmin courseId={id} />;
 }

@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Container from "@/components/Container";
 import { supabase } from "@/lib/supabase";
 
 export default function AccountLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/account";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +36,7 @@ export default function AccountLoginPage() {
       setErr(error.message);
       return;
     }
-    router.push("/account");
+    router.push(redirect);
   }
 
   return (
@@ -67,7 +77,7 @@ export default function AccountLoginPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             New here?{" "}
-            <Link href="/account/signup" className="font-semibold text-primary hover:underline">Create an account</Link>
+            <Link href={`/account/signup${redirect !== "/account" ? `?redirect=${encodeURIComponent(redirect)}` : ""}`} className="font-semibold text-primary hover:underline">Create an account</Link>
           </p>
         </div>
       </Container>

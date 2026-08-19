@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Container from "@/components/Container";
 import { supabase } from "@/lib/supabase"; // ✅ use your existing client
 
 type EventRow = {
@@ -198,8 +197,8 @@ export default function AdminEventsPage() {
   const canViewAll = events.length > 2;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
-      <Container>
+    <div>
+      <div>
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -521,7 +520,7 @@ export default function AdminEventsPage() {
             </div>
           ) : null}
         </div>
-      </Container>
+      </div>
     </div>
   );
 }
