@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ManualGoogleReviews } from "@/components/ManualGoogleReviews";
 import { HeroSection } from "@/components/HeroSection";
 import { Reveal } from "@/components/Reveal";
+import { ListingCard, type ListingCardMeta } from "@/components/ListingCard";
+import ResourceCard, { type ResourceItem } from "@/components/resources/ResourceCard";
 import { supabase } from "@/lib/supabase";
 import { goalCards, popularSearches, whyProwess, newsletterPreferences } from "@/content/site";
 
@@ -13,25 +15,17 @@ type OpportunityCard = {
   kind: "job" | "opportunity";
   title: string;
   subtitle: string;
-  meta: string;
+  eyebrow: string;
+  meta: ListingCardMeta[];
   href: string;
 };
 
 type CareerPathCard = { id: string; slug: string; title: string; description: string | null };
 type LearnCard = { id: string; slug: string; title: string; description: string | null; access: string; price: number | null; price_currency: string | null };
-type ResourceCard = { id: string; slug: string; title: string; description: string | null; resource_type: string | null; access: string; price: number | null; price_currency: string | null };
 type EventCard = { id: string; slug: string; title: string; date: string; type: string | null };
 
 function EmptyState({ children }: { children: React.ReactNode }) {
   return <p className="rounded-2xl border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">{children}</p>;
-}
-
-function Badge({ premium }: { premium: boolean }) {
-  return (
-    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${premium ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-      {premium ? "Premium" : "Free"}
-    </span>
-  );
 }
 
 function NewsletterForm() {
@@ -110,31 +104,33 @@ export default function ModernHomePage() {
   const [opportunities, setOpportunities] = useState<OpportunityCard[]>([]);
   const [careerPathCards, setCareerPathCards] = useState<CareerPathCard[]>([]);
   const [courses, setCourses] = useState<LearnCard[]>([]);
-  const [freeResources, setFreeResources] = useState<ResourceCard[]>([]);
-  const [premiumItems, setPremiumItems] = useState<(LearnCard | ResourceCard)[]>([]);
+  const [freeResources, setFreeResources] = useState<ResourceItem[]>([]);
+  const [premiumItems, setPremiumItems] = useState<(LearnCard | ResourceItem)[]>([]);
   const [events, setEvents] = useState<EventCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [jobsRes, oppsRes, pathsRes, coursesRes, resourcesRes, eventsRes] = await Promise.all([
-        supabase.from("jobs").select("id, slug, title, location_type, country, created_at, companies(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
-        supabase.from("opportunities").select("id, slug, title, organisation_name, created_at, opportunity_types(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
+      const [jobsRes, oppsRes, pathsRes, coursesRes, freeResourcesRes, premiumResourcesRes, eventsRes] = await Promise.all([
+        supabase.from("jobs").select("id, slug, title, location_type, country, created_at, featured, companies(name), job_categories(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
+        supabase.from("opportunities").select("id, slug, title, organisation_name, created_at, featured, opportunity_types(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
         supabase.from("career_paths").select("id, slug, title, description").eq("status", "published").order("created_at", { ascending: false }).limit(6),
         supabase.from("courses").select("id, slug, title, description, access, price, price_currency").eq("status", "published").order("created_at", { ascending: false }).limit(6),
-        supabase.from("resources").select("id, slug, title, description, resource_type, access, price, price_currency").eq("status", "published").in("audience", ["consumer", "both"]).order("created_at", { ascending: false }).limit(10),
+        fetch("/api/resources?access=free&audience=consumer,both&pageSize=6&sort=recent").then((r) => r.json()),
+        fetch("/api/resources?access=premium&audience=consumer,both&pageSize=4&sort=recent").then((r) => r.json()),
         supabase.from("events").select("id, slug, title, date, type").eq("status", "published").gte("date", new Date().toISOString()).order("date", { ascending: true }).limit(3),
       ]);
 
-      type JobQueryRow = { id: string; slug: string; title: string; location_type: string; country: string | null; companies: { name: string } | null };
-      type OppQueryRow = { id: string; slug: string; title: string; organisation_name: string | null; opportunity_types: { name: string } | null };
+      type JobQueryRow = { id: string; slug: string; title: string; location_type: string; country: string | null; featured: boolean; companies: { name: string } | null; job_categories: { name: string } | null };
+      type OppQueryRow = { id: string; slug: string; title: string; organisation_name: string | null; featured: boolean; opportunity_types: { name: string } | null };
 
       const jobCards: OpportunityCard[] = ((jobsRes.data || []) as unknown as JobQueryRow[]).map((j) => ({
         id: j.id,
         kind: "job",
         title: j.title,
         subtitle: j.companies?.name || "Prowess Digital Solutions",
-        meta: j.location_type === "remote" ? "Remote" : [j.location_type, j.country].filter(Boolean).join(" · ") || "Job",
+        eyebrow: j.job_categories?.name || "Job",
+        meta: j.location_type === "remote" ? [{ icon: "pin", text: "Remote" }] : [{ icon: "pin", text: [j.location_type, j.country].filter(Boolean).join(" · ") || "Job" }],
         href: `/jobs/${j.slug}`,
       }));
       const oppCards: OpportunityCard[] = ((oppsRes.data || []) as unknown as OppQueryRow[]).map((o) => ({
@@ -142,7 +138,8 @@ export default function ModernHomePage() {
         kind: "opportunity",
         title: o.title,
         subtitle: o.organisation_name || o.opportunity_types?.name || "Opportunity",
-        meta: o.opportunity_types?.name || "Opportunity",
+        eyebrow: o.opportunity_types?.name || "Opportunity",
+        meta: [],
         href: `/opportunities/${o.slug}`,
       }));
       setOpportunities([...jobCards, ...oppCards].slice(0, 6));
@@ -152,12 +149,11 @@ export default function ModernHomePage() {
       const publishedCourses = (coursesRes.data || []) as LearnCard[];
       setCourses(publishedCourses.filter((c) => c.access === "free").slice(0, 4));
 
-      const publishedResources = (resourcesRes.data || []) as ResourceCard[];
-      setFreeResources(publishedResources.filter((r) => r.access === "free").slice(0, 6));
+      setFreeResources((freeResourcesRes?.items || []) as ResourceItem[]);
 
       const premium = [
         ...publishedCourses.filter((c) => c.access === "premium"),
-        ...publishedResources.filter((r) => r.access === "premium"),
+        ...((premiumResourcesRes?.items || []) as ResourceItem[]),
       ].slice(0, 4);
       setPremiumItems(premium);
 
@@ -223,12 +219,16 @@ export default function ModernHomePage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {opportunities.map((o) => (
-                <Link key={o.id} href={o.href} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-primary">{o.kind === "job" ? "Job" : o.meta}</span>
-                  <h3 className="mt-1 text-base font-bold text-foreground">{o.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{o.subtitle}</p>
-                  <span className="mt-3 inline-block text-sm font-semibold text-primary">View opportunity →</span>
-                </Link>
+                <ListingCard
+                  key={o.id}
+                  href={o.href}
+                  icon={o.kind === "job" ? "briefcase" : "spark"}
+                  colorSeed={o.eyebrow}
+                  eyebrow={o.eyebrow}
+                  title={o.title}
+                  subtitle={o.subtitle}
+                  meta={o.meta}
+                />
               ))}
             </div>
           )}
@@ -251,10 +251,15 @@ export default function ModernHomePage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {careerPathCards.map((c) => (
-                <Link key={c.id} href={`/career-paths/${c.slug}`} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                  <h3 className="text-base font-bold text-foreground">{c.title}</h3>
-                  {c.description && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>}
-                </Link>
+                <ListingCard
+                  key={c.id}
+                  href={`/career-paths/${c.slug}`}
+                  icon="path"
+                  colorSeed={c.title}
+                  eyebrow="Career Path"
+                  title={c.title}
+                  description={c.description}
+                />
               ))}
             </div>
           )}
@@ -282,10 +287,15 @@ export default function ModernHomePage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {courses.map((c) => (
-                <Link key={c.id} href={`/learn/${c.slug}`} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                  <Badge premium={c.access === "premium"} />
-                  <h3 className="mt-3 text-base font-bold text-foreground">{c.title}</h3>
-                </Link>
+                <ListingCard
+                  key={c.id}
+                  href={`/learn/${c.slug}`}
+                  icon="spark"
+                  colorSeed={c.title}
+                  eyebrow="Free"
+                  title={c.title}
+                  description={c.description}
+                />
               ))}
             </div>
           )}
@@ -311,10 +321,7 @@ export default function ModernHomePage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {freeResources.map((r) => (
-                <Link key={r.id} href={`/resources/${r.slug}`} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
-                  <h3 className="mt-1 text-base font-bold text-foreground">{r.title}</h3>
-                </Link>
+                <ResourceCard key={r.id} item={r} />
               ))}
             </div>
           )}
@@ -336,17 +343,22 @@ export default function ModernHomePage() {
             <EmptyState>Premium content is on the way. Free content comes first.</EmptyState>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {premiumItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={"resource_type" in item ? `/resources/${item.slug}` : `/learn/${item.slug}`}
-                  className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <Badge premium />
-                  <h3 className="mt-3 text-base font-bold text-foreground">{item.title}</h3>
-                  {item.price ? <p className="mt-1 text-sm text-muted-foreground">{item.price_currency || "NGN"} {item.price}</p> : null}
-                </Link>
-              ))}
+              {premiumItems.map((item) =>
+                "resource_type" in item ? (
+                  <ResourceCard key={item.id} item={item} />
+                ) : (
+                  <ListingCard
+                    key={item.id}
+                    href={`/learn/${item.slug}`}
+                    icon="spark"
+                    colorSeed={item.title}
+                    eyebrow="Premium"
+                    title={item.title}
+                    description={item.description}
+                    footer={item.price ? `${item.price_currency || "NGN"} ${item.price}` : null}
+                  />
+                )
+              )}
             </div>
           )}
           <div className="mt-8 text-center">

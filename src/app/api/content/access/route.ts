@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { hasEntitlement } from "@/lib/payments/entitlement";
+import { signDownloadUrl } from "@/lib/resourceDownload";
 
 export const runtime = "nodejs";
 
@@ -50,20 +51,15 @@ export async function POST(req: Request) {
         .single();
 
       // Older resources (uploaded before the B2C content model existed)
-      // store their file in Supabase Storage via file_path rather than a
-      // plain file_url - same signing approach as the existing
-      // /api/resources/download route, so those older PDFs work through
-      // this same gated pipeline instead of needing a separate one.
-      let signedFileUrl: string | null = null;
-      if (data?.file_path) {
-        const cleanPath = String(data.file_path).replace(/^pdfs\//, "");
-        const { data: signed } = await supabase.storage
-          .from("resources")
-          .createSignedUrl(cleanPath, 60 * 10);
-        signedFileUrl = signed?.signedUrl ?? null;
-      }
+      // store their file in Supabase Storage via file_path. Rather than
+      // handing back a raw Supabase signed URL (which leaks the storage
+      // domain the moment the browser navigates to it, even if hidden
+      // behind a button beforehand), mint a same-origin proxy link that
+      // streams the file through our own /api/resources/[id]/file route -
+      // the actual URL the user ever sees stays on our domain throughout.
+      const downloadUrl = data?.file_path ? signDownloadUrl(itemId) : null;
 
-      return NextResponse.json({ ok: true, resource: { ...data, signed_file_url: signedFileUrl } });
+      return NextResponse.json({ ok: true, resource: { ...data, download_url: downloadUrl } });
     }
 
     if (itemType === "course") {

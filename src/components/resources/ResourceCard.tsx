@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getYoutubeThumbnail } from "@/lib/youtube";
 
 export type ResourceItem = {
   id: string;
@@ -13,6 +14,9 @@ export type ResourceItem = {
   stage: string | null;
   resource_type: string | null;
   level: string | null;
+  source: string | null;
+  external_url: string | null;
+  thumbnail_url: string | null;
   access: "free" | "premium";
   price: number | null;
   price_currency: string | null;
@@ -30,19 +34,29 @@ function formatMB(bytes: number) {
 }
 
 export default function ResourceCard({ item }: { item: ResourceItem }) {
-  const [coverSrc, setCoverSrc] = useState<string | null>(item.cover_url);
+  const isVideo = item.resource_type === "video" || item.source === "youtube";
+  // Priority: a real uploaded cover, then an explicit thumbnail_url, then -
+  // for a YouTube video with neither - the thumbnail YouTube already hosts
+  // for every video, so a video never has to fall back to the plain
+  // "no cover" state a PDF guide uses.
+  const fallbackCover = item.cover_url
+    || item.thumbnail_url
+    || (item.source === "youtube" && item.external_url ? getYoutubeThumbnail(item.external_url) : null);
+
+  const [coverSrc, setCoverSrc] = useState<string | null>(fallbackCover);
   const [coverFailed, setCoverFailed] = useState(false);
 
   useEffect(() => {
-    setCoverSrc(item.cover_url);
+    setCoverSrc(fallbackCover);
     setCoverFailed(false);
-  }, [item.cover_url]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.cover_url, item.thumbnail_url, item.external_url]);
 
   // type/category/stage are the legacy free-text fields (still set on
   // older uploaded resources); resource_type/level are what the current
   // admin form actually writes. Fall back across both so neither an old
   // nor a new resource ends up with a blank badge.
-  const typeLabel = item.type || item.resource_type?.replace(/_/g, " ") || "Resource";
+  const typeLabel = isVideo ? "Video" : item.type || item.resource_type?.replace(/_/g, " ") || "Resource";
   const metaLine = [item.category, item.stage].filter(Boolean).join(" • ");
 
   return (
@@ -53,19 +67,28 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
       {/* Cover */}
       <div className="relative h-48 w-full bg-slate-100">
         {coverSrc && !coverFailed ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverSrc}
-            alt={item.title}
-            className="h-full w-full object-cover"
-            onError={() => setCoverFailed(true)}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={coverSrc}
+              alt={item.title}
+              className="h-full w-full object-cover"
+              onError={() => setCoverFailed(true)}
+            />
+            {isVideo && (
+              <span className="absolute inset-0 flex items-center justify-center bg-black/20 transition group-hover:bg-black/35">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[var(--steel-teal)] shadow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                </span>
+              </span>
+            )}
+          </>
         ) : (
           <div className="h-full w-full flex flex-col items-center justify-center text-slate-500">
             <div className="mb-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
               {typeLabel}
             </div>
-            <p className="text-sm font-semibold text-slate-700">Resource</p>
+            <p className="text-sm font-semibold text-slate-700">{isVideo ? "Video" : "Resource"}</p>
             {metaLine && <p className="mt-1 text-xs text-slate-500">{metaLine}</p>}
           </div>
         )}
@@ -124,7 +147,7 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
 
         <div className="mt-5">
           <span className="block w-full rounded-xl bg-[var(--steel-teal)] px-4 py-3 text-center text-sm font-semibold text-white transition group-hover:opacity-90">
-            {item.access === "premium" ? "View resource" : "Read Online"}
+            {item.access === "premium" ? "View resource" : isVideo ? "Watch video" : "Read Online"}
           </span>
         </div>
       </div>

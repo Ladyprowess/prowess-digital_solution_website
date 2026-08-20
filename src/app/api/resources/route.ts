@@ -13,6 +13,8 @@ export async function GET(req: Request) {
     const category = (searchParams.get("category") || "").trim();
     const stage = (searchParams.get("stage") || "").trim();
     const type = (searchParams.get("type") || "").trim();
+    const access = (searchParams.get("access") || "").trim();
+    const audience = (searchParams.get("audience") || "").trim();
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(24, Math.max(1, Number(searchParams.get("pageSize")) || 6));
 
@@ -22,6 +24,8 @@ export async function GET(req: Request) {
     if (category) query = query.eq("category", category);
     if (stage) query = query.eq("stage", stage);
     if (type) query = query.eq("type", type);
+    if (access) query = query.eq("access", access);
+    if (audience) query = query.in("audience", audience.split(","));
 
     // search
     if (q) {

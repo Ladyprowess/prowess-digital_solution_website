@@ -11,7 +11,7 @@ type ResourceBodyData = {
   file_url: string | null;
   external_url: string | null;
   source: string;
-  signed_file_url: string | null;
+  download_url: string | null;
 };
 
 export function ResourceBody({
@@ -69,12 +69,12 @@ export function ResourceBody({
     );
   }
 
-  // signed_file_url is a real, working Supabase Storage signed URL, but a
-  // long, ugly one that shouldn't be shown as this page's own link. Only
-  // that case needs hiding behind a button; a plain file_url is already a
-  // clean URL the admin typed in directly, safe to show as a normal link.
-  const signedDownloadUrl = data?.signed_file_url;
-  const plainDownloadUrl = !signedDownloadUrl ? data?.file_url : null;
+  // download_url is a same-origin proxy link (/api/resources/[id]/file) that
+  // streams the file through our own domain, so it's safe to render as a
+  // normal link - the browser never navigates to the raw Supabase storage
+  // URL. Only fall back to a plain file_url when there's no file_path-based
+  // download available (an admin-typed external link).
+  const downloadUrl = data?.download_url || data?.file_url || null;
   const youtubeId = data?.source === "youtube" && data.external_url ? getYoutubeVideoId(data.external_url) : null;
 
   return (
@@ -117,19 +117,9 @@ export function ResourceBody({
         </a>
       )}
 
-      {signedDownloadUrl && (
-        <button
-          type="button"
-          onClick={() => window.open(signedDownloadUrl, "_blank", "noopener,noreferrer")}
-          className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
-        >
-          Download →
-        </button>
-      )}
-
-      {plainDownloadUrl && (
+      {downloadUrl && (
         <a
-          href={plainDownloadUrl}
+          href={downloadUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
@@ -138,7 +128,7 @@ export function ResourceBody({
         </a>
       )}
 
-      {!data?.content && !data?.external_url && !signedDownloadUrl && !plainDownloadUrl && (
+      {!data?.content && !data?.external_url && !downloadUrl && (
         <p className="text-sm text-muted-foreground">No content has been added to this resource yet.</p>
       )}
     </div>
