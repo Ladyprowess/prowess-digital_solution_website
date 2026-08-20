@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(24, Math.max(1, Number(searchParams.get("pageSize")) || 6));
 
-    let query = supabaseAdmin().from("resources").select("*", { count: "exact" });
+    let query = supabaseAdmin().from("resources").select("*", { count: "exact" }).eq("status", "published");
 
     // filters
     if (category) query = query.eq("category", category);

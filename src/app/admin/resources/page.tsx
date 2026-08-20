@@ -38,6 +38,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground";
 
+async function getToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error("Your session expired - refresh and try again.");
+  return token;
+}
+
 function ResourcesAdmin() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -60,6 +67,10 @@ function ResourcesAdmin() {
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
   const [fileUrl, setFileUrl] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [resourceFile, setResourceFile] = useState<File | null>(null);
+  const [existingFileName, setExistingFileName] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [access, setAccess] = useState<"free" | "premium">("free");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("NGN");
@@ -118,6 +129,7 @@ function ResourcesAdmin() {
     setTitle(""); setAudience("consumer"); setResourceType("guide"); setCategory(""); setLevel("");
     setSource("prowess"); setExternalUrl(""); setThumbnailUrl("");
     setSummary(""); setContent(""); setFileUrl("");
+    setCoverFile(null); setResourceFile(null); setExistingFileName(null);
     setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
   };
 
@@ -126,7 +138,7 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, access, price, price_currency, featured, status, resource_skill_map(skill_id)")
+      .select("id, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, file_name, access, price, price_currency, featured, status, resource_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -135,7 +147,7 @@ function ResourcesAdmin() {
     const r = data as unknown as {
       id: string; title: string; audience: (typeof AUDIENCES)[number]; resource_type: (typeof RESOURCE_TYPES)[number] | null;
       category: string | null; level: (typeof LEVELS)[number] | null; source: Source; external_url: string | null;
-      thumbnail_url: string | null; description: string | null; content: string | null; file_url: string | null;
+      thumbnail_url: string | null; description: string | null; content: string | null; file_url: string | null; file_name: string | null;
       access: "free" | "premium"; price: number | null; price_currency: string | null; featured: boolean;
       status: ResourceRow["status"]; resource_skill_map: { skill_id: string }[];
     };
@@ -152,6 +164,7 @@ function ResourcesAdmin() {
     setSummary(r.description || "");
     setContent(r.content || "");
     setFileUrl(r.file_url || "");
+    setCoverFile(null); setResourceFile(null); setExistingFileName(r.file_name || null);
     setAccess(r.access);
     setPrice(r.price?.toString() || "");
     setCurrency(r.price_currency || "NGN");
@@ -169,6 +182,31 @@ function ResourcesAdmin() {
 
     setSaving(true);
     try {
+      // Real file/cover uploads take priority over the plain-URL fallback
+      // fields - both write into the same file_path/cover_path columns the
+      // existing signing pipeline (/api/resources, /api/content/access)
+      // already knows how to serve, so nothing downstream needs to change.
+      let uploaded: { file_path?: string; file_name?: string; file_type?: string; file_size?: number; cover_path?: string } = {};
+      if (source === "prowess" && (resourceFile || coverFile)) {
+        setUploading(true);
+        try {
+          const token = await getToken();
+          const form = new FormData();
+          if (resourceFile) form.append("file", resourceFile);
+          if (coverFile) form.append("cover", coverFile);
+          const res = await fetch("/api/admin/resources/upload", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body?.error || "Upload failed.");
+          uploaded = body;
+        } finally {
+          setUploading(false);
+        }
+      }
+
       const now = new Date().toISOString();
       const basePayload = {
         title: title.trim(),
@@ -185,6 +223,8 @@ function ResourcesAdmin() {
         description: summary.trim() || null,
         content: content.trim() || null,
         file_url: fileUrl.trim() || null,
+        ...(uploaded.file_path ? { file_path: uploaded.file_path, file_name: uploaded.file_name, file_type: uploaded.file_type, file_size: uploaded.file_size } : {}),
+        ...(uploaded.cover_path ? { cover_path: uploaded.cover_path } : {}),
         access,
         price: access === "premium" && price ? Number(price) : null,
         price_currency: access === "premium" && price ? currency : null,
@@ -291,9 +331,23 @@ function ResourcesAdmin() {
               )}
             </div>
 
-            <Field label="Thumbnail image (URL, optional)">
-              <input value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} className={inputCls} placeholder="https://..." />
-            </Field>
+            {source === "prowess" ? (
+              <Field label="Cover image">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
+                  className={inputCls}
+                />
+                {coverFile && <p className="mt-1.5 text-xs text-muted-foreground">Selected: {coverFile.name}</p>}
+                <p className="mt-1.5 text-xs text-muted-foreground">Or paste a cover image URL instead:</p>
+                <input value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} className={`${inputCls} mt-1.5`} placeholder="https://..." />
+              </Field>
+            ) : (
+              <Field label="Thumbnail image (URL, optional)">
+                <input value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} className={inputCls} placeholder="https://..." />
+              </Field>
+            )}
 
             <Field label="Summary">
               <textarea value={summary} onChange={(e) => setSummary(e.target.value)} className={`${inputCls} min-h-[80px]`} />
@@ -304,8 +358,19 @@ function ResourcesAdmin() {
                 <Field label="Content">
                   <RichTextEditor key={`content-${editingResourceId || "new"}`} value={content} onChange={setContent} placeholder="The actual guide/article/checklist content..." />
                 </Field>
-                <Field label="File link (for downloadable templates, optional)">
-                  <input value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} className={inputCls} placeholder="https://..." />
+                <Field label="Downloadable file (PDF, e-book, template, etc.)">
+                  <input
+                    type="file"
+                    onChange={(e) => setResourceFile(e.target.files?.[0] || null)}
+                    className={inputCls}
+                  />
+                  {resourceFile ? (
+                    <p className="mt-1.5 text-xs text-muted-foreground">Selected: {resourceFile.name} ({(resourceFile.size / (1024 * 1024)).toFixed(1)} MB)</p>
+                  ) : existingFileName ? (
+                    <p className="mt-1.5 text-xs text-muted-foreground">Current file: {existingFileName}. Choose a new file to replace it.</p>
+                  ) : null}
+                  <p className="mt-1.5 text-xs text-muted-foreground">Or paste a link to an already-hosted file instead:</p>
+                  <input value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} className={`${inputCls} mt-1.5`} placeholder="https://..." />
                 </Field>
               </>
             )}
@@ -344,7 +409,7 @@ function ResourcesAdmin() {
                 disabled={saving}
                 className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60 hover:opacity-90"
               >
-                {saving ? "Saving..." : editingResourceId ? "Update resource" : "Save resource"}
+                {uploading ? "Uploading file..." : saving ? "Saving..." : editingResourceId ? "Update resource" : "Save resource"}
               </button>
               {editingResourceId && (
                 <button

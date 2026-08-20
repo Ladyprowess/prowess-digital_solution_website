@@ -69,7 +69,12 @@ export function ResourceBody({
     );
   }
 
-  const downloadUrl = data?.signed_file_url || data?.file_url;
+  // signed_file_url is a real, working Supabase Storage signed URL, but a
+  // long, ugly one that shouldn't be shown as this page's own link. Only
+  // that case needs hiding behind a button; a plain file_url is already a
+  // clean URL the admin typed in directly, safe to show as a normal link.
+  const signedDownloadUrl = data?.signed_file_url;
+  const plainDownloadUrl = !signedDownloadUrl ? data?.file_url : null;
   const youtubeId = data?.source === "youtube" && data.external_url ? getYoutubeVideoId(data.external_url) : null;
 
   return (
@@ -112,9 +117,19 @@ export function ResourceBody({
         </a>
       )}
 
-      {downloadUrl && (
+      {signedDownloadUrl && (
+        <button
+          type="button"
+          onClick={() => window.open(signedDownloadUrl, "_blank", "noopener,noreferrer")}
+          className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+        >
+          Download →
+        </button>
+      )}
+
+      {plainDownloadUrl && (
         <a
-          href={downloadUrl}
+          href={plainDownloadUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
@@ -123,7 +138,7 @@ export function ResourceBody({
         </a>
       )}
 
-      {!data?.content && !data?.external_url && !downloadUrl && (
+      {!data?.content && !data?.external_url && !signedDownloadUrl && !plainDownloadUrl && (
         <p className="text-sm text-muted-foreground">No content has been added to this resource yet.</p>
       )}
     </div>
