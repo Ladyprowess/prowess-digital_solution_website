@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+
+const PAGE_SIZE = 30;
 
 type Skill = { id: string; slug: string; name: string };
 
@@ -64,11 +67,21 @@ function SkillsAdmin() {
     return Object.values(rec).reduce((sum, n) => sum + (n || 0), 0);
   }
 
+  const [page, setPage] = useState(1);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return skills;
     return skills.filter((s) => s.name.toLowerCase().includes(q) || s.slug.includes(q));
   }, [skills, search]);
+
+  useEffect(() => { setPage(1); }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = useMemo(() => {
+    const from = (page - 1) * PAGE_SIZE;
+    return filtered.slice(from, from + PAGE_SIZE);
+  }, [filtered, page]);
 
   function toggleSelected(id: string) {
     setSelectedIds((prev) => {
@@ -219,7 +232,7 @@ function SkillsAdmin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((s) => {
+                  {paged.map((s) => {
                     const rec = usage[s.id] || {};
                     const total = totalUsage(s.id);
                     const breakdown = SKILL_MAP_TABLES.filter((m) => rec[m.table]).map((m) => `${m.label} ${rec[m.table]}`).join(" · ");
@@ -266,6 +279,8 @@ function SkillsAdmin() {
               </table>
             </div>
           )}
+          <p className="mt-4 text-center text-xs text-muted-foreground">{filtered.length} skill{filtered.length === 1 ? "" : "s"}{search.trim() ? " match" : " total"}</p>
+          <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </div>

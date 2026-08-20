@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 
 type BookingRow = {
   id: string;
@@ -21,23 +22,27 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
+const PAGE_SIZE = 20;
+
 export default function AdminConsultationsPage() {
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
+  const [stats, setStats] = useState({ total: 0, paid: 0, pending: 0 });
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"" | BookingRow["payment_status"]>("");
+  const [search, setSearch] = useState("");
 
-  const stats = useMemo(() => {
-    const total = rows.length;
-    const paid = rows.filter((r) => r.payment_status === "paid").length;
-    const pending = rows.filter((r) => r.payment_status === "pending").length;
-    return { total, paid, pending };
-  }, [rows]);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setMsg("");
 
-    const res = await fetch("/api/consultations/admin/bookings", { cache: "no-store" });
+    const params = new URLSearchParams({ page: String(page) });
+    if (statusFilter) params.set("status", statusFilter);
+    if (search.trim()) params.set("q", search.trim());
+
+    const res = await fetch(`/api/consultations/admin/bookings?${params.toString()}`, { cache: "no-store" });
     const json = await res.json().catch(() => null);
 
     setLoading(false);
@@ -49,11 +54,18 @@ export default function AdminConsultationsPage() {
     }
 
     setRows((json?.items || []) as BookingRow[]);
-  }
+    setTotal(json?.total || 0);
+    setStats(json?.stats || { total: 0, paid: 0, pending: 0 });
+  }, [page, statusFilter, search]);
 
   useEffect(() => {
-    load();
-  }, []);
+    const t = setTimeout(load, 200);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  useEffect(() => { setPage(1); }, [statusFilter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -81,18 +93,37 @@ export default function AdminConsultationsPage() {
         </div>
 
         <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <p className={cn("text-sm", msg ? "text-rose-700" : "text-slate-600")}>
               {msg || "Latest bookings appear first."}
             </p>
 
-            <button
-              type="button"
-              onClick={load}
-              className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Refresh
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search name or email..."
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
+              />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
+              >
+                <option value="">All statuses</option>
+                <option value="free">Free</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+              </select>
+              <button
+                type="button"
+                onClick={load}
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Refresh
+              </button>
+            </div>
           </div>
 
           {loading ? <p className="mt-4 text-sm text-slate-600">Loading…</p> : null}
@@ -100,7 +131,7 @@ export default function AdminConsultationsPage() {
           <div className="mt-5 space-y-3">
             {!loading && rows.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                No bookings yet.
+                No bookings match this filter.
               </div>
             ) : null}
 
@@ -146,6 +177,8 @@ export default function AdminConsultationsPage() {
               </div>
             ))}
           </div>
+          <p className="mt-4 text-center text-xs text-slate-500">{total} booking{total === 1 ? "" : "s"} total</p>
+          <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </div>

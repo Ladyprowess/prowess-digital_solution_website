@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { SourcesPanel } from "@/components/admin/SourcesPanel";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -560,27 +561,8 @@ function WorkAdmin() {
             </div>
           )}
 
-          {jobsTotalPages > 1 && (
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setJobsPage((p) => Math.max(1, p - 1))}
-                disabled={jobsPage <= 1}
-                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-40 hover:bg-muted"
-              >
-                ← Previous
-              </button>
-              <span className="text-xs text-muted-foreground">Page {jobsPage} of {jobsTotalPages} ({jobsTotal} jobs)</span>
-              <button
-                type="button"
-                onClick={() => setJobsPage((p) => Math.min(jobsTotalPages, p + 1))}
-                disabled={jobsPage >= jobsTotalPages}
-                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-40 hover:bg-muted"
-              >
-                Next →
-              </button>
-            </div>
-          )}
+          <p className="mt-2 text-center text-xs text-muted-foreground">{jobsTotal} job{jobsTotal === 1 ? "" : "s"} total</p>
+          <AdminPagination page={jobsPage} totalPages={jobsTotalPages} onPageChange={setJobsPage} />
         </div>
       </div>
   );

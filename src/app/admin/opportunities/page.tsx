@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { SourcesPanel } from "@/components/admin/SourcesPanel";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -471,27 +472,8 @@ function OpportunitiesAdmin() {
             </div>
           )}
 
-          {oppsTotalPages > 1 && (
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setOppsPage((p) => Math.max(1, p - 1))}
-                disabled={oppsPage <= 1}
-                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-40 hover:bg-muted"
-              >
-                ← Previous
-              </button>
-              <span className="text-xs text-muted-foreground">Page {oppsPage} of {oppsTotalPages} ({oppsTotal} opportunities)</span>
-              <button
-                type="button"
-                onClick={() => setOppsPage((p) => Math.min(oppsTotalPages, p + 1))}
-                disabled={oppsPage >= oppsTotalPages}
-                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-40 hover:bg-muted"
-              >
-                Next →
-              </button>
-            </div>
-          )}
+          <p className="mt-2 text-center text-xs text-muted-foreground">{oppsTotal} opportunit{oppsTotal === 1 ? "y" : "ies"} total</p>
+          <AdminPagination page={oppsPage} totalPages={oppsTotalPages} onPageChange={setOppsPage} />
         </div>
       </div>
     </div>

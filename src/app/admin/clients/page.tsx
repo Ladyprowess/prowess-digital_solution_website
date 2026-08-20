@@ -2,9 +2,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { PREMIUM_TOOL_KEYS, PREMIUM_TOOL_NAMES, type PremiumToolKey } from "@/lib/tools/tierAccess";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 
 const B = "#507c80", DARK = "#3a5c60", MID = "#6a9ea3", LITE = "#e8f4f5";
 const LGRAY = "#f2f5f5", MGRAY = "#c8d8da", W = "#fff";
+const PAGE_SIZE = 20;
 
 type ClientStatus = "active" | "forever" | "revoked" | "expired";
 type AccessType = "1year" | "forever";
@@ -254,6 +256,7 @@ export default function AdminClientsPage() {
   const [filter, setFilter] = useState<"all" | ClientStatus>("all");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -271,6 +274,7 @@ export default function AdminClientsPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(1); }, [search, filter]);
 
   const filtered = clients
     .filter(c => {
@@ -289,6 +293,9 @@ export default function AdminClientsPage() {
     revoked: clients.filter(c => getStatus(c) === "revoked").length,
     expired: clients.filter(c => getStatus(c) === "expired").length,
   };
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div style={{ fontFamily: "'Segoe UI',system-ui,sans-serif" }}>
@@ -330,7 +337,7 @@ export default function AdminClientsPage() {
         ) : (
           <div style={{ background: W, borderRadius: 12, border: `1px solid ${MGRAY}`, overflow: "hidden" }}>
             <div style={{ background: DARK, padding: "10px 16px", display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: W, fontWeight: 700, fontSize: 13 }}>{filtered.length} client{filtered.length !== 1 ? "s" : ""} shown</span>
+              <span style={{ color: W, fontWeight: 700, fontSize: 13 }}>{filtered.length} client{filtered.length !== 1 ? "s" : ""} match{filtered.length !== 1 ? "" : "es"}</span>
               <span style={{ color: "rgba(255,255,255,.4)", fontSize: 11 }}>Changes sync instantly</span>
             </div>
             <div style={{ overflowX: "auto" }}>
@@ -341,7 +348,7 @@ export default function AdminClientsPage() {
                   ))}</tr>
                 </thead>
                 <tbody>
-                  {filtered.map(c => (
+                  {paged.map(c => (
                     <ClientRow key={c.code} client={c}
                       onUpdate={u => setClients(prev => prev.map(x => x.code === u.code ? u : x))}
                       onDelete={code => setClients(prev => prev.filter(x => x.code !== code))} />
@@ -351,6 +358,7 @@ export default function AdminClientsPage() {
             </div>
           </div>
         )}
+        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
       {modal && <CreateModal onSave={c => setClients(prev => [c, ...prev])} onClose={() => setModal(false)} />}
     </div>

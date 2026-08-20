@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { TOOL_ICON_KEYS } from "@/lib/tools/icons";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+
+const PAGE_SIZE = 20;
 
 type ToolRow = {
   id: string;
@@ -33,6 +36,11 @@ const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-
 function ToolsAdmin() {
   const [tools, setTools] = useState<ToolRow[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"all" | ToolRow["status"]>("all");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | ToolRow["category"]>("all");
+  const [listSearch, setListSearch] = useState("");
 
   const [key, setKey] = useState("");
   const [category, setCategory] = useState<"career" | "business">("business");
@@ -54,16 +62,28 @@ function ToolsAdmin() {
 
   const loadTools = useCallback(async () => {
     setLoadingList(true);
-    const { data } = await supabase
+    let query = supabase
       .from("tools")
-      .select("id, key, category, title, description, detail, icon_key, badge, gated, href, position, status")
-      .order("category")
-      .order("position");
-    setTools(data || []);
-    setLoadingList(false);
-  }, []);
+      .select("id, key, category, title, description, detail, icon_key, badge, gated, href, position, status", { count: "exact" });
+    if (statusFilter !== "all") query = query.eq("status", statusFilter);
+    if (categoryFilter !== "all") query = query.eq("category", categoryFilter);
+    if (listSearch.trim()) query = query.ilike("title", `%${listSearch.trim()}%`);
 
-  useEffect(() => { loadTools(); }, [loadTools]);
+    const from = (page - 1) * PAGE_SIZE;
+    const { data, count } = await query.order("category").order("position").range(from, from + PAGE_SIZE - 1);
+    setTools(data || []);
+    setTotal(count || 0);
+    setLoadingList(false);
+  }, [page, statusFilter, categoryFilter, listSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(loadTools, 200);
+    return () => clearTimeout(t);
+  }, [loadTools]);
+
+  useEffect(() => { setPage(1); }, [statusFilter, categoryFilter, listSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const resetForm = () => {
     setEditingToolId(null);
@@ -137,7 +157,7 @@ function ToolsAdmin() {
   async function deleteTool(id: string) {
     if (!confirm("Delete this tool card? This can't be undone.")) return;
     await supabase.from("tools").delete().eq("id", id);
-    setTools((prev) => prev.filter((t) => t.id !== id));
+    loadTools();
   }
 
   return (
@@ -231,11 +251,39 @@ function ToolsAdmin() {
         </div>
 
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h2 className="text-xl font-semibold text-foreground">All Tools</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-foreground">All Tools</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+                placeholder="Search title..."
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              />
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value as typeof categoryFilter)}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              >
+                <option value="all">All categories</option>
+                <option value="career">Career &amp; CV</option>
+                <option value="business">Business</option>
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+          </div>
           {loadingList ? (
             <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
           ) : tools.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">No tools yet.</p>
+            <p className="mt-4 text-sm text-muted-foreground">No tools match this filter.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[560px] text-left text-sm">
@@ -274,6 +322,8 @@ function ToolsAdmin() {
               </table>
             </div>
           )}
+          <p className="mt-4 text-center text-xs text-muted-foreground">{total} tool{total === 1 ? "" : "s"} total</p>
+          <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </div>

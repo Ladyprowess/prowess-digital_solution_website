@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
+
+const PAGE_SIZE = 20;
 
 type ResourceRow = {
   id: string;
@@ -39,6 +42,11 @@ function ResourcesAdmin() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"all" | ResourceRow["status"]>("all");
+  const [audienceFilter, setAudienceFilter] = useState<"all" | ResourceRow["audience"]>("all");
+  const [listSearch, setListSearch] = useState("");
 
   const [title, setTitle] = useState("");
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
@@ -65,21 +73,34 @@ function ResourcesAdmin() {
   const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
   const [loadingEdit, setLoadingEdit] = useState(false);
 
-  const loadResources = useCallback(async () => {
-    setLoadingList(true);
-    const [{ data }, { data: skillRows }] = await Promise.all([
-      supabase
-        .from("resources")
-        .select("id, slug, title, resource_type, category, audience, access, price, status")
-        .order("created_at", { ascending: false }),
-      supabase.from("skills").select("id, slug, name").order("name"),
-    ]);
-    setResources(data || []);
-    setSkills(skillRows || []);
-    setLoadingList(false);
+  useEffect(() => {
+    supabase.from("skills").select("id, slug, name").order("name").then(({ data }) => setSkills(data || []));
   }, []);
 
-  useEffect(() => { loadResources(); }, [loadResources]);
+  const loadResources = useCallback(async () => {
+    setLoadingList(true);
+    let query = supabase
+      .from("resources")
+      .select("id, slug, title, resource_type, category, audience, access, price, status", { count: "exact" });
+    if (statusFilter !== "all") query = query.eq("status", statusFilter);
+    if (audienceFilter !== "all") query = query.eq("audience", audienceFilter);
+    if (listSearch.trim()) query = query.ilike("title", `%${listSearch.trim()}%`);
+
+    const from = (page - 1) * PAGE_SIZE;
+    const { data, count } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
+    setResources(data || []);
+    setTotal(count || 0);
+    setLoadingList(false);
+  }, [page, statusFilter, audienceFilter, listSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(loadResources, 200);
+    return () => clearTimeout(t);
+  }, [loadResources]);
+
+  useEffect(() => { setPage(1); }, [statusFilter, audienceFilter, listSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   async function getUniqueSlug(base: string): Promise<string> {
     let candidate = base;
@@ -212,7 +233,7 @@ function ResourcesAdmin() {
   async function deleteResource(id: string) {
     if (!confirm("Delete this resource? This can't be undone.")) return;
     await supabase.from("resources").delete().eq("id", id);
-    setResources((prev) => prev.filter((r) => r.id !== id));
+    loadResources();
   }
 
   return (
@@ -339,11 +360,39 @@ function ResourcesAdmin() {
         </div>
 
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h2 className="text-xl font-semibold text-foreground">All Resources</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-foreground">All Resources</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+                placeholder="Search title..."
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              />
+              <select
+                value={audienceFilter}
+                onChange={(e) => setAudienceFilter(e.target.value as typeof audienceFilter)}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              >
+                <option value="all">All audiences</option>
+                {AUDIENCES.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+          </div>
           {loadingList ? (
             <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
           ) : resources.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">No resources yet.</p>
+            <p className="mt-4 text-sm text-muted-foreground">No resources match this filter.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[620px] text-left text-sm">
@@ -387,6 +436,8 @@ function ResourcesAdmin() {
               </table>
             </div>
           )}
+          <p className="mt-4 text-center text-xs text-muted-foreground">{total} resource{total === 1 ? "" : "s"} total</p>
+          <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </div>

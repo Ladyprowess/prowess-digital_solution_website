@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase"; // ✅ use your existing client
+import { AdminPagination } from "@/components/admin/AdminPagination";
 
 type EventRow = {
   id: string;
@@ -62,8 +63,10 @@ export default function AdminEventsPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
 
-  // ✅ view-all toggle
-  const [viewAll, setViewAll] = useState(false);
+  const EVENTS_PAGE_SIZE = 8;
+  const [eventsPage, setEventsPage] = useState(1);
+  const [eventStatusFilter, setEventStatusFilter] = useState<"all" | EventRow["status"]>("all");
+  const [eventSearch, setEventSearch] = useState("");
 
   const stats = useMemo(() => {
     const total = events.length;
@@ -72,10 +75,21 @@ export default function AdminEventsPage() {
     return { total, published, drafts };
   }, [events]);
 
-  // ✅ show only 2 until "View all"
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      if (eventStatusFilter !== "all" && e.status !== eventStatusFilter) return false;
+      if (eventSearch.trim() && !e.title.toLowerCase().includes(eventSearch.trim().toLowerCase())) return false;
+      return true;
+    });
+  }, [events, eventStatusFilter, eventSearch]);
+
+  const eventsTotalPages = Math.max(1, Math.ceil(filteredEvents.length / EVENTS_PAGE_SIZE));
   const visibleEvents = useMemo(() => {
-    return viewAll ? events : events.slice(0, 2);
-  }, [events, viewAll]);
+    const from = (eventsPage - 1) * EVENTS_PAGE_SIZE;
+    return filteredEvents.slice(from, from + EVENTS_PAGE_SIZE);
+  }, [filteredEvents, eventsPage]);
+
+  useEffect(() => { setEventsPage(1); }, [eventStatusFilter, eventSearch]);
 
   useEffect(() => {
     if (!coverFile) {
@@ -183,8 +197,7 @@ export default function AdminEventsPage() {
       setStatus("published");
       setCoverFile(null);
 
-      // ✅ after creating, keep it on “2 only” view (optional)
-      setViewAll(false);
+      setEventsPage(1);
 
       await loadEventsAndCounts();
     } catch (err: any) {
@@ -193,8 +206,6 @@ export default function AdminEventsPage() {
       setLoading(false);
     }
   }
-
-  const canViewAll = events.length > 2;
 
   return (
     <div>
@@ -404,24 +415,27 @@ export default function AdminEventsPage() {
 
         {/* All Events */}
         <div className="mt-8">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-slate-900">All Events</h2>
-
-              {/* ✅ View all / Show less */}
-              {canViewAll ? (
-                <button
-                  type="button"
-                  onClick={() => setViewAll((v) => !v)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                >
-                  {viewAll ? "Show less" : `View all (${events.length})`}
-                </button>
-              ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold text-slate-900">All Events</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={eventSearch}
+                onChange={(e) => setEventSearch(e.target.value)}
+                placeholder="Search title..."
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
+              />
+              <select
+                value={eventStatusFilter}
+                onChange={(e) => setEventStatusFilter(e.target.value as typeof eventStatusFilter)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
             </div>
-
-            <p className="text-sm text-slate-600">Use links to open event page or view registrants.</p>
           </div>
+          <p className="mt-2 text-sm text-slate-600">Use links to open event page or view registrants.</p>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             {visibleEvents.map((ev) => {
@@ -518,7 +532,13 @@ export default function AdminEventsPage() {
             <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
               No events yet. Create your first event above.
             </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+              No events match this filter.
+            </div>
           ) : null}
+
+          <AdminPagination page={eventsPage} totalPages={eventsTotalPages} onPageChange={setEventsPage} />
         </div>
       </div>
     </div>

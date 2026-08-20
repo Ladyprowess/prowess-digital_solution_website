@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
 import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
+
+const PAGE_SIZE = 20;
 
 type CareerPathRow = {
   id: string;
@@ -32,6 +35,10 @@ function CareerPathsAdmin() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [paths, setPaths] = useState<CareerPathRow[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"all" | CareerPathRow["status"]>("all");
+  const [listSearch, setListSearch] = useState("");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -48,21 +55,33 @@ function CareerPathsAdmin() {
   const [editingPathId, setEditingPathId] = useState<string | null>(null);
   const [loadingEdit, setLoadingEdit] = useState(false);
 
-  const loadAll = useCallback(async () => {
-    setLoadingList(true);
-    const [{ data: skillRows }, { data: pathRows }] = await Promise.all([
-      supabase.from("skills").select("id, slug, name").order("name"),
-      supabase
-        .from("career_paths")
-        .select("id, slug, title, description, access, price, status")
-        .order("created_at", { ascending: false }),
-    ]);
-    setSkills(skillRows || []);
-    setPaths(pathRows || []);
-    setLoadingList(false);
+  useEffect(() => {
+    supabase.from("skills").select("id, slug, name").order("name").then(({ data }) => setSkills(data || []));
   }, []);
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  const loadPaths = useCallback(async () => {
+    setLoadingList(true);
+    let query = supabase
+      .from("career_paths")
+      .select("id, slug, title, description, access, price, status", { count: "exact" });
+    if (statusFilter !== "all") query = query.eq("status", statusFilter);
+    if (listSearch.trim()) query = query.ilike("title", `%${listSearch.trim()}%`);
+
+    const from = (page - 1) * PAGE_SIZE;
+    const { data, count } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
+    setPaths(data || []);
+    setTotal(count || 0);
+    setLoadingList(false);
+  }, [page, statusFilter, listSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(loadPaths, 200);
+    return () => clearTimeout(t);
+  }, [loadPaths]);
+
+  useEffect(() => { setPage(1); }, [statusFilter, listSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   async function getUniqueSlug(base: string): Promise<string> {
     let candidate = base;
@@ -146,7 +165,7 @@ function CareerPathsAdmin() {
 
       setMsg(editingPathId ? "Career path updated." : "Career path saved.");
       resetForm();
-      loadAll();
+      loadPaths();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -162,7 +181,7 @@ function CareerPathsAdmin() {
   async function deletePath(id: string) {
     if (!confirm("Delete this career path? This can't be undone.")) return;
     await supabase.from("career_paths").delete().eq("id", id);
-    setPaths((prev) => prev.filter((p) => p.id !== id));
+    loadPaths();
   }
 
   return (
@@ -227,11 +246,30 @@ function CareerPathsAdmin() {
         </div>
 
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-card p-8">
-          <h2 className="text-xl font-semibold text-foreground">All Career Paths</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-foreground">All Career Paths</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+                placeholder="Search title..."
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+          </div>
           {loadingList ? (
             <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
           ) : paths.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">No career paths yet.</p>
+            <p className="mt-4 text-sm text-muted-foreground">No career paths match this filter.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[480px] text-left text-sm">
@@ -270,6 +308,8 @@ function CareerPathsAdmin() {
               </table>
             </div>
           )}
+          <p className="mt-4 text-center text-xs text-muted-foreground">{total} career path{total === 1 ? "" : "s"} total</p>
+          <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </div>
