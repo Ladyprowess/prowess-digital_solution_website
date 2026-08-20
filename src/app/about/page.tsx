@@ -1,315 +1,344 @@
-"use client";
-
+import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
 import {
+  Briefcase,
+  Sparkles,
+  Map,
   GraduationCap,
+  Wrench,
   Users,
-  Globe,
-  ShieldCheck,
+  BookOpen,
 } from "lucide-react";
 
-const values = [
-  "Clarity",
-  "Integrity",
-  "Structure",
-  "Simplicity",
-  "Long-term thinking",
+export const metadata: Metadata = {
+  title: "About | Prowess Digital Solutions",
+  description:
+    "Prowess Digital Solutions is a platform that brings jobs, opportunities, career paths, learning and resources together in one place, alongside tools and services for businesses.",
+};
+
+const whatYouCanDo = [
+  { icon: Briefcase, title: "Find Work", desc: "Real, published job listings across roles and industries.", href: "/jobs" },
+  { icon: Sparkles, title: "Find Opportunities", desc: "Scholarships, grants, fellowships and internships worth knowing about.", href: "/opportunities" },
+  { icon: Map, title: "Explore Career Paths", desc: "Guided roadmaps connecting the skills, learning and roles that build a career.", href: "/career-paths" },
+  { icon: GraduationCap, title: "Learn", desc: "Courses that build practical, usable skills.", href: "/learn" },
+  { icon: Wrench, title: "Build", desc: "Business tools, calculators and templates for everyday operations.", href: "/tools" },
+  { icon: Users, title: "Connect", desc: "Events and community moments worth showing up for.", href: "/events" },
+  { icon: BookOpen, title: "Access Resources", desc: "Guides, e-books and videos you can actually use.", href: "/resources" },
+];
+
+const connectionSteps = ["Career", "Skills", "Learning", "Resources", "Opportunities", "Work"];
+
+const approach = [
+  { title: "Practical", desc: "Everything on the platform is built to be used, not just read." },
+  { title: "Curated", desc: "Content is selected and organised, not dumped into a directory." },
+  { title: "Accessible", desc: "A large portion of the platform stays free, by design." },
+  { title: "Connected", desc: "Skills, learning, resources and opportunities are linked, not siloed." },
+  { title: "Useful", desc: "If it does not help someone move forward, it does not belong here." },
 ];
 
 export default function AboutPage() {
   return (
     <div className="page-wrap">
 
+      {/* HERO */}
       <AgencyPageHeader
         eyebrow="About Prowess Digital Solutions"
         title={
           <>
-            Structure first. <span className="text-primary">Growth follows.</span>
+            One platform for career growth, <span className="text-primary">and the business behind it.</span>
           </>
         }
-        description="Most businesses do not fail because the founder lacked effort or ambition. They fail because the foundations were never properly built. Prowess Digital Solutions started in Nigeria to change that, and now works with founders everywhere who deserve the same quality of business support."
-        primaryAction={{ label: "Start a Conversation", href: "/contact" }}
-        secondaryAction={{ label: "Read Our Story", href: "#our-story" }}
-        proof={[
-          "Founder led business guidance",
-          "Fixed scope diagnostics and documentation",
-          "Support for founders building globally",
-        ]}
+        description="Prowess Digital Solutions brings jobs, opportunities, career paths, learning and resources together in one place, so individuals can keep moving forward without searching a dozen different websites - alongside tools and services built for businesses."
+        primaryAction={{ label: "Explore the Platform", href: "/" }}
+        secondaryAction={{ label: "What You Can Do", href: "#what-you-can-do" }}
       />
 
-      {/* ── WHY WE EXIST ──────────────────────────────────────────────────── */}
+      {/* WHAT IS IT */}
       <section className="section">
         <Container>
           <Reveal>
-            <div className="mx-auto max-w-4xl text-center">
-              <h2 className="h2">Why Prowess Digital Solutions Exists</h2>
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className="h2">What Is Prowess Digital Solutions?</h2>
               <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
-                We are a business consulting company that started in Nigeria and now works with
-                founders everywhere. We help people build structured, sustainable businesses through
-                fixed scope diagnostics, practical tools, and hands on documentation. Not quick fixes.
-                Not empty advice. Real support that stays with you as you grow.
+                Prowess Digital Solutions is a career and opportunity platform. On the individual
+                side, it connects jobs, opportunities, career paths, courses and resources so people
+                can find work, build skills and move their careers forward in one place. On the
+                business side, it offers practical tools, resources and digital solutions services
+                that help businesses operate and grow. Both sides share the same standard: practical,
+                curated, and built to actually be used.
               </p>
             </div>
           </Reveal>
-
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                icon: "lightbulb" as const,
-                title: "Clarity Before Anything Else",
-                desc: "Every successful business starts with clear thinking. We help you understand exactly what your business needs and why, before you invest more time or money into the wrong things.",
-              },
-              {
-                icon: "building" as const,
-                title: "Foundations Built Properly",
-                desc: "Shortcuts create expensive problems later. We help you build the operational structure, systems, and processes that support real growth, not just the appearance of it.",
-              },
-              {
-                icon: "chart" as const,
-                title: "Long-Term Thinking",
-                desc: "We are not interested in what works for three months. Our approach focuses on sustainable systems and decisions that compound and hold up as your business grows.",
-              },
-              {
-                icon: "people" as const,
-                title: "Tools That Actually Work",
-                desc: "We built a suite of practical digital tools to help founders track numbers, manage cash, handle invoices, and plan growth without the guesswork.",
-              },
-              {
-                icon: "shield" as const,
-                title: "Honest Guidance",
-                desc: "Sometimes the most valuable advice is to slow down, fix the foundation, or take a different path. We tell you what you need to hear, not what feels comfortable.",
-              },
-              {
-                icon: "settings" as const,
-                title: "Structure Over Chaos",
-                desc: "Business is not chaos; it is a series of systems working together. We bring order to the complexity through clear frameworks, defined roles, and documented processes.",
-              },
-            ].map((v, i) => (
-              <Reveal key={v.title} delay={i * 70}>
-                <ValueCard icon={v.icon} title={v.title} desc={v.desc} />
-              </Reveal>
-            ))}
-          </div>
         </Container>
       </section>
 
-      {/* ── THE STORY ─────────────────────────────────────────────────────── */}
-      <section id="our-story" className="section">
+      {/* FOUNDER */}
+      <section className="section">
         <Container>
-          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-            <Reveal as="div">
-              <h2 className="h2">The Story Behind Prowess Digital Solutions</h2>
-              <div className="mt-5 space-y-5 leading-relaxed text-muted-foreground">
-                <p>
-                  After spending years watching talented entrepreneurs fail, not because their
-                  ideas were bad but because they lacked proper business foundations, it became
-                  clear that something had to change. Too many business owners were struggling
-                  with the same problems: unclear structure, no systems, decisions made under
-                  pressure, and no one in their corner who actually understood how business works.
-                </p>
-                <p>
-                  Prowess Digital Solutions started in Nigeria, built to be the support that many
-                  entrepreneurs there never had access to. Not a generic consulting firm with
-                  frameworks copied from somewhere else. A practical, honest partner that
-                  understands the real conditions of building a business, and works with you to
-                  build something that lasts, wherever you are building it.
-                </p>
-                <p>
-                  We started with consulting and grew into building our own tools, because we
-                  realised that great advice without the right systems to support it only goes
-                  so far. Today, Prowess Digital Solutions combines fixed scope diagnostics,
-                  practical digital tools, and hands on documentation into one focused offering,
-                  for founders who are serious about building properly, wherever they are.
-                </p>
-              </div>
-
-              <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md">
-                <p className="italic leading-relaxed text-foreground">
-                  &ldquo;Before I do anything in business, I speak to Prowess Digital Solutions.&rdquo;
-                  We will save you from countless expensive mistakes and help you build
-                  something sustainable.
-                </p>
-                <div className="mt-5">
-                  <p className="font-semibold text-foreground">Ngozi Peace Okafor</p>
-                  <p className="text-sm text-muted-foreground">Founder, Prowess Digital Solutions</p>
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={120} y={30}>
-              <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="grid gap-10 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-center">
+            <Reveal>
+              <div className="relative mx-auto aspect-[3/4] w-56 overflow-hidden rounded-2xl border border-border bg-card shadow-sm lg:w-full">
                 <Image
-                  src="/images/ngozi-peace-okafor-2.png"
-                  alt="Ngozi Peace Okafor"
+                  src="/images/ngozi-peace-okafor-1.jpg"
+                  alt="Ngozi Peace Okafor, Founder of Prowess Digital Solutions"
                   fill
-                  className="object-cover object-center"
-                  priority
+                  sizes="(min-width: 1024px) 280px, 224px"
+                  className="object-cover object-top"
                 />
               </div>
             </Reveal>
+            <Reveal delay={100} as="div">
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">Behind Prowess Digital Solutions</p>
+              <h2 className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">Ngozi Peace Okafor, Founder</h2>
+              <p className="mt-4 leading-relaxed text-muted-foreground">
+                Prowess Digital Solutions started as one person helping businesses fix the
+                foundations no one else was paying attention to. That same instinct - build the
+                thing that is actually useful, not the thing that looks impressive - is what shaped
+                the platform it has grown into today.
+              </p>
+              <p className="mt-4 italic leading-relaxed text-foreground">
+                &ldquo;The goal has never changed: give people something they can actually use to
+                move forward, whether that is a business or a career.&rdquo;
+              </p>
+            </Reveal>
           </div>
         </Container>
       </section>
 
-      {/* ── MISSION ───────────────────────────────────────────────────────── */}
-      <section className="section">
+      {/* WHY WE BUILT IT */}
+      <section className="bg-muted py-20 sm:py-24">
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+            <Reveal as="div">
+              <h2 className="h2">Why We Built It</h2>
+              <div className="mt-5 space-y-5 leading-relaxed text-muted-foreground">
+                <p>
+                  Finding a job is scattered across job boards. Finding a scholarship or grant is
+                  scattered across mailing lists and social media. Learning a skill is scattered
+                  across platforms that were never built to connect back to real opportunities.
+                  Most people end up doing all of this separately, with no thread tying it together.
+                </p>
+                <p>
+                  Prowess Digital Solutions exists to bring those pieces into one place, and to
+                  connect them to each other. A career path points to the skills it needs. Those
+                  skills point to courses and resources that teach them. Those, in turn, point to
+                  the jobs and opportunities they prepare someone for. One thread, not a dozen tabs.
+                </p>
+              </div>
+            </Reveal>
+            <Reveal delay={120} y={30}>
+              <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+                <p className="text-lg font-semibold text-foreground">The problem, in short:</p>
+                <p className="mt-3 leading-relaxed text-muted-foreground">
+                  Jobs, learning and opportunities are treated as unrelated things, scattered across
+                  unrelated places. They are not unrelated. They are stages of the same journey.
+                </p>
+              </div>
+            </Reveal>
+          </div>
+        </Container>
+      </section>
+
+      {/* WHAT YOU CAN DO */}
+      <section id="what-you-can-do" className="section">
         <Container>
           <Reveal>
-            <div className="mx-auto max-w-4xl text-center">
-              <h2 className="h2">Our Mission</h2>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="h2">What You Can Do</h2>
               <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
-                To help founders everywhere build structured, sustainable businesses by giving
-                them the fixed scope support, practical tools, and documentation they need to
-                grow with confidence and without chaos.
+                Seven things, one platform.
+              </p>
+            </div>
+          </Reveal>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {whatYouCanDo.map((item, i) => (
+              <Reveal key={item.title} delay={i * 60}>
+                <Link
+                  href={item.href}
+                  className="group flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md"
+                >
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <item.icon size={20} strokeWidth={1.8} />
+                  </span>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">{item.title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">{item.desc}</p>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* HOW IT ALL CONNECTS */}
+      <section className="bg-muted py-20 sm:py-24">
+        <Container>
+          <Reveal>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="h2">How It All Connects</h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Nothing on the platform sits on its own. Every part points to the next.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+              {connectionSteps.map((step, i) => (
+                <div key={step} className="flex items-center gap-3 sm:gap-4">
+                  <div className="rounded-full border-2 border-primary/20 bg-card px-6 py-3 shadow-sm">
+                    <span className="text-sm font-semibold text-foreground sm:text-base">{step}</span>
+                  </div>
+                  {i < connectionSteps.length - 1 && (
+                    <span className="text-lg text-primary/50">→</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* FOR INDIVIDUALS */}
+      <section className="section">
+        <Container>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Reveal>
+              <div className="h-full rounded-2xl border border-border bg-card p-8 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-widest text-primary">For Individuals</p>
+                <h2 className="mt-3 text-2xl font-bold text-foreground">Built for anyone building a career</h2>
+                <p className="mt-4 leading-relaxed text-muted-foreground">
+                  Whether you are looking for your first job, changing direction, or trying to build
+                  a specific skill set, the individual side of the platform is for you. It brings
+                  together jobs, opportunities, career paths, courses and resources, so you can find
+                  what you need and see what naturally comes next.
+                </p>
+              </div>
+            </Reveal>
+            <Reveal delay={100}>
+              <div className="h-full rounded-2xl border border-border bg-card p-8 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-widest text-primary">For Businesses</p>
+                <h2 className="mt-3 text-2xl font-bold text-foreground">Practical support to operate and grow</h2>
+                <p className="mt-4 leading-relaxed text-muted-foreground">
+                  Prowess Digital Solutions also helps businesses directly, through business tools,
+                  practical resources, and digital solutions services for teams that need extra
+                  hands or expertise.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-primary">
+                  <Link href="/tools" className="hover:underline">Business Tools →</Link>
+                  <Link href="/resources" className="hover:underline">Resources →</Link>
+                  <Link href="/services" className="hover:underline">Digital Solutions →</Link>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </Container>
+      </section>
+
+      {/* FREE + PREMIUM */}
+      <section className="bg-muted py-20 sm:py-24">
+        <Container>
+          <Reveal>
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className="h2">Free + Premium</h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Most of the platform is free. Job listings, opportunities, career paths and a large
+                share of learning resources are available at no cost, because access to a job or a
+                scholarship should not depend on ability to pay. Premium content exists alongside it,
+                for people who want to go deeper - structured courses, in-depth guides and resources
+                built for people who are serious about a specific skill or path. Free content is not
+                a teaser for premium. It stands on its own.
               </p>
             </div>
           </Reveal>
         </Container>
       </section>
 
-      {/* ── VALUES ────────────────────────────────────────────────────────── */}
-      <section className="bg-background py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      {/* OUR APPROACH */}
+      <section className="section">
+        <Container>
           <Reveal>
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-                Our Values
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Simple thinking, clear steps, and long-term business growth.
-              </p>
+              <h2 className="h2">Our Approach</h2>
             </div>
           </Reveal>
-
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
-            {values.map((value, i) => (
-              <Reveal key={value} delay={i * 60} y={12}>
-                <div className="group inline-flex items-center gap-3 rounded-full border-2 border-primary/20 bg-card px-8 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-lg">
-                  <div className="h-2 w-2 rounded-full bg-primary transition group-hover:scale-125" />
-                  <span className="text-base font-semibold text-foreground">{value}</span>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {approach.map((a, i) => (
+              <Reveal key={a.title} delay={i * 60} y={12}>
+                <div className="group h-full rounded-2xl border-2 border-primary/20 bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-lg">
+                  <p className="text-base font-semibold text-foreground">{a.title}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a.desc}</p>
                 </div>
               </Reveal>
             ))}
           </div>
-
-          <Reveal delay={150}>
-            <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background p-10 text-center shadow-xl">
-              <p className="text-lg leading-relaxed text-foreground sm:text-xl">
-                <span className="font-bold text-foreground">The feeling we aim for:</span>
-                <br />
-                <em>This place understands business properly.</em>
-              </p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      
-      {/* ── WHY THEY TRUST US ─────────────────────────────────────────────── */}
-      <section className="section">
-        <Container>
-          <Reveal>
-            <div className="mx-auto max-w-4xl text-center">
-              <h2 className="h2">Why Business Owners Trust Us</h2>
-            </div>
-          </Reveal>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                icon: <GraduationCap size={28} />,
-                title: "Structured Expertise",
-                desc: "Years of business strategy experience with practical frameworks that hold up in any market.",
-              },
-              {
-                icon: <Users size={28} />,
-                title: "Long-Term Relationships",
-                desc: "Most of our clients come back, because building a business is ongoing and consistent support makes a real difference.",
-              },
-              {
-                icon: <Globe size={28} />,
-                title: "Built From Real Experience",
-                desc: "Tested first in one of the hardest markets to build a business in. What holds up there holds up anywhere.",
-              },
-              {
-                icon: <ShieldCheck size={28} />,
-                title: "Honest Guidance",
-                desc: "A reputation built on telling clients what they need to hear, not what they want to hear.",
-              },
-            ].map((t, i) => (
-              <Reveal key={t.title} delay={i * 80}>
-                <TrustCard icon={t.icon} title={t.title} desc={t.desc} />
-              </Reveal>
-            ))}
-          </div>
         </Container>
       </section>
 
+      {/* WHERE WE'RE GOING */}
+      <section className="bg-muted py-20 sm:py-24">
+        <Container>
+          <Reveal>
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className="h2">Where Prowess Digital Solutions Is Going</h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Prowess Digital Solutions started as a digital solutions business, helping companies
+                with practical tools and services. That work continues today. Alongside it, the
+                platform has grown into something broader: a place for individuals to find jobs,
+                opportunities, learning and resources in one connected system. That evolution is
+                ongoing - more career paths, more opportunities, and more ways for the individual
+                and business sides of the platform to support each other.
+              </p>
+            </div>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* CONTENT & EXTERNAL SOURCES */}
+      <section className="section">
+        <Container>
+          <Reveal>
+            <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+              <h2 className="text-xl font-bold text-foreground">Content &amp; External Sources</h2>
+              <p className="mt-4 leading-relaxed text-muted-foreground">
+                Some jobs, opportunities, videos and other materials on this platform are sourced
+                from third parties and shared because they are useful. Where an application or
+                service is external, it remains subject to that provider&rsquo;s own terms, process
+                and availability - Prowess Digital Solutions is not the employer, funder or service
+                provider in those cases.
+              </p>
+            </div>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/70 py-20 sm:py-24">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+        </div>
+        <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Build what&rsquo;s next for you.</h2>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-primary shadow-2xl transition hover:scale-[1.02] hover:bg-white/95"
+            >
+              Explore the Platform
+            </Link>
+            <Link
+              href="/services"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/40 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              For Businesses →
+            </Link>
+          </div>
+        </div>
+      </section>
+
     </div>
-  );
-}
-
-/* ── COMPONENTS ──────────────────────────────────────────────────────────── */
-
-function ValueCard({
-  title,
-  desc,
-  icon,
-}: {
-  title: string;
-  desc: string;
-  icon?: "lightbulb" | "building" | "chart" | "people" | "shield" | "settings";
-}) {
-  return (
-    <div className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-md">
-      <div className="mb-4 flex items-center gap-3">
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-border/60 transition group-hover:bg-gradient-to-br group-hover:from-primary/15 group-hover:to-primary/5 group-hover:text-primary group-hover:ring-primary/10">
-          {iconEmoji(icon)}
-        </span>
-        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-      </div>
-      <p className="leading-relaxed text-muted-foreground">{desc}</p>
-    </div>
-  );
-}
-
-function TrustCard({
-  icon,
-  title,
-  desc,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div className="group rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 transition group-hover:scale-105">
-        {icon}
-      </div>
-      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-      <p className="mt-2 leading-relaxed text-muted-foreground">{desc}</p>
-    </div>
-  );
-}
-
-function iconEmoji(
-  icon?: "lightbulb" | "building" | "chart" | "people" | "shield" | "settings"
-) {
-  const paths: Record<string, string> = {
-    lightbulb: "M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18",
-    building: "M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21",
-    chart: "M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941",
-    people: "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
-    shield: "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z",
-    settings: "M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z",
-  };
-  const d = (icon && paths[icon]) || "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z";
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d={d} />
-    </svg>
   );
 }
