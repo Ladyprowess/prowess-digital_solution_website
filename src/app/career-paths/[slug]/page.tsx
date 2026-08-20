@@ -7,6 +7,7 @@ import { SaveButton } from "@/components/SaveButton";
 import { CareerInterestButton } from "@/components/CareerInterestButton";
 import { getSkillGraph } from "@/lib/careerPathGraph";
 import { RichText } from "@/components/RichText";
+import { RelatedSection } from "@/components/RelatedSection";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
 
 const supabase = createClient(
@@ -43,24 +44,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${path.title} Career Path`,
     description: (path.description ? stripHtmlForMeta(path.description) : "") || `Skills, courses, resources, jobs and opportunities for a career in ${path.title}.`,
   };
-}
-
-function RelatedSection({
-  title,
-  items,
-  render,
-}: {
-  title: string;
-  items: unknown[];
-  render: () => React.ReactNode;
-}) {
-  if (items.length === 0) return null;
-  return (
-    <section className="mt-10">
-      <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">{title}</h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">{render()}</div>
-    </section>
-  );
 }
 
 export default async function CareerPathDetailPage({ params }: { params: Promise<{ slug: string }> }) {

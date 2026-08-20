@@ -5,7 +5,9 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { RichText } from "@/components/RichText";
+import { RelatedSection } from "@/components/RelatedSection";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
+import { getSkillGraph } from "@/lib/careerPathGraph";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -27,13 +29,13 @@ type OpportunityDetail = {
   remote_regions: string[] | null;
   deadline_at: string | null;
   opportunity_types: { name: string } | null;
-  opportunity_skill_map: { skills: { name: string; slug: string } }[];
+  opportunity_skill_map: { skills: { id: string; name: string; slug: string } }[];
 };
 
 async function getOpportunity(slug: string) {
   const { data } = await supabase
     .from("opportunities")
-    .select("id, slug, title, organisation_name, description, eligibility, benefits, apply_url, location_type, country, city, remote_regions, deadline_at, opportunity_types(name), opportunity_skill_map(skills(name, slug))")
+    .select("id, slug, title, organisation_name, description, eligibility, benefits, apply_url, location_type, country, city, remote_regions, deadline_at, opportunity_types(name), opportunity_skill_map(skills(id, name, slug))")
     .eq("slug", slug)
     .eq("status", "published")
     .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
@@ -63,6 +65,8 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
   if (!opp) return notFound();
 
   const skills = opp.opportunity_skill_map?.map((m) => m.skills).filter(Boolean) || [];
+  const skillIds = skills.map((s) => s.id);
+  const graph = await getSkillGraph(skillIds, { limit: 4 });
 
   const { data: typeRow } = await supabase.from("opportunities").select("type_id").eq("id", opp.id).single();
   let related: { slug: string; title: string; organisation_name: string | null }[] = [];
@@ -163,6 +167,42 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
             </section>
           </Reveal>
         )}
+
+        <Reveal delay={240}>
+          <RelatedSection title="LEARN THESE SKILLS" items={graph.courses} render={() => graph.courses.map((c) => (
+            <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{c.access}</span>
+              <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
+            </Link>
+          ))} />
+        </Reveal>
+
+        <Reveal delay={280}>
+          <RelatedSection title="RECOMMENDED RESOURCES" items={graph.resources} render={() => graph.resources.map((r) => (
+            <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
+              <p className="mt-1.5 text-sm font-semibold text-foreground">{r.title}</p>
+            </Link>
+          ))} />
+        </Reveal>
+
+        <Reveal delay={320}>
+          <RelatedSection title="RELATED CAREER PATHS" items={graph.careerPaths} render={() => graph.careerPaths.map((p) => (
+            <Link key={p.slug} href={`/career-paths/${p.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${p.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{p.access}</span>
+              <p className="mt-1.5 text-sm font-semibold text-foreground">{p.title}</p>
+            </Link>
+          ))} />
+        </Reveal>
+
+        <Reveal delay={360}>
+          <RelatedSection title="FIND RELEVANT JOBS" items={graph.jobs} render={() => graph.jobs.map((j) => (
+            <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+              <p className="text-sm font-semibold text-foreground">{j.title}</p>
+              {j.companies?.name && <p className="mt-0.5 text-xs text-muted-foreground">{j.companies.name}</p>}
+            </Link>
+          ))} />
+        </Reveal>
       </div>
     </div>
   );

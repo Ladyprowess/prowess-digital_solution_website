@@ -5,7 +5,9 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { RichText } from "@/components/RichText";
+import { RelatedSection } from "@/components/RelatedSection";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
+import { getSkillGraph } from "@/lib/careerPathGraph";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -32,13 +34,13 @@ type JobDetail = {
   companies: { name: string; website: string | null; description: string | null } | null;
   job_categories: { name: string } | null;
   job_types: { name: string } | null;
-  job_skill_map: { skills: { name: string; slug: string } }[];
+  job_skill_map: { skills: { id: string; name: string; slug: string } }[];
 };
 
 async function getJob(slug: string) {
   const { data } = await supabase
     .from("jobs")
-    .select("id, slug, title, description, requirements, responsibilities, apply_url, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, experience_level, deadline_at, companies(name, website, description), job_categories(name), job_types(name), job_skill_map(skills(name, slug))")
+    .select("id, slug, title, description, requirements, responsibilities, apply_url, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, experience_level, deadline_at, companies(name, website, description), job_categories(name), job_types(name), job_skill_map(skills(id, name, slug))")
     .eq("slug", slug)
     .eq("status", "published")
     .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
@@ -77,6 +79,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
   if (!job) return notFound();
 
   const skills = job.job_skill_map?.map((m) => m.skills).filter(Boolean) || [];
+  const skillIds = skills.map((s) => s.id);
+  const graph = await getSkillGraph(skillIds, { limit: 4 });
 
   let relatedJobs: { slug: string; title: string; companies: { name: string } | null }[] = [];
   if (job.job_categories) {
@@ -196,6 +200,33 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
             </section>
           </Reveal>
         )}
+
+        <Reveal delay={280}>
+          <RelatedSection title="LEARN THESE SKILLS" items={graph.courses} render={() => graph.courses.map((c) => (
+            <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{c.access}</span>
+              <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
+            </Link>
+          ))} />
+        </Reveal>
+
+        <Reveal delay={320}>
+          <RelatedSection title="RECOMMENDED RESOURCES" items={graph.resources} render={() => graph.resources.map((r) => (
+            <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
+              <p className="mt-1.5 text-sm font-semibold text-foreground">{r.title}</p>
+            </Link>
+          ))} />
+        </Reveal>
+
+        <Reveal delay={360}>
+          <RelatedSection title="RELATED OPPORTUNITIES" items={graph.opportunities} render={() => graph.opportunities.map((o) => (
+            <Link key={o.slug} href={`/opportunities/${o.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+              <p className="text-sm font-semibold text-foreground">{o.title}</p>
+              {o.organisation_name && <p className="mt-0.5 text-xs text-muted-foreground">{o.organisation_name}</p>}
+            </Link>
+          ))} />
+        </Reveal>
       </div>
     </div>
   );
