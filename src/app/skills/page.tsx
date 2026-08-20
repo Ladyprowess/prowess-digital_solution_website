@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://prowessdigitalsolutions.com/skills" },
 };
 
+const PAGE_SIZE = 60;
+
 const SKILL_MAP_TABLES = [
   "job_skill_map",
   "opportunity_skill_map",
@@ -42,8 +44,13 @@ async function getSkillsWithUsage() {
     .sort((a, b) => b.usage - a.usage || a.name.localeCompare(b.name));
 }
 
-export default async function SkillsPage() {
-  const skills = await getSkillsWithUsage();
+export default async function SkillsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const allSkills = await getSkillsWithUsage();
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
+  const totalPages = Math.max(1, Math.ceil(allSkills.length / PAGE_SIZE));
+  const from = (page - 1) * PAGE_SIZE;
+  const skills = allSkills.slice(from, from + PAGE_SIZE);
 
   return (
     <div className="min-h-screen bg-background py-16">
@@ -75,6 +82,26 @@ export default async function SkillsPage() {
                 </span>
               </Link>
             ))}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-10 flex items-center justify-center gap-3">
+            <Link
+              href={page <= 2 ? "/skills" : `/skills?page=${page - 1}`}
+              aria-disabled={page <= 1}
+              className={`rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted ${page <= 1 ? "pointer-events-none opacity-40" : ""}`}
+            >
+              ← Previous
+            </Link>
+            <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
+            <Link
+              href={`/skills?page=${page + 1}`}
+              aria-disabled={page >= totalPages}
+              className={`rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted ${page >= totalPages ? "pointer-events-none opacity-40" : ""}`}
+            >
+              Next →
+            </Link>
           </div>
         )}
       </Container>

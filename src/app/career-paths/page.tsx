@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { ListingCard } from "@/components/ListingCard";
+import { Pagination } from "@/components/Pagination";
 import { supabase } from "@/lib/supabase";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
+
+const PAGE_SIZE = 24;
 
 type CareerPathCard = {
   id: string;
@@ -21,18 +24,26 @@ type CareerPathCard = {
 export default function CareerPathsPage() {
   const [paths, setPaths] = useState<CareerPathCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    const from = (page - 1) * PAGE_SIZE;
     supabase
       .from("career_paths")
-      .select("id, slug, title, description, access, price, price_currency, career_path_skill_map(skills(name))")
+      .select("id, slug, title, description, access, price, price_currency, career_path_skill_map(skills(name))", { count: "exact" })
       .eq("status", "published")
       .order("title")
-      .then(({ data }) => {
+      .range(from, from + PAGE_SIZE - 1)
+      .then(({ data, count }) => {
         setPaths((data as unknown as CareerPathCard[]) || []);
+        setTotal(count || 0);
         setLoading(false);
       });
-  }, []);
+  }, [page]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="min-h-screen bg-background py-16">
@@ -68,6 +79,12 @@ export default function CareerPathsPage() {
             ))}
           </div>
         )}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        />
       </Container>
     </div>
   );

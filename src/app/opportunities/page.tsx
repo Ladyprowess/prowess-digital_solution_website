@@ -4,7 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { ListingCard, type ListingCardMeta } from "@/components/ListingCard";
+import { Pagination } from "@/components/Pagination";
 import { supabase } from "@/lib/supabase";
+
+const PAGE_SIZE = 24;
 
 type Lookup = { id: string; slug: string; name: string };
 
@@ -35,6 +38,8 @@ export default function OpportunitiesPage() {
 
   const [search, setSearch] = useState("");
   const [typeId, setTypeId] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     supabase.from("opportunity_types").select("id, slug, name").order("name").then(({ data }) => setTypes(data || []));
@@ -44,7 +49,7 @@ export default function OpportunitiesPage() {
     setLoading(true);
     let query = supabase
       .from("opportunities")
-      .select("id, slug, title, organisation_name, location_type, country, deadline_at, featured, opportunity_types(name)")
+      .select("id, slug, title, organisation_name, location_type, country, deadline_at, featured, opportunity_types(name)", { count: "exact" })
       .eq("status", "published")
       .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
       .order("featured", { ascending: false })
@@ -53,12 +58,21 @@ export default function OpportunitiesPage() {
     if (typeId) query = query.eq("type_id", typeId);
     if (search.trim()) query = query.ilike("title", `%${search.trim()}%`);
 
-    const { data } = await query.limit(30);
+    const from = (page - 1) * PAGE_SIZE;
+    const { data, count } = await query.range(from, from + PAGE_SIZE - 1);
     setOpportunities(((data as unknown as OpportunityCard[]) || []));
+    setTotal(count || 0);
     setLoading(false);
-  }, [typeId, search]);
+  }, [typeId, search, page]);
 
-  useEffect(() => { loadOpportunities(); }, [loadOpportunities]);
+  useEffect(() => {
+    const t = setTimeout(loadOpportunities, 150);
+    return () => clearTimeout(t);
+  }, [loadOpportunities]);
+
+  useEffect(() => { setPage(1); }, [typeId, search]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="min-h-screen bg-background py-16">
@@ -114,6 +128,12 @@ export default function OpportunitiesPage() {
             })}
           </div>
         )}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        />
       </Container>
     </div>
   );

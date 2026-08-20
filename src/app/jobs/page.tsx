@@ -4,7 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { ListingCard, type ListingCardMeta } from "@/components/ListingCard";
+import { Pagination } from "@/components/Pagination";
 import { supabase } from "@/lib/supabase";
+
+const PAGE_SIZE = 24;
 
 type Lookup = { id: string; slug: string; name: string };
 
@@ -52,6 +55,8 @@ export default function JobsPage() {
   const [typeId, setTypeId] = useState("");
   const [locationType, setLocationType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -67,7 +72,7 @@ export default function JobsPage() {
     setLoading(true);
     let query = supabase
       .from("jobs")
-      .select("id, slug, title, location_type, country, city, salary_min, salary_max, salary_currency, deadline_at, featured, companies(name), job_categories(name), job_types(name)")
+      .select("id, slug, title, location_type, country, city, salary_min, salary_max, salary_currency, deadline_at, featured, companies(name), job_categories(name), job_types(name)", { count: "exact" })
       .eq("status", "published")
       // Imported listings get a 30-day expires_at as a staleness safety
       // net (see runImportForSource) - manually created jobs leave it null
@@ -82,12 +87,21 @@ export default function JobsPage() {
     if (experienceLevel) query = query.eq("experience_level", experienceLevel);
     if (search.trim()) query = query.ilike("title", `%${search.trim()}%`);
 
-    const { data } = await query.limit(30);
+    const from = (page - 1) * PAGE_SIZE;
+    const { data, count } = await query.range(from, from + PAGE_SIZE - 1);
     setJobs(((data as unknown as JobCard[]) || []));
+    setTotal(count || 0);
     setLoading(false);
-  }, [categoryId, typeId, locationType, experienceLevel, search]);
+  }, [categoryId, typeId, locationType, experienceLevel, search, page]);
 
-  useEffect(() => { loadJobs(); }, [loadJobs]);
+  useEffect(() => {
+    const t = setTimeout(loadJobs, 150);
+    return () => clearTimeout(t);
+  }, [loadJobs]);
+
+  useEffect(() => { setPage(1); }, [categoryId, typeId, locationType, experienceLevel, search]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="min-h-screen bg-background py-16">
@@ -158,6 +172,12 @@ export default function JobsPage() {
             })}
           </div>
         )}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        />
       </Container>
     </div>
   );
