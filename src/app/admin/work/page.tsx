@@ -5,6 +5,7 @@ import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillP
 import { SourcesPanel } from "@/components/admin/SourcesPanel";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { AdminPagination } from "@/components/admin/AdminPagination";
+import { CompanyPicker } from "@/components/admin/CompanyPicker";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 
@@ -39,6 +40,7 @@ const JOB_CONNECTORS = [
 
 const LOCATION_TYPES = ["remote", "hybrid", "on_site"] as const;
 const EXPERIENCE_LEVELS = ["entry", "junior", "mid", "senior", "executive"] as const;
+const SALARY_PERIODS = ["hour", "day", "month", "year"] as const;
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -59,7 +61,7 @@ function WorkAdmin() {
   const [loadingLists, setLoadingLists] = useState(true);
 
   const [title, setTitle] = useState("");
-  const [companyName, setCompanyName] = useState("");
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState("");
   const [typeId, setTypeId] = useState("");
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
@@ -70,14 +72,22 @@ function WorkAdmin() {
   const [salaryMin, setSalaryMin] = useState("");
   const [salaryMax, setSalaryMax] = useState("");
   const [salaryCurrency, setSalaryCurrency] = useState("USD");
+  const [salaryPeriod, setSalaryPeriod] = useState<(typeof SALARY_PERIODS)[number]>("year");
   const [experienceLevel, setExperienceLevel] = useState<(typeof EXPERIENCE_LEVELS)[number] | "">("");
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
   const [responsibilities, setResponsibilities] = useState("");
+  const [benefits, setBenefits] = useState("");
+  const [niceToHave, setNiceToHave] = useState("");
   const [applyUrl, setApplyUrl] = useState("");
   const [deadlineAt, setDeadlineAt] = useState("");
   const [featured, setFeatured] = useState(false);
   const [publishNow, setPublishNow] = useState(true);
+  const [editingStatus, setEditingStatus] = useState<JobRow["status"] | null>(null);
+  const [manualSlug, setManualSlug] = useState("");
+  const [originalSlug, setOriginalSlug] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -153,19 +163,6 @@ function WorkAdmin() {
     loadJobs();
   }
 
-  async function getOrCreateCompany(name: string): Promise<string> {
-    const slug = slugify(name);
-    const { data: existing } = await supabase.from("companies").select("id").eq("slug", slug).maybeSingle();
-    if (existing) return existing.id;
-    const { data: created, error } = await supabase
-      .from("companies")
-      .insert({ slug, name })
-      .select("id")
-      .single();
-    if (error || !created) throw new Error(error?.message || "Could not save the company.");
-    return created.id;
-  }
-
   async function getUniqueJobSlug(base: string): Promise<string> {
     let candidate = base;
     let suffix = 1;
@@ -185,11 +182,12 @@ function WorkAdmin() {
 
   const resetForm = () => {
     setEditingJobId(null);
-    setTitle(""); setCompanyName(""); setCategoryId(""); setTypeId("");
+    setTitle(""); setCompanyId(null); setCategoryId(""); setTypeId("");
     setLocationType("remote"); setCountry(""); setCity(""); setRemoteRegions("");
-    setSalaryMin(""); setSalaryMax(""); setSalaryCurrency("USD"); setExperienceLevel("");
-    setDescription(""); setRequirements(""); setResponsibilities("");
+    setSalaryMin(""); setSalaryMax(""); setSalaryCurrency("USD"); setSalaryPeriod("year"); setExperienceLevel("");
+    setDescription(""); setRequirements(""); setResponsibilities(""); setBenefits(""); setNiceToHave("");
     setApplyUrl(""); setDeadlineAt(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
+    setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
   };
 
   async function startEditJob(id: string) {
@@ -197,25 +195,28 @@ function WorkAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("jobs")
-      .select("id, title, category_id, type_id, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, experience_level, description, requirements, responsibilities, apply_url, deadline_at, featured, status, companies(name), job_skill_map(skill_id)")
+      .select("id, slug, title, company_id, category_id, type_id, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, salary_period, experience_level, description, requirements, responsibilities, benefits, nice_to_have, apply_url, deadline_at, featured, status, meta_title, meta_description, job_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
     if (error || !data) { setErr(error?.message || "Could not load this job."); return; }
 
     const job = data as unknown as {
-      id: string; title: string; category_id: string; type_id: string;
+      id: string; slug: string; title: string; company_id: string; category_id: string; type_id: string;
       location_type: (typeof LOCATION_TYPES)[number]; country: string | null; city: string | null;
       remote_regions: string[] | null; salary_min: number | null; salary_max: number | null;
-      salary_currency: string | null; experience_level: (typeof EXPERIENCE_LEVELS)[number] | null;
+      salary_currency: string | null; salary_period: (typeof SALARY_PERIODS)[number] | null;
+      experience_level: (typeof EXPERIENCE_LEVELS)[number] | null;
       description: string | null; requirements: string | null; responsibilities: string | null;
+      benefits: string | null; nice_to_have: string | null;
       apply_url: string; deadline_at: string | null; featured: boolean; status: JobRow["status"];
-      companies: { name: string } | null; job_skill_map: { skill_id: string }[];
+      meta_title: string | null; meta_description: string | null;
+      job_skill_map: { skill_id: string }[];
     };
 
     setEditingJobId(job.id);
     setTitle(job.title);
-    setCompanyName(job.companies?.name || "");
+    setCompanyId(job.company_id);
     setCategoryId(job.category_id);
     setTypeId(job.type_id);
     setLocationType(job.location_type);
@@ -225,15 +226,23 @@ function WorkAdmin() {
     setSalaryMin(job.salary_min?.toString() || "");
     setSalaryMax(job.salary_max?.toString() || "");
     setSalaryCurrency(job.salary_currency || "USD");
+    setSalaryPeriod(job.salary_period || "year");
     setExperienceLevel(job.experience_level || "");
     setDescription(job.description || "");
     setRequirements(job.requirements || "");
     setResponsibilities(job.responsibilities || "");
+    setBenefits(job.benefits || "");
+    setNiceToHave(job.nice_to_have || "");
     setApplyUrl(job.apply_url);
     setDeadlineAt(job.deadline_at ? job.deadline_at.slice(0, 10) : "");
     setFeatured(job.featured);
     setPublishNow(job.status === "published");
     setSelectedSkillIds(job.job_skill_map.map((m) => m.skill_id));
+    setEditingStatus(job.status);
+    setManualSlug(job.slug);
+    setOriginalSlug(job.slug);
+    setMetaTitle(job.meta_title || "");
+    setMetaDescription(job.meta_description || "");
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -241,14 +250,13 @@ function WorkAdmin() {
   const submit = async () => {
     setErr(""); setMsg("");
     if (!title.trim()) return setErr("Job title is required.");
-    if (!companyName.trim()) return setErr("Company is required.");
+    if (!companyId) return setErr("Company is required.");
     if (!categoryId) return setErr("Category is required.");
     if (!typeId) return setErr("Job type is required.");
     if (!applyUrl.trim()) return setErr("Apply link is required.");
 
     setSaving(true);
     try {
-      const companyId = await getOrCreateCompany(companyName.trim());
       const now = new Date().toISOString();
 
       const basePayload = {
@@ -263,25 +271,36 @@ function WorkAdmin() {
         salary_min: salaryMin ? Number(salaryMin) : null,
         salary_max: salaryMax ? Number(salaryMax) : null,
         salary_currency: salaryMin || salaryMax ? salaryCurrency : null,
+        salary_period: salaryMin || salaryMax ? salaryPeriod : null,
         experience_level: experienceLevel || null,
         description: description.trim() || null,
         requirements: requirements.trim() || null,
         responsibilities: responsibilities.trim() || null,
+        benefits: benefits.trim() || null,
+        nice_to_have: niceToHave.trim() || null,
         apply_url: applyUrl.trim(),
         featured,
         status: publishNow ? "published" : "draft",
         deadline_at: deadlineAt || null,
+        meta_title: metaTitle.trim() || null,
+        meta_description: metaDescription.trim() || null,
       };
 
       let jobId = editingJobId;
 
       if (editingJobId) {
-        // Slug and source stay untouched on edit - regenerating the slug
-        // would change the job's live URL, and an imported job keeps its
-        // real source attribution instead of silently becoming "manual"
-        // just because an admin edited it.
+        // The slug can only move while the job is still a draft - once
+        // published, changing it would break a URL someone may have
+        // already bookmarked, shared or that search engines have indexed.
+        const wantsSlugChange = editingStatus === "draft" && manualSlug.trim() && slugify(manualSlug) !== originalSlug;
+        const slugUpdate = wantsSlugChange ? { slug: await getUniqueJobSlug(slugify(manualSlug)) } : {};
+
+        // Source stays untouched on edit - an imported job keeps its real
+        // source attribution instead of silently becoming "manual" just
+        // because an admin edited it.
         const { error } = await supabase.from("jobs").update({
           ...basePayload,
+          ...slugUpdate,
           published_at: publishNow ? now : null,
         }).eq("id", editingJobId);
         if (error) throw new Error(error.message);
@@ -289,7 +308,7 @@ function WorkAdmin() {
       } else {
         const [sourceId, slug] = await Promise.all([
           getManualSourceId(),
-          getUniqueJobSlug(slugify(title)),
+          getUniqueJobSlug(slugify(manualSlug.trim() || title)),
         ]);
         const { data: created, error } = await supabase.from("jobs").insert({
           ...basePayload,
@@ -343,7 +362,7 @@ function WorkAdmin() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Company *">
-                <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={inputCls} placeholder="e.g. Flutterwave" />
+                <CompanyPicker value={companyId} onChange={setCompanyId} />
               </Field>
               <Field label="Apply link (URL) *">
                 <input value={applyUrl} onChange={(e) => setApplyUrl(e.target.value)} className={inputCls} placeholder="https://..." />
@@ -385,7 +404,7 @@ function WorkAdmin() {
               <input value={remoteRegions} onChange={(e) => setRemoteRegions(e.target.value)} className={inputCls} placeholder="e.g. Africa, US, Canada" />
             </Field>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-4">
               <Field label="Salary min">
                 <input value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)} className={inputCls} placeholder="e.g. 1500" type="number" />
               </Field>
@@ -394,6 +413,11 @@ function WorkAdmin() {
               </Field>
               <Field label="Currency">
                 <input value={salaryCurrency} onChange={(e) => setSalaryCurrency(e.target.value)} className={inputCls} placeholder="USD" />
+              </Field>
+              <Field label="Per">
+                <select value={salaryPeriod} onChange={(e) => setSalaryPeriod(e.target.value as typeof salaryPeriod)} className={inputCls}>
+                  {SALARY_PERIODS.map((p) => <option key={p} value={p}>{p[0].toUpperCase() + p.slice(1)}</option>)}
+                </select>
               </Field>
             </div>
 
@@ -418,6 +442,12 @@ function WorkAdmin() {
             <Field label="Requirements">
               <RichTextEditor key={`req-${editingJobId || "new"}`} value={requirements} onChange={setRequirements} placeholder="What's required to apply..." />
             </Field>
+            <Field label="Benefits (optional)">
+              <RichTextEditor key={`benefits-${editingJobId || "new"}`} value={benefits} onChange={setBenefits} placeholder="What the role offers - remote work, learning budget, etc..." />
+            </Field>
+            <Field label="Nice to have (optional)">
+              <RichTextEditor key={`nth-${editingJobId || "new"}`} value={niceToHave} onChange={setNiceToHave} placeholder="Not required, but a plus..." />
+            </Field>
 
             <Field label="Skills">
               <SkillPicker
@@ -425,6 +455,27 @@ function WorkAdmin() {
                 selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds}
               />
             </Field>
+
+            <div className="rounded-xl border border-border/60 p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SEO (optional)</p>
+              <div className="mt-4 grid gap-4">
+                <Field label={editingStatus && editingStatus !== "draft" ? "URL slug (frozen once published)" : "URL slug"}>
+                  <input
+                    value={manualSlug}
+                    onChange={(e) => setManualSlug(e.target.value)}
+                    disabled={Boolean(editingStatus) && editingStatus !== "draft"}
+                    className={`${inputCls} disabled:cursor-not-allowed disabled:opacity-60`}
+                    placeholder="Leave blank to auto-generate from the title"
+                  />
+                </Field>
+                <Field label="Meta title">
+                  <input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputCls} placeholder="Defaults to the job title if left blank" />
+                </Field>
+                <Field label="Meta description">
+                  <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} className={`${inputCls} min-h-20`} placeholder="Shown in search results and link previews" />
+                </Field>
+              </div>
+            </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-6">
               <label className="flex items-center gap-3 text-sm font-semibold text-foreground">

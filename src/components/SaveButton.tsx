@@ -14,10 +14,12 @@ export function SaveButton({
   itemType,
   itemId,
   className = "",
+  iconOnly = false,
 }: {
   itemType: "job" | "opportunity" | "resource" | "course" | "career_path";
   itemId: string;
   className?: string;
+  iconOnly?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -70,14 +72,17 @@ export function SaveButton({
       type="button"
       onClick={toggle}
       disabled={checking || busy}
-      className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-60 ${
+      title={savedRowId ? "Saved" : "Save"}
+      className={`inline-flex items-center gap-2 rounded-xl border font-semibold transition disabled:opacity-60 ${
+        iconOnly ? "p-2.5" : "px-4 py-2.5 text-sm"
+      } ${
         savedRowId ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:bg-muted"
       } ${className}`}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill={savedRowId ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
       </svg>
-      {savedRowId ? "Saved" : "Save"}
+      {!iconOnly && (savedRowId ? "Saved" : "Save")}
     </button>
   );
 }
