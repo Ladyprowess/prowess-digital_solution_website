@@ -106,12 +106,20 @@ export async function POST(req: Request) {
     for (const p of requestedPreferences) mergedPreferences[p] = true;
 
     // filters is a saved-search payload (category/skills/location/remote/
-    // keywords) - optional, and only ever sent by the filter-aware alerts
-    // form. A plain "just email me" signup (e.g. the navbar modal) never
-    // sends it, so it must fall back to whatever was already saved rather
-    // than being wiped out by an unrelated subscribe request.
+    // keywords) - optional, and only ever sent by a filter-aware alerts
+    // form. Namespaced by filterKey ("jobs" | "opportunities", defaulting
+    // to "jobs" to match what was already written before this namespacing
+    // existed) so submitting a jobs alert and an opportunities alert for
+    // the same email doesn't overwrite one with the other - each content
+    // type keeps its own saved search under the same jsonb column. A plain
+    // "just email me" signup (e.g. the navbar modal) never sends `filters`
+    // at all, so the existing object is carried forward untouched.
+    const existingFilters: Record<string, unknown> = (existing?.filters && typeof existing.filters === "object" && !Array.isArray(existing.filters))
+      ? existing.filters
+      : {};
+    const filterKey = body?.filterKey ? String(body.filterKey) : "jobs";
     const filters = body?.filters && typeof body.filters === "object" && !Array.isArray(body.filters)
-      ? body.filters
+      ? { ...existingFilters, [filterKey]: body.filters }
       : (existing?.filters ?? null);
 
     const { error: upsertError } = await supabase

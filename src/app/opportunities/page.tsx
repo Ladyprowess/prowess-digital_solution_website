@@ -10,6 +10,7 @@ import { OpportunityTypeTabs } from "@/components/opportunities/OpportunityTypeT
 import { OpportunityFiltersSidebar } from "@/components/opportunities/OpportunityFiltersSidebar";
 import { ActiveFilterChips } from "@/components/opportunities/ActiveFilterChips";
 import { OpportunitiesEmptyState } from "@/components/opportunities/OpportunitiesEmptyState";
+import { OpportunityAlertsSection } from "@/components/opportunities/OpportunityAlertsSection";
 import { supabase } from "@/lib/supabase";
 import { SORT_OPTIONS, CLOSING_SOON_DAYS } from "@/lib/opportunities/constants";
 import { DEFAULT_FILTERS, filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type OpportunityFilters } from "@/lib/opportunities/filters";
@@ -189,6 +190,7 @@ function OpportunitiesPageContent() {
 
   const quickFilters: { label: string; patch: Partial<OpportunityFilters> }[] = [
     { label: "Remote", patch: { locationType: filters.locationType === "remote" ? "" : "remote" } },
+    { label: "Global", patch: { locationType: filters.locationType === "any" ? "" : "any" } },
     { label: "Fully Funded", patch: { fundingType: filters.fundingType === "fully_funded" ? "" : "fully_funded" } },
     { label: "Closing Soon", patch: { deadlineWindow: filters.deadlineWindow === "week" ? "" : "week" } },
     { label: "Africa", patch: { eligibleLocation: filters.eligibleLocation === "Africa" ? "" : "Africa" } },
@@ -325,6 +327,8 @@ function OpportunitiesPageContent() {
               )}
 
               <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
+
+              <OpportunityAlertsSection currentFilters={filters} types={types} skills={skills} />
             </div>
           </div>
         </Container>

@@ -16,7 +16,7 @@ export function OpportunityTypeTabs({
   onChange: (slug: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 overflow-x-auto">
+    <div className="flex flex-wrap gap-2">
       <button
         type="button"
         onClick={() => onChange("")}

@@ -43,6 +43,7 @@ export function JobAlertsSection({
           email,
           preference: "jobs",
           source: "jobs-page-alerts",
+          filterKey: "jobs",
           filters: { category: category || null, skills: selectedSkills, location: location || null, remote, keywords: keywords || null },
         }),
       });
