@@ -237,13 +237,20 @@ function LearnPageContent() {
       {!activeFiltersPresent && popularSkills.length > 0 && (
         <section className="border-b border-border py-14">
           <Container>
-            <h2 className="text-lg font-bold text-foreground">What do you want to get better at?</h2>
-            <div className="mt-5 flex flex-wrap gap-2.5">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-bold text-foreground">What do you want to get better at?</h2>
+              <Link href="/skills" className="flex-shrink-0 text-sm font-semibold text-primary hover:underline">
+                View all skills →
+              </Link>
+            </div>
+            {/* Fixed to one row that scrolls sideways - however many skills exist,
+                this section never grows the page's height. */}
+            <div className="mt-5 -mx-4 flex flex-nowrap gap-2.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
               {popularSkills.map((s) => (
                 <Link
                   key={s.slug}
                   href={`/skills/${s.slug}`}
-                  className="group flex items-center gap-2 rounded-full border border-border bg-card py-2 pl-4 pr-2.5 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:bg-muted"
+                  className="group flex flex-shrink-0 items-center gap-2 rounded-full border border-border bg-card py-2 pl-4 pr-2.5 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:bg-muted"
                 >
                   {s.name}
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground group-hover:bg-card">
@@ -260,14 +267,24 @@ function LearnPageContent() {
       {!activeFiltersPresent && careerPaths.length > 0 && (
         <section className="border-b border-border bg-muted py-14">
           <Container>
-            <h2 className="text-lg font-bold text-foreground">Learn for a Career</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Not sure what to learn? Explore a career path and see the skills and learning resources connected to it.</p>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {careerPaths.slice(0, 6).map((p) => (
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Learn for a Career</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Not sure what to learn? Explore a career path and see the skills and learning resources connected to it.</p>
+              </div>
+              <Link href="/career-paths" className="flex-shrink-0 text-sm font-semibold text-primary hover:underline">
+                View all →
+              </Link>
+            </div>
+            {/* Same fixed-height, horizontal-scroll pattern as the skills row
+                above - a growing list of career paths widens the scroll area
+                instead of pushing the rest of the page down. */}
+            <div className="mt-5 -mx-4 flex flex-nowrap gap-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+              {careerPaths.slice(0, 12).map((p) => (
                 <Link
                   key={p.slug}
                   href={`/career-paths/${p.slug}`}
-                  className="rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                  className="w-56 flex-shrink-0 rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                 >
                   <p className="font-semibold text-foreground">{p.title}</p>
                 </Link>
