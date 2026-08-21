@@ -89,7 +89,7 @@ export async function POST(req: Request) {
 
     const { data: existing, error: lookupError } = await supabase
       .from("newsletter_subscribers")
-      .select("preferences")
+      .select("preferences, filters")
       .eq("email", email)
       .maybeSingle();
 
@@ -105,10 +105,19 @@ export async function POST(req: Request) {
     const mergedPreferences = { ...existingPreferences };
     for (const p of requestedPreferences) mergedPreferences[p] = true;
 
+    // filters is a saved-search payload (category/skills/location/remote/
+    // keywords) - optional, and only ever sent by the filter-aware alerts
+    // form. A plain "just email me" signup (e.g. the navbar modal) never
+    // sends it, so it must fall back to whatever was already saved rather
+    // than being wiped out by an unrelated subscribe request.
+    const filters = body?.filters && typeof body.filters === "object" && !Array.isArray(body.filters)
+      ? body.filters
+      : (existing?.filters ?? null);
+
     const { error: upsertError } = await supabase
       .from("newsletter_subscribers")
       .upsert(
-        { email, preferences: mergedPreferences, source, updated_at: new Date().toISOString() },
+        { email, preferences: mergedPreferences, filters, source, updated_at: new Date().toISOString() },
         { onConflict: "email" }
       );
 

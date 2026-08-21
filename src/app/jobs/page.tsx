@@ -9,6 +9,7 @@ import { JobCard, type JobCardData } from "@/components/jobs/JobCard";
 import { JobFiltersSidebar } from "@/components/jobs/JobFiltersSidebar";
 import { ActiveFilterChips } from "@/components/jobs/ActiveFilterChips";
 import { JobsEmptyState } from "@/components/jobs/JobsEmptyState";
+import { JobAlertsSection } from "@/components/jobs/JobAlertsSection";
 import { supabase } from "@/lib/supabase";
 import { SORT_OPTIONS, CLOSING_SOON_DAYS } from "@/lib/jobs/constants";
 import { DEFAULT_FILTERS, filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type JobFilters } from "@/lib/jobs/filters";
@@ -293,6 +294,8 @@ function JobsPageContent() {
               )}
 
               <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
+
+              <JobAlertsSection currentFilters={filters} categories={categories} skills={skills} />
             </div>
           </div>
         </Container>
