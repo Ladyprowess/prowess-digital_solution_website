@@ -1,25 +1,33 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
-import { SkillCard, type SkillCardData } from "@/components/skills/SkillCard";
 import { supabase } from "@/lib/supabase";
 
 const PAGE_SIZE = 24;
-const POPULAR_COUNT = 10;
 const LEARN_RESOURCE_KINDS = ["video", "article", "guide", "ebook"];
 
 type SkillRow = { id: string; slug: string; name: string; description: string | null; featured: boolean };
+type SkillWithCounts = SkillRow & { learningCount: number; jobsCount: number; opportunitiesCount: number };
+
+function ChevronRight() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="flex-shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
 
 export default function SkillsPage() {
-  const [skills, setSkills] = useState<SkillCardData[]>([]);
+  const [skills, setSkills] = useState<SkillWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [hasContentOnly, setHasContentOnly] = useState(false);
-  const [sort, setSort] = useState<"name" | "connected">("name");
+  const [sort, setSort] = useState<"connected" | "name">("connected");
 
   useEffect(() => {
     (async () => {
@@ -46,8 +54,8 @@ export default function SkillsPage() {
         }
       }
 
-      const withCounts: SkillCardData[] = ((skillRows as SkillRow[]) || []).map((s) => ({
-        id: s.id, slug: s.slug, name: s.name, description: s.description, featured: s.featured,
+      const withCounts: SkillWithCounts[] = ((skillRows as SkillRow[]) || []).map((s) => ({
+        ...s,
         learningCount: learningCounts.get(s.id) || 0,
         jobsCount: jobCounts.get(s.id) || 0,
         opportunitiesCount: oppCounts.get(s.id) || 0,
@@ -74,31 +82,19 @@ export default function SkillsPage() {
     setPage(1);
   }
 
-  function updateSort(value: "name" | "connected") {
+  function updateSort(value: "connected" | "name") {
     setSort(value);
     setPage(1);
   }
 
-  const popularSkills = useMemo(() => {
-    // Only ever shows skills with real content (or an explicit admin
-    // Featured override) - padding this out with zero-usage skills just to
-    // hit a round number would make "Popular" a lie.
-    const withUsage = filtered.filter((s) => s.featured || s.learningCount + s.jobsCount + s.opportunitiesCount > 0);
-    return [...withUsage]
-      .sort((a, b) => {
-        if (a.featured !== b.featured) return a.featured ? -1 : 1;
-        const totalA = a.learningCount + a.jobsCount + a.opportunitiesCount;
-        const totalB = b.learningCount + b.jobsCount + b.opportunitiesCount;
-        return totalB - totalA;
-      })
-      .slice(0, POPULAR_COUNT);
-  }, [filtered]);
-
-  const browseSkills = useMemo(() => {
+  // Featured skills always lead, regardless of sort - it's an explicit
+  // editorial signal, not something a sort dropdown should be able to bury.
+  const sortedSkills = useMemo(() => {
     const base = hasContentOnly
       ? filtered.filter((s) => s.learningCount + s.jobsCount + s.opportunitiesCount > 0)
       : filtered;
     return [...base].sort((a, b) => {
+      if (a.featured !== b.featured) return a.featured ? -1 : 1;
       if (sort === "connected") {
         const totalA = a.learningCount + a.jobsCount + a.opportunitiesCount;
         const totalB = b.learningCount + b.jobsCount + b.opportunitiesCount;
@@ -108,13 +104,21 @@ export default function SkillsPage() {
     });
   }, [filtered, hasContentOnly, sort]);
 
-  const totalPages = Math.max(1, Math.ceil(browseSkills.length / PAGE_SIZE));
-  const pagedBrowseSkills = useMemo(() => {
+  const totalPages = Math.max(1, Math.ceil(sortedSkills.length / PAGE_SIZE));
+  const pagedSkills = useMemo(() => {
     const from = (page - 1) * PAGE_SIZE;
-    return browseSkills.slice(from, from + PAGE_SIZE);
-  }, [browseSkills, page]);
+    return sortedSkills.slice(from, from + PAGE_SIZE);
+  }, [sortedSkills, page]);
 
-  const exampleChips = popularSkills.slice(0, 4);
+  const exampleChips = useMemo(() => {
+    return [...skills]
+      .filter((s) => s.featured || s.learningCount + s.jobsCount + s.opportunitiesCount > 0)
+      .sort((a, b) => {
+        if (a.featured !== b.featured) return a.featured ? -1 : 1;
+        return (b.learningCount + b.jobsCount + b.opportunitiesCount) - (a.learningCount + a.jobsCount + a.opportunitiesCount);
+      })
+      .slice(0, 4);
+  }, [skills]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -174,68 +178,79 @@ export default function SkillsPage() {
           </div>
         </Container>
       ) : (
-        <>
-          {/* POPULAR SKILLS */}
-          {popularSkills.length > 0 && (
-            <section className="border-b border-border py-14">
-              <Container>
-                <h2 className="text-lg font-bold text-foreground">Popular Skills</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Explore skills connected to real learning resources, jobs and opportunities on Prowess Digital Solutions.</p>
-                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {popularSkills.map((s) => <SkillCard key={s.id} skill={s} />)}
+        <section className="py-14">
+          <Container>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">All Skills</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {sortedSkills.length} skill{sortedSkills.length === 1 ? "" : "s"} connected to learning resources, jobs and opportunities on Prowess Digital Solutions.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input type="checkbox" checked={hasContentOnly} onChange={(e) => updateHasContentOnly(e.target.checked)} />
+                  Only show skills with content
+                </label>
+                <select
+                  value={sort}
+                  onChange={(e) => updateSort(e.target.value as typeof sort)}
+                  className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground"
+                >
+                  <option value="connected">Most connected</option>
+                  <option value="name">Name (A–Z)</option>
+                </select>
+              </div>
+            </div>
+
+            {sortedSkills.length === 0 ? (
+              <div className="mt-6 rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+                <p className="text-sm text-muted-foreground">No skills match these filters.</p>
+              </div>
+            ) : (
+              <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+                <div className="hidden border-b border-border px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid sm:grid-cols-[1fr_110px_90px_130px_16px] sm:gap-4">
+                  <span>Skill</span>
+                  <span className="text-center">Learning</span>
+                  <span className="text-center">Jobs</span>
+                  <span className="text-center">Opportunities</span>
+                  <span />
                 </div>
-              </Container>
-            </section>
-          )}
-
-          {/* BROWSE ALL SKILLS */}
-          <section className="py-14">
-            <Container>
-              <h2 className="text-lg font-bold text-foreground">Explore All Skills</h2>
-
-              <div className="mt-5 grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-                <div className="rounded-2xl border border-border bg-card p-6">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Search</p>
-                  <input
-                    value={search}
-                    onChange={(e) => updateSearch(e.target.value)}
-                    placeholder="Search skills..."
-                    className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground"
-                  />
-
-                  <p className="mt-5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Sort</p>
-                  <select
-                    value={sort}
-                    onChange={(e) => updateSort(e.target.value as typeof sort)}
-                    className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground"
-                  >
-                    <option value="name">Name (A–Z)</option>
-                    <option value="connected">Most connected</option>
-                  </select>
-
-                  <label className="mt-5 flex items-center gap-2 text-sm text-foreground">
-                    <input type="checkbox" checked={hasContentOnly} onChange={(e) => updateHasContentOnly(e.target.checked)} />
-                    Only show skills with content
-                  </label>
-                </div>
-
-                <div>
-                  <p className="mb-4 text-sm text-muted-foreground">{browseSkills.length} skill{browseSkills.length === 1 ? "" : "s"}</p>
-                  {browseSkills.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
-                      <p className="text-sm text-muted-foreground">No skills match these filters.</p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                      {pagedBrowseSkills.map((s) => <SkillCard key={s.id} skill={s} compact />)}
-                    </div>
-                  )}
-                  <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                <div className="divide-y divide-border">
+                  {pagedSkills.map((s) => (
+                    <Link
+                      key={s.id}
+                      href={`/skills/${s.slug}`}
+                      className="group grid grid-cols-1 gap-2 px-5 py-4 transition hover:bg-muted sm:grid-cols-[1fr_110px_90px_130px_16px] sm:items-center sm:gap-4"
+                    >
+                      <div className="min-w-0">
+                        <span className="font-semibold text-foreground">{s.name}</span>
+                        {s.featured && (
+                          <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">Featured</span>
+                        )}
+                        {s.description && <p className="mt-0.5 truncate text-sm text-muted-foreground sm:max-w-md">{s.description}</p>}
+                      </div>
+                      <span className={`text-sm sm:text-center ${s.learningCount > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
+                        <span className="text-muted-foreground sm:hidden">Learning </span>{s.learningCount}
+                      </span>
+                      <span className={`text-sm sm:text-center ${s.jobsCount > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
+                        <span className="text-muted-foreground sm:hidden">Jobs </span>{s.jobsCount}
+                      </span>
+                      <span className={`text-sm sm:text-center ${s.opportunitiesCount > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
+                        <span className="text-muted-foreground sm:hidden">Opportunities </span>{s.opportunitiesCount}
+                      </span>
+                      <span className="hidden sm:block">
+                        <ChevronRight />
+                      </span>
+                    </Link>
+                  ))}
                 </div>
               </div>
-            </Container>
-          </section>
-        </>
+            )}
+
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </Container>
+        </section>
       )}
     </div>
   );
