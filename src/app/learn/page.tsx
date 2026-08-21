@@ -12,13 +12,13 @@ import { LearnFiltersSidebar } from "@/components/learn/LearnFiltersSidebar";
 import { supabase } from "@/lib/supabase";
 import { SORT_OPTIONS } from "@/lib/learn/constants";
 import { filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type LearnFilters } from "@/lib/learn/filters";
-import { courseToLearnItem, resourceToLearnItem, type LearnItem, type CourseRow, type ResourceRow } from "@/lib/learn/types";
+import {
+  courseToLearnItem, resourceToLearnItem, COURSE_SELECT, RESOURCE_SELECT, LEARN_RESOURCE_KINDS,
+  type LearnItem, type CourseRow, type ResourceRow,
+} from "@/lib/learn/types";
 
 const PAGE_SIZE = 24;
-const RESOURCE_KINDS = ["video", "article", "guide", "ebook"];
-
-const COURSE_SELECT = "id, slug, title, description, level, access, price, price_currency, thumbnail_url, featured, created_at, course_skill_map(skills(slug, name))";
-const RESOURCE_SELECT = "id, slug, title, description, resource_type, level, access, price, price_currency, thumbnail_url, featured, created_at, resource_skill_map(skills(slug, name))";
+const RESOURCE_KINDS = LEARN_RESOURCE_KINDS;
 
 type SkillLookup = { id: string; slug: string; name: string; description: string | null };
 type CareerPathLookup = { slug: string; title: string; description: string | null };

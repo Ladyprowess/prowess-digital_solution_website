@@ -82,3 +82,46 @@ export async function getSkillGraph(skillIds: string[], options?: { limit?: numb
     careerPaths: dedupeBySlug(((careerPathRows.data || []) as unknown as { career_paths: RelatedCareerPath }[]).map((r) => r.career_paths)).slice(0, limit),
   };
 }
+
+export type RelatedSkill = { id: string; slug: string; name: string; description: string | null };
+
+// "Related Skills" derived from real co-occurrence, not a curated list: for
+// every job/opportunity/course/resource tagged with this skill, find every
+// *other* skill also tagged on those same items, ranked by how often that
+// overlap happens. Deliberately scoped to these four tables (not
+// career_path_skill_map/event_skill_map) - the tables that actually drive
+// day-to-day discovery on the platform.
+const CO_OCCURRENCE_TABLES = [
+  { map: "job_skill_map", idColumn: "job_id" },
+  { map: "opportunity_skill_map", idColumn: "opportunity_id" },
+  { map: "course_skill_map", idColumn: "course_id" },
+  { map: "resource_skill_map", idColumn: "resource_id" },
+] as const;
+
+export async function getRelatedSkills(skillId: string, options?: { limit?: number }): Promise<RelatedSkill[]> {
+  const limit = options?.limit ?? 8;
+  const overlapCount = new Map<string, number>();
+
+  await Promise.all(
+    CO_OCCURRENCE_TABLES.map(async ({ map, idColumn }) => {
+      const { data: ownRows } = await supabase.from(map).select(idColumn).eq("skill_id", skillId);
+      const itemIds = Array.from(new Set((ownRows || []).map((r: Record<string, unknown>) => String(r[idColumn]))));
+      if (itemIds.length === 0) return;
+
+      const { data: coRows } = await supabase.from(map).select(`skill_id, ${idColumn}`).in(idColumn, itemIds).neq("skill_id", skillId);
+      for (const row of (coRows || []) as { skill_id: string }[]) {
+        overlapCount.set(row.skill_id, (overlapCount.get(row.skill_id) || 0) + 1);
+      }
+    })
+  );
+
+  const rankedIds = Array.from(overlapCount.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([id]) => id);
+  if (rankedIds.length === 0) return [];
+
+  const { data: skillRows } = await supabase.from("skills").select("id, slug, name, description").in("id", rankedIds).eq("status", "published");
+  const bySkillId = new Map((skillRows || []).map((s) => [s.id, s]));
+  return rankedIds.map((id) => bySkillId.get(id)).filter((s): s is RelatedSkill => Boolean(s));
+}

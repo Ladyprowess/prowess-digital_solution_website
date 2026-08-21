@@ -38,6 +38,14 @@ export type ResourceRow = {
   resource_skill_map: { skills: { slug: string; name: string } | null }[];
 };
 
+// Shared field-select strings for courses/resources shaped for LearnItem -
+// exported so any page needing a course/resource feed (currently /learn and
+// /skills/[slug]'s Recommended Learning section) uses the exact same shape
+// instead of two copies drifting apart.
+export const COURSE_SELECT = "id, slug, title, description, level, access, price, price_currency, thumbnail_url, featured, created_at, course_skill_map(skills(slug, name))";
+export const RESOURCE_SELECT = "id, slug, title, description, resource_type, level, access, price, price_currency, thumbnail_url, featured, created_at, resource_skill_map(skills(slug, name))";
+export const LEARN_RESOURCE_KINDS = ["video", "article", "guide", "ebook"];
+
 export function courseToLearnItem(c: CourseRow): LearnItem {
   return {
     id: c.id, slug: c.slug, href: `/learn/${c.slug}`, kind: "course",
