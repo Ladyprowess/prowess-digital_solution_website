@@ -17,6 +17,7 @@ const ITEM_TABLE: Record<string, string> = {
   resource: "resources",
   course: "courses",
   career_path: "career_paths",
+  skill: "skills",
 };
 
 const ITEM_LABEL: Record<string, string> = {
@@ -25,6 +26,7 @@ const ITEM_LABEL: Record<string, string> = {
   resource: "Resource",
   course: "Course",
   career_path: "Career Path",
+  skill: "Skill",
 };
 
 function hrefFor(itemType: string, slug?: string | null): string | null {
@@ -35,6 +37,7 @@ function hrefFor(itemType: string, slug?: string | null): string | null {
     case "resource": return `/resources/${slug}`;
     case "course": return `/learn/${slug}`;
     case "career_path": return `/career-paths/${slug}`;
+    case "skill": return `/skills/${slug}`;
     default: return null;
   }
 }
@@ -48,7 +51,10 @@ async function attachTitles<T extends { item_type: string; item_id: string }>(ro
     Object.entries(byType).map(async ([type, ids]) => {
       const table = ITEM_TABLE[type];
       if (!table) return;
-      const { data } = await supabase.from(table).select("id, title, slug").in("id", ids);
+      // skills has a `name` column, not `title` like every other saveable
+      // table - aliased back to `title` in the select so the rest of this
+      // function can stay generic across item types.
+      const { data } = await supabase.from(table).select(type === "skill" ? "id, title:name, slug" : "id, title, slug").in("id", ids);
       (data || []).forEach((row: { id: string; title: string; slug: string }) => { infoMap[row.id] = { title: row.title, slug: row.slug }; });
     })
   );

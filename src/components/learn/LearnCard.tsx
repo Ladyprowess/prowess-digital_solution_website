@@ -43,15 +43,19 @@ export function LearnCard({ item }: { item: LearnItem }) {
   const price = priceLabel(item);
 
   return (
-    <div className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${color.ring}`}>
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
       <Link href={item.href} className="flex flex-1 flex-col">
-        <div className="relative h-40 w-full bg-muted">
+        <div className="relative h-40 w-full overflow-hidden bg-muted">
           {item.thumbnail_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className={`flex h-full w-full items-center justify-center ${color.chip}`}>
-              <KindIcon kind={item.kind} />
+            <div className="relative flex h-full w-full items-center justify-center">
+              <div className={`absolute -right-8 -top-10 h-32 w-32 rounded-full ${color.bar} opacity-20 blur-2xl`} />
+              <div className={`absolute -bottom-10 -left-6 h-36 w-36 rounded-full ${color.bar} opacity-10 blur-2xl`} />
+              <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm ${color.chip}`}>
+                <KindIcon kind={item.kind} />
+              </div>
             </div>
           )}
           <div className="absolute left-3 top-3 flex gap-1.5">
@@ -66,32 +70,28 @@ export function LearnCard({ item }: { item: LearnItem }) {
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col p-5">
-          <h3 className="text-base font-bold leading-snug text-foreground">{item.title}</h3>
-          {item.description && (
-            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{stripHtmlForMeta(item.description, 140)}</p>
-          )}
-
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            {item.level && <span className="capitalize">{item.level}</span>}
-          </div>
-
-          {skills.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {skills.map((s) => (
-                <span key={s.slug} className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${color.tag}`}>{s.name}</span>
-              ))}
-              {extraSkills > 0 && (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">+{extraSkills} more</span>
-              )}
-            </div>
-          )}
-
-          <div className="mt-auto pt-4">
-            <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${item.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+        <div className="flex flex-1 flex-col p-6">
+          <div className="flex items-center justify-between gap-2">
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${item.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
               {item.access === "premium" ? (price || "Premium") : "Free"}
             </span>
+            {item.level && <span className="text-xs capitalize text-muted-foreground">{item.level}</span>}
           </div>
+
+          <h3 className="mt-4 line-clamp-2 text-base font-bold leading-snug text-foreground">{item.title}</h3>
+          {item.description && (
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{stripHtmlForMeta(item.description, 140)}</p>
+          )}
+
+          <div className="flex-1" />
+
+          {skills.length > 0 && (
+            <p className="mt-4 truncate text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">Skills </span>
+              {skills.map((s) => s.name).join(", ")}
+              {extraSkills > 0 && ` +${extraSkills}`}
+            </p>
+          )}
         </div>
       </Link>
 

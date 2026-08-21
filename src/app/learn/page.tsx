@@ -282,7 +282,7 @@ function LearnPageContent() {
         <section className="border-b border-border py-14">
           <Container>
             <h2 className="text-lg font-bold text-foreground">Featured Learning</h2>
-            <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-5 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {featured.map((item) => <LearnCard key={`${item.kind}-${item.id}`} item={item} />)}
             </div>
           </Container>
@@ -346,7 +346,7 @@ function LearnPageContent() {
                   )}
                 </div>
               ) : (
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {items.map((item) => <LearnCard key={`${item.kind}-${item.id}`} item={item} />)}
                 </div>
               )}

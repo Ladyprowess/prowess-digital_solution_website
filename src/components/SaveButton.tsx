@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 // Shared bookmark toggle for jobs/opportunities/resources/courses/career
-// paths - all backed by the one generic saved_items table (see
+// paths/skills - all backed by the one generic saved_items table (see
 // jobs_opportunities_schema.sql for why a single polymorphic table beats a
 // saved_<type> table per content type). Requires sign-in; anonymous clicks
 // go to /account/login rather than failing silently, since saved_items has
@@ -16,7 +16,7 @@ export function SaveButton({
   className = "",
   iconOnly = false,
 }: {
-  itemType: "job" | "opportunity" | "resource" | "course" | "career_path";
+  itemType: "job" | "opportunity" | "resource" | "course" | "career_path" | "skill";
   itemId: string;
   className?: string;
   iconOnly?: boolean;

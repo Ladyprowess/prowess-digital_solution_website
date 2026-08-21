@@ -1,110 +1,179 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
+import { Pagination } from "@/components/Pagination";
+import { SkillCard, type SkillCardData } from "@/components/skills/SkillCard";
+import { supabase } from "@/lib/supabase";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const PAGE_SIZE = 24;
+const POPULAR_COUNT = 10;
+const LEARN_RESOURCE_KINDS = ["video", "article", "guide", "ebook"];
 
-export const metadata: Metadata = {
-  title: "Skills | Prowess Digital Solutions",
-  description: "Browse skills to find the career paths, jobs, courses and resources connected to each one.",
-  alternates: { canonical: "https://prowessdigitalsolutions.com/skills" },
-};
+type SkillRow = { id: string; slug: string; name: string; description: string | null; featured: boolean };
 
-const PAGE_SIZE = 60;
+export default function SkillsPage() {
+  const [skills, setSkills] = useState<SkillCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-const SKILL_MAP_TABLES = [
-  "job_skill_map",
-  "opportunity_skill_map",
-  "course_skill_map",
-  "resource_skill_map",
-  "event_skill_map",
-  "career_path_skill_map",
-] as const;
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const [{ data: skillRows }, { data: jobRows }, { data: oppRows }, { data: courseRows }, { data: resourceRows }] = await Promise.all([
+        supabase.from("skills").select("id, slug, name, description, featured").eq("status", "published").order("name"),
+        supabase.from("job_skill_map").select("skill_id"),
+        supabase.from("opportunity_skill_map").select("skill_id"),
+        supabase.from("course_skill_map").select("skill_id"),
+        supabase.from("resource_skill_map").select("skill_id, resources(resource_type)"),
+      ]);
 
-async function getSkillsWithUsage() {
-  const [{ data: skills }, ...mapResults] = await Promise.all([
-    supabase.from("skills").select("id, slug, name").order("name"),
-    ...SKILL_MAP_TABLES.map((table) => supabase.from(table).select("skill_id")),
-  ]);
+      const jobCounts = new Map<string, number>();
+      for (const r of jobRows || []) jobCounts.set(r.skill_id, (jobCounts.get(r.skill_id) || 0) + 1);
 
-  const usageBySkillId = new Map<string, number>();
-  mapResults.forEach((result) => {
-    for (const row of (result.data as { skill_id: string }[] | null) || []) {
-      usageBySkillId.set(row.skill_id, (usageBySkillId.get(row.skill_id) || 0) + 1);
-    }
-  });
+      const oppCounts = new Map<string, number>();
+      for (const r of oppRows || []) oppCounts.set(r.skill_id, (oppCounts.get(r.skill_id) || 0) + 1);
 
-  return (skills || [])
-    .map((s) => ({ ...s, usage: usageBySkillId.get(s.id) || 0 }))
-    .sort((a, b) => b.usage - a.usage || a.name.localeCompare(b.name));
-}
+      const learningCounts = new Map<string, number>();
+      for (const r of courseRows || []) learningCounts.set(r.skill_id, (learningCounts.get(r.skill_id) || 0) + 1);
+      for (const r of (resourceRows as unknown as { skill_id: string; resources: { resource_type: string | null } | null }[]) || []) {
+        if (r.resources?.resource_type && LEARN_RESOURCE_KINDS.includes(r.resources.resource_type)) {
+          learningCounts.set(r.skill_id, (learningCounts.get(r.skill_id) || 0) + 1);
+        }
+      }
 
-export default async function SkillsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const allSkills = await getSkillsWithUsage();
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number(pageParam) || 1);
-  const totalPages = Math.max(1, Math.ceil(allSkills.length / PAGE_SIZE));
-  const from = (page - 1) * PAGE_SIZE;
-  const skills = allSkills.slice(from, from + PAGE_SIZE);
+      const withCounts: SkillCardData[] = ((skillRows as SkillRow[]) || []).map((s) => ({
+        id: s.id, slug: s.slug, name: s.name, description: s.description, featured: s.featured,
+        learningCount: learningCounts.get(s.id) || 0,
+        jobsCount: jobCounts.get(s.id) || 0,
+        opportunitiesCount: oppCounts.get(s.id) || 0,
+      }));
+
+      setSkills(withCounts);
+      setLoading(false);
+    })();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return skills;
+    return skills.filter((s) => s.name.toLowerCase().includes(q));
+  }, [skills, search]);
+
+  function updateSearch(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
+
+  const popularSkills = useMemo(() => {
+    return [...filtered]
+      .sort((a, b) => {
+        if (a.featured !== b.featured) return a.featured ? -1 : 1;
+        const totalA = a.learningCount + a.jobsCount + a.opportunitiesCount;
+        const totalB = b.learningCount + b.jobsCount + b.opportunitiesCount;
+        return totalB - totalA;
+      })
+      .slice(0, POPULAR_COUNT);
+  }, [filtered]);
+
+  const browseSkills = useMemo(() => {
+    return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+  }, [filtered]);
+
+  const totalPages = Math.max(1, Math.ceil(browseSkills.length / PAGE_SIZE));
+  const pagedBrowseSkills = useMemo(() => {
+    const from = (page - 1) * PAGE_SIZE;
+    return browseSkills.slice(from, from + PAGE_SIZE);
+  }, [browseSkills, page]);
+
+  const exampleChips = popularSkills.slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-background py-16">
-      <Container>
-        <Reveal>
-          <div className="mb-12 text-center">
-            <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Skills</div>
-            <h1 className="text-4xl font-bold tracking-tight text-foreground">What do you want to get good at?</h1>
-            <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Every skill connects to the career paths, jobs, courses and resources that use it.</p>
-          </div>
-        </Reveal>
+    <div className="min-h-screen bg-background">
+      {/* HERO */}
+      <section className="border-b border-border bg-muted py-16 sm:py-20">
+        <Container>
+          <Reveal>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Build skills that move your career forward.</h1>
+            <p className="mt-3 max-w-2xl text-base text-muted-foreground">
+              Explore the skills employers are looking for, discover what you can learn, and see the jobs, opportunities, career paths and resources connected to each skill.
+            </p>
+          </Reveal>
+          <Reveal delay={80}>
+            <div className="mt-6">
+              <input
+                value={search}
+                onChange={(e) => updateSearch(e.target.value)}
+                placeholder="Search skills..."
+                className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-sm text-foreground shadow-sm sm:max-w-xl"
+              />
+            </div>
+          </Reveal>
+          {!loading && exampleChips.length > 0 && (
+            <Reveal delay={120}>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {exampleChips.map((s) => (
+                  <button
+                    key={s.slug}
+                    type="button"
+                    onClick={() => updateSearch(s.name)}
+                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            </Reveal>
+          )}
+        </Container>
+      </section>
 
-        {skills.length === 0 ? (
-          <div className="mx-auto max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
-            <p className="text-foreground font-semibold">No skills yet.</p>
+      {loading ? (
+        <Container>
+          <p className="py-16 text-center text-sm text-muted-foreground">Loading…</p>
+        </Container>
+      ) : skills.length === 0 ? (
+        <Container>
+          <div className="mx-auto my-16 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+            <p className="font-semibold text-foreground">No skills yet.</p>
             <p className="mt-1 text-sm text-muted-foreground">Check back soon.</p>
           </div>
-        ) : (
-          <div className="flex flex-wrap justify-center gap-3">
-            {skills.map((s) => (
-              <Link
-                key={s.id}
-                href={`/skills/${s.slug}`}
-                className="group flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
-              >
-                {s.name}
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${s.usage > 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {s.usage}
-                </span>
-              </Link>
-            ))}
+        </Container>
+      ) : filtered.length === 0 ? (
+        <Container>
+          <div className="mx-auto my-16 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+            <p className="font-semibold text-foreground">No skills match &quot;{search}&quot;.</p>
           </div>
-        )}
+        </Container>
+      ) : (
+        <>
+          {/* POPULAR SKILLS */}
+          {popularSkills.length > 0 && (
+            <section className="border-b border-border py-14">
+              <Container>
+                <h2 className="text-lg font-bold text-foreground">Popular Skills</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Explore skills connected to real learning resources, jobs and opportunities on Prowess Digital Solutions.</p>
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {popularSkills.map((s) => <SkillCard key={s.id} skill={s} />)}
+                </div>
+              </Container>
+            </section>
+          )}
 
-        {totalPages > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-3">
-            <Link
-              href={page <= 2 ? "/skills" : `/skills?page=${page - 1}`}
-              aria-disabled={page <= 1}
-              className={`rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted ${page <= 1 ? "pointer-events-none opacity-40" : ""}`}
-            >
-              ← Previous
-            </Link>
-            <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
-            <Link
-              href={`/skills?page=${page + 1}`}
-              aria-disabled={page >= totalPages}
-              className={`rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted ${page >= totalPages ? "pointer-events-none opacity-40" : ""}`}
-            >
-              Next →
-            </Link>
-          </div>
-        )}
-      </Container>
+          {/* BROWSE ALL SKILLS */}
+          <section className="py-14">
+            <Container>
+              <h2 className="text-lg font-bold text-foreground">Explore All Skills</h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {pagedBrowseSkills.map((s) => <SkillCard key={s.id} skill={s} compact />)}
+              </div>
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            </Container>
+          </section>
+        </>
+      )}
     </div>
   );
 }
