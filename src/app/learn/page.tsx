@@ -238,17 +238,17 @@ function LearnPageContent() {
         <section className="border-b border-border py-14">
           <Container>
             <h2 className="text-lg font-bold text-foreground">What do you want to get better at?</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-5 flex flex-wrap gap-2.5">
               {popularSkills.map((s) => (
                 <Link
                   key={s.slug}
                   href={`/skills/${s.slug}`}
-                  className="rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                  className="group flex items-center gap-2 rounded-full border border-border bg-card py-2 pl-4 pr-2.5 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:bg-muted"
                 >
-                  <p className="font-semibold text-foreground">{s.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {s.description || `${skillUsage[s.id] || 0} learning item${(skillUsage[s.id] || 0) === 1 ? "" : "s"}`}
-                  </p>
+                  {s.name}
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground group-hover:bg-card">
+                    {skillUsage[s.id] || 0}
+                  </span>
                 </Link>
               ))}
             </div>

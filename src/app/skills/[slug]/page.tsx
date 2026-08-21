@@ -40,7 +40,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function idsForSkill(table: string, idColumn: string, skillId: string): Promise<string[]> {
   const { data } = await supabase.from(table).select(idColumn).eq("skill_id", skillId);
-  return Array.from(new Set((data || []).map((r: Record<string, unknown>) => String(r[idColumn]))));
+  const rows = (data || []) as unknown as Record<string, unknown>[];
+  return Array.from(new Set(rows.map((r) => String(r[idColumn]))));
 }
 
 // Real 3-stat counts (Learning/Jobs/Opportunities) for a batch of skills at

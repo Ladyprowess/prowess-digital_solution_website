@@ -15,3 +15,14 @@ export function colorForSeed(seed: string) {
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   return CHART_CLASSES[hash % CHART_CLASSES.length];
 }
+
+// A single calm, deliberate accent (no per-item hue variation) for the
+// Skills and Learn surfaces specifically - kept separate from
+// colorForSeed so Jobs/Opportunities/Career Paths keep their existing
+// category-hued cards untouched.
+export const CALM_ACCENT = {
+  chip: "bg-primary/10 text-primary",
+  ring: "hover:border-primary/30",
+  bar: "bg-primary",
+  tag: "bg-muted text-muted-foreground",
+} as const;

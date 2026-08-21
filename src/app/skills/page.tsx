@@ -18,6 +18,8 @@ export default function SkillsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [hasContentOnly, setHasContentOnly] = useState(false);
+  const [sort, setSort] = useState<"name" | "connected">("name");
 
   useEffect(() => {
     (async () => {
@@ -67,8 +69,22 @@ export default function SkillsPage() {
     setPage(1);
   }
 
+  function updateHasContentOnly(value: boolean) {
+    setHasContentOnly(value);
+    setPage(1);
+  }
+
+  function updateSort(value: "name" | "connected") {
+    setSort(value);
+    setPage(1);
+  }
+
   const popularSkills = useMemo(() => {
-    return [...filtered]
+    // Only ever shows skills with real content (or an explicit admin
+    // Featured override) - padding this out with zero-usage skills just to
+    // hit a round number would make "Popular" a lie.
+    const withUsage = filtered.filter((s) => s.featured || s.learningCount + s.jobsCount + s.opportunitiesCount > 0);
+    return [...withUsage]
       .sort((a, b) => {
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
         const totalA = a.learningCount + a.jobsCount + a.opportunitiesCount;
@@ -79,8 +95,18 @@ export default function SkillsPage() {
   }, [filtered]);
 
   const browseSkills = useMemo(() => {
-    return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-  }, [filtered]);
+    const base = hasContentOnly
+      ? filtered.filter((s) => s.learningCount + s.jobsCount + s.opportunitiesCount > 0)
+      : filtered;
+    return [...base].sort((a, b) => {
+      if (sort === "connected") {
+        const totalA = a.learningCount + a.jobsCount + a.opportunitiesCount;
+        const totalB = b.learningCount + b.jobsCount + b.opportunitiesCount;
+        if (totalA !== totalB) return totalB - totalA;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [filtered, hasContentOnly, sort]);
 
   const totalPages = Math.max(1, Math.ceil(browseSkills.length / PAGE_SIZE));
   const pagedBrowseSkills = useMemo(() => {
@@ -166,10 +192,47 @@ export default function SkillsPage() {
           <section className="py-14">
             <Container>
               <h2 className="text-lg font-bold text-foreground">Explore All Skills</h2>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {pagedBrowseSkills.map((s) => <SkillCard key={s.id} skill={s} compact />)}
+
+              <div className="mt-5 grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
+                <div className="rounded-2xl border border-border bg-card p-6">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Search</p>
+                  <input
+                    value={search}
+                    onChange={(e) => updateSearch(e.target.value)}
+                    placeholder="Search skills..."
+                    className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground"
+                  />
+
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Sort</p>
+                  <select
+                    value={sort}
+                    onChange={(e) => updateSort(e.target.value as typeof sort)}
+                    className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground"
+                  >
+                    <option value="name">Name (A–Z)</option>
+                    <option value="connected">Most connected</option>
+                  </select>
+
+                  <label className="mt-5 flex items-center gap-2 text-sm text-foreground">
+                    <input type="checkbox" checked={hasContentOnly} onChange={(e) => updateHasContentOnly(e.target.checked)} />
+                    Only show skills with content
+                  </label>
+                </div>
+
+                <div>
+                  <p className="mb-4 text-sm text-muted-foreground">{browseSkills.length} skill{browseSkills.length === 1 ? "" : "s"}</p>
+                  {browseSkills.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+                      <p className="text-sm text-muted-foreground">No skills match these filters.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                      {pagedBrowseSkills.map((s) => <SkillCard key={s.id} skill={s} compact />)}
+                    </div>
+                  )}
+                  <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                </div>
               </div>
-              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </Container>
           </section>
         </>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { SaveButton } from "@/components/SaveButton";
-import { colorForSeed } from "@/lib/listingColors";
+import { CALM_ACCENT } from "@/lib/listingColors";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
 import type { LearnItem } from "@/lib/learn/types";
 
@@ -37,13 +37,13 @@ function priceLabel(item: LearnItem): string | null {
 }
 
 export function LearnCard({ item }: { item: LearnItem }) {
-  const color = colorForSeed(item.kind);
+  const color = CALM_ACCENT;
   const skills = item.skills.slice(0, 3);
   const extraSkills = item.skills.length > 3 ? item.skills.length - 3 : 0;
   const price = priceLabel(item);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
       <Link href={item.href} className="flex flex-1 flex-col">
         <div className="relative h-40 w-full overflow-hidden bg-muted">
           {item.thumbnail_url ? (

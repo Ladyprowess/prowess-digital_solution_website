@@ -73,7 +73,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50">
       <div className="border-b border-border bg-background/95 backdrop-blur">
         <Container>
-          <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(160px,200px)_1fr_220px] lg:gap-6">
+          <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(160px,200px)_1fr_240px] lg:gap-10">
             {/* Logo */}
             <Link href="/" aria-label="Go to homepage" className="flex items-center">
               <Image
@@ -87,7 +87,7 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex min-w-0 items-center justify-center gap-5 xl:gap-6">
+            <nav className="hidden lg:flex min-w-0 items-center justify-center gap-7 xl:gap-9">
 
               {primaryLinks.map((item) => {
                 const active = !("external" in item) && isActive(item.href);
@@ -126,7 +126,7 @@ export default function Navbar() {
                   aria-haspopup="menu"
                   aria-expanded={moreOpen}
                   className={[
-                    "flex items-center gap-2 rounded-xl px-4 py-2",
+                    "flex items-center gap-2 rounded-xl px-5 py-2.5",
                     "text-base font-semibold text-foreground whitespace-nowrap",
                     "border border-transparent hover:border-border hover:bg-muted transition",
                     moreOpen ? "border-border bg-muted" : "",
@@ -160,7 +160,7 @@ export default function Navbar() {
             </nav>
 
             {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center justify-end gap-3">
+            <div className="hidden lg:flex items-center justify-end gap-5">
               <Link
                 href={signedIn ? "/account" : "/account/login"}
                 className="text-sm font-semibold text-foreground hover:text-primary transition whitespace-nowrap"
@@ -170,7 +170,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setAlertsOpen(true)}
-                className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition whitespace-nowrap"
+                className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition whitespace-nowrap"
               >
                 Get Job Alerts
               </button>
