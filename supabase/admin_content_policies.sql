@@ -40,7 +40,15 @@ begin
     'purchases',
     'event_skill_map',
     'tools',
-    'site_settings'
+    'site_settings',
+    'career_path_responsibilities',
+    'career_path_roadmap_stages',
+    'career_path_roadmap_stage_skill_map',
+    'career_path_roles',
+    'career_path_role_skill_map',
+    'career_path_tool_map',
+    'career_path_projects',
+    'career_path_project_skill_map'
   ]
   loop
     execute format('drop policy if exists "admin_full_access" on public.%I', t);
