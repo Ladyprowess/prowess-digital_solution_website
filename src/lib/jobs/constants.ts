@@ -1,13 +1,7 @@
-// Single source of truth for what "closing soon" means, shared by the job
-// card (urgency styling) and the listing filter facet, so the two never
-// disagree about the threshold.
-export const CLOSING_SOON_DAYS = 7;
-
-export function isClosingSoon(deadlineAt: string | null): boolean {
-  if (!deadlineAt) return false;
-  const daysLeft = (new Date(deadlineAt).getTime() - Date.now()) / 86_400_000;
-  return daysLeft >= 0 && daysLeft <= CLOSING_SOON_DAYS;
-}
+// Re-exported from the shared, content-type-agnostic location so existing
+// imports of `@/lib/jobs/constants` keep working unchanged - opportunities
+// import the same helper directly from `@/lib/closingSoon`.
+export { CLOSING_SOON_DAYS, isClosingSoon } from "@/lib/closingSoon";
 
 export const SORT_OPTIONS = [
   { value: "relevant", label: "Most Relevant" },
