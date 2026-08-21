@@ -76,6 +76,11 @@ function ResourcesAdmin() {
   const [currency, setCurrency] = useState("NGN");
   const [featured, setFeatured] = useState(false);
   const [publishNow, setPublishNow] = useState(true);
+  const [editingStatus, setEditingStatus] = useState<ResourceRow["status"] | null>(null);
+  const [manualSlug, setManualSlug] = useState("");
+  const [originalSlug, setOriginalSlug] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -131,6 +136,7 @@ function ResourcesAdmin() {
     setSummary(""); setContent(""); setFileUrl("");
     setCoverFile(null); setResourceFile(null); setExistingFileName(null);
     setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
+    setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
   };
 
   async function startEditResource(id: string) {
@@ -138,18 +144,19 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, file_name, access, price, price_currency, featured, status, resource_skill_map(skill_id)")
+      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, resource_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
     if (error || !data) { setErr(error?.message || "Could not load this resource."); return; }
 
     const r = data as unknown as {
-      id: string; title: string; audience: (typeof AUDIENCES)[number]; resource_type: (typeof RESOURCE_TYPES)[number] | null;
+      id: string; slug: string; title: string; audience: (typeof AUDIENCES)[number]; resource_type: (typeof RESOURCE_TYPES)[number] | null;
       category: string | null; level: (typeof LEVELS)[number] | null; source: Source; external_url: string | null;
       thumbnail_url: string | null; description: string | null; content: string | null; file_url: string | null; file_name: string | null;
       access: "free" | "premium"; price: number | null; price_currency: string | null; featured: boolean;
-      status: ResourceRow["status"]; resource_skill_map: { skill_id: string }[];
+      status: ResourceRow["status"]; meta_title: string | null; meta_description: string | null;
+      resource_skill_map: { skill_id: string }[];
     };
 
     setEditingResourceId(r.id);
@@ -171,6 +178,11 @@ function ResourcesAdmin() {
     setFeatured(r.featured);
     setPublishNow(r.status === "published");
     setSelectedSkillIds(r.resource_skill_map.map((m) => m.skill_id));
+    setEditingStatus(r.status);
+    setManualSlug(r.slug);
+    setOriginalSlug(r.slug);
+    setMetaTitle(r.meta_title || "");
+    setMetaDescription(r.meta_description || "");
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -231,16 +243,24 @@ function ResourcesAdmin() {
         featured,
         status: publishNow ? "published" as const : "draft" as const,
         is_published: publishNow,
+        meta_title: metaTitle.trim() || null,
+        meta_description: metaDescription.trim() || null,
       };
 
       let resourceId = editingResourceId;
 
       if (editingResourceId) {
-        const { error } = await supabase.from("resources").update(basePayload).eq("id", editingResourceId);
+        // The slug can only move while the resource is still a draft - once
+        // published, changing it would break a URL someone may have
+        // already bookmarked, shared, or that search engines have indexed.
+        const wantsSlugChange = editingStatus === "draft" && manualSlug.trim() && slugify(manualSlug) !== originalSlug;
+        const slugUpdate = wantsSlugChange ? { slug: await getUniqueSlug(slugify(manualSlug)) } : {};
+
+        const { error } = await supabase.from("resources").update({ ...basePayload, ...slugUpdate }).eq("id", editingResourceId);
         if (error) throw new Error(error.message);
         await supabase.from("resource_skill_map").delete().eq("resource_id", editingResourceId);
       } else {
-        const slug = await getUniqueSlug(slugify(title));
+        const slug = await getUniqueSlug(slugify(manualSlug.trim() || title));
         const { data: created, error } = await supabase.from("resources").insert({
           ...basePayload,
           slug,
@@ -387,6 +407,27 @@ function ResourcesAdmin() {
                 selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds}
               />
             </Field>
+
+            <div className="rounded-xl border border-border/60 p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SEO (optional)</p>
+              <div className="mt-4 grid gap-4">
+                <Field label={editingStatus && editingStatus !== "draft" ? "URL slug (frozen once published)" : "URL slug"}>
+                  <input
+                    value={manualSlug}
+                    onChange={(e) => setManualSlug(e.target.value)}
+                    disabled={Boolean(editingStatus) && editingStatus !== "draft"}
+                    className={`${inputCls} disabled:cursor-not-allowed disabled:opacity-60`}
+                    placeholder="Leave blank to auto-generate from the title"
+                  />
+                </Field>
+                <Field label="Meta title">
+                  <input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputCls} placeholder="Defaults to the resource title if left blank" />
+                </Field>
+                <Field label="Meta description">
+                  <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} className={`${inputCls} min-h-20`} placeholder="Shown in search results and link previews" />
+                </Field>
+              </div>
+            </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-6">
               <label className="flex items-center gap-3 text-sm font-semibold text-foreground">

@@ -47,11 +47,20 @@ function LearnAdmin() {
   const [title, setTitle] = useState("");
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [description, setDescription] = useState("");
+  const [whatYoullLearn, setWhatYoullLearn] = useState("");
   const [level, setLevel] = useState<(typeof LEVELS)[number] | "">("");
   const [access, setAccess] = useState<"free" | "premium">("free");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("NGN");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [durationLabel, setDurationLabel] = useState("");
+  const [featured, setFeatured] = useState(false);
   const [publishNow, setPublishNow] = useState(false);
+  const [editingStatus, setEditingStatus] = useState<CourseRow["status"] | null>(null);
+  const [manualSlug, setManualSlug] = useState("");
+  const [originalSlug, setOriginalSlug] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -101,7 +110,9 @@ function LearnAdmin() {
 
   const resetForm = () => {
     setEditingCourseId(null);
-    setTitle(""); setDescription(""); setLevel(""); setAccess("free"); setPrice(""); setPublishNow(false); setSelectedSkillIds([]);
+    setTitle(""); setDescription(""); setWhatYoullLearn(""); setLevel(""); setAccess("free"); setPrice("");
+    setThumbnailUrl(""); setDurationLabel(""); setFeatured(false); setPublishNow(false); setSelectedSkillIds([]);
+    setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
   };
 
   async function startEditCourse(id: string) {
@@ -109,27 +120,39 @@ function LearnAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("courses")
-      .select("id, title, description, level, access, price, price_currency, status, course_skill_map(skill_id)")
+      .select("id, slug, title, description, what_youll_learn, level, access, price, price_currency, thumbnail_url, duration_label, featured, status, meta_title, meta_description, course_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
     if (error || !data) { setErr(error?.message || "Could not load this course."); return; }
 
     const course = data as unknown as {
-      id: string; title: string; description: string | null; level: (typeof LEVELS)[number] | null;
+      id: string; slug: string; title: string; description: string | null; what_youll_learn: string | null;
+      level: (typeof LEVELS)[number] | null;
       access: "free" | "premium"; price: number | null; price_currency: string | null;
-      status: CourseRow["status"]; course_skill_map: { skill_id: string }[];
+      thumbnail_url: string | null; duration_label: string | null; featured: boolean;
+      status: CourseRow["status"]; meta_title: string | null; meta_description: string | null;
+      course_skill_map: { skill_id: string }[];
     };
 
     setEditingCourseId(course.id);
     setTitle(course.title);
     setDescription(course.description || "");
+    setWhatYoullLearn(course.what_youll_learn || "");
     setLevel(course.level || "");
     setAccess(course.access);
     setPrice(course.price?.toString() || "");
     setCurrency(course.price_currency || "NGN");
+    setThumbnailUrl(course.thumbnail_url || "");
+    setDurationLabel(course.duration_label || "");
+    setFeatured(course.featured);
     setPublishNow(course.status === "published");
     setSelectedSkillIds(course.course_skill_map.map((m) => m.skill_id));
+    setEditingStatus(course.status);
+    setManualSlug(course.slug);
+    setOriginalSlug(course.slug);
+    setMetaTitle(course.meta_title || "");
+    setMetaDescription(course.meta_description || "");
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -143,21 +166,33 @@ function LearnAdmin() {
       const basePayload = {
         title: title.trim(),
         description: description.trim() || null,
+        what_youll_learn: whatYoullLearn.trim() || null,
         level: level || null,
         access,
         price: access === "premium" && price ? Number(price) : null,
         price_currency: access === "premium" && price ? currency : null,
+        thumbnail_url: thumbnailUrl.trim() || null,
+        duration_label: durationLabel.trim() || null,
+        featured,
         status: publishNow ? "published" as const : "draft" as const,
+        meta_title: metaTitle.trim() || null,
+        meta_description: metaDescription.trim() || null,
       };
 
       let courseId = editingCourseId;
 
       if (editingCourseId) {
-        const { error } = await supabase.from("courses").update(basePayload).eq("id", editingCourseId);
+        // The slug can only move while the course is still a draft - once
+        // published, changing it would break a URL someone may have
+        // already bookmarked, shared, or that search engines have indexed.
+        const wantsSlugChange = editingStatus === "draft" && manualSlug.trim() && slugify(manualSlug) !== originalSlug;
+        const slugUpdate = wantsSlugChange ? { slug: await getUniqueSlug(slugify(manualSlug)) } : {};
+
+        const { error } = await supabase.from("courses").update({ ...basePayload, ...slugUpdate }).eq("id", editingCourseId);
         if (error) throw new Error(error.message);
         await supabase.from("course_skill_map").delete().eq("course_id", editingCourseId);
       } else {
-        const slug = await getUniqueSlug(slugify(title));
+        const slug = await getUniqueSlug(slugify(manualSlug.trim() || title));
         const { data: created, error } = await supabase.from("courses").insert({ ...basePayload, slug }).select("id").single();
         if (error || !created) throw new Error(error?.message || "Could not save the course.");
         courseId = created.id;
@@ -204,11 +239,24 @@ function LearnAdmin() {
               <RichTextEditor key={`desc-${editingCourseId || "new"}`} value={description} onChange={setDescription} placeholder="What the course covers, who it's for, what they'll learn..." />
             </Field>
 
-            <Field label="Level">
-              <select value={level} onChange={(e) => setLevel(e.target.value as typeof level)} className={inputCls}>
-                <option value="">Not specified</option>
-                {LEVELS.map((l) => <option key={l} value={l}>{l[0].toUpperCase() + l.slice(1)}</option>)}
-              </select>
+            <Field label="What you'll learn">
+              <RichTextEditor key={`wyl-${editingCourseId || "new"}`} value={whatYoullLearn} onChange={setWhatYoullLearn} placeholder="A bullet list of concrete takeaways..." />
+            </Field>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Level">
+                <select value={level} onChange={(e) => setLevel(e.target.value as typeof level)} className={inputCls}>
+                  <option value="">Not specified</option>
+                  {LEVELS.map((l) => <option key={l} value={l}>{l[0].toUpperCase() + l.slice(1)}</option>)}
+                </select>
+              </Field>
+              <Field label="Duration (optional)">
+                <input value={durationLabel} onChange={(e) => setDurationLabel(e.target.value)} className={inputCls} placeholder="e.g. 4 hours, 6 modules" />
+              </Field>
+            </div>
+
+            <Field label="Thumbnail URL (optional)">
+              <input value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} className={inputCls} placeholder="https://..." />
             </Field>
 
             <AccessPriceFields
@@ -224,10 +272,37 @@ function LearnAdmin() {
               />
             </Field>
 
-            <label className="mt-2 flex items-center gap-3 text-sm font-semibold text-foreground">
-              <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />
-              Publish immediately
-            </label>
+            <div className="rounded-xl border border-border/60 p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SEO (optional)</p>
+              <div className="mt-4 grid gap-4">
+                <Field label={editingStatus && editingStatus !== "draft" ? "URL slug (frozen once published)" : "URL slug"}>
+                  <input
+                    value={manualSlug}
+                    onChange={(e) => setManualSlug(e.target.value)}
+                    disabled={Boolean(editingStatus) && editingStatus !== "draft"}
+                    className={`${inputCls} disabled:cursor-not-allowed disabled:opacity-60`}
+                    placeholder="Leave blank to auto-generate from the title"
+                  />
+                </Field>
+                <Field label="Meta title">
+                  <input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputCls} placeholder="Defaults to the course title if left blank" />
+                </Field>
+                <Field label="Meta description">
+                  <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} className={`${inputCls} min-h-20`} placeholder="Shown in search results and link previews" />
+                </Field>
+              </div>
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center gap-6">
+              <label className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />
+                Publish immediately
+              </label>
+              <label className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
+                Featured
+              </label>
+            </div>
 
             {err ? <p className="text-sm text-red-600">{err}</p> : null}
             {msg ? <p className="text-sm text-green-700">{msg}</p> : null}

@@ -6,7 +6,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 
 const PAGE_SIZE = 30;
 
-type Skill = { id: string; slug: string; name: string };
+type Skill = { id: string; slug: string; name: string; description: string | null };
 
 // Every table a skill can be tagged onto - the item-id column differs per
 // table (job_id, resource_id, ...) but the shape is otherwise identical, so
@@ -35,6 +35,7 @@ function SkillsAdmin() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [editingDescription, setEditingDescription] = useState("");
 
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
@@ -42,7 +43,7 @@ function SkillsAdmin() {
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data: skillRows }, ...mapResults] = await Promise.all([
-      supabase.from("skills").select("id, slug, name").order("name"),
+      supabase.from("skills").select("id, slug, name, description").order("name"),
       ...SKILL_MAP_TABLES.map((m) => supabase.from(m.table).select("skill_id")),
     ]);
 
@@ -94,17 +95,19 @@ function SkillsAdmin() {
   function startEdit(s: Skill) {
     setEditingId(s.id);
     setEditingName(s.name);
+    setEditingDescription(s.description || "");
     setMsg(""); setErr("");
   }
 
   async function saveEdit(id: string) {
     const name = editingName.trim();
     if (!name) return;
-    const { error } = await supabase.from("skills").update({ name }).eq("id", id);
+    const description = editingDescription.trim() || null;
+    const { error } = await supabase.from("skills").update({ name, description }).eq("id", id);
     if (error) { setErr(error.message); return; }
-    setSkills((prev) => prev.map((s) => (s.id === id ? { ...s, name } : s)).sort((a, b) => a.name.localeCompare(b.name)));
+    setSkills((prev) => prev.map((s) => (s.id === id ? { ...s, name, description } : s)).sort((a, b) => a.name.localeCompare(b.name)));
     setEditingId(null);
-    setMsg("Skill renamed.");
+    setMsg("Skill updated.");
   }
 
   async function deleteSkill(id: string, name: string) {
@@ -243,20 +246,30 @@ function SkillsAdmin() {
                         </td>
                         <td className="py-2 pr-4">
                           {editingId === s.id ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  value={editingName}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === "Escape") setEditingId(null); }}
+                                  autoFocus
+                                  className="rounded-lg border border-border bg-card px-2 py-1 text-sm"
+                                />
+                                <button onClick={() => saveEdit(s.id)} className="text-xs font-semibold text-primary hover:underline">Save</button>
+                                <button onClick={() => setEditingId(null)} className="text-xs font-semibold text-muted-foreground hover:underline">Cancel</button>
+                              </div>
                               <input
-                                value={editingName}
-                                onChange={(e) => setEditingName(e.target.value)}
+                                value={editingDescription}
+                                onChange={(e) => setEditingDescription(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === "Enter") saveEdit(s.id); if (e.key === "Escape") setEditingId(null); }}
-                                autoFocus
-                                className="rounded-lg border border-border bg-card px-2 py-1 text-sm"
+                                placeholder="Short blurb for the Learn page (optional)"
+                                className="w-full rounded-lg border border-border bg-card px-2 py-1 text-xs"
                               />
-                              <button onClick={() => saveEdit(s.id)} className="text-xs font-semibold text-primary hover:underline">Save</button>
-                              <button onClick={() => setEditingId(null)} className="text-xs font-semibold text-muted-foreground hover:underline">Cancel</button>
                             </div>
                           ) : (
-                            <button onClick={() => startEdit(s)} className="font-medium text-foreground hover:underline" title="Click to rename">
-                              {s.name}
+                            <button onClick={() => startEdit(s)} className="text-left hover:underline" title="Click to edit">
+                              <span className="font-medium text-foreground">{s.name}</span>
+                              {s.description && <span className="block text-xs text-muted-foreground">{s.description}</span>}
                             </button>
                           )}
                         </td>
