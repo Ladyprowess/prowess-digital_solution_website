@@ -288,8 +288,8 @@ function ResourcesPageContent() {
                             <td className="px-4 py-3">
                               <Link href={`/resources/${r.slug}`} className="font-semibold text-foreground hover:text-primary">{r.title}</Link>
                             </td>
-                            <td className="px-4 py-3 capitalize text-muted-foreground">{r.resource_type ? typeLabel(r.resource_type) : "—"}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{r.use_case ? USE_CASE_LABELS[r.use_case as UseCase] : "—"}</td>
+                            <td className="px-4 py-3 capitalize text-muted-foreground">{r.resource_type ? typeLabel(r.resource_type) : "-"}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{r.use_case ? USE_CASE_LABELS[r.use_case as UseCase] : "-"}</td>
                             <td className="px-4 py-3">
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${r.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{r.access}</span>
                             </td>

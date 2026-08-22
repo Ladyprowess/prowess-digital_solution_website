@@ -36,6 +36,7 @@ const JOB_CONNECTORS = [
   { value: "jobicy", label: "Jobicy (JSON API)" },
   { value: "greenhouse", label: "Greenhouse (per company)" },
   { value: "lever", label: "Lever (per company)" },
+  { value: "cryptojobslist", label: "CryptoJobsList (sitemap - their RSS feed is dead)" },
 ];
 
 const LOCATION_TYPES = ["remote", "hybrid", "on_site"] as const;

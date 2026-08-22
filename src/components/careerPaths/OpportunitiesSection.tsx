@@ -28,7 +28,16 @@ export function OpportunitiesSection({
     [opportunities, activeName]
   );
 
-  if (opportunities.length === 0) return null;
+  if (opportunities.length === 0) {
+    return (
+      <div>
+        <p className="text-sm text-muted-foreground">No opportunities yet for this career path.</p>
+        <Link href={`/opportunities?skills=${skillSlugs.join(",")}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
+          View all opportunities →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div>

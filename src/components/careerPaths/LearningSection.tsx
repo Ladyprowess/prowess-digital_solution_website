@@ -16,7 +16,16 @@ export function LearningSection({ items, skillSlugs }: { items: LearnItem[]; ski
 
   const filtered = useMemo(() => (kind ? items.filter((i) => i.kind === kind) : items), [items, kind]);
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <div>
+        <p className="text-sm text-muted-foreground">No learning content yet for this career path.</p>
+        <Link href={`/learn?skills=${skillSlugs.join(",")}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
+          View all learning →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div>

@@ -23,7 +23,16 @@ export function JobsSection({ jobs, skillSlugs }: { jobs: JobCardData[]; skillSl
     [jobs, locationType]
   );
 
-  if (jobs.length === 0) return null;
+  if (jobs.length === 0) {
+    return (
+      <div>
+        <p className="text-sm text-muted-foreground">No jobs yet for this career path.</p>
+        <Link href={`/jobs?skills=${skillSlugs.join(",")}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
+          View all jobs →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div>

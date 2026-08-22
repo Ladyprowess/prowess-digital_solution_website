@@ -10,8 +10,15 @@ import { fetchRemotiveListings } from "@/lib/jobs/importers/remotive";
 import { fetchJobicyListings } from "@/lib/jobs/importers/jobicy";
 import { fetchGreenhouseListings } from "@/lib/jobs/importers/greenhouse";
 import { fetchLeverListings } from "@/lib/jobs/importers/lever";
+import { fetchCryptoJobsListListings } from "@/lib/jobs/importers/cryptoJobsList";
 import { runImportForSource } from "@/lib/jobs/runImport";
 import type { NormalizedListing } from "@/lib/jobs/importers/types";
+
+// Every other connector here is one request. cryptojobslist fetches a
+// sitemap plus up to 25 individual job pages (see cryptoJobsList.ts for
+// why) - comfortably past the platform's default function timeout, so this
+// route needs the extended budget explicitly.
+export const maxDuration = 60;
 
 // Connectors keyed by job_sources.connector. Each source's raw shape (JSON
 // API, RSS, whatever) is different enough that "just point it at a URL"
@@ -27,6 +34,7 @@ const CONNECTORS: Record<string, (feedUrl: string) => Promise<NormalizedListing[
   jobicy: fetchJobicyListings,
   greenhouse: fetchGreenhouseListings,
   lever: fetchLeverListings,
+  cryptojobslist: fetchCryptoJobsListListings,
 };
 
 export async function POST(req: NextRequest) {

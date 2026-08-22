@@ -242,7 +242,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
 
         {resource.source !== "prowess" && (
           <p className="mt-10 text-center text-xs text-muted-foreground">
-            This resource is hosted on {SOURCE_LABELS[resource.source] || "a third-party site"} and shared here for its educational value — all rights belong to the original creator.
+            This resource is hosted on {SOURCE_LABELS[resource.source] || "a third-party site"} and shared here for its educational value - all rights belong to the original creator.
           </p>
         )}
       </div>
