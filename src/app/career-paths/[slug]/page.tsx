@@ -292,7 +292,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
           .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
       : Promise.resolve({ data: [] }),
     resourceIds.length
-      ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").in("resource_type", LEARN_RESOURCE_KINDS).in("id", resourceIds)
+      ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true).in("resource_type", LEARN_RESOURCE_KINDS).in("id", resourceIds)
           .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
       : Promise.resolve({ data: [] }),
   ]);

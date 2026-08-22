@@ -9,7 +9,6 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
 
     const q = (searchParams.get("q") || "").trim();
-    const sort = (searchParams.get("sort") || "popular").toLowerCase();
     const category = (searchParams.get("category") || "").trim();
     const stage = (searchParams.get("stage") || "").trim();
     const type = (searchParams.get("type") || "").trim();
@@ -41,18 +40,11 @@ export async function GET(req: Request) {
       query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
     }
 
-    // sorting
-    if (sort === "popular") {
-      query = query
-        .order("downloads", { ascending: false })
-        .order("created_at", { ascending: false });
-    } else if (sort === "rating") {
-      query = query
-        .order("rating", { ascending: false })
-        .order("created_at", { ascending: false });
-    } else {
-      query = query.order("created_at", { ascending: false });
-    }
+    // Newest-first only -- "popular"/"rating" sorts used to order by
+    // downloads/rating, but nothing writes non-zero values to either column
+    // outside the legacy upload flow (removed), so those sorts never
+    // differentiated real content from a tie at zero.
+    query = query.order("created_at", { ascending: false });
 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;

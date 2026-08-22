@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
-import { getYoutubeVideoId } from "@/lib/youtube";
 import { RichText } from "@/components/RichText";
 
 type ResourceBodyData = {
@@ -13,6 +12,8 @@ type ResourceBodyData = {
   source: string;
   download_url: string | null;
 };
+
+type TocItem = { id: string; text: string; level: 2 | 3 };
 
 export function ResourceBody({
   resourceId,
@@ -26,30 +27,60 @@ export function ResourceBody({
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [data, setData] = useState<ResourceBodyData | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const [toc, setToc] = useState<TocItem[]>([]);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const load = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setSignedIn(!!session);
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSignedIn(!!session);
 
-    const res = await fetch("/api/content/access", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-      },
-      body: JSON.stringify({ itemType: "resource", itemId: resourceId }),
-    });
-    const result = await res.json();
+      const res = await fetch("/api/content/access", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ itemType: "resource", itemId: resourceId }),
+      });
+      const result = await res.json();
 
-    if (!result.ok) {
-      setStatus("locked");
-      return;
-    }
-    setData(result.resource);
-    setStatus("entitled");
+      if (!result.ok) {
+        setStatus("locked");
+        return;
+      }
+      setData(result.resource);
+      setStatus("entitled");
+    })();
   }, [resourceId]);
 
-  useEffect(() => { load(); }, [load]);
+  // Table of contents built from the rendered content's real H2/H3 nodes,
+  // once RichText has mounted them into the DOM -- TipTap's schema only
+  // ever produces these two heading levels (RichTextEditor.tsx restricts
+  // it), on both the write and read paths, so this is safe to rely on.
+  // Only shown for genuinely long content, not a two-heading guide.
+  // Deferred to a microtask so reading the DOM happens after the commit
+  // this effect fired from, not synchronously within the effect body.
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (!contentRef.current) {
+        setToc([]);
+        return;
+      }
+      const headings = Array.from(contentRef.current.querySelectorAll("h2, h3")) as HTMLElement[];
+      const seen = new Set<string>();
+      const items: TocItem[] = headings.map((h) => {
+        const base = (h.textContent || "section").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "section";
+        let id = base;
+        let n = 1;
+        while (seen.has(id)) id = `${base}-${n++}`;
+        seen.add(id);
+        h.id = id;
+        return { id, text: h.textContent || "", level: h.tagName === "H2" ? 2 : 3 };
+      });
+      setToc(items);
+    });
+  }, [data?.content]);
 
   if (status === "loading") {
     return <p className="mt-10 text-center text-sm text-muted-foreground">Loading…</p>;
@@ -75,27 +106,29 @@ export function ResourceBody({
   // URL. Only fall back to a plain file_url when there's no file_path-based
   // download available (an admin-typed external link).
   const downloadUrl = data?.download_url || data?.file_url || null;
-  const youtubeId = data?.source === "youtube" && data.external_url ? getYoutubeVideoId(data.external_url) : null;
 
   return (
     <div className="mt-10 space-y-6">
-      {youtubeId && (
-        <div className="aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black">
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}`}
-            title="YouTube video player"
-            className="h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
+      {toc.length >= 3 && (
+        <nav className="rounded-2xl border border-border bg-card p-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">On this page</p>
+          <ul className="mt-3 space-y-1.5 text-sm">
+            {toc.map((item) => (
+              <li key={item.id} className={item.level === 3 ? "ml-4" : ""}>
+                <a href={`#${item.id}`} className="text-primary hover:underline">{item.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       )}
 
       {data?.content && (
-        <RichText html={data.content} />
+        <div ref={contentRef}>
+          <RichText html={data.content} />
+        </div>
       )}
 
-      {data?.external_url && !youtubeId && (
+      {data?.external_url && (
         <a
           href={data.external_url}
           target="_blank"
@@ -103,17 +136,6 @@ export function ResourceBody({
           className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90"
         >
           Open →
-        </a>
-      )}
-
-      {data?.external_url && youtubeId && (
-        <a
-          href={data.external_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block text-sm font-semibold text-primary hover:underline"
-        >
-          Watch on YouTube →
         </a>
       )}
 

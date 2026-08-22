@@ -55,6 +55,10 @@ export default function ResourcesBrowser() {
     if (category) params.set("category", category);
     if (stage) params.set("stage", stage);
     if (type) params.set("type", type);
+    // Video has its own dedicated /videos experience -- excluded here the
+    // same way the homepage's Free/Premium resource sections already are,
+    // so a video never double-appears in both places.
+    params.set("exclude_resource_type", "video");
     params.set("page", String(pageToLoad));
     params.set("pageSize", String(STEP));
 

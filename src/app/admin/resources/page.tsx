@@ -27,6 +27,15 @@ type Source = "prowess" | "youtube" | "external";
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 const AUDIENCES = ["consumer", "business", "both"] as const;
 const CONTENT_ROLES = ["general", "learning", "career", "business", "motivation", "interview", "webinar", "tutorial"] as const;
+const USE_CASES = ["learn", "template", "checklist", "business_guide", "career", "read"] as const;
+const USE_CASE_LABELS: Record<(typeof USE_CASES)[number], string> = {
+  learn: "I want to learn something",
+  template: "I need a template",
+  checklist: "I need a checklist",
+  business_guide: "I want a business guide",
+  career: "I need career resources",
+  read: "I want something to read",
+};
 
 // Where a resource is eligible to surface, independent of its type/
 // audience/category. Applies to every resource type, not just video --
@@ -100,6 +109,9 @@ function ResourcesAdmin() {
   const [contentRole, setContentRole] = useState<(typeof CONTENT_ROLES)[number] | "">("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [whyRecommended, setWhyRecommended] = useState("");
+  const [readingMinutes, setReadingMinutes] = useState("");
+  const [pageCount, setPageCount] = useState("");
+  const [useCase, setUseCase] = useState<(typeof USE_CASES)[number] | "">("");
   const [placements, setPlacements] = useState<Record<PlacementKey, boolean>>({
     show_in_library: true, show_in_learn: true, show_in_recommended: true,
     show_on_homepage: false, show_in_business: false, show_in_career: false,
@@ -161,6 +173,7 @@ function ResourcesAdmin() {
     setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
     setContentRole(""); setDurationMinutes(""); setWhyRecommended("");
+    setReadingMinutes(""); setPageCount(""); setUseCase("");
     setPlacements({ show_in_library: true, show_in_learn: true, show_in_recommended: true, show_on_homepage: false, show_in_business: false, show_in_career: false });
   };
 
@@ -169,7 +182,7 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
+      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -182,6 +195,7 @@ function ResourcesAdmin() {
       access: "free" | "premium"; price: number | null; price_currency: string | null; featured: boolean;
       status: ResourceRow["status"]; meta_title: string | null; meta_description: string | null;
       content_role: (typeof CONTENT_ROLES)[number] | null; duration_minutes: number | null; why_recommended: string | null;
+      reading_minutes: number | null; page_count: number | null; use_case: (typeof USE_CASES)[number] | null;
       show_in_library: boolean; show_in_learn: boolean; show_in_recommended: boolean;
       show_on_homepage: boolean; show_in_business: boolean; show_in_career: boolean;
       resource_skill_map: { skill_id: string }[];
@@ -214,6 +228,9 @@ function ResourcesAdmin() {
     setContentRole(r.content_role || "");
     setDurationMinutes(r.duration_minutes?.toString() || "");
     setWhyRecommended(r.why_recommended || "");
+    setReadingMinutes(r.reading_minutes?.toString() || "");
+    setPageCount(r.page_count?.toString() || "");
+    setUseCase(r.use_case || "");
     setPlacements({
       show_in_library: r.show_in_library, show_in_learn: r.show_in_learn, show_in_recommended: r.show_in_recommended,
       show_on_homepage: r.show_on_homepage, show_in_business: r.show_in_business, show_in_career: r.show_in_career,
@@ -283,6 +300,9 @@ function ResourcesAdmin() {
         content_role: resourceType === "video" ? (contentRole || null) : null,
         duration_minutes: resourceType === "video" && durationMinutes ? Number(durationMinutes) : null,
         why_recommended: resourceType === "video" ? (whyRecommended.trim() || null) : null,
+        reading_minutes: resourceType === "article" && readingMinutes ? Number(readingMinutes) : null,
+        page_count: resourceType === "ebook" && pageCount ? Number(pageCount) : null,
+        use_case: useCase || null,
         ...placements,
       };
 
@@ -390,23 +410,40 @@ function ResourcesAdmin() {
               )}
             </div>
 
-            {resourceType === "video" && (
+            {(resourceType === "video" || resourceType === "article" || resourceType === "ebook") && (
               <div className="grid gap-4 rounded-xl border border-border/60 p-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Video details</p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Content role (curation only - not shown as a nav tab)">
-                    <select value={contentRole} onChange={(e) => setContentRole(e.target.value as typeof contentRole)} className={inputCls}>
-                      <option value="">Not set</option>
-                      {CONTENT_ROLES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
-                    </select>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{resourceType} details</p>
+
+                {resourceType === "video" && (
+                  <>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Field label="Content role (curation only - not shown as a nav tab)">
+                        <select value={contentRole} onChange={(e) => setContentRole(e.target.value as typeof contentRole)} className={inputCls}>
+                          <option value="">Not set</option>
+                          {CONTENT_ROLES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="Duration (minutes)">
+                        <input type="number" min="0" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} className={inputCls} placeholder="e.g. 12" />
+                      </Field>
+                    </div>
+                    <Field label="Why we recommend this (optional)">
+                      <RichTextEditor key={`why-${editingResourceId || "new"}`} value={whyRecommended} onChange={setWhyRecommended} placeholder="Why did Prowess select this video? Shown on the video page." />
+                    </Field>
+                  </>
+                )}
+
+                {resourceType === "article" && (
+                  <Field label="Reading time (minutes)">
+                    <input type="number" min="0" value={readingMinutes} onChange={(e) => setReadingMinutes(e.target.value)} className={inputCls} placeholder="e.g. 8" />
                   </Field>
-                  <Field label="Duration (minutes)">
-                    <input type="number" min="0" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} className={inputCls} placeholder="e.g. 12" />
+                )}
+
+                {resourceType === "ebook" && (
+                  <Field label="Page count">
+                    <input type="number" min="0" value={pageCount} onChange={(e) => setPageCount(e.target.value)} className={inputCls} placeholder="e.g. 42" />
                   </Field>
-                </div>
-                <Field label="Why we recommend this (optional)">
-                  <RichTextEditor key={`why-${editingResourceId || "new"}`} value={whyRecommended} onChange={setWhyRecommended} placeholder="Why did Prowess select this video? Shown on the video page." />
-                </Field>
+                )}
               </div>
             )}
 
@@ -487,6 +524,13 @@ function ResourcesAdmin() {
                 </Field>
               </div>
             </div>
+
+            <Field label="Browse by need (curation only, optional)">
+              <select value={useCase} onChange={(e) => setUseCase(e.target.value as typeof useCase)} className={inputCls}>
+                <option value="">Not set</option>
+                {USE_CASES.map((u) => <option key={u} value={u}>{USE_CASE_LABELS[u]}</option>)}
+              </select>
+            </Field>
 
             <div className="rounded-xl border border-border/60 p-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Where should this show?</p>

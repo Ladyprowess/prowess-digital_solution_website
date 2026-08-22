@@ -56,13 +56,13 @@ async function statsForSkills(skillIds: string[]): Promise<Map<string, { learnin
     supabase.from("job_skill_map").select("skill_id").in("skill_id", skillIds),
     supabase.from("opportunity_skill_map").select("skill_id").in("skill_id", skillIds),
     supabase.from("course_skill_map").select("skill_id").in("skill_id", skillIds),
-    supabase.from("resource_skill_map").select("skill_id, resources(resource_type)").in("skill_id", skillIds),
+    supabase.from("resource_skill_map").select("skill_id, resources(resource_type, show_in_learn)").in("skill_id", skillIds),
   ]);
   for (const r of jobRows.data || []) stats.get(r.skill_id)!.jobsCount += 1;
   for (const r of oppRows.data || []) stats.get(r.skill_id)!.opportunitiesCount += 1;
   for (const r of courseRows.data || []) stats.get(r.skill_id)!.learningCount += 1;
-  for (const r of (resourceRows.data as unknown as { skill_id: string; resources: { resource_type: string | null } | null }[]) || []) {
-    if (r.resources?.resource_type && LEARN_RESOURCE_KINDS.includes(r.resources.resource_type)) {
+  for (const r of (resourceRows.data as unknown as { skill_id: string; resources: { resource_type: string | null; show_in_learn: boolean | null } | null }[]) || []) {
+    if (r.resources?.show_in_learn && r.resources.resource_type && LEARN_RESOURCE_KINDS.includes(r.resources.resource_type)) {
       stats.get(r.skill_id)!.learningCount += 1;
     }
   }
@@ -101,7 +101,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
       ? supabase.from("courses").select(COURSE_SELECT).eq("status", "published").in("id", courseIds).limit(CARD_LIMIT)
       : Promise.resolve({ data: [] }),
     resourceIds.length
-      ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").in("resource_type", LEARN_RESOURCE_KINDS).in("id", resourceIds).limit(CARD_LIMIT)
+      ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true).in("resource_type", LEARN_RESOURCE_KINDS).in("id", resourceIds).limit(CARD_LIMIT)
       : Promise.resolve({ data: [] }),
   ]);
 
