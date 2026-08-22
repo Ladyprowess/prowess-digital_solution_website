@@ -39,6 +39,13 @@ function toHtml(value: string): string {
     .join("");
 }
 
+// Exported so any other component that needs to parse a rich-text field's
+// structure client-side (e.g. ChecklistBody walking <li> nodes) sanitizes
+// through this exact same allowlist rather than trusting the raw column.
+export function sanitizeRichTextHtml(html: string): string {
+  return sanitizeHtml(toHtml(html), SANITIZE_OPTIONS);
+}
+
 // The read-only counterpart to RichTextEditor.tsx - renders the content
 // (bold/headings/lists/links/quotes) using the same .blog-content
 // typography every rich-text field on the platform shares. DOMPurify is a
@@ -48,6 +55,6 @@ function toHtml(value: string): string {
 // made it into a description column (a direct DB edit, a future editor
 // change, etc.) before it ever reaches the DOM.
 export function RichText({ html, className = "" }: { html: string; className?: string }) {
-  const clean = sanitizeHtml(toHtml(html), SANITIZE_OPTIONS);
+  const clean = sanitizeRichTextHtml(html);
   return <div className={`blog-content ${className}`} dangerouslySetInnerHTML={{ __html: clean }} />;
 }

@@ -7,6 +7,7 @@ import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
+import { RESOURCE_TYPES, USE_CASES, USE_CASE_LABELS } from "@/lib/resources/constants";
 
 const PAGE_SIZE = 20;
 
@@ -22,20 +23,10 @@ type ResourceRow = {
   status: "draft" | "published" | "archived";
 };
 
-const RESOURCE_TYPES = ["article", "guide", "checklist", "template", "ebook", "video", "podcast", "external_course", "business_guide"] as const;
 type Source = "prowess" | "youtube" | "external";
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 const AUDIENCES = ["consumer", "business", "both"] as const;
 const CONTENT_ROLES = ["general", "learning", "career", "business", "motivation", "interview", "webinar", "tutorial"] as const;
-const USE_CASES = ["learn", "template", "checklist", "business_guide", "career", "read"] as const;
-const USE_CASE_LABELS: Record<(typeof USE_CASES)[number], string> = {
-  learn: "I want to learn something",
-  template: "I need a template",
-  checklist: "I need a checklist",
-  business_guide: "I want a business guide",
-  career: "I need career resources",
-  read: "I want something to read",
-};
 
 // Where a resource is eligible to surface, independent of its type/
 // audience/category. Applies to every resource type, not just video --

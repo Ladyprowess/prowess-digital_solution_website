@@ -12,6 +12,7 @@ export type ResourceItem = {
   category: string | null;
   stage: string | null;
   resource_type: string | null;
+  use_case: string | null;
   level: string | null;
   source: string | null;
   external_url: string | null;

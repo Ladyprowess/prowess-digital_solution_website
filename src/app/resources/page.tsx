@@ -1,240 +1,353 @@
-import type { Metadata } from "next";
-import Container from "@/components/Container";
-import AgencyPageHeader from "@/components/AgencyPageHeader";
-import ResourcesBrowser from "@/components/resources/ResourcesBrowser";
-import { Reveal } from "@/components/Reveal";
+"use client";
+
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import Container from "@/components/Container";
+import { Reveal } from "@/components/Reveal";
+import { Pagination } from "@/components/Pagination";
+import { PillTabs, type PillTab } from "@/components/PillTabs";
+import { ScrollCarousel } from "@/components/ScrollCarousel";
+import ResourceCard, { type ResourceItem } from "@/components/resources/ResourceCard";
+import { PUBLIC_RESOURCE_TYPES, USE_CASES, USE_CASE_LABELS, USE_CASE_DESCRIPTIONS, type UseCase } from "@/lib/resources/constants";
+import {
+  filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters,
+  type ResourceFilters,
+} from "@/lib/resources/filters";
 
-export const metadata: Metadata = {
-  title: "Resources | Prowess Digital Solutions",
-  description:
-    "Free business tools, guides, templates, and practical materials built for African entrepreneurs. Diagnose your business, plan your structure, and track your growth.",
-  keywords: [
-    "business tools for African entrepreneurs",
-    "free business checklist Nigeria",
-    "business structure template Africa",
-    "business diagnostic tool",
-    "African small business resources",
-    "startup cost calculator Africa",
-    "Prowess Digital Solutions resources",
-  ],
-  openGraph: {
-    title: "Resources | Prowess Digital Solutions",
-    description:
-      "Free tools and guides built for African business owners. Start with a diagnostic report, check your foundations, and map your structure.",
-    url: "https://prowessdigitalsolutions.com/resources",
-    siteName: "Prowess Digital Solutions",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Resources | Prowess Digital Solutions",
-    description:
-      "Free business tools and guides built for African entrepreneurs. Diagnose your business. Build your foundation.",
-  },
-  alternates: {
-    canonical: "https://prowessdigitalsolutions.com/resources",
-  },
-};
+const PAGE_SIZE = 12;
 
-const TOOLS = [
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-      </svg>
-    ),
-    title: "Business Helper",
-    desc: "Describe what is happening in your business and get a structured diagnostic report with a Business Health Score and clear next steps, powered by AI.",
-    href: "/tools/business-helper",
-    cta: "Run a Diagnostic",
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-      </svg>
-    ),
-    title: "Operational Health Self-Audit",
-    desc: "36 checkpoints across 6 categories. See what your business already has in place and exactly what to fix before you chase growth.",
-    href: "/tools/business-health-check",
-    cta: "Check Your Foundations",
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-      </svg>
-    ),
-    title: "Business Structure Template",
-    desc: "Map out your roles, departments, decision making, and communication flow. Fill it in and download it as your operating foundation.",
-    href: "/tools/business-structure",
-    cta: "Build Your Structure",
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-      </svg>
-    ),
-    title: "Customer Service Guide",
-    desc: "A practical guide to handling clients, complaints, and retention.",
-    href: "/tools/customer-support",
-    cta: "Read the Guide",
-  },
+const AUDIENCE_TABS: PillTab<string>[] = [
+  { value: "", label: "All Resources" },
+  { value: "consumer", label: "For Individuals" },
+  { value: "business", label: "For Businesses" },
 ];
+
+function typeLabel(type: string): string {
+  return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+const TYPE_TABS: PillTab<string>[] = [
+  { value: "", label: "All Types" },
+  ...PUBLIC_RESOURCE_TYPES.map((t) => ({ value: t, label: typeLabel(t) })),
+];
+
+// A resource tagged "both" should surface under either audience filter --
+// only "All" excludes nothing. Mirrors src/app/videos/page.tsx.
+function audienceValues(audience: string): string[] {
+  if (audience === "consumer") return ["consumer", "both"];
+  if (audience === "business") return ["business", "both"];
+  return ["consumer", "business", "both"];
+}
+
+// Every fetch on this page goes through /api/resources (server-side,
+// service-role) rather than querying Supabase directly from the browser
+// like /videos/page.tsx does -- resource covers live in a private Storage
+// bucket and need a signed URL, which only the server route can generate.
+async function fetchResources(params: URLSearchParams): Promise<{ items: ResourceItem[]; total: number }> {
+  const res = await fetch(`/api/resources?${params.toString()}`, { cache: "no-store" });
+  const data = await res.json().catch(() => ({}));
+  return { items: data?.items || [], total: data?.total || 0 };
+}
 
 export default function ResourcesPage() {
   return (
-    <div>
-      <AgencyPageHeader
-        eyebrow="Resources"
-        title={
-          <>
-            Tools, guides, and <span className="text-primary">practical resources.</span>
-          </>
-        }
-        description="Guides, templates, and practical tools to support clear business thinking. Everything here is built for entrepreneurs who are serious about structure."
-        primaryAction={{ label: "Explore Free Tools", href: "#tools" }}
-        secondaryAction={{ label: "Talk to Us", href: "/contact" }}
-        proof={[
-          "Free tools you can use today",
-          "Templates for structure and planning",
-          "Guides for clearer business decisions",
-        ]}
-      />
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <ResourcesPageContent />
+    </Suspense>
+  );
+}
 
-    <section className="py-12 sm:py-16 bg-muted/40">
-      <Container>
+function ResourcesPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
+  const activeFiltersPresent = hasActiveFilters(filters);
 
-        {/* CONTENT CARDS */}
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              title: "Blog",
-              desc: "Articles that help you build structure, make better decisions, and think long-term about your business.",
-              href: "/blog",
-              cta: "View Blog",
-              external: false,
-            },
-            {
-              title: "Videos",
-              desc: "Practical videos to build real skills, plus motivational videos to keep you going.",
-              href: "/videos",
-              cta: "Watch Videos",
-              external: false,
-            },
-            {
-              title: "Events",
-              desc: "Workshops, sessions, and learning events designed for business owners at every stage.",
-              href: "/events",
-              cta: "View Events",
-              external: false,
-            },
-          ].map((card, i) => (
-            <Reveal key={card.title} delay={i * 90} className="h-full">
-              <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                <h3 className="text-lg font-semibold text-foreground">{card.title}</h3>
-                <p className="mt-2 text-muted-foreground">{card.desc}</p>
-                <div className="mt-auto pt-4">
-                  {card.external ? (
-                    <a
-                      href={card.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-                    >
-                      {card.cta}
-                    </a>
+  const [items, setItems] = useState<ResourceItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const [featuredPicks, setFeaturedPicks] = useState<ResourceItem[]>([]);
+  const [businessRail, setBusinessRail] = useState<ResourceItem[]>([]);
+  const [careerRail, setCareerRail] = useState<ResourceItem[]>([]);
+  const [templatesAndChecklists, setTemplatesAndChecklists] = useState<ResourceItem[]>([]);
+
+  // Curated sections (Featured, Popular Picks, Business/Career rails,
+  // Templates & Checklists table) sit above the main discovery feed and
+  // don't participate in pagination -- only shown on the unfiltered,
+  // first-page view, same convention as /videos' curated rails.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (activeFiltersPresent || filters.page > 1) {
+        if (!cancelled) { setFeaturedPicks([]); setBusinessRail([]); setCareerRail([]); setTemplatesAndChecklists([]); }
+        return;
+      }
+      const base = () => new URLSearchParams({ exclude_resource_type: "video" });
+      const featuredParams = base(); featuredParams.set("featured", "true"); featuredParams.set("pageSize", "7");
+      const businessParams = base(); businessParams.set("show_in_business", "true"); businessParams.set("pageSize", "8");
+      const careerParams = base(); careerParams.set("show_in_career", "true"); careerParams.set("pageSize", "8");
+      const templatesParams = new URLSearchParams({ resource_type: "template,checklist", pageSize: "8" });
+
+      const [f, b, c, t] = await Promise.all([
+        fetchResources(featuredParams),
+        fetchResources(businessParams),
+        fetchResources(careerParams),
+        fetchResources(templatesParams),
+      ]);
+      if (cancelled) return;
+      setFeaturedPicks(f.items);
+      setBusinessRail(b.items);
+      setCareerRail(c.items);
+      setTemplatesAndChecklists(t.items);
+    })();
+    return () => { cancelled = true; };
+  }, [activeFiltersPresent, filters.page]);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Debounced, matching /videos and /learn's 150ms search-input pattern.
+    const t = setTimeout(async () => {
+      setLoading(true);
+      const params = new URLSearchParams();
+      params.set("exclude_resource_type", "video");
+      params.set("audience", audienceValues(filters.audience).join(","));
+      if (filters.type) params.set("resource_type", filters.type);
+      if (filters.useCase) params.set("use_case", filters.useCase);
+      if (filters.q.trim()) params.set("q", filters.q.trim());
+      params.set("page", String(filters.page));
+      params.set("pageSize", String(PAGE_SIZE));
+
+      const { items: nextItems, total: nextTotal } = await fetchResources(params);
+      if (cancelled) return;
+      setItems(nextItems);
+      setTotal(nextTotal);
+      setLoading(false);
+    }, 150);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [filters.audience, filters.type, filters.useCase, filters.q, filters.page]);
+
+  function updateFilters(patch: Partial<ResourceFilters>) {
+    const next: ResourceFilters = { ...filters, ...patch };
+    if (!("page" in patch)) next.page = 1;
+    const qs = searchParamsFromFilters(next).toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
+  function browseByNeed(useCase: UseCase) {
+    updateFilters({ useCase });
+    document.getElementById("explore")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hero = featuredPicks[0] || null;
+  const popularPicks = featuredPicks.slice(1);
+  const showCurated = hero || popularPicks.length > 0 || businessRail.length > 0 || careerRail.length > 0 || templatesAndChecklists.length > 0;
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* HERO */}
+      <section className="border-b border-border bg-muted py-16 sm:py-20">
+        <Container>
+          <Reveal>
+            <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Resources</div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Guides, templates and tools to help you move forward.</h1>
+            <p className="mt-3 max-w-2xl text-base text-muted-foreground">
+              Downloadable and readable material -- articles, guides, ebooks, templates and checklists -- for building a career or growing a business.
+            </p>
+          </Reveal>
+          <Reveal delay={80}>
+            <div className="mt-6">
+              <input
+                value={filters.q}
+                onChange={(e) => updateFilters({ q: e.target.value })}
+                placeholder="Search resources..."
+                className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-sm text-foreground shadow-sm sm:max-w-xl"
+              />
+            </div>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* AUDIENCE + TYPE */}
+      <section className="border-b border-border py-8">
+        <Container>
+          <Reveal>
+            <PillTabs tabs={AUDIENCE_TABS} active={filters.audience} onChange={(v) => updateFilters({ audience: v })} />
+          </Reveal>
+          <Reveal delay={40}>
+            <div className="mt-4">
+              <PillTabs tabs={TYPE_TABS} active={filters.type} onChange={(v) => updateFilters({ type: v })} />
+            </div>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* FEATURED RESOURCE */}
+      {hero && (
+        <section className="border-b border-border py-14">
+          <Container>
+            <Reveal>
+              <div className="grid gap-6 sm:grid-cols-[3fr_2fr]">
+                <Link href={`/resources/${hero.slug}`} className="group relative block overflow-hidden rounded-2xl border border-border bg-muted">
+                  {hero.cover_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={hero.cover_url} alt={hero.title} className="h-full w-full object-cover" />
                   ) : (
-                    <Link
-                      href={card.href}
-                      className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-                    >
-                      {card.cta}
-                    </Link>
+                    <div className="flex h-64 w-full items-center justify-center text-sm text-muted-foreground">No cover image</div>
                   )}
+                </Link>
+                <div className="flex flex-col justify-center">
+                  <span className="text-xs font-bold uppercase tracking-widest text-primary">Featured</span>
+                  <h2 className="mt-2 text-xl font-bold text-foreground">{hero.title}</h2>
+                  {hero.resource_type && <p className="mt-1 text-sm capitalize text-muted-foreground">{typeLabel(hero.resource_type)}</p>}
+                  {hero.description && <p className="mt-3 text-sm text-muted-foreground line-clamp-3">{hero.description}</p>}
+                  <Link href={`/resources/${hero.slug}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">View resource →</Link>
                 </div>
               </div>
             </Reveal>
-          ))}
-        </div>
+          </Container>
+        </section>
+      )}
 
-        {/* ---------------------------------------------------------- */}
-        {/*  FREE TOOLS SECTION                                        */}
-        {/* ---------------------------------------------------------- */}
-        <section id="tools" className="mt-24">
+      {/* BROWSE BY NEED */}
+      <section className="border-b border-border py-14">
+        <Container>
           <Reveal>
-            <div className="max-w-2xl mb-10">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary mb-4">
-                Free Tools
-              </div>
-              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Tools that do the thinking with you
-              </h2>
-              <p className="mt-3 text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Practical tools built for business owners, to help you grow the right way.
-              </p>
+            <h2 className="text-xl font-bold text-foreground">Browse by need</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Not sure where to start? Tell us what you&apos;re after.</p>
+          </Reveal>
+          <Reveal delay={40}>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {USE_CASES.map((uc) => (
+                <button
+                  key={uc}
+                  type="button"
+                  onClick={() => browseByNeed(uc)}
+                  className={`rounded-2xl border p-5 text-left transition ${filters.useCase === uc ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"}`}
+                >
+                  <p className="text-sm font-bold text-foreground">{USE_CASE_LABELS[uc]}</p>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{USE_CASE_DESCRIPTIONS[uc]}</p>
+                </button>
+              ))}
             </div>
           </Reveal>
+        </Container>
+      </section>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            {TOOLS.map((tool, i) => (
-              <Reveal key={tool.href} delay={i * 80} className="h-full">
-                <div className="group flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md">
-                  <div className="flex h-full items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                      {tool.icon}
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <h3 className="font-semibold text-foreground">{tool.title}</h3>
-                      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                        {tool.desc}
-                      </p>
-                      <div className="mt-auto pt-4">
-                        <a
-                          href={tool.href}
-                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:opacity-80"
-                        >
-                          {tool.cta}
-                          <span className="transition-transform group-hover:translate-x-1">→</span>
-                        </a>
-                      </div>
-                    </div>
+      {/* CURATED RAILS */}
+      {showCurated && (
+        <section className="border-b border-border bg-muted/40 py-14">
+          <Container>
+            {popularPicks.length > 0 && (
+              <Reveal>
+                <div>
+                  <h2 className="text-lg font-bold text-foreground">Popular Resources</h2>
+                  <div className="mt-4"><ScrollCarousel>{popularPicks.map((r) => <div key={r.id} className="w-72 flex-shrink-0 snap-start"><ResourceCard item={r} /></div>)}</ScrollCarousel></div>
+                </div>
+              </Reveal>
+            )}
+
+            {businessRail.length > 0 && (
+              <Reveal delay={40}>
+                <div className="mt-10">
+                  <h2 className="text-lg font-bold text-foreground">For Business Owners</h2>
+                  <div className="mt-4"><ScrollCarousel>{businessRail.map((r) => <div key={r.id} className="w-72 flex-shrink-0 snap-start"><ResourceCard item={r} /></div>)}</ScrollCarousel></div>
+                </div>
+              </Reveal>
+            )}
+
+            {careerRail.length > 0 && (
+              <Reveal delay={80}>
+                <div className="mt-10">
+                  <h2 className="text-lg font-bold text-foreground">For Your Career</h2>
+                  <div className="mt-4"><ScrollCarousel>{careerRail.map((r) => <div key={r.id} className="w-72 flex-shrink-0 snap-start"><ResourceCard item={r} /></div>)}</ScrollCarousel></div>
+                </div>
+              </Reveal>
+            )}
+
+            {templatesAndChecklists.length > 0 && (
+              <Reveal delay={120}>
+                <div className="mt-10">
+                  <h2 className="text-lg font-bold text-foreground">Templates & Checklists</h2>
+                  <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-card">
+                    <table className="w-full min-w-[520px] text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <th className="px-4 py-3">Title</th>
+                          <th className="px-4 py-3">Type</th>
+                          <th className="px-4 py-3">Use case</th>
+                          <th className="px-4 py-3">Access</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {templatesAndChecklists.map((r) => (
+                          <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                            <td className="px-4 py-3">
+                              <Link href={`/resources/${r.slug}`} className="font-semibold text-foreground hover:text-primary">{r.title}</Link>
+                            </td>
+                            <td className="px-4 py-3 capitalize text-muted-foreground">{r.resource_type ? typeLabel(r.resource_type) : "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{r.use_case ? USE_CASE_LABELS[r.use_case as UseCase] : "—"}</td>
+                            <td className="px-4 py-3">
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${r.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{r.access}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </Reveal>
-            ))}
+            )}
+          </Container>
+        </section>
+      )}
+
+      {/* EXPLORE RESOURCES */}
+      <section id="explore" className="scroll-mt-20 py-12 sm:py-16">
+        <Container>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} resource${total === 1 ? "" : "s"} found`}</p>
           </div>
 
-          <Reveal delay={TOOLS.length * 80}>
-            <div className="mt-8 flex items-center justify-between rounded-2xl border border-border bg-card p-6 shadow-sm flex-wrap gap-4">
-              <div>
-                <p className="font-semibold text-foreground">
-                  Need to see other tools?
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Those tools are available to Prowess Digital Solutions clients.
-                </p>
+          {loading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+          ) : items.length === 0 ? (
+            <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
+              <h2 className="text-lg font-semibold text-foreground">No resources found</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding resources here soon - check back shortly."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((r) => <ResourceCard key={r.id} item={r} />)}
+            </div>
+          )}
+
+          <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
+        </Container>
+      </section>
+
+      {/* CLOSING CTA */}
+      <section className="border-t border-border py-14">
+        <Container>
+          <Reveal>
+            <div className="rounded-3xl bg-foreground px-8 py-12 text-center">
+              <h2 className="text-2xl font-bold text-background sm:text-3xl">Looking for something more structured?</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm text-background/70">Resources are just one part of building your career or business -- explore what else is here.</p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Link href="/learn" className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90">Explore Learn</Link>
+                <Link href="/videos" className="rounded-xl border border-background/30 px-6 py-3 text-sm font-semibold text-background hover:bg-background/10">Watch Videos</Link>
+                <Link href="/jobs" className="rounded-xl border border-background/30 px-6 py-3 text-sm font-semibold text-background hover:bg-background/10">Browse Jobs</Link>
+                <Link href="/opportunities" className="rounded-xl border border-background/30 px-6 py-3 text-sm font-semibold text-background hover:bg-background/10">Find Opportunities</Link>
               </div>
-              <Link
-                href="/tools"
-                className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 whitespace-nowrap"
-              >
-                View all tools →
-              </Link>
             </div>
           </Reveal>
-        </section>
-
-        {/* RESOURCE BROWSER */}
-        <Reveal delay={80}>
-          <div className="mt-16">
-            <ResourcesBrowser />
-          </div>
-        </Reveal>
-      </Container>
-    </section>
+        </Container>
+      </section>
     </div>
   );
 }

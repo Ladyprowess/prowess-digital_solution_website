@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { ResourceBody } from "@/components/ResourceBody";
+import { ChecklistBody } from "@/components/resources/ChecklistBody";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { RelatedSection } from "@/components/RelatedSection";
 import { getSkillGraph } from "@/lib/careerPathGraph";
@@ -176,7 +177,11 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
         )}
 
         <Reveal delay={120}>
-          <ResourceBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} />
+          {resource.resource_type === "checklist" ? (
+            <ChecklistBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} />
+          ) : (
+            <ResourceBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} />
+          )}
         </Reveal>
 
         {showBusinessCta && (

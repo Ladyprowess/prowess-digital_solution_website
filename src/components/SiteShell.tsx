@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 // `footer` is a pre-rendered element (built by the RootLayout Server
 // Component, which passes it in as children/props) rather than a <Footer/>
@@ -21,6 +22,7 @@ export default function SiteShell({ children, footer }: { children: React.ReactN
       <Navbar />
       <main className="min-h-[70vh]">{children}</main>
       {footer}
+      <InstallPrompt />
     </>
   );
 }

@@ -16,6 +16,10 @@ export async function GET(req: Request) {
     const audience = (searchParams.get("audience") || "").trim();
     const resourceType = (searchParams.get("resource_type") || "").trim();
     const excludeResourceType = (searchParams.get("exclude_resource_type") || "").trim();
+    const useCase = (searchParams.get("use_case") || "").trim();
+    const featured = (searchParams.get("featured") || "").trim();
+    const showInBusiness = (searchParams.get("show_in_business") || "").trim();
+    const showInCareer = (searchParams.get("show_in_career") || "").trim();
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(24, Math.max(1, Number(searchParams.get("pageSize")) || 6));
 
@@ -34,6 +38,10 @@ export async function GET(req: Request) {
       const excluded = excludeResourceType.split(",").map((v) => v.trim()).filter(Boolean);
       if (excluded.length > 0) query = query.not("resource_type", "in", `(${excluded.join(",")})`);
     }
+    if (useCase) query = query.eq("use_case", useCase);
+    if (featured === "true") query = query.eq("featured", true);
+    if (showInBusiness === "true") query = query.eq("show_in_business", true);
+    if (showInCareer === "true") query = query.eq("show_in_career", true);
 
     // search
     if (q) {
@@ -44,7 +52,10 @@ export async function GET(req: Request) {
     // downloads/rating, but nothing writes non-zero values to either column
     // outside the legacy upload flow (removed), so those sorts never
     // differentiated real content from a tie at zero.
-    query = query.order("created_at", { ascending: false });
+    // Secondary order by id -- created_at ties (common on seeded/imported
+    // batches) would otherwise let a row appear on two pages or neither
+    // between requests, since Postgres doesn't guarantee stable tie order.
+    query = query.order("created_at", { ascending: false }).order("id", { ascending: true });
 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
