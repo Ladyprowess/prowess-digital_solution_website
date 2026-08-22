@@ -107,6 +107,7 @@ export default function ModernHomePage() {
   const [careerPathCards, setCareerPathCards] = useState<CareerPathCard[]>([]);
   const [courses, setCourses] = useState<LearnCard[]>([]);
   const [freeResources, setFreeResources] = useState<ResourceItem[]>([]);
+  const [curatedResources, setCuratedResources] = useState<ResourceItem[]>([]);
   const [premiumItems, setPremiumItems] = useState<(LearnCard | ResourceItem)[]>([]);
   const [homepageVideos, setHomepageVideos] = useState<VideoCardData[]>([]);
   const [events, setEvents] = useState<EventCard[]>([]);
@@ -114,7 +115,7 @@ export default function ModernHomePage() {
 
   useEffect(() => {
     (async () => {
-      const [jobsRes, oppsRes, pathsRes, coursesRes, freeResourcesRes, premiumResourcesRes, homepageVideosRes, eventsRes] = await Promise.all([
+      const [jobsRes, oppsRes, pathsRes, coursesRes, freeResourcesRes, premiumResourcesRes, curatedResourcesRes, homepageVideosRes, eventsRes] = await Promise.all([
         supabase.from("jobs").select("id, slug, title, location_type, country, created_at, featured, companies(name), job_categories(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
         supabase.from("opportunities").select("id, slug, title, organisation_name, created_at, featured, opportunity_types(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
         supabase.from("career_paths").select("id, slug, title, description").eq("status", "published").order("created_at", { ascending: false }).limit(6),
@@ -123,10 +124,15 @@ export default function ModernHomePage() {
         // their own dedicated section below instead of double-appearing.
         fetch("/api/resources?access=free&audience=consumer,both&pageSize=6&sort=recent&exclude_resource_type=video").then((r) => r.json()),
         fetch("/api/resources?access=premium&audience=consumer,both&pageSize=4&sort=recent&exclude_resource_type=video").then((r) => r.json()),
-        // Direct query, not /api/resources -- that route always requires
-        // show_in_library, but a video can be homepage-only without also
-        // being in the general library (show_on_homepage and
-        // show_in_library are independent placement flags).
+        // Admin-curated "Resources worth exploring" -- independent of the
+        // un-curated Free/Premium feeds above (those are access-driven,
+        // this is a deliberate editorial pick via show_on_homepage, same
+        // curation concept as the video section below).
+        fetch("/api/resources?show_on_homepage=true&exclude_resource_type=video&pageSize=5").then((r) => r.json()),
+        // Direct query, not /api/resources -- video covers come from
+        // thumbnail_url/YouTube, not a signed Storage cover_path, so there's
+        // no reason to route through the server for these (unlike the
+        // curated-resources fetch above, which needs the route's signing).
         supabase.from("resources").select("id, slug, title, description, category, source, external_url, thumbnail_url, access")
           .eq("status", "published").eq("resource_type", "video").eq("show_on_homepage", true)
           .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(4),
@@ -162,6 +168,7 @@ export default function ModernHomePage() {
       setCourses(publishedCourses.filter((c) => c.access === "free").slice(0, 4));
 
       setFreeResources((freeResourcesRes?.items || []) as ResourceItem[]);
+      setCuratedResources((curatedResourcesRes?.items || []) as ResourceItem[]);
 
       const premium = [
         ...publishedCourses.filter((c) => c.access === "premium"),
@@ -348,6 +355,59 @@ export default function ModernHomePage() {
           </div>
         </section>
       )}
+
+      {/* RESOURCES WORTH EXPLORING -- admin-curated (show_on_homepage), one
+          large featured pick plus a few smaller ones. Independent of the
+          un-curated Free/Premium feeds below, which are access-driven, not
+          editorially picked. No existing homepage resource section has
+          this one-large-plus-several-small layout, so it's new markup
+          rather than reused ResourceCard-grid styling. */}
+      {!loading && curatedResources.length > 0 && (() => {
+        const heroIdx = curatedResources.findIndex((r) => r.featured);
+        const hero = curatedResources[heroIdx >= 0 ? heroIdx : 0];
+        const rest = curatedResources.filter((_, i) => i !== (heroIdx >= 0 ? heroIdx : 0)).slice(0, 4);
+        return (
+          <section className="bg-muted py-20 sm:py-24">
+            <div className="mx-auto max-w-7xl px-6 lg:px-8">
+              <Reveal>
+                <div className="mb-10 text-center">
+                  <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Resources</div>
+                  <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Resources worth exploring</h2>
+                </div>
+              </Reveal>
+              <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+                <Reveal>
+                  <Link href={`/resources/${hero.slug}`} className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                    {hero.cover_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={hero.cover_url} alt={hero.title} className="h-64 w-full object-cover sm:h-80" />
+                    ) : (
+                      <div className="flex h-64 w-full items-center justify-center bg-muted text-sm text-muted-foreground sm:h-80">No cover image</div>
+                    )}
+                    <div className="p-6">
+                      <span className="text-xs font-bold uppercase tracking-widest text-primary">Featured Resource</span>
+                      <h3 className="mt-2 text-xl font-bold text-foreground">{hero.title}</h3>
+                      {hero.description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{hero.description}</p>}
+                    </div>
+                  </Link>
+                </Reveal>
+                {rest.length > 0 && (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                    {rest.map((r, i) => (
+                      <Reveal key={r.id} delay={(i + 1) * 40}>
+                        <ResourceCard item={r} />
+                      </Reveal>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="mt-8 text-center">
+                <Link href="/resources" className="text-sm font-semibold text-primary hover:underline">Explore all resources →</Link>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* FREE RESOURCES */}
       <section className="bg-background py-20 sm:py-24">

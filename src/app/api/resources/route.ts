@@ -20,12 +20,20 @@ export async function GET(req: Request) {
     const featured = (searchParams.get("featured") || "").trim();
     const showInBusiness = (searchParams.get("show_in_business") || "").trim();
     const showInCareer = (searchParams.get("show_in_career") || "").trim();
+    const showOnHomepage = (searchParams.get("show_on_homepage") || "").trim();
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(24, Math.max(1, Number(searchParams.get("pageSize")) || 6));
 
     let query = supabaseAdmin().from("resources").select("*", { count: "exact" })
-      .eq("status", "published")
-      .eq("show_in_library", true);
+      .eq("status", "published");
+
+    // show_in_library and show_on_homepage are independent placement flags
+    // (matches the video homepage query's precedent in src/app/page.tsx) --
+    // a resource can be homepage-curated without also being in the general
+    // library, so an explicit show_on_homepage request skips the
+    // show_in_library gate rather than requiring both.
+    if (showOnHomepage === "true") query = query.eq("show_on_homepage", true);
+    else query = query.eq("show_in_library", true);
 
     // filters
     if (category) query = query.eq("category", category);

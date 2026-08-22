@@ -24,6 +24,7 @@ export type ResourceItem = {
   cover_path?: string | null;
   file_size: number | null;
   reading_minutes: number | null;
+  featured?: boolean;
 };
 
 function formatMB(bytes: number) {
