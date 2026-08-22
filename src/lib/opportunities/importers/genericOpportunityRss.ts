@@ -44,5 +44,6 @@ export async function fetchGenericOpportunityRss(feedUrl: string): Promise<Norma
       country: null,
       city: null,
       tags: item.categories || [],
+      postedAt: item.isoDate || item.pubDate || null,
     }));
 }

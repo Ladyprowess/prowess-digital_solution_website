@@ -51,6 +51,7 @@ type JobPostingSchema = {
   jobLocationType?: string;
   skills?: string;
   industry?: string;
+  datePosted?: string;
 };
 
 // Job pages carry several ld+json blocks (WebSite, JobPosting, BreadcrumbList) -
@@ -86,7 +87,7 @@ async function mapWithConcurrency<T, R>(items: T[], concurrency: number, worker:
   return results;
 }
 
-async function fetchJobPosting(url: string): Promise<NormalizedListing | null> {
+async function fetchJobPosting(url: string, sitemapLastmod: string): Promise<NormalizedListing | null> {
   try {
     const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
     if (!res.ok) return null;
@@ -113,6 +114,11 @@ async function fetchJobPosting(url: string): Promise<NormalizedListing | null> {
       country: countries[0] || null,
       city: cities.join(", ") || null,
       tags: [...employmentTypes, ...skillTags, ...industryTags],
+      // schema.org JobPosting's own datePosted is more precise than the
+      // sitemap's <lastmod> (which can reflect any edit, not just the
+      // original posting) - only fall back to it when the page's JSON-LD
+      // doesn't include one.
+      postedAt: job.datePosted || sitemapLastmod || null,
     };
   } catch {
     return null;
@@ -132,5 +138,5 @@ export async function fetchCryptoJobsListListings(sitemapUrl: string): Promise<N
     .sort((a, b) => b.lastmod.localeCompare(a.lastmod))
     .slice(0, MAX_JOBS_PER_RUN);
 
-  return mapWithConcurrency(entries, FETCH_CONCURRENCY, (entry) => fetchJobPosting(entry.url));
+  return mapWithConcurrency(entries, FETCH_CONCURRENCY, (entry) => fetchJobPosting(entry.url, entry.lastmod));
 }

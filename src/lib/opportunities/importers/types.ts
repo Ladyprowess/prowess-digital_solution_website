@@ -12,4 +12,7 @@ export type NormalizedOpportunity = {
   country?: string | null;
   city?: string | null;
   tags: string[];
+  // The source's own posting date, raw/unparsed - see NormalizedListing in
+  // jobs/importers/types.ts for why this stays a passthrough here.
+  postedAt?: string | null;
 };

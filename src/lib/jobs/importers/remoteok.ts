@@ -12,6 +12,7 @@ type RemoteOkApiItem = {
   url?: string;
   location?: string;
   tags?: string[];
+  date?: string;
 };
 
 export async function fetchRemoteOkListings(feedUrl: string): Promise<NormalizedListing[]> {
@@ -38,5 +39,6 @@ export async function fetchRemoteOkListings(feedUrl: string): Promise<Normalized
       country: null,
       city: item.location?.trim() || null,
       tags: Array.isArray(item.tags) ? item.tags.map((t) => String(t).trim()).filter(Boolean) : [],
+      postedAt: item.date || null,
     }));
 }

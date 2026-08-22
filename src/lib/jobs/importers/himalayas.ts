@@ -23,5 +23,6 @@ export async function fetchHimalayasListings(feedUrl: string): Promise<Normalize
       country: null,
       city: null,
       tags: item.categories || [],
+      postedAt: item.isoDate || item.pubDate || null,
     }));
 }

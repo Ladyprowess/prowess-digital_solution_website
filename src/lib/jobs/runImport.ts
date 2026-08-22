@@ -48,6 +48,16 @@ function matchSlugFromTags(tags: string[], keywordMap: Record<string, string[]>)
   return null;
 }
 
+// listing.postedAt is raw, unvalidated text from a connector - Date can
+// silently accept garbage and produce an Invalid Date, which would insert
+// as null into Postgres anyway but is worth catching explicitly here
+// rather than relying on that behavior.
+function parsePostedAt(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export type ImportSummary = { fetched: number; imported: number; skippedExisting: number; errors: number };
 
 export async function runImportForSource(
@@ -124,6 +134,7 @@ export async function runImportForSource(
       // it's assumed stale, since these postings get pulled at the source
       // and there's no way to know that happened without checking.
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const sourcePublishedAt = parsePostedAt(listing.postedAt);
       const { data: createdJob, error: jobError } = await db
         .from("jobs")
         .insert({
@@ -140,7 +151,12 @@ export async function runImportForSource(
           source_id: source.id,
           external_id: listing.externalId,
           status: source.auto_publish ? "published" : "draft",
-          published_at: source.auto_publish ? now : null,
+          // Stored regardless of publish status so it survives until an
+          // admin manually publishes this draft later (every external
+          // source currently imports as a draft) - see
+          // supabase/source_published_at.sql.
+          source_published_at: sourcePublishedAt,
+          published_at: source.auto_publish ? (sourcePublishedAt || now) : null,
           expires_at: expiresAt,
         })
         .select("id")

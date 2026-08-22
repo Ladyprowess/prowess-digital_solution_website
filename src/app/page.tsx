@@ -121,8 +121,12 @@ export default function ModernHomePage() {
   useEffect(() => {
     (async () => {
       const [jobsRes, oppsRes, pathsRes, coursesRes, freeResourcesRes, premiumResourcesRes, curatedHeroRes, curatedRestRes, homepageVideosRes, eventsRes] = await Promise.all([
-        supabase.from("jobs").select("id, slug, title, location_type, country, created_at, featured, companies(name), job_categories(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
-        supabase.from("opportunities").select("id, slug, title, organisation_name, created_at, featured, opportunity_types(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
+        // published_at, not created_at -- for imported listings this is the
+        // source's real posting date (see supabase/source_published_at.sql),
+        // not when Prowess happened to import them. Matches /jobs and
+        // /opportunities' own "newest" sort.
+        supabase.from("jobs").select("id, slug, title, location_type, country, published_at, featured, companies(name), job_categories(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("published_at", { ascending: false, nullsFirst: false }).limit(4),
+        supabase.from("opportunities").select("id, slug, title, organisation_name, published_at, featured, opportunity_types(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("published_at", { ascending: false, nullsFirst: false }).limit(4),
         supabase.from("career_paths").select("id, slug, title, description").eq("status", "published").order("created_at", { ascending: false }).limit(6),
         supabase.from("courses").select("id, slug, title, description, access, price, price_currency").eq("status", "published").order("created_at", { ascending: false }).limit(6),
         // exclude_resource_type keeps videos out of these two -- they get

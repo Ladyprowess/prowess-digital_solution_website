@@ -85,6 +85,13 @@ function WorkAdmin() {
   const [featured, setFeatured] = useState(false);
   const [publishNow, setPublishNow] = useState(true);
   const [editingStatus, setEditingStatus] = useState<JobRow["status"] | null>(null);
+  // The real posting date captured at import time (see
+  // supabase/source_published_at.sql) - null for a manually created job.
+  // Publishing an imported job should use this instead of "now", so its
+  // "Posted X days ago" label and newest-first sort reflect when it
+  // actually went live on the site it came from, not when an admin
+  // happened to click Publish.
+  const [sourcePublishedAt, setSourcePublishedAt] = useState<string | null>(null);
   const [manualSlug, setManualSlug] = useState("");
   const [originalSlug, setOriginalSlug] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
@@ -189,6 +196,7 @@ function WorkAdmin() {
     setDescription(""); setRequirements(""); setResponsibilities(""); setBenefits(""); setNiceToHave("");
     setApplyUrl(""); setDeadlineAt(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
+    setSourcePublishedAt(null);
   };
 
   async function startEditJob(id: string) {
@@ -196,7 +204,7 @@ function WorkAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("jobs")
-      .select("id, slug, title, company_id, category_id, type_id, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, salary_period, experience_level, description, requirements, responsibilities, benefits, nice_to_have, apply_url, deadline_at, featured, status, meta_title, meta_description, job_skill_map(skill_id)")
+      .select("id, slug, title, company_id, category_id, type_id, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, salary_period, experience_level, description, requirements, responsibilities, benefits, nice_to_have, apply_url, deadline_at, featured, status, meta_title, meta_description, source_published_at, job_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -212,6 +220,7 @@ function WorkAdmin() {
       benefits: string | null; nice_to_have: string | null;
       apply_url: string; deadline_at: string | null; featured: boolean; status: JobRow["status"];
       meta_title: string | null; meta_description: string | null;
+      source_published_at: string | null;
       job_skill_map: { skill_id: string }[];
     };
 
@@ -244,6 +253,7 @@ function WorkAdmin() {
     setOriginalSlug(job.slug);
     setMetaTitle(job.meta_title || "");
     setMetaDescription(job.meta_description || "");
+    setSourcePublishedAt(job.source_published_at);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -302,7 +312,9 @@ function WorkAdmin() {
         const { error } = await supabase.from("jobs").update({
           ...basePayload,
           ...slugUpdate,
-          published_at: publishNow ? now : null,
+          // Prefer the real source posting date over "now" when this job
+          // was imported and we captured one - see sourcePublishedAt above.
+          published_at: publishNow ? (sourcePublishedAt || now) : null,
         }).eq("id", editingJobId);
         if (error) throw new Error(error.message);
         await supabase.from("job_skill_map").delete().eq("job_id", editingJobId);

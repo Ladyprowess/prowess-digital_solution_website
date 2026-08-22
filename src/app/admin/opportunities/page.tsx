@@ -84,6 +84,10 @@ function OpportunitiesAdmin() {
   const [featured, setFeatured] = useState(false);
   const [publishNow, setPublishNow] = useState(true);
   const [editingStatus, setEditingStatus] = useState<OpportunityRow["status"] | null>(null);
+  // The real posting date captured at import time (see
+  // supabase/source_published_at.sql) - null for a manually created
+  // opportunity. See the identical field in admin/work/page.tsx for why.
+  const [sourcePublishedAt, setSourcePublishedAt] = useState<string | null>(null);
   const [manualSlug, setManualSlug] = useState("");
   const [originalSlug, setOriginalSlug] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
@@ -190,6 +194,7 @@ function OpportunitiesAdmin() {
     setFeatured(false); setPublishNow(true);
     setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
+    setSourcePublishedAt(null);
   };
 
   async function startEditOpp(id: string) {
@@ -197,7 +202,7 @@ function OpportunitiesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("opportunities")
-      .select("id, slug, title, type_id, organisation_name, organisation_logo_url, description, eligibility, eligibility_summary, eligible_locations, requirements, application_process, benefits, benefit_tags, funding_type, funding_description, application_cost, application_fee, application_fee_currency, location_type, country, city, remote_regions, apply_url, deadline_at, application_opens_at, program_start_at, program_end_at, featured, status, meta_title, meta_description, opportunity_skill_map(skill_id)")
+      .select("id, slug, title, type_id, organisation_name, organisation_logo_url, description, eligibility, eligibility_summary, eligible_locations, requirements, application_process, benefits, benefit_tags, funding_type, funding_description, application_cost, application_fee, application_fee_currency, location_type, country, city, remote_regions, apply_url, deadline_at, application_opens_at, program_start_at, program_end_at, featured, status, meta_title, meta_description, source_published_at, opportunity_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -215,6 +220,7 @@ function OpportunitiesAdmin() {
       application_opens_at: string | null; program_start_at: string | null; program_end_at: string | null;
       featured: boolean; status: OpportunityRow["status"];
       meta_title: string | null; meta_description: string | null;
+      source_published_at: string | null;
       opportunity_skill_map: { skill_id: string }[];
     };
 
@@ -253,6 +259,7 @@ function OpportunitiesAdmin() {
     setOriginalSlug(opp.slug);
     setMetaTitle(opp.meta_title || "");
     setMetaDescription(opp.meta_description || "");
+    setSourcePublishedAt(opp.source_published_at);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -311,7 +318,10 @@ function OpportunitiesAdmin() {
         const { error } = await supabase.from("opportunities").update({
           ...basePayload,
           ...slugUpdate,
-          published_at: publishNow ? now : null,
+          // Prefer the real source posting date over "now" when this
+          // opportunity was imported and we captured one - see
+          // sourcePublishedAt above.
+          published_at: publishNow ? (sourcePublishedAt || now) : null,
         }).eq("id", editingOppId);
         if (error) throw new Error(error.message);
         await supabase.from("opportunity_skill_map").delete().eq("opportunity_id", editingOppId);

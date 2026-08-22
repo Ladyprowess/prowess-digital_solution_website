@@ -11,6 +11,7 @@ type JobicyItem = {
   jobType?: string[];
   jobGeo?: string;
   jobDescription?: string;
+  pubDate?: string;
 };
 
 // Jobicy's RSS is behind a Cloudflare bot challenge that a server-side fetch
@@ -40,5 +41,6 @@ export async function fetchJobicyListings(feedUrl: string): Promise<NormalizedLi
       country: null,
       city: item.jobGeo?.trim() || null,
       tags: [...(item.jobIndustry || []), ...(item.jobType || [])],
+      postedAt: item.pubDate || null,
     }));
 }

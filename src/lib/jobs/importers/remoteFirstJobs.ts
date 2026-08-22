@@ -34,6 +34,7 @@ export async function fetchRemoteFirstJobsListings(feedUrl: string): Promise<Nor
         country: null,
         city: null,
         tags: item.categories || [],
+        postedAt: item.isoDate || item.pubDate || null,
       };
     });
 }

@@ -42,6 +42,15 @@ function matchTypeSlug(tags: string[], title: string): string | null {
   return null;
 }
 
+// listing.postedAt is raw, unvalidated text from a connector - see the
+// identical helper in jobs/runImport.ts for why this is worth catching
+// explicitly rather than trusting Date's behavior on garbage input.
+function parsePostedAt(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export type ImportSummary = { fetched: number; imported: number; skippedExisting: number; errors: number };
 
 export async function runOpportunityImportForSource(
@@ -83,6 +92,7 @@ export async function runOpportunityImportForSource(
       // an imported listing doesn't stay visible forever after the source
       // pulls it down.
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const sourcePublishedAt = parsePostedAt(listing.postedAt);
 
       const { error: insertError } = await db.from("opportunities").insert({
         slug: opportunitySlug,
@@ -97,7 +107,10 @@ export async function runOpportunityImportForSource(
         source_id: source.id,
         external_id: listing.externalId,
         status: source.auto_publish ? "published" : "draft",
-        published_at: source.auto_publish ? now : null,
+        // Stored regardless of publish status - see jobs/runImport.ts and
+        // supabase/source_published_at.sql for why.
+        source_published_at: sourcePublishedAt,
+        published_at: source.auto_publish ? (sourcePublishedAt || now) : null,
         expires_at: expiresAt,
       });
 

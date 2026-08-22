@@ -14,4 +14,9 @@ export type NormalizedListing = {
   country?: string | null;
   city?: string | null;
   tags: string[];
+  // The source's own posting date, in whatever raw format it exposes
+  // (ISO string, RFC-822 pubDate, etc.) - runImport.ts is the only place
+  // that parses/validates it, so connectors just pass through whatever the
+  // feed gives them. Null/absent when a source genuinely doesn't expose one.
+  postedAt?: string | null;
 };

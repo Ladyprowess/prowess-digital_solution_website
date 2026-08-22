@@ -39,6 +39,7 @@ export async function fetchWeWorkRemotelyListings(feedUrl: string): Promise<Norm
         country: null,
         city: item.region?.trim() || null,
         tags: [...(item.categories || []), ...(item.type ? [item.type] : []), ...skillTags],
+        postedAt: item.isoDate || item.pubDate || null,
       };
     });
 }

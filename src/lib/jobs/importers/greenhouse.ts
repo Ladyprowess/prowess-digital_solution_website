@@ -9,6 +9,11 @@ type GreenhouseItem = {
   location?: { name?: string };
   company_name?: string;
   departments?: { name: string }[];
+  // Best-effort - Greenhouse's public board API documents updated_at on
+  // every posting, but no job_sources row currently uses this connector, so
+  // this couldn't be confirmed against a live response the way every other
+  // connector's date field was this session.
+  updated_at?: string;
 };
 
 // One job_sources row per company, e.g.
@@ -42,6 +47,7 @@ export async function fetchGreenhouseListings(feedUrl: string): Promise<Normaliz
         country: null,
         city: locationName || null,
         tags: (item.departments || []).map((d) => d.name),
+        postedAt: item.updated_at || null,
       };
     });
 }

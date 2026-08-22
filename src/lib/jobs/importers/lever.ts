@@ -9,6 +9,11 @@ type LeverItem = {
   descriptionPlain?: string;
   description?: string;
   categories?: { location?: string; team?: string; commitment?: string; department?: string };
+  // Best-effort - Lever's public postings API documents createdAt as epoch
+  // milliseconds on every posting, but no job_sources row currently uses
+  // this connector, so this couldn't be confirmed against a live response
+  // the way every other connector's date field was this session.
+  createdAt?: number;
 };
 
 // One job_sources row per company, e.g. https://api.lever.co/v0/postings/{company}
@@ -45,6 +50,7 @@ export async function fetchLeverListings(feedUrl: string): Promise<NormalizedLis
         country: null,
         city: locationName || null,
         tags: [item.categories?.team, item.categories?.commitment, item.categories?.department].filter(Boolean) as string[],
+        postedAt: item.createdAt ? new Date(item.createdAt).toISOString() : null,
       };
     });
 }

@@ -12,6 +12,7 @@ type RemotiveItem = {
   job_type?: string;
   candidate_required_location?: string;
   description?: string;
+  publication_date?: string;
 };
 
 // Remotive's own terms cap this at "max 4 times a day" - the job_sources
@@ -39,5 +40,12 @@ export async function fetchRemotiveListings(feedUrl: string): Promise<Normalized
       country: null,
       city: item.candidate_required_location?.trim() || null,
       tags: [...(item.tags || []), ...(item.category ? [item.category] : []), ...(item.job_type ? [item.job_type] : [])],
+      // publication_date comes back with no timezone suffix (e.g.
+      // "2026-08-20T09:54:55") - confirmed against a live fetch. Remotive's
+      // own API docs state their timestamps are UTC, so a bare "new Date()"
+      // parse (which would treat it as local time) would silently shift by
+      // whatever the server's timezone offset is - appending "Z" is what
+      // makes that explicit.
+      postedAt: item.publication_date ? `${item.publication_date}Z` : null,
     }));
 }

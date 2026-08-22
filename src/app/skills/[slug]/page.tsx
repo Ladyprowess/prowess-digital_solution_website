@@ -90,12 +90,14 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
     jobIds.length
       ? supabase.from("jobs")
           .select("id, slug, title, location_type, country, city, salary_min, salary_max, salary_currency, salary_period, experience_level, deadline_at, published_at, featured, companies!inner(name, logo_url, verified), job_categories(name), job_types(name), job_skill_map(skills(slug, name))")
-          .eq("status", "published").or(`expires_at.is.null,expires_at.gte.${nowIso}`).in("id", jobIds).limit(CARD_LIMIT)
+          .eq("status", "published").or(`expires_at.is.null,expires_at.gte.${nowIso}`).in("id", jobIds)
+          .order("featured", { ascending: false }).order("published_at", { ascending: false, nullsFirst: false }).limit(CARD_LIMIT)
       : Promise.resolve({ data: [] }),
     oppIds.length
       ? supabase.from("opportunities")
           .select("id, slug, title, organisation_name, organisation_logo_url, location_type, country, city, eligibility_summary, eligible_locations, benefit_tags, deadline_at, published_at, featured, opportunity_types(name), opportunity_skill_map(skills(slug, name))")
-          .eq("status", "published").or(`expires_at.is.null,expires_at.gte.${nowIso}`).in("id", oppIds).limit(CARD_LIMIT)
+          .eq("status", "published").or(`expires_at.is.null,expires_at.gte.${nowIso}`).in("id", oppIds)
+          .order("featured", { ascending: false }).order("published_at", { ascending: false, nullsFirst: false }).limit(CARD_LIMIT)
       : Promise.resolve({ data: [] }),
     courseIds.length
       ? supabase.from("courses").select(COURSE_SELECT).eq("status", "published").in("id", courseIds).limit(CARD_LIMIT)
