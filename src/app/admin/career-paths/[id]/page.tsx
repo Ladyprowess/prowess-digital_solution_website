@@ -209,7 +209,7 @@ function CareerPathEditor({ id }: { id: string }) {
         </Field>
 
         {selectedSkillIds.length > 0 && (
-          <Field label="Skill levels (optional — powers the skill matrix and roadmap on the public page)">
+          <Field label="Skill levels (optional - powers the skill matrix and roadmap on the public page)">
             <div className="grid gap-2">
               {selectedSkillIds.map((skillId) => {
                 const skill = skills.find((s) => s.id === skillId);

@@ -394,7 +394,7 @@ function ResourcesAdmin() {
               <div className="grid gap-4 rounded-xl border border-border/60 p-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Video details</p>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Content role (curation only — not shown as a nav tab)">
+                  <Field label="Content role (curation only - not shown as a nav tab)">
                     <select value={contentRole} onChange={(e) => setContentRole(e.target.value as typeof contentRole)} className={inputCls}>
                       <option value="">Not set</option>
                       {CONTENT_ROLES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
@@ -490,7 +490,7 @@ function ResourcesAdmin() {
 
             <div className="rounded-xl border border-border/60 p-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Where should this show?</p>
-              <p className="mt-1 text-xs text-muted-foreground">Independent of type/audience/category — applies to every resource type, not just video.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Independent of type/audience/category - applies to every resource type, not just video.</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {PLACEMENT_FIELDS.map((field) => (
                   <label key={field.key} className="flex items-center gap-2.5 text-sm text-foreground">

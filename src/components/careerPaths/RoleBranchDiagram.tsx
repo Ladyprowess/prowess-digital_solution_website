@@ -101,7 +101,7 @@ export function RoleBranchDiagram({ pathTitle, roles }: { pathTitle: string; rol
                   {active.jobs.map((j) => (
                     <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-xl border border-border px-3 py-2 text-sm hover:border-primary/30">
                       <span className="font-semibold text-foreground">{j.title}</span>
-                      {j.companies?.name && <span className="text-muted-foreground"> — {j.companies.name}</span>}
+                      {j.companies?.name && <span className="text-muted-foreground"> - {j.companies.name}</span>}
                     </Link>
                   ))}
                 </div>

@@ -228,7 +228,7 @@ function RolesAdmin({ careerPathId }: { careerPathId: string }) {
         </p>
         {parent && !editingId && (
           <button type="button" onClick={resetForm} className="w-fit text-xs font-semibold text-muted-foreground hover:underline">
-            Cancel — add a top-level role instead
+            Cancel - add a top-level role instead
           </button>
         )}
         <Field label="Role title">

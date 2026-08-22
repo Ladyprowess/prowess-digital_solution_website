@@ -25,7 +25,7 @@ export function SkillMatrix({ rows }: { rows: SkillMatrixRow[] }) {
           {rows.map((row) => (
             <tr key={row.slug} className="border-b border-border/60 last:border-0">
               <td className="px-5 py-3 font-semibold text-foreground">{row.name}</td>
-              <td className="px-5 py-3 capitalize text-muted-foreground">{row.level || "—"}</td>
+              <td className="px-5 py-3 capitalize text-muted-foreground">{row.level || "-"}</td>
               <td className="px-5 py-3">
                 <Link href={`/learn?skills=${row.slug}`} className="text-xs font-semibold text-primary hover:underline">Learn →</Link>
               </td>

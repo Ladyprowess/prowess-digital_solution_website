@@ -234,7 +234,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
 
         {video.source !== "prowess" && (
           <p className="mt-10 text-center text-xs text-muted-foreground">
-            This video is hosted on {SOURCE_LABELS[video.source] || "a third-party site"} and shared here for its educational value — all rights belong to the original creator.
+            This video is hosted on {SOURCE_LABELS[video.source] || "a third-party site"} and shared here for its educational value - all rights belong to the original creator.
           </p>
         )}
       </div>

@@ -164,7 +164,7 @@ function ProjectsAdmin({ careerPathId }: { careerPathId: string }) {
               <span className="text-foreground">
                 {p.title}
                 {p.level && <span className="ml-2 text-xs capitalize text-muted-foreground">({p.level})</span>}
-                {p.status === "draft" && <span className="ml-2 text-xs text-muted-foreground">— draft</span>}
+                {p.status === "draft" && <span className="ml-2 text-xs text-muted-foreground">- draft</span>}
               </span>
               <span className="flex-shrink-0">
                 <button onClick={() => startEdit(p)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>

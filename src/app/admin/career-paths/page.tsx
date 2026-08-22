@@ -118,8 +118,8 @@ function CareerPathsAdmin() {
                 {paths.map((p) => (
                   <tr key={p.id} className="border-b border-border/60">
                     <td className="py-2 pr-4 font-medium text-foreground">{p.title}</td>
-                    <td className="py-2 pr-4 capitalize text-muted-foreground">{p.category || "—"}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">{p.featured ? "Yes" : "—"}</td>
+                    <td className="py-2 pr-4 capitalize text-muted-foreground">{p.category || "-"}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">{p.featured ? "Yes" : "-"}</td>
                     <td className="py-2 pr-4 capitalize text-muted-foreground">{p.status}</td>
                     <td className="py-2 pr-4">
                       <Link href={`/admin/career-paths/${p.id}`} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</Link>

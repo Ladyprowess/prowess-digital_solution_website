@@ -38,7 +38,7 @@ export function ToolPicker({
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading tools…</p>;
   if (tools.length === 0) {
-    return <p className="text-sm text-muted-foreground">No published career tools yet — add some in Admin &gt; Tools first.</p>;
+    return <p className="text-sm text-muted-foreground">No published career tools yet - add some in Admin &gt; Tools first.</p>;
   }
 
   return (
