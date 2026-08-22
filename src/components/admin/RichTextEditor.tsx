@@ -86,13 +86,19 @@ export function RichTextEditor({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
+    // rounded-xl + overflow-hidden used to sit on this same outer div, but
+    // overflow-hidden on an ancestor breaks position: sticky for a
+    // descendant in every major browser, even when nothing actually needs
+    // clipping (there's no fixed/max-height here, so overflow never really
+    // triggers). rounded-t-xl on the toolbar and rounded-b-xl on
+    // EditorContent reproduce the same rounded-box look without it.
+    <div className="rounded-xl border border-border bg-card">
       {/* sticky, not just at the top of the editor - on a long document the
           page scrolls well past this box, and without position: sticky the
           toolbar scrolls away with it, leaving no way to select text further
           down and apply formatting without scrolling back up first. No
           admin layout header to clear, so top-0 is safe. */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b border-border bg-card p-2">
+      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-1 rounded-t-xl border-b border-border bg-card p-2">
         <ToolbarButton label="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
           <span className="font-bold">B</span>
         </ToolbarButton>
@@ -121,7 +127,7 @@ export function RichTextEditor({
           Clear
         </ToolbarButton>
       </div>
-      <EditorContent editor={editor} />
+      <EditorContent editor={editor} className="overflow-hidden rounded-b-xl" />
     </div>
   );
 }
