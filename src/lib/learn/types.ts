@@ -60,9 +60,11 @@ export function courseToLearnItem(c: CourseRow): LearnItem {
 // resource_type is a wider enum on the table than what Learn surfaces -
 // only video/article/guide/ebook rows are ever queried for this feed, so
 // the cast is safe (checklist/template/podcast/etc never reach this mapper).
+// Video gets its own dedicated detail page (/videos/[slug]) rather than
+// the generic /resources/[slug] every other resource type shares.
 export function resourceToLearnItem(r: ResourceRow): LearnItem {
   return {
-    id: r.id, slug: r.slug, href: `/resources/${r.slug}`, kind: r.resource_type as LearnKind,
+    id: r.id, slug: r.slug, href: r.resource_type === "video" ? `/videos/${r.slug}` : `/resources/${r.slug}`, kind: r.resource_type as LearnKind,
     title: r.title, description: r.description,
     level: r.level, access: r.access, price: r.price, price_currency: r.price_currency,
     thumbnail_url: r.thumbnail_url, featured: r.featured,

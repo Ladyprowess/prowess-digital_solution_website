@@ -53,7 +53,7 @@ function LearnPageContent() {
         supabase.from("skills").select("id, slug, name, description").order("name"),
         supabase.from("career_paths").select("slug, title, description").eq("status", "published").order("title"),
         supabase.from("course_skill_map").select("skill_id"),
-        supabase.from("resources").select("id").eq("status", "published").in("resource_type", RESOURCE_KINDS),
+        supabase.from("resources").select("id").eq("status", "published").eq("show_in_learn", true).in("resource_type", RESOURCE_KINDS),
       ]);
       setSkills(skillRows.data || []);
       setCareerPaths(pathRows.data || []);
@@ -92,7 +92,7 @@ function LearnPageContent() {
       }
       const [c, r] = await Promise.all([
         supabase.from("courses").select(COURSE_SELECT).eq("status", "published").eq("featured", true).order("created_at", { ascending: false }).limit(6),
-        supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("featured", true).in("resource_type", RESOURCE_KINDS).order("created_at", { ascending: false }).limit(6),
+        supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("featured", true).eq("show_in_learn", true).in("resource_type", RESOURCE_KINDS).order("created_at", { ascending: false }).limit(6),
       ]);
       if (cancelled) return;
       const merged = [
@@ -144,7 +144,7 @@ function LearnPageContent() {
           ids = Array.from(new Set((data || []).map((r) => r.resource_id)));
           if (ids.length === 0) return [];
         }
-        let q = supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published");
+        let q = supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true);
         q = q.in("resource_type", filters.kind && RESOURCE_KINDS.includes(filters.kind) ? [filters.kind] : RESOURCE_KINDS);
         if (ids) q = q.in("id", ids);
         if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);

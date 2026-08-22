@@ -43,7 +43,7 @@ export async function getSkillGraph(skillIds: string[], options?: { limit?: numb
     supabase.from("job_skill_map").select("jobs!inner(slug, title, status, expires_at, companies(name))").in("skill_id", skillIds).eq("jobs.status", "published"),
     supabase.from("opportunity_skill_map").select("opportunities!inner(slug, title, status, expires_at, organisation_name, opportunity_types(slug))").in("skill_id", skillIds).eq("opportunities.status", "published"),
     supabase.from("course_skill_map").select("courses!inner(slug, title, status, access, price)").in("skill_id", skillIds).eq("courses.status", "published"),
-    supabase.from("resource_skill_map").select("resources!inner(slug, title, status, resource_type, access, price, thumbnail_url, source, external_url)").in("skill_id", skillIds).eq("resources.status", "published"),
+    supabase.from("resource_skill_map").select("resources!inner(slug, title, status, resource_type, access, price, thumbnail_url, source, external_url)").in("skill_id", skillIds).eq("resources.status", "published").eq("resources.show_in_recommended", true),
     supabase.from("event_skill_map").select("events!inner(slug, title, date)").in("skill_id", skillIds),
     supabase.from("career_path_skill_map").select("career_paths!inner(slug, title, status, access, price)").in("skill_id", skillIds).eq("career_paths.status", "published"),
   ]);

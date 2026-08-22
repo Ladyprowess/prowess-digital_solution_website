@@ -7,6 +7,8 @@ import { HeroSection } from "@/components/HeroSection";
 import { Reveal } from "@/components/Reveal";
 import { ListingCard, type ListingCardMeta } from "@/components/ListingCard";
 import ResourceCard, { type ResourceItem } from "@/components/resources/ResourceCard";
+import { VideoCard, type VideoCardData } from "@/components/videos/VideoCard";
+import { ContinueWatching } from "@/components/videos/ContinueWatching";
 import { supabase } from "@/lib/supabase";
 import { goalCards, popularSearches, whyProwess, newsletterPreferences } from "@/content/site";
 
@@ -106,18 +108,28 @@ export default function ModernHomePage() {
   const [courses, setCourses] = useState<LearnCard[]>([]);
   const [freeResources, setFreeResources] = useState<ResourceItem[]>([]);
   const [premiumItems, setPremiumItems] = useState<(LearnCard | ResourceItem)[]>([]);
+  const [homepageVideos, setHomepageVideos] = useState<VideoCardData[]>([]);
   const [events, setEvents] = useState<EventCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [jobsRes, oppsRes, pathsRes, coursesRes, freeResourcesRes, premiumResourcesRes, eventsRes] = await Promise.all([
+      const [jobsRes, oppsRes, pathsRes, coursesRes, freeResourcesRes, premiumResourcesRes, homepageVideosRes, eventsRes] = await Promise.all([
         supabase.from("jobs").select("id, slug, title, location_type, country, created_at, featured, companies(name), job_categories(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
         supabase.from("opportunities").select("id, slug, title, organisation_name, created_at, featured, opportunity_types(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
         supabase.from("career_paths").select("id, slug, title, description").eq("status", "published").order("created_at", { ascending: false }).limit(6),
         supabase.from("courses").select("id, slug, title, description, access, price, price_currency").eq("status", "published").order("created_at", { ascending: false }).limit(6),
-        fetch("/api/resources?access=free&audience=consumer,both&pageSize=6&sort=recent").then((r) => r.json()),
-        fetch("/api/resources?access=premium&audience=consumer,both&pageSize=4&sort=recent").then((r) => r.json()),
+        // exclude_resource_type keeps videos out of these two -- they get
+        // their own dedicated section below instead of double-appearing.
+        fetch("/api/resources?access=free&audience=consumer,both&pageSize=6&sort=recent&exclude_resource_type=video").then((r) => r.json()),
+        fetch("/api/resources?access=premium&audience=consumer,both&pageSize=4&sort=recent&exclude_resource_type=video").then((r) => r.json()),
+        // Direct query, not /api/resources -- that route always requires
+        // show_in_library, but a video can be homepage-only without also
+        // being in the general library (show_on_homepage and
+        // show_in_library are independent placement flags).
+        supabase.from("resources").select("id, slug, title, description, category, source, external_url, thumbnail_url, access")
+          .eq("status", "published").eq("resource_type", "video").eq("show_on_homepage", true)
+          .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(4),
         supabase.from("events").select("id, slug, title, date, type").eq("status", "published").gte("date", new Date().toISOString()).order("date", { ascending: true }).limit(3),
       ]);
 
@@ -157,6 +169,7 @@ export default function ModernHomePage() {
       ].slice(0, 4);
       setPremiumItems(premium);
 
+      setHomepageVideos((homepageVideosRes.data || []) as VideoCardData[]);
       setEvents((eventsRes.data || []) as EventCard[]);
       setLoading(false);
     })();
@@ -305,6 +318,37 @@ export default function ModernHomePage() {
         </div>
       </section>
 
+      {/* CONTINUE WATCHING -- independent of whether any video is flagged
+          show_on_homepage, which defaults false: a signed-in user with real
+          progress should see this regardless of homepage curation state.
+          No vertical section padding here -- ContinueWatching renders
+          nothing at all when empty (the common case: signed out, or no
+          progress), so a padded wrapper would leave a blank gap. Its own
+          root carries vertical margin instead, only present when it does. */}
+      <div className="mx-auto max-w-7xl bg-background px-6 lg:px-8">
+        <ContinueWatching />
+      </div>
+
+      {/* WATCH SOMETHING USEFUL */}
+      {!loading && homepageVideos.length > 0 && (
+        <section className="bg-background py-20 sm:py-24">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <Reveal>
+              <div className="mb-10 text-center">
+                <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Videos</div>
+                <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Watch something useful</h2>
+              </div>
+            </Reveal>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {homepageVideos.map((v) => <VideoCard key={v.id} video={v} />)}
+            </div>
+            <div className="mt-8 text-center">
+              <Link href="/videos" className="text-sm font-semibold text-primary hover:underline">Explore all videos →</Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* FREE RESOURCES */}
       <section className="bg-background py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -427,7 +471,7 @@ export default function ModernHomePage() {
               </p>
             </div>
           </Reveal>
-          <div className="grid gap-5 sm:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <Link href="/tools" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
               <h3 className="text-base font-bold text-foreground">Business Tools</h3>
               <p className="mt-1 text-sm text-muted-foreground">Tools for everyday business operations.</p>
@@ -435,6 +479,10 @@ export default function ModernHomePage() {
             <Link href="/resources" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
               <h3 className="text-base font-bold text-foreground">Business Resources</h3>
               <p className="mt-1 text-sm text-muted-foreground">Guides, templates and practical resources.</p>
+            </Link>
+            <Link href="/videos?audience=business" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+              <h3 className="text-base font-bold text-foreground">Business Videos</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Strategy, marketing and growth, on video.</p>
             </Link>
             <Link href="/services" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
               <h3 className="text-base font-bold text-foreground">Digital Solutions</h3>

@@ -6,9 +6,9 @@ import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
 import { supabase } from "@/lib/supabase";
+import { LEARN_RESOURCE_KINDS } from "@/lib/learn/types";
 
 const PAGE_SIZE = 24;
-const LEARN_RESOURCE_KINDS = ["video", "article", "guide", "ebook"];
 
 type SkillRow = { id: string; slug: string; name: string; description: string | null; featured: boolean };
 type SkillWithCounts = SkillRow & { learningCount: number; jobsCount: number; opportunitiesCount: number };

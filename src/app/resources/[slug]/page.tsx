@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
@@ -70,6 +70,10 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
   const { slug } = await params;
   const resource = await getResource(slug);
   if (!resource) return notFound();
+  // Video gets its own dedicated player-first detail page -- this is a
+  // safety net for any link that still points here (existing bookmarks,
+  // pages not yet repointed) rather than serving the generic layout.
+  if (resource.resource_type === "video") redirect(`/videos/${slug}`);
 
   const skills = resource.resource_skill_map?.map((m) => m.skills).filter(Boolean) || [];
   const typeLabel = (resource.resource_type || resource.type || "Resource").toString().replace(/_/g, " ");

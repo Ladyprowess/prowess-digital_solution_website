@@ -15,10 +15,14 @@ export async function GET(req: Request) {
     const type = (searchParams.get("type") || "").trim();
     const access = (searchParams.get("access") || "").trim();
     const audience = (searchParams.get("audience") || "").trim();
+    const resourceType = (searchParams.get("resource_type") || "").trim();
+    const excludeResourceType = (searchParams.get("exclude_resource_type") || "").trim();
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(24, Math.max(1, Number(searchParams.get("pageSize")) || 6));
 
-    let query = supabaseAdmin().from("resources").select("*", { count: "exact" }).eq("status", "published");
+    let query = supabaseAdmin().from("resources").select("*", { count: "exact" })
+      .eq("status", "published")
+      .eq("show_in_library", true);
 
     // filters
     if (category) query = query.eq("category", category);
@@ -26,6 +30,11 @@ export async function GET(req: Request) {
     if (type) query = query.eq("type", type);
     if (access) query = query.eq("access", access);
     if (audience) query = query.in("audience", audience.split(","));
+    if (resourceType) query = query.in("resource_type", resourceType.split(","));
+    if (excludeResourceType) {
+      const excluded = excludeResourceType.split(",").map((v) => v.trim()).filter(Boolean);
+      if (excluded.length > 0) query = query.not("resource_type", "in", `(${excluded.join(",")})`);
+    }
 
     // search
     if (q) {

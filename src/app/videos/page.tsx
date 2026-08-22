@@ -1,215 +1,317 @@
-import type { Metadata } from "next";
+"use client";
+
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Container from "@/components/Container";
-import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
-import { getYoutubeThumbnail } from "@/lib/youtube";
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-export const metadata: Metadata = {
-  title: "Videos | Prowess Digital Solutions",
-  description: "Practical and motivational videos to help you grow - your career, your skills, and your mindset.",
-  alternates: { canonical: "https://prowessdigitalsolutions.com/videos" },
-};
+import { Pagination } from "@/components/Pagination";
+import { PillTabs, type PillTab } from "@/components/PillTabs";
+import { ScrollCarousel } from "@/components/ScrollCarousel";
+import { VideoCard, thumbnailFor, type VideoCardData } from "@/components/videos/VideoCard";
+import { ContinueWatching } from "@/components/videos/ContinueWatching";
+import { supabase } from "@/lib/supabase";
+import {
+  filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters,
+  type VideoFilters, type SortValue,
+} from "@/lib/videos/filters";
 
 const PAGE_SIZE = 12;
 
-type VideoResource = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  category: string | null;
-  source: string;
-  external_url: string | null;
-  thumbnail_url: string | null;
-  access: "free" | "premium";
-};
+const AUDIENCE_TABS: PillTab<string>[] = [
+  { value: "", label: "All Videos" },
+  { value: "consumer", label: "For Individuals" },
+  { value: "business", label: "For Businesses" },
+];
 
-async function getVideos(page: number, category: string) {
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+const SORT_OPTIONS: { value: SortValue; label: string }[] = [
+  { value: "newest", label: "Newest" },
+  { value: "shortest", label: "Shortest" },
+  { value: "longest", label: "Longest" },
+];
 
-  let query = supabase
-    .from("resources")
-    .select("id, slug, title, description, category, source, external_url, thumbnail_url, access", { count: "exact" })
-    // published check covers both the legacy is_published-driven rows and
-    // the newer status field, kept in sync on every admin write
-    .eq("status", "published")
-    .eq("resource_type", "video");
+const VIDEO_SELECT = "id, slug, title, description, category, source, external_url, thumbnail_url, access, content_role, duration_minutes, created_at";
 
-  if (category) query = query.eq("category", category);
+type VideoRow = VideoCardData & { content_role: string | null; duration_minutes: number | null; created_at: string };
 
-  const { data, count } = await query.order("created_at", { ascending: false }).range(from, to);
-
-  return { videos: (data as VideoResource[] | null) || [], total: count || 0 };
+// A video tagged "both" should surface under either audience filter -- only
+// "All" excludes nothing.
+function audienceValues(audience: string): string[] {
+  if (audience === "consumer") return ["consumer", "both"];
+  if (audience === "business") return ["business", "both"];
+  return ["consumer", "business", "both"];
 }
 
-async function getCategories() {
-  const { data } = await supabase
-    .from("resources")
-    .select("category")
-    .eq("status", "published")
-    .eq("resource_type", "video")
-    .not("category", "is", null);
-
-  const unique = Array.from(new Set((data || []).map((r) => r.category as string))).sort();
-  return unique;
+export default function VideosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <VideosPageContent />
+    </Suspense>
+  );
 }
 
-function thumbnailFor(v: VideoResource): string | null {
-  if (v.thumbnail_url) return v.thumbnail_url;
-  if (v.source === "youtube" && v.external_url) return getYoutubeThumbnail(v.external_url);
-  return null;
-}
+function VideosPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
+  const activeFiltersPresent = hasActiveFilters(filters);
 
-function pageHref(page: number, category: string) {
-  const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  if (page > 1) params.set("page", String(page));
-  const qs = params.toString();
-  return `/videos${qs ? `?${qs}` : ""}`;
-}
+  const [categories, setCategories] = useState<string[]>([]);
+  const [items, setItems] = useState<VideoRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-export default async function VideosPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; category?: string }>;
-}) {
-  const params = await searchParams;
-  const page = Math.max(1, Number(params.page) || 1);
-  const category = params.category?.trim() || "";
+  const [featured, setFeatured] = useState<VideoRow | null>(null);
+  const [businessRail, setBusinessRail] = useState<VideoRow[]>([]);
+  const [careerRail, setCareerRail] = useState<VideoRow[]>([]);
+  const [ideasRail, setIdeasRail] = useState<VideoRow[]>([]);
 
-  const [{ videos, total }, categories] = await Promise.all([getVideos(page, category), getCategories()]);
+  useEffect(() => {
+    supabase
+      .from("resources")
+      .select("category")
+      .eq("status", "published").eq("resource_type", "video").eq("show_in_library", true)
+      .not("category", "is", null)
+      .then(({ data }) => setCategories(Array.from(new Set((data || []).map((r) => r.category as string))).sort()));
+  }, []);
+
+  // Curated sections (featured, For Business Owners, For Your Career, Ideas
+  // Worth Watching) sit above the main discovery feed and don't participate
+  // in pagination -- only shown on the unfiltered, first-page view, same
+  // convention as /learn's Featured Learning strip.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (activeFiltersPresent || filters.page > 1) {
+        if (!cancelled) { setFeatured(null); setBusinessRail([]); setCareerRail([]); setIdeasRail([]); }
+        return;
+      }
+      const base = () => supabase.from("resources").select(VIDEO_SELECT).eq("status", "published").eq("resource_type", "video").eq("show_in_library", true);
+      const [f, b, c, i] = await Promise.all([
+        base().eq("featured", true).order("created_at", { ascending: false }).limit(1),
+        base().eq("show_in_business", true).order("created_at", { ascending: false }).limit(8),
+        base().eq("show_in_career", true).order("created_at", { ascending: false }).limit(8),
+        base().in("content_role", ["motivation", "interview"]).order("created_at", { ascending: false }).limit(8),
+      ]);
+      if (cancelled) return;
+      setFeatured(((f.data as VideoRow[]) || [])[0] || null);
+      setBusinessRail((b.data as VideoRow[]) || []);
+      setCareerRail((c.data as VideoRow[]) || []);
+      setIdeasRail((i.data as VideoRow[]) || []);
+    })();
+    return () => { cancelled = true; };
+  }, [activeFiltersPresent, filters.page]);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Debounced, matching /learn and /jobs' 150ms search-input pattern --
+    // without this, every keystroke fired its own query + router.replace.
+    const t = setTimeout(async () => {
+      setLoading(true);
+      let q = supabase
+        .from("resources")
+        .select(VIDEO_SELECT, { count: "exact" })
+        .eq("status", "published").eq("resource_type", "video").eq("show_in_library", true)
+        .in("audience", audienceValues(filters.audience));
+      if (filters.category) q = q.eq("category", filters.category);
+      if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);
+      // Secondary order by id -- duration_minutes is nullable and admins
+      // often share the same value, and Postgres doesn't guarantee a
+      // stable order among ties, which would let a row appear on two
+      // pages (or neither) between requests.
+      if (filters.sort === "shortest") q = q.order("duration_minutes", { ascending: true, nullsFirst: false }).order("id", { ascending: true });
+      else if (filters.sort === "longest") q = q.order("duration_minutes", { ascending: false, nullsFirst: false }).order("id", { ascending: true });
+      else q = q.order("created_at", { ascending: false }).order("id", { ascending: true });
+
+      const from = (filters.page - 1) * PAGE_SIZE;
+      const { data, count } = await q.range(from, from + PAGE_SIZE - 1);
+      if (cancelled) return;
+      setItems((data as VideoRow[]) || []);
+      setTotal(count || 0);
+      setLoading(false);
+    }, 150);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [filters.audience, filters.category, filters.q, filters.sort, filters.page]);
+
+  function updateFilters(patch: Partial<VideoFilters>) {
+    const next: VideoFilters = { ...filters, ...patch };
+    if (!("page" in patch)) next.page = 1;
+    const qs = searchParamsFromFilters(next).toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const popularCategories = categories.slice(0, 6);
+  const categoryTabs: PillTab<string>[] = [{ value: "", label: "All" }, ...categories.map((c) => ({ value: c, label: c }))];
+  const featuredThumb = featured ? thumbnailFor(featured) : null;
 
   return (
-    <div>
-      <AgencyPageHeader
-        eyebrow="Videos"
-        title={
-          <>
-            Watch, learn, and <span className="text-primary">keep moving.</span>
-          </>
-        }
-        description="Practical videos to build real skills, plus motivational videos to keep you going. All in one place."
-        primaryAction={{ label: "Explore Learn", href: "/learn" }}
-        secondaryAction={{ label: "Browse Resources", href: "/resources" }}
-        proof={[
-          "Skill-building videos",
-          "Motivation to keep going",
-          "New videos added regularly",
-        ]}
-      />
-
-      <section className="py-12 sm:py-16 bg-muted/40">
+    <div className="min-h-screen bg-background">
+      {/* HERO */}
+      <section className="border-b border-border bg-muted py-16 sm:py-20">
         <Container>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              More videos also live on our{" "}
-              <a href="https://www.youtube.com/@ProwessDigitalSolutions" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
-                YouTube channel →
-              </a>
+          <Reveal>
+            <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Videos</div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Videos that help you learn, build and grow.</h1>
+            <p className="mt-3 max-w-2xl text-base text-muted-foreground">
+              Practical tutorials, career advice, business insights, interviews, motivation and useful ideas from Prowess Digital Solutions and trusted creators.
             </p>
-
-            {categories.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  href={pageHref(1, "")}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${!category ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:bg-muted"}`}
-                >
-                  All
-                </Link>
-                {categories.map((c) => (
-                  <Link
+          </Reveal>
+          <Reveal delay={80}>
+            <div className="mt-6">
+              <input
+                value={filters.q}
+                onChange={(e) => updateFilters({ q: e.target.value })}
+                placeholder="Search videos..."
+                className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-sm text-foreground shadow-sm sm:max-w-xl"
+              />
+            </div>
+          </Reveal>
+          {popularCategories.length > 0 && (
+            <Reveal delay={120}>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Popular:</span>
+                {popularCategories.map((c) => (
+                  <button
                     key={c}
-                    href={pageHref(1, c)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${category === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:bg-muted"}`}
+                    type="button"
+                    onClick={() => updateFilters({ category: c })}
+                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
                   >
                     {c}
-                  </Link>
+                  </button>
                 ))}
               </div>
+            </Reveal>
+          )}
+        </Container>
+      </section>
+
+      {/* AUDIENCE + CATEGORY */}
+      <section className="border-b border-border py-8">
+        <Container>
+          <Reveal>
+            <PillTabs tabs={AUDIENCE_TABS} active={filters.audience} onChange={(v) => updateFilters({ audience: v })} />
+          </Reveal>
+          {categoryTabs.length > 1 && (
+            <Reveal delay={40}>
+              <div className="mt-4">
+                <PillTabs tabs={categoryTabs} active={filters.category} onChange={(v) => updateFilters({ category: v })} />
+              </div>
+            </Reveal>
+          )}
+        </Container>
+      </section>
+
+      {/* FEATURED VIDEO */}
+      {featured && (
+        <section className="border-b border-border py-14">
+          <Container>
+            <Reveal>
+              <div className="grid gap-6 sm:grid-cols-[3fr_2fr]">
+                <Link href={`/videos/${featured.slug}`} className="group relative block aspect-video overflow-hidden rounded-2xl border border-border bg-black">
+                  {featuredThumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={featuredThumb} alt={featured.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">No thumbnail</div>
+                  )}
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/15 transition group-hover:bg-black/30">
+                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-primary shadow">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                    </span>
+                  </span>
+                </Link>
+                <div className="flex flex-col justify-center">
+                  <span className="text-xs font-bold uppercase tracking-widest text-primary">Featured</span>
+                  <h2 className="mt-2 text-xl font-bold text-foreground">{featured.title}</h2>
+                  {featured.category && <p className="mt-1 text-sm text-muted-foreground">{featured.category}</p>}
+                  {featured.description && <p className="mt-3 text-sm text-muted-foreground line-clamp-3">{featured.description}</p>}
+                  {featured.duration_minutes && <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{featured.duration_minutes} min</p>}
+                  <Link href={`/videos/${featured.slug}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Watch video →</Link>
+                </div>
+              </div>
+            </Reveal>
+          </Container>
+        </section>
+      )}
+
+      {/* CONTINUE WATCHING + CURATED RAILS */}
+      {(businessRail.length > 0 || careerRail.length > 0 || ideasRail.length > 0) && (
+        <section className="border-b border-border bg-muted/40 py-14">
+          <Container>
+            <Reveal><ContinueWatching /></Reveal>
+
+            {businessRail.length > 0 && (
+              <Reveal delay={40}>
+                <div className="mt-10">
+                  <h2 className="text-lg font-bold text-foreground">For Business Owners</h2>
+                  <div className="mt-4"><ScrollCarousel>{businessRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
+                </div>
+              </Reveal>
             )}
+
+            {careerRail.length > 0 && (
+              <Reveal delay={80}>
+                <div className="mt-10">
+                  <h2 className="text-lg font-bold text-foreground">For Your Career</h2>
+                  <div className="mt-4"><ScrollCarousel>{careerRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
+                </div>
+              </Reveal>
+            )}
+
+            {ideasRail.length > 0 && (
+              <Reveal delay={120}>
+                <div className="mt-10">
+                  <h2 className="text-lg font-bold text-foreground">Ideas Worth Watching</h2>
+                  <div className="mt-4"><ScrollCarousel>{ideasRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
+                </div>
+              </Reveal>
+            )}
+          </Container>
+        </section>
+      )}
+      {!(businessRail.length > 0 || careerRail.length > 0 || ideasRail.length > 0) && !activeFiltersPresent && filters.page === 1 && (
+        <section className="border-b border-border py-8"><Container><ContinueWatching /></Container></section>
+      )}
+
+      {/* EXPLORE VIDEOS */}
+      <section className="py-12 sm:py-16">
+        <Container>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                More videos also live on our{" "}
+                <a href="https://www.youtube.com/@ProwessDigitalSolutions" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">YouTube channel →</a>
+              </p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} video${total === 1 ? "" : "s"} found`}</p>
+            </div>
+            <select
+              value={filters.sort}
+              onChange={(e) => updateFilters({ sort: e.target.value as SortValue })}
+              className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground"
+            >
+              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
 
-          {videos.length === 0 ? (
-            <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-border bg-card p-10 text-center">
-              <h2 className="text-lg font-semibold text-foreground">No videos yet</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {category
-                  ? `No videos in "${category}" yet - try a different category.`
-                  : "We're adding videos here soon - practical lessons and motivation to help you grow. Check back shortly."}
+          {loading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+          ) : items.length === 0 ? (
+            <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
+              <h2 className="text-lg font-semibold text-foreground">No videos found</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding videos here soon - check back shortly."}
               </p>
             </div>
           ) : (
-            <>
-              <p className="mt-6 text-sm text-muted-foreground">
-                Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} of {total} video{total === 1 ? "" : "s"}
-              </p>
-
-              <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {videos.map((v, i) => {
-                  const thumb = thumbnailFor(v);
-                  return (
-                    <Reveal key={v.id} delay={i * 60}>
-                      <Link
-                        href={`/resources/${v.slug}`}
-                        className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                      >
-                        <div className="relative aspect-video w-full bg-muted">
-                          {thumb ? (
-                            // eslint-disable-next-line @next/next/no-img-element -- external video-host thumbnail, not a local/optimizable asset
-                            <img src={thumb} alt={v.title} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">No thumbnail</div>
-                          )}
-                          <span className="absolute inset-0 flex items-center justify-center bg-black/15 transition group-hover:bg-black/30">
-                            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-primary shadow">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                            </span>
-                          </span>
-                          {v.access === "premium" && (
-                            <span className="absolute right-3 top-3 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">Premium</span>
-                          )}
-                        </div>
-                        <div className="p-5">
-                          {v.category && <p className="text-xs font-semibold uppercase tracking-wide text-primary">{v.category}</p>}
-                          <h3 className="mt-1 font-semibold text-foreground line-clamp-2">{v.title}</h3>
-                          {v.description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{v.description}</p>}
-                        </div>
-                      </Link>
-                    </Reveal>
-                  );
-                })}
-              </div>
-
-              {totalPages > 1 && (
-                <div className="mt-10 flex items-center justify-center gap-3">
-                  <Link
-                    href={pageHref(page - 1, category)}
-                    aria-disabled={page <= 1}
-                    className={`rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted ${page <= 1 ? "pointer-events-none opacity-40" : ""}`}
-                  >
-                    ← Previous
-                  </Link>
-                  <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
-                  <Link
-                    href={pageHref(page + 1, category)}
-                    aria-disabled={page >= totalPages}
-                    className={`rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted ${page >= totalPages ? "pointer-events-none opacity-40" : ""}`}
-                  >
-                    Next →
-                  </Link>
-                </div>
-              )}
-            </>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((v) => <VideoCard key={v.id} video={v} />)}
+            </div>
           )}
+
+          <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
         </Container>
       </section>
     </div>

@@ -7,10 +7,10 @@ import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
 import { PillTabs, type PillTab } from "@/components/PillTabs";
 import { CareerPathCard, type CareerPathCardData } from "@/components/careerPaths/CareerPathCard";
+import { LEARN_RESOURCE_KINDS } from "@/lib/learn/types";
 import { supabase } from "@/lib/supabase";
 
 const PAGE_SIZE = 12;
-const LEARN_RESOURCE_KINDS = ["video", "article", "guide", "ebook"];
 
 const CATEGORY_TABS: PillTab<string>[] = [
   { value: "", label: "All" },
