@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
-import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { SkillPicker, type Skill } from "@/components/admin/SkillPicker";
 import { ToolPicker, saveToolMap } from "@/components/admin/ToolPicker";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { CAREER_PATH_ICON_KEYS } from "@/lib/careerPaths/icons";
@@ -36,6 +36,7 @@ function CareerPathEditor({ id }: { id: string }) {
   const [originalSlug, setOriginalSlug] = useState("");
   const [description, setDescription] = useState("");
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  const [skillLevels, setSkillLevels] = useState<Record<string, "" | (typeof LEVELS)[number]>>({});
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
   const [access, setAccess] = useState<"free" | "premium">("free");
   const [price, setPrice] = useState("");
@@ -63,7 +64,7 @@ function CareerPathEditor({ id }: { id: string }) {
       const { data, error } = await supabase
         .from("career_paths")
         .select(
-          "id, title, slug, description, access, price, price_currency, status, featured, level, category, icon_key, image_url, who_its_for, career_path_skill_map(skill_id), career_path_tool_map(tool_id)"
+          "id, title, slug, description, access, price, price_currency, status, featured, level, category, icon_key, image_url, who_its_for, career_path_skill_map(skill_id, level), career_path_tool_map(tool_id)"
         )
         .eq("id", id)
         .single();
@@ -75,7 +76,7 @@ function CareerPathEditor({ id }: { id: string }) {
         price: number | null; price_currency: string | null; status: "draft" | "published";
         featured: boolean; level: (typeof LEVELS)[number] | null; category: (typeof CATEGORIES)[number] | null;
         icon_key: string; image_url: string | null; who_its_for: string[] | null;
-        career_path_skill_map: { skill_id: string }[];
+        career_path_skill_map: { skill_id: string; level: (typeof LEVELS)[number] | null }[];
         career_path_tool_map: { tool_id: string }[];
       };
 
@@ -94,6 +95,7 @@ function CareerPathEditor({ id }: { id: string }) {
       setImageUrl(p.image_url || "");
       setWhoItsFor((p.who_its_for || []).join("\n"));
       setSelectedSkillIds(p.career_path_skill_map.map((m) => m.skill_id));
+      setSkillLevels(Object.fromEntries(p.career_path_skill_map.map((m) => [m.skill_id, m.level || ""])));
       setSelectedToolIds(p.career_path_tool_map.map((m) => m.tool_id));
     })();
   }, [id, isNew]);
@@ -152,7 +154,11 @@ function CareerPathEditor({ id }: { id: string }) {
         pathId = created.id;
       }
 
-      await saveSkillMap("career_path_skill_map", "career_path_id", pathId!, selectedSkillIds);
+      if (selectedSkillIds.length > 0) {
+        await supabase.from("career_path_skill_map").insert(
+          selectedSkillIds.map((skillId) => ({ career_path_id: pathId!, skill_id: skillId, level: skillLevels[skillId] || null }))
+        );
+      }
       await saveToolMap(pathId!, selectedToolIds);
 
       if (isNew) {
@@ -201,6 +207,30 @@ function CareerPathEditor({ id }: { id: string }) {
         <Field label="Skills needed">
           <SkillPicker skills={skills} onSkillsChange={setSkills} selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds} />
         </Field>
+
+        {selectedSkillIds.length > 0 && (
+          <Field label="Skill levels (optional — powers the skill matrix and roadmap on the public page)">
+            <div className="grid gap-2">
+              {selectedSkillIds.map((skillId) => {
+                const skill = skills.find((s) => s.id === skillId);
+                if (!skill) return null;
+                return (
+                  <div key={skillId} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-4 py-2.5">
+                    <span className="text-sm text-foreground">{skill.name}</span>
+                    <select
+                      value={skillLevels[skillId] || ""}
+                      onChange={(e) => setSkillLevels((prev) => ({ ...prev, [skillId]: e.target.value as (typeof LEVELS)[number] | "" }))}
+                      className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs"
+                    >
+                      <option value="">Not set</option>
+                      {LEVELS.map((l) => <option key={l} value={l} className="capitalize">{l}</option>)}
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+          </Field>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Level">
