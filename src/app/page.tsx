@@ -107,28 +107,42 @@ export default function ModernHomePage() {
   const [careerPathCards, setCareerPathCards] = useState<CareerPathCard[]>([]);
   const [courses, setCourses] = useState<LearnCard[]>([]);
   const [freeResources, setFreeResources] = useState<ResourceItem[]>([]);
-  const [curatedResources, setCuratedResources] = useState<ResourceItem[]>([]);
+  const [curatedHero, setCuratedHero] = useState<ResourceItem | null>(null);
+  const [curatedRest, setCuratedRest] = useState<ResourceItem[]>([]);
   const [premiumItems, setPremiumItems] = useState<(LearnCard | ResourceItem)[]>([]);
   const [homepageVideos, setHomepageVideos] = useState<VideoCardData[]>([]);
   const [events, setEvents] = useState<EventCard[]>([]);
   const [loading, setLoading] = useState(true);
+  // This page fetches everything exactly once on mount (no filters/re-fetch
+  // triggers), so a plain useState here can't go stale the way a per-item
+  // component's would need a reset effect for.
+  const [heroCoverFailed, setHeroCoverFailed] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [jobsRes, oppsRes, pathsRes, coursesRes, freeResourcesRes, premiumResourcesRes, curatedResourcesRes, homepageVideosRes, eventsRes] = await Promise.all([
+      const [jobsRes, oppsRes, pathsRes, coursesRes, freeResourcesRes, premiumResourcesRes, curatedHeroRes, curatedRestRes, homepageVideosRes, eventsRes] = await Promise.all([
         supabase.from("jobs").select("id, slug, title, location_type, country, created_at, featured, companies(name), job_categories(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
         supabase.from("opportunities").select("id, slug, title, organisation_name, created_at, featured, opportunity_types(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(4),
         supabase.from("career_paths").select("id, slug, title, description").eq("status", "published").order("created_at", { ascending: false }).limit(6),
         supabase.from("courses").select("id, slug, title, description, access, price, price_currency").eq("status", "published").order("created_at", { ascending: false }).limit(6),
         // exclude_resource_type keeps videos out of these two -- they get
         // their own dedicated section below instead of double-appearing.
-        fetch("/api/resources?access=free&audience=consumer,both&pageSize=6&sort=recent&exclude_resource_type=video").then((r) => r.json()),
-        fetch("/api/resources?access=premium&audience=consumer,both&pageSize=4&sort=recent&exclude_resource_type=video").then((r) => r.json()),
+        // exclude_show_on_homepage keeps out anything already shown in the
+        // curated "Resources worth exploring" section (nothing stops an
+        // admin flagging a resource both show_in_library and
+        // show_on_homepage at once).
+        fetch("/api/resources?access=free&audience=consumer,both&pageSize=6&sort=recent&exclude_resource_type=video&exclude_show_on_homepage=true").then((r) => r.json()),
+        fetch("/api/resources?access=premium&audience=consumer,both&pageSize=4&sort=recent&exclude_resource_type=video&exclude_show_on_homepage=true").then((r) => r.json()),
         // Admin-curated "Resources worth exploring" -- independent of the
         // un-curated Free/Premium feeds above (those are access-driven,
         // this is a deliberate editorial pick via show_on_homepage, same
-        // curation concept as the video section below).
-        fetch("/api/resources?show_on_homepage=true&exclude_resource_type=video&pageSize=5").then((r) => r.json()),
+        // curation concept as the video section below). Fetched as two
+        // separate queries rather than one list sliced client-side --
+        // /api/resources only ever orders by created_at, so a single
+        // pageSize-capped fetch could cut off the actual featured pick
+        // before it ever reaches the client if 5+ resources are curated.
+        fetch("/api/resources?show_on_homepage=true&featured=true&audience=consumer,both&exclude_resource_type=video&pageSize=1").then((r) => r.json()),
+        fetch("/api/resources?show_on_homepage=true&audience=consumer,both&exclude_resource_type=video&pageSize=5").then((r) => r.json()),
         // Direct query, not /api/resources -- video covers come from
         // thumbnail_url/YouTube, not a signed Storage cover_path, so there's
         // no reason to route through the server for these (unlike the
@@ -168,7 +182,12 @@ export default function ModernHomePage() {
       setCourses(publishedCourses.filter((c) => c.access === "free").slice(0, 4));
 
       setFreeResources((freeResourcesRes?.items || []) as ResourceItem[]);
-      setCuratedResources((curatedResourcesRes?.items || []) as ResourceItem[]);
+
+      const curatedHeroItems = (curatedHeroRes?.items || []) as ResourceItem[];
+      const curatedRestItems = (curatedRestRes?.items || []) as ResourceItem[];
+      const hero = curatedHeroItems[0] || curatedRestItems[0] || null;
+      setCuratedHero(hero);
+      setCuratedRest(curatedRestItems.filter((r) => r.id !== hero?.id).slice(0, 4));
 
       const premium = [
         ...publishedCourses.filter((c) => c.access === "premium"),
@@ -362,10 +381,8 @@ export default function ModernHomePage() {
           editorially picked. No existing homepage resource section has
           this one-large-plus-several-small layout, so it's new markup
           rather than reused ResourceCard-grid styling. */}
-      {!loading && curatedResources.length > 0 && (() => {
-        const heroIdx = curatedResources.findIndex((r) => r.featured);
-        const hero = curatedResources[heroIdx >= 0 ? heroIdx : 0];
-        const rest = curatedResources.filter((_, i) => i !== (heroIdx >= 0 ? heroIdx : 0)).slice(0, 4);
+      {!loading && curatedHero && (() => {
+        const heroCoverSrc = curatedHero.cover_url || curatedHero.thumbnail_url || null;
         return (
           <section className="bg-muted py-20 sm:py-24">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -377,23 +394,23 @@ export default function ModernHomePage() {
               </Reveal>
               <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
                 <Reveal>
-                  <Link href={`/resources/${hero.slug}`} className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                    {hero.cover_url ? (
+                  <Link href={`/resources/${curatedHero.slug}`} className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                    {heroCoverSrc && !heroCoverFailed ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={hero.cover_url} alt={hero.title} className="h-64 w-full object-cover sm:h-80" />
+                      <img src={heroCoverSrc} alt={curatedHero.title} className="h-64 w-full object-cover sm:h-80" onError={() => setHeroCoverFailed(true)} />
                     ) : (
                       <div className="flex h-64 w-full items-center justify-center bg-muted text-sm text-muted-foreground sm:h-80">No cover image</div>
                     )}
                     <div className="p-6">
                       <span className="text-xs font-bold uppercase tracking-widest text-primary">Featured Resource</span>
-                      <h3 className="mt-2 text-xl font-bold text-foreground">{hero.title}</h3>
-                      {hero.description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{hero.description}</p>}
+                      <h3 className="mt-2 text-xl font-bold text-foreground">{curatedHero.title}</h3>
+                      {curatedHero.description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{curatedHero.description}</p>}
                     </div>
                   </Link>
                 </Reveal>
-                {rest.length > 0 && (
+                {curatedRest.length > 0 && (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                    {rest.map((r, i) => (
+                    {curatedRest.map((r, i) => (
                       <Reveal key={r.id} delay={(i + 1) * 40}>
                         <ResourceCard item={r} />
                       </Reveal>

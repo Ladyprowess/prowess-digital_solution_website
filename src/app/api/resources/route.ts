@@ -21,6 +21,7 @@ export async function GET(req: Request) {
     const showInBusiness = (searchParams.get("show_in_business") || "").trim();
     const showInCareer = (searchParams.get("show_in_career") || "").trim();
     const showOnHomepage = (searchParams.get("show_on_homepage") || "").trim();
+    const excludeShowOnHomepage = (searchParams.get("exclude_show_on_homepage") || "").trim();
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(24, Math.max(1, Number(searchParams.get("pageSize")) || 6));
 
@@ -34,6 +35,11 @@ export async function GET(req: Request) {
     // show_in_library gate rather than requiring both.
     if (showOnHomepage === "true") query = query.eq("show_on_homepage", true);
     else query = query.eq("show_in_library", true);
+    // Lets a caller that already shows show_on_homepage resources in their
+    // own curated section (the homepage's "Resources worth exploring")
+    // avoid pulling the same row into a second, un-curated section further
+    // down the same page -- nothing stops an admin setting both flags true.
+    if (excludeShowOnHomepage === "true") query = query.eq("show_on_homepage", false);
 
     // filters
     if (category) query = query.eq("category", category);
