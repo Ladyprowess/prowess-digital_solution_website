@@ -17,7 +17,7 @@ import {
   type LearnItem, type CourseRow, type ResourceRow,
 } from "@/lib/learn/types";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 12;
 const RESOURCE_KINDS = LEARN_RESOURCE_KINDS;
 
 type SkillLookup = { id: string; slug: string; name: string; description: string | null };

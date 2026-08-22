@@ -9,7 +9,7 @@ import { PillTabs, type PillTab } from "@/components/PillTabs";
 import { CareerPathCard, type CareerPathCardData } from "@/components/careerPaths/CareerPathCard";
 import { supabase } from "@/lib/supabase";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 12;
 const LEARN_RESOURCE_KINDS = ["video", "article", "guide", "ebook"];
 
 const CATEGORY_TABS: PillTab<string>[] = [

@@ -26,6 +26,22 @@ const RESOURCE_TYPES = ["article", "guide", "checklist", "template", "ebook", "v
 type Source = "prowess" | "youtube" | "external";
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 const AUDIENCES = ["consumer", "business", "both"] as const;
+const CONTENT_ROLES = ["general", "learning", "career", "business", "motivation", "interview", "webinar", "tutorial"] as const;
+
+// Where a resource is eligible to surface, independent of its type/
+// audience/category. Applies to every resource type, not just video --
+// library/learn/recommended default true (normal flow, nothing published
+// today should silently vanish); homepage/business/career are deliberate
+// curation opt-ins, default false.
+const PLACEMENT_FIELDS = [
+  { key: "show_in_library", label: "Video/resource library" },
+  { key: "show_in_learn", label: "Learn" },
+  { key: "show_in_recommended", label: "Recommended learning (skill/career/job pages)" },
+  { key: "show_on_homepage", label: "Homepage" },
+  { key: "show_in_business", label: "Business content" },
+  { key: "show_in_career", label: "Career content" },
+] as const;
+type PlacementKey = (typeof PLACEMENT_FIELDS)[number]["key"];
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -81,6 +97,13 @@ function ResourcesAdmin() {
   const [originalSlug, setOriginalSlug] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
+  const [contentRole, setContentRole] = useState<(typeof CONTENT_ROLES)[number] | "">("");
+  const [durationMinutes, setDurationMinutes] = useState("");
+  const [whyRecommended, setWhyRecommended] = useState("");
+  const [placements, setPlacements] = useState<Record<PlacementKey, boolean>>({
+    show_in_library: true, show_in_learn: true, show_in_recommended: true,
+    show_on_homepage: false, show_in_business: false, show_in_career: false,
+  });
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -137,6 +160,8 @@ function ResourcesAdmin() {
     setCoverFile(null); setResourceFile(null); setExistingFileName(null);
     setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
+    setContentRole(""); setDurationMinutes(""); setWhyRecommended("");
+    setPlacements({ show_in_library: true, show_in_learn: true, show_in_recommended: true, show_on_homepage: false, show_in_business: false, show_in_career: false });
   };
 
   async function startEditResource(id: string) {
@@ -144,7 +169,7 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, resource_skill_map(skill_id)")
+      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -156,6 +181,9 @@ function ResourcesAdmin() {
       thumbnail_url: string | null; description: string | null; content: string | null; file_url: string | null; file_name: string | null;
       access: "free" | "premium"; price: number | null; price_currency: string | null; featured: boolean;
       status: ResourceRow["status"]; meta_title: string | null; meta_description: string | null;
+      content_role: (typeof CONTENT_ROLES)[number] | null; duration_minutes: number | null; why_recommended: string | null;
+      show_in_library: boolean; show_in_learn: boolean; show_in_recommended: boolean;
+      show_on_homepage: boolean; show_in_business: boolean; show_in_career: boolean;
       resource_skill_map: { skill_id: string }[];
     };
 
@@ -183,6 +211,13 @@ function ResourcesAdmin() {
     setOriginalSlug(r.slug);
     setMetaTitle(r.meta_title || "");
     setMetaDescription(r.meta_description || "");
+    setContentRole(r.content_role || "");
+    setDurationMinutes(r.duration_minutes?.toString() || "");
+    setWhyRecommended(r.why_recommended || "");
+    setPlacements({
+      show_in_library: r.show_in_library, show_in_learn: r.show_in_learn, show_in_recommended: r.show_in_recommended,
+      show_on_homepage: r.show_on_homepage, show_in_business: r.show_in_business, show_in_career: r.show_in_career,
+    });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -245,6 +280,10 @@ function ResourcesAdmin() {
         is_published: publishNow,
         meta_title: metaTitle.trim() || null,
         meta_description: metaDescription.trim() || null,
+        content_role: resourceType === "video" ? (contentRole || null) : null,
+        duration_minutes: resourceType === "video" && durationMinutes ? Number(durationMinutes) : null,
+        why_recommended: resourceType === "video" ? (whyRecommended.trim() || null) : null,
+        ...placements,
       };
 
       let resourceId = editingResourceId;
@@ -351,6 +390,26 @@ function ResourcesAdmin() {
               )}
             </div>
 
+            {resourceType === "video" && (
+              <div className="grid gap-4 rounded-xl border border-border/60 p-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Video details</p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Content role (curation only — not shown as a nav tab)">
+                    <select value={contentRole} onChange={(e) => setContentRole(e.target.value as typeof contentRole)} className={inputCls}>
+                      <option value="">Not set</option>
+                      {CONTENT_ROLES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Duration (minutes)">
+                    <input type="number" min="0" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} className={inputCls} placeholder="e.g. 12" />
+                  </Field>
+                </div>
+                <Field label="Why we recommend this (optional)">
+                  <RichTextEditor key={`why-${editingResourceId || "new"}`} value={whyRecommended} onChange={setWhyRecommended} placeholder="Why did Prowess select this video? Shown on the video page." />
+                </Field>
+              </div>
+            )}
+
             {source === "prowess" ? (
               <Field label="Cover image">
                 <input
@@ -426,6 +485,23 @@ function ResourcesAdmin() {
                 <Field label="Meta description">
                   <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} className={`${inputCls} min-h-20`} placeholder="Shown in search results and link previews" />
                 </Field>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border/60 p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Where should this show?</p>
+              <p className="mt-1 text-xs text-muted-foreground">Independent of type/audience/category — applies to every resource type, not just video.</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {PLACEMENT_FIELDS.map((field) => (
+                  <label key={field.key} className="flex items-center gap-2.5 text-sm text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={placements[field.key]}
+                      onChange={(e) => setPlacements((prev) => ({ ...prev, [field.key]: e.target.checked }))}
+                    />
+                    {field.label}
+                  </label>
+                ))}
               </div>
             </div>
 

@@ -14,7 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { SORT_OPTIONS, CLOSING_SOON_DAYS } from "@/lib/jobs/constants";
 import { DEFAULT_FILTERS, filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type JobFilters } from "@/lib/jobs/filters";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 12;
 
 type Lookup = { id: string; slug: string; name: string };
 type SkillLookup = { id: string; slug: string; name: string };
