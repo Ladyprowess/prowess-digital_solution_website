@@ -155,6 +155,12 @@ function ResourcesPageContent() {
   const hero = featuredPicks[0] || null;
   const popularPicks = featuredPicks.slice(1);
   const showCurated = hero || popularPicks.length > 0 || businessRail.length > 0 || careerRail.length > 0 || templatesAndChecklists.length > 0;
+  // Every resource already appeared in a rail above -- an empty "no
+  // resources found" box directly beneath a fully-populated curated
+  // section reads as broken, not as "nothing here yet". Only suppressed on
+  // the unfiltered first page; a real "no results" for an active filter
+  // still needs to show.
+  const exploreIsRedundant = !loading && !activeFiltersPresent && filters.page === 1 && items.length === 0 && Boolean(showCurated);
 
   return (
     <div className="min-h-screen bg-background">
@@ -315,29 +321,35 @@ function ResourcesPageContent() {
         </section>
       )}
 
-      {/* EXPLORE RESOURCES */}
+      {/* EXPLORE RESOURCES -- id="explore" stays mounted unconditionally so
+          the "Browse by need" tiles always have a scroll target, even when
+          the content below is suppressed. */}
       <section id="explore" className="scroll-mt-20 py-12 sm:py-16">
         <Container>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} resource${total === 1 ? "" : "s"} found`}</p>
-          </div>
+          {!exploreIsRedundant && (
+            <>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+                <p className="text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} resource${total === 1 ? "" : "s"} found`}</p>
+              </div>
 
-          {loading ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
-          ) : items.length === 0 ? (
-            <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
-              <h2 className="text-lg font-semibold text-foreground">No resources found</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding resources here soon - check back shortly."}
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map((r) => <ResourceCard key={r.id} item={r} />)}
-            </div>
+              {loading ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+              ) : items.length === 0 ? (
+                <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
+                  <h2 className="text-lg font-semibold text-foreground">No resources found</h2>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                    {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding resources here soon - check back shortly."}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {items.map((r) => <ResourceCard key={r.id} item={r} />)}
+                </div>
+              )}
+
+              <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
+            </>
           )}
-
-          <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
         </Container>
       </section>
 
