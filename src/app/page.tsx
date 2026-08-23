@@ -487,7 +487,7 @@ export default function ModernHomePage() {
                     eyebrow="Premium"
                     title={item.title}
                     description={item.description}
-                    footer={item.price ? `${item.price_currency || "NGN"} ${item.price}` : null}
+                    footer={item.price ? `${item.price_currency || "USD"} ${item.price}` : null}
                   />
                 )
               )}

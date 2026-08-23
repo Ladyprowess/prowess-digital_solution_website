@@ -43,7 +43,7 @@ export function AccessPriceFields({
             <input value={price} onChange={(e) => onPriceChange(e.target.value)} className={inputCls} type="number" placeholder="e.g. 5000" />
           </Field>
           <Field label="Currency">
-            <input value={currency} onChange={(e) => onCurrencyChange(e.target.value)} className={inputCls} placeholder="NGN" />
+            <input value={currency} onChange={(e) => onCurrencyChange(e.target.value)} className={inputCls} placeholder="USD" />
           </Field>
         </>
       )}

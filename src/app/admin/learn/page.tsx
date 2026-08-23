@@ -51,7 +51,7 @@ function LearnAdmin() {
   const [level, setLevel] = useState<(typeof LEVELS)[number] | "">("");
   const [access, setAccess] = useState<"free" | "premium">("free");
   const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState("NGN");
+  const [currency, setCurrency] = useState("USD");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [durationLabel, setDurationLabel] = useState("");
   const [featured, setFeatured] = useState(false);
@@ -142,7 +142,7 @@ function LearnAdmin() {
     setLevel(course.level || "");
     setAccess(course.access);
     setPrice(course.price?.toString() || "");
-    setCurrency(course.price_currency || "NGN");
+    setCurrency(course.price_currency || "USD");
     setThumbnailUrl(course.thumbnail_url || "");
     setDurationLabel(course.duration_label || "");
     setFeatured(course.featured);

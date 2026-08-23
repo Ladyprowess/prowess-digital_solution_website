@@ -372,7 +372,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
           <Reveal>
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${path.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                {path.access === "premium" ? `Premium${path.price ? ` - ${path.price_currency || "NGN"} ${path.price}` : ""}` : "Free"}
+                {path.access === "premium" ? `Premium${path.price ? ` - ${path.price_currency || "USD"} ${path.price}` : ""}` : "Free"}
               </span>
               {path.featured && (
                 <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">Featured</span>

@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const { link } = await initializePayment({
       email,
       amount: priced.amount,
-      currency: priced.currency === "USD" ? "USD" : "NGN",
+      currency: priced.currency === "NGN" ? "NGN" : "USD",
       reference,
       callbackUrl: `${SITE_URL}/purchase/success`,
       metadata: { type: "content_purchase", purchase_id: row.id },

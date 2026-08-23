@@ -40,7 +40,7 @@ function CareerPathEditor({ id }: { id: string }) {
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
   const [access, setAccess] = useState<"free" | "premium">("free");
   const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState("NGN");
+  const [currency, setCurrency] = useState("USD");
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [featured, setFeatured] = useState(false);
   const [level, setLevel] = useState<"" | (typeof LEVELS)[number]>("");
@@ -86,7 +86,7 @@ function CareerPathEditor({ id }: { id: string }) {
       setDescription(p.description || "");
       setAccess(p.access);
       setPrice(p.price?.toString() || "");
-      setCurrency(p.price_currency || "NGN");
+      setCurrency(p.price_currency || "USD");
       setStatus(p.status);
       setFeatured(p.featured);
       setLevel(p.level || "");

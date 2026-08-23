@@ -76,7 +76,7 @@ export function BuyButton({
         disabled={loading}
         className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90 disabled:opacity-60"
       >
-        {loading ? "Starting checkout…" : `Buy for ${currency || "NGN"} ${price?.toLocaleString() ?? ""}`}
+        {loading ? "Starting checkout…" : `Buy for ${currency || "USD"} ${price?.toLocaleString() ?? ""}`}
       </button>
       {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
     </div>

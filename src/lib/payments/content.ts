@@ -88,5 +88,5 @@ export async function getItemPrice(itemType: string, itemId: string) {
     .maybeSingle();
 
   if (!data || data.access !== "premium" || !data.price) return null;
-  return { title: data.title as string, amount: data.price as number, currency: (data.price_currency as string) || "NGN" };
+  return { title: data.title as string, amount: data.price as number, currency: (data.price_currency as string) || "USD" };
 }

@@ -122,7 +122,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wide text-primary capitalize">{typeLabel}</span>
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${resource.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {resource.access === "premium" ? `Premium${resource.price ? ` - ${resource.price_currency || "NGN"} ${resource.price}` : ""}` : "Free"}
+                  {resource.access === "premium" ? `Premium${resource.price ? ` - ${resource.price_currency || "USD"} ${resource.price}` : ""}` : "Free"}
                 </span>
               </div>
               <h1 className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">{resource.title}</h1>

@@ -78,7 +78,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${course.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {course.access === "premium" ? `Premium${course.price ? ` - ${course.price_currency || "NGN"} ${course.price}` : ""}` : "Free"}
+                  {course.access === "premium" ? `Premium${course.price ? ` - ${course.price_currency || "USD"} ${course.price}` : ""}` : "Free"}
                 </span>
                 {course.featured && (
                   <span className="rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">Featured</span>

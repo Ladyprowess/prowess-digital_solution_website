@@ -89,7 +89,7 @@ function ResourcesAdmin() {
   const [uploading, setUploading] = useState(false);
   const [access, setAccess] = useState<"free" | "premium">("free");
   const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState("NGN");
+  const [currency, setCurrency] = useState("USD");
   const [featured, setFeatured] = useState(false);
   const [publishNow, setPublishNow] = useState(true);
   const [editingStatus, setEditingStatus] = useState<ResourceRow["status"] | null>(null);
@@ -209,7 +209,7 @@ function ResourcesAdmin() {
     setCoverFile(null); setResourceFile(null); setExistingFileName(r.file_name || null);
     setAccess(r.access);
     setPrice(r.price?.toString() || "");
-    setCurrency(r.price_currency || "NGN");
+    setCurrency(r.price_currency || "USD");
     setFeatured(r.featured);
     setPublishNow(r.status === "published");
     setSelectedSkillIds(r.resource_skill_map.map((m) => m.skill_id));
