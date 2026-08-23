@@ -32,6 +32,7 @@ export function ResourceBody({
   price,
   currency,
   contentDisplay = "text",
+  allowDownload = true,
 }: {
   resourceId: string;
   title: string;
@@ -42,6 +43,10 @@ export function ResourceBody({
   // an admin choice for a resource that's really just a PDF, where
   // retyping it as rich text would be pointless duplicate work.
   contentDisplay?: "text" | "pdf";
+  // Admin choice: some resources should only be readable on the site, not
+  // downloadable as a raw file (e.g. an embedded PDF meant to be read
+  // in-place, not saved locally).
+  allowDownload?: boolean;
 }) {
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [data, setData] = useState<ResourceBodyData | null>(null);
@@ -130,6 +135,10 @@ export function ResourceBody({
   // picked "pdf" display but never uploaded a file falls back to the
   // normal written-content rendering below rather than showing nothing.
   const showEmbeddedPdf = contentDisplay === "pdf" && Boolean(downloadUrl);
+  // allowDownload only gates the Download *button* -- an embedded PDF still
+  // renders above regardless, since that's viewing it on the site, not
+  // downloading the raw file.
+  const showDownloadLink = allowDownload && Boolean(downloadUrl);
 
   return (
     <div className="mt-10 space-y-6">
@@ -169,9 +178,9 @@ export function ResourceBody({
         </a>
       )}
 
-      {downloadUrl && (
+      {showDownloadLink && (
         <a
-          href={downloadUrl}
+          href={downloadUrl!}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"

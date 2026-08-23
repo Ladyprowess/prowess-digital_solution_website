@@ -60,10 +60,14 @@ export function ChecklistBody({
   resourceId,
   price,
   currency,
+  allowDownload = true,
 }: {
   resourceId: string;
   price: number | null;
   currency: string | null;
+  // Admin choice: some resources should only be readable/checkable on the
+  // site, not downloadable as a raw file.
+  allowDownload?: boolean;
 }) {
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [data, setData] = useState<ChecklistBodyData | null>(null);
@@ -198,7 +202,7 @@ export function ChecklistBody({
         </a>
       )}
 
-      {downloadUrl && (
+      {allowDownload && downloadUrl && (
         <a
           href={downloadUrl}
           target="_blank"

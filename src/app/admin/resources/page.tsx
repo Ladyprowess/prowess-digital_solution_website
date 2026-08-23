@@ -81,6 +81,7 @@ function ResourcesAdmin() {
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
   const [contentDisplay, setContentDisplay] = useState<(typeof CONTENT_DISPLAYS)[number]>("text");
+  const [allowDownload, setAllowDownload] = useState(true);
   const [fileUrl, setFileUrl] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [resourceFile, setResourceFile] = useState<File | null>(null);
@@ -158,7 +159,7 @@ function ResourcesAdmin() {
     setEditingResourceId(null);
     setTitle(""); setAudience("consumer"); setResourceType("guide"); setCategory(""); setLevel("");
     setSource("prowess"); setExternalUrl(""); setThumbnailUrl("");
-    setSummary(""); setContent(""); setContentDisplay("text"); setFileUrl("");
+    setSummary(""); setContent(""); setContentDisplay("text"); setAllowDownload(true); setFileUrl("");
     setCoverFile(null); setResourceFile(null); setExistingFileName(null);
     setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
@@ -172,7 +173,7 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, content_display, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
+      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, content_display, allow_download, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -181,7 +182,7 @@ function ResourcesAdmin() {
     const r = data as unknown as {
       id: string; slug: string; title: string; audience: (typeof AUDIENCES)[number]; resource_type: (typeof RESOURCE_TYPES)[number] | null;
       category: string | null; level: (typeof LEVELS)[number] | null; source: Source; external_url: string | null;
-      thumbnail_url: string | null; description: string | null; content: string | null; content_display: (typeof CONTENT_DISPLAYS)[number]; file_url: string | null; file_name: string | null;
+      thumbnail_url: string | null; description: string | null; content: string | null; content_display: (typeof CONTENT_DISPLAYS)[number]; allow_download: boolean; file_url: string | null; file_name: string | null;
       access: "free" | "premium"; price: number | null; price_currency: string | null; featured: boolean;
       status: ResourceRow["status"]; meta_title: string | null; meta_description: string | null;
       content_role: (typeof CONTENT_ROLES)[number] | null; duration_minutes: number | null; why_recommended: string | null;
@@ -203,6 +204,7 @@ function ResourcesAdmin() {
     setSummary(r.description || "");
     setContent(r.content || "");
     setContentDisplay(r.content_display || "text");
+    setAllowDownload(r.allow_download ?? true);
     setFileUrl(r.file_url || "");
     setCoverFile(null); setResourceFile(null); setExistingFileName(r.file_name || null);
     setAccess(r.access);
@@ -296,6 +298,7 @@ function ResourcesAdmin() {
         description: summary.trim() || null,
         content: content.trim() || null,
         content_display: contentDisplay,
+        allow_download: allowDownload,
         file_url: fileUrl.trim() || null,
         ...(uploaded.file_path ? { file_path: uploaded.file_path, file_name: uploaded.file_name, file_type: uploaded.file_type, file_size: uploaded.file_size } : {}),
         ...(uploaded.cover_path ? { cover_path: uploaded.cover_path } : {}),
@@ -505,6 +508,13 @@ function ResourcesAdmin() {
                   ) : null}
                   <p className="mt-1.5 text-xs text-muted-foreground">Or paste a link to an already-hosted file instead:</p>
                   <input value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} className={`${inputCls} mt-1.5`} placeholder="https://..." />
+                  <label className="mt-3 flex items-center gap-2 text-sm text-foreground">
+                    <input type="checkbox" checked={allowDownload} onChange={(e) => setAllowDownload(e.target.checked)} />
+                    Show a &quot;Download&quot; link on the resource page
+                  </label>
+                  {!allowDownload && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">Visitors can only read this on the site - no download link will show.</p>
+                  )}
                 </Field>
               </>
             )}
