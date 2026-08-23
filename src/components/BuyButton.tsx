@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useSignedIn } from "@/lib/useSignedIn";
 
 // Shared checkout trigger for any premium item (course or resource). The
 // amount is never sent from here - /api/content/checkout reads the real
@@ -25,17 +26,9 @@ export function BuyButton({
   className?: string;
 }) {
   const pathname = usePathname();
-  const [signedIn, setSignedIn] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const { signedIn, checking: checkingSession } = useSignedIn();
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSignedIn(!!data.session);
-      setCheckingSession(false);
-    });
-  }, []);
 
   async function buy() {
     setErr("");

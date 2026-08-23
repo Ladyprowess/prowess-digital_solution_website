@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Modal from "@/components/Modal";
 import { supabase } from "@/lib/supabase";
+import { useSignedIn } from "@/lib/useSignedIn";
 
 type Props = {
   open: boolean;
@@ -15,20 +16,11 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signedIn, setSignedIn] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
-
-  // Checked every time the modal opens, not just once on mount - the user
-  // could open this, go sign in in another tab, and come back.
-  useEffect(() => {
-    if (!open) return;
-    (async () => {
-      setCheckingSession(true);
-      const { data } = await supabase.auth.getSession();
-      setSignedIn(!!data.session);
-      setCheckingSession(false);
-    })();
-  }, [open]);
+  // Subscribes to real auth-state changes, not just a one-shot check tied
+  // to `open` - catches a user who signs in from a different tab without
+  // closing this modal, which a plain re-check-on-open never would (open
+  // itself never changes value in that case).
+  const { signedIn, checking: checkingSession } = useSignedIn();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
