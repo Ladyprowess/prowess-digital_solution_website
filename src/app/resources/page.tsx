@@ -196,12 +196,18 @@ function ResourcesPageContent() {
           <Container>
             <Reveal>
               <div className="grid gap-6 sm:grid-cols-[3fr_2fr]">
-                <Link href={`/resources/${hero.slug}`} className="group relative block overflow-hidden rounded-2xl border border-border bg-muted">
+                <Link href={`/resources/${hero.slug}`} className="group relative block aspect-[16/9] overflow-hidden rounded-2xl border border-border bg-muted">
                   {hero.cover_url ? (
+                    // object-contain, not object-cover -- resource covers
+                    // are often marketing graphics with text baked into
+                    // the image, which object-cover can crop illegibly
+                    // (worse on mobile, where this box's width shrinks a
+                    // lot more than a fixed aspect ratio would). Contain
+                    // never cuts anything off, just letterboxes on bg-muted.
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={hero.cover_url} alt={hero.title} className="h-full w-full object-cover" />
+                    <img src={hero.cover_url} alt={hero.title} className="h-full w-full object-contain" />
                   ) : (
-                    <div className="flex h-64 w-full items-center justify-center text-sm text-muted-foreground">No cover image</div>
+                    <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">No cover image</div>
                   )}
                 </Link>
                 <div className="flex flex-col justify-center">

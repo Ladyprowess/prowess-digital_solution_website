@@ -67,7 +67,14 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
           <img
             src={coverSrc}
             alt={item.title}
-            className="h-full w-full object-cover"
+            // object-contain, not object-cover -- these covers are often
+            // marketing-style graphics with text baked into the image
+            // itself, not plain photos. Cropping (object-cover) can chop
+            // that text off, especially badly on mobile where a fixed-
+            // height box forces a much narrower effective aspect ratio
+            // than on desktop. Letterboxing (contain, on the slate-100 bg
+            // already behind this) never cuts anything off.
+            className="h-full w-full object-contain"
             onError={() => setCoverFailed(true)}
           />
         ) : (

@@ -400,10 +400,19 @@ export default function ModernHomePage() {
                 <Reveal>
                   <Link href={`/resources/${curatedHero.slug}`} className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
                     {heroCoverSrc && !heroCoverFailed ? (
+                      // object-contain, not object-cover, in an aspect-
+                      // ratio box rather than a fixed pixel height -- this
+                      // column is full-width below lg and a 3fr column
+                      // above it, so a fixed height (h-64/h-80) forced a
+                      // much narrower effective aspect ratio on mobile
+                      // than on desktop, cropping text baked into the
+                      // cover graphic off the sides. An aspect ratio keeps
+                      // the crop window proportional at every width, and
+                      // contain never cuts anything off regardless.
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={heroCoverSrc} alt={curatedHero.title} className="h-64 w-full object-cover sm:h-80" onError={() => setHeroCoverFailed(true)} />
+                      <img src={heroCoverSrc} alt={curatedHero.title} className="aspect-[16/9] w-full object-contain" onError={() => setHeroCoverFailed(true)} />
                     ) : (
-                      <div className="flex h-64 w-full items-center justify-center bg-muted text-sm text-muted-foreground sm:h-80">No cover image</div>
+                      <div className="flex aspect-[16/9] w-full items-center justify-center bg-muted text-sm text-muted-foreground">No cover image</div>
                     )}
                     <div className="p-6">
                       <span className="text-xs font-bold uppercase tracking-widest text-primary">Featured Resource</span>
