@@ -37,21 +37,29 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Only trusted once it's come through the same signature verification as
-  // the rest of this block - an unverified email query param on a free
-  // resource (no signature check at all) could be anything a caller typed,
-  // never safe to stamp onto a document as if it were real.
-  let watermarkEmail: string | null = null;
+  // /api/content/access always mints a signed link via signDownloadUrl for
+  // every resource that has a file, free or premium, embedding the caller's
+  // email whenever they're signed in - so a valid signature (and the email
+  // riding along inside it) is normally present here regardless of access
+  // level. Premium hard-requires it (that's the actual entitlement gate).
+  // Free doesn't require it - free content stays reachable even from an
+  // old/bookmarked link with no signature - but still uses it for a
+  // personalized watermark when it's there and genuinely valid.
+  const exp = searchParams.get("exp");
+  const sig = searchParams.get("sig");
+  const email = searchParams.get("email");
+  const hasValidSignature = Boolean(exp) && Boolean(sig) && Date.now() <= Number(exp) && verifyDownloadSignature(id, exp!, sig!, email);
 
-  if (resource.access === "premium") {
-    const exp = searchParams.get("exp");
-    const sig = searchParams.get("sig");
-    const email = searchParams.get("email");
-    if (!exp || !sig || Date.now() > Number(exp) || !verifyDownloadSignature(id, exp, sig, email)) {
-      return NextResponse.json({ error: "This link has expired or is invalid." }, { status: 403 });
-    }
-    watermarkEmail = email;
+  if (resource.access === "premium" && !hasValidSignature) {
+    return NextResponse.json({ error: "This link has expired or is invalid." }, { status: 403 });
   }
+
+  // An unverified email query param is never trusted for the watermark - it
+  // only counts once it's passed the same signature check as everything
+  // else, so a caller can't just type a different name into the URL. No
+  // valid signature (an anonymous read of free content, most often) still
+  // gets watermarked, just with the site's name instead of a person's.
+  const watermarkLabel = hasValidSignature && email ? email : "prowessdigitalsolutions.com";
 
   // Older resources (pre-B2C) store file_path with a "pdfs/" prefix that
   // isn't part of the actual storage key - same cleanup /api/content/access
@@ -65,14 +73,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const isPdf = (resource.file_type || "").toLowerCase() === "application/pdf" || cleanPath.toLowerCase().endsWith(".pdf");
 
   let body: Blob = blob;
-  if (isPdf && watermarkEmail) {
+  if (isPdf) {
     try {
       const bytes = new Uint8Array(await blob.arrayBuffer());
-      const watermarked = await watermarkPdf(bytes, watermarkEmail);
+      const watermarked = await watermarkPdf(bytes, watermarkLabel);
       body = new Blob([Buffer.from(watermarked)], { type: "application/pdf" });
     } catch {
       // Malformed/unsupported PDF structure - serve the real file rather
-      // than blocking a legitimate buyer's access over a cosmetic feature.
+      // than blocking a legitimate reader's access over a cosmetic feature.
       body = blob;
     }
   }
