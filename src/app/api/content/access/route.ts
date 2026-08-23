@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       // behind a button beforehand), mint a same-origin proxy link that
       // streams the file through our own /api/resources/[id]/file route -
       // the actual URL the user ever sees stays on our domain throughout.
-      const downloadUrl = data?.file_path ? signDownloadUrl(itemId) : null;
+      const downloadUrl = data?.file_path ? signDownloadUrl(itemId, member?.email ?? null) : null;
 
       return NextResponse.json({ ok: true, resource: { ...data, download_url: downloadUrl } });
     }

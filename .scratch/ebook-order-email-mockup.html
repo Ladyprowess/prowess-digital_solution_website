@@ -1,0 +1,373 @@
+<style>
+  :root {
+    --bg: #fafcfc;
+    --surface: #ffffff;
+    --ink: #0b1b1d;
+    --ink-soft: #4b6062;
+    --primary: #507c80;
+    --primary-deep: #3d5f62;
+    --primary-tint: #e7eeee;
+    --border: #dde6e6;
+    --mono-bg: #f2f6f6;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10191a;
+      --surface: #16211f;
+      --ink: #f2f6f5;
+      --ink-soft: #a9bdbc;
+      --primary: #6fb0b5;
+      --primary-deep: #8dc4c8;
+      --primary-tint: #1c2b2a;
+      --border: #26403f;
+      --mono-bg: #1a2726;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10191a;
+    --surface: #16211f;
+    --ink: #f2f6f5;
+    --ink-soft: #a9bdbc;
+    --primary: #6fb0b5;
+    --primary-deep: #8dc4c8;
+    --primary-tint: #1c2b2a;
+    --border: #26403f;
+    --mono-bg: #1a2726;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 48px 20px 80px;
+  }
+
+  .page-head {
+    max-width: 640px;
+    margin: 0 auto 28px;
+  }
+  .page-head .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary-deep);
+  }
+  .page-head h1 {
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    margin: 6px 0 4px;
+    text-wrap: balance;
+  }
+  .page-head p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .client-chrome {
+    max-width: 640px;
+    margin: 0 auto 56px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(11, 27, 29, 0.04);
+  }
+  .client-bar {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .client-bar dt {
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .client-bar dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .client-bar .subject dd { font-weight: 650; }
+
+  /* ---- the actual email body ---- */
+  .email-body {
+    background: var(--surface);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .email-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #5c9296 100%);
+    padding: 30px 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .email-header .mark {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+  .email-header .wordmark {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .email-content {
+    padding: 36px 32px 8px;
+  }
+  .email-content h2 {
+    font-size: 19px;
+    font-weight: 650;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .email-content p {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+  .email-content p strong { color: var(--ink); font-weight: 600; }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary-tint);
+    color: var(--primary-deep);
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    padding: 5px 12px 5px 9px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+  .status-pill svg { flex-shrink: 0; }
+
+  .order-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 4px 0 26px;
+  }
+  .order-card .item-row {
+    display: flex;
+    gap: 14px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .order-card .item-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--primary-tint);
+    color: var(--primary-deep);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .order-card .item-title {
+    font-size: 14.5px;
+    font-weight: 650;
+    color: var(--ink);
+    line-height: 1.4;
+    margin: 0 0 2px;
+  }
+  .order-card .item-type {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .order-card dl {
+    margin: 0;
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    row-gap: 11px;
+    column-gap: 16px;
+    background: var(--mono-bg);
+  }
+  .order-card dt {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .order-card dd {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .order-card dd.mono {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    letter-spacing: 0.01em;
+  }
+  .order-card dd.total {
+    color: var(--primary-deep);
+    font-size: 14px;
+  }
+
+  .cta-row { text-align: center; margin: 30px 0; }
+  .cta-button {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 650;
+    text-decoration: none;
+    padding: 13px 30px;
+    border-radius: 10px;
+  }
+
+  .email-note {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    padding: 0 32px 30px;
+  }
+
+  .email-footer {
+    padding: 22px 32px 28px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .email-footer p {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin: 0 0 4px;
+    line-height: 1.6;
+  }
+
+  /* ---- second, smaller preview: admin notification ---- */
+  .section-label {
+    max-width: 640px;
+    margin: 0 auto 14px;
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .admin-email .email-content { padding: 28px 32px 6px; }
+  .admin-email h2 { font-size: 16px; }
+  .admin-list {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px 20px;
+    margin: 4px 0 24px;
+    background: var(--mono-bg);
+  }
+  .admin-list .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .admin-list .row:last-child { border-bottom: none; }
+  .admin-list .row .k { color: var(--ink-soft); font-weight: 500; }
+  .admin-list .row .v { font-weight: 650; color: var(--ink); text-align: right; }
+</style>
+
+<div class="page-head">
+  <div class="eyebrow">Email preview</div>
+  <h1>Order confirmation, redesigned</h1>
+  <p>Two emails fire off the same purchase: this one to the buyer, and a shorter one to you. Real copy, real numbers, nothing placeholder.</p>
+</div>
+
+<div class="client-chrome">
+  <dl class="client-bar">
+    <dt>From</dt><dd>Prowess Digital Solutions &lt;hello@prowessdigitalsolutions.com&gt;</dd>
+    <dt>To</dt><dd>jane.buyer@gmail.com</dd>
+    <dt class="subject">Subject</dt><dd class="subject">Payment confirmed for How to Build a Strong Business Brand for Your E-commerce Store</dd>
+  </dl>
+
+  <div class="email-body">
+    <div class="email-header">
+      <svg class="mark" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="15" stroke="white" stroke-width="1.6"/>
+        <path d="M12 21 L17 10.5 L17 21" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M13.3 17.3 L19.5 17.3" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span class="wordmark">Prowess Digital Solutions</span>
+    </div>
+
+    <div class="email-content">
+      <span class="status-pill">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Payment confirmed
+      </span>
+
+      <h2>Hi there,</h2>
+      <p>Your payment has gone through. Here is a summary of your order.</p>
+
+      <div class="order-card">
+        <div class="item-row">
+          <div class="item-thumb">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.6"/><path d="M12 4h6.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H12" stroke="currentColor" stroke-width="1.6"/></svg>
+          </div>
+          <div>
+            <p class="item-title">How to Build a Strong Business Brand for Your E-commerce Store</p>
+            <p class="item-type">Ebook &middot; Guide</p>
+          </div>
+        </div>
+        <dl>
+          <dt>Order number</dt><dd class="mono">CONTENT-1787512-A1F9</dd>
+          <dt>Date</dt><dd>23 Aug 2026</dd>
+          <dt>Payment method</dt><dd>Card, via Flutterwave</dd>
+          <dt>Amount paid</dt><dd class="total">USD 15.00</dd>
+        </dl>
+      </div>
+
+      <div class="cta-row">
+        <a href="#" class="cta-button">Read your ebook</a>
+      </div>
+    </div>
+
+    <p class="email-note">Need help with this order? Reply to this email and mention the order number above.</p>
+
+    <div class="email-footer">
+      <p>Prowess Digital Solutions &middot; prowessdigitalsolutions.com</p>
+      <p>Questions about this order? Reply to this email.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Also sent, to you</div>
+<div class="client-chrome admin-email">
+  <dl class="client-bar">
+    <dt>From</dt><dd>Prowess Digital Solutions &lt;hello@prowessdigitalsolutions.com&gt;</dd>
+    <dt>To</dt><dd>you@prowessdigitalsolutions.com</dd>
+    <dt class="subject">Subject</dt><dd class="subject">New ebook sale: How to Build a Strong Business Brand...</dd>
+  </dl>
+  <div class="email-body">
+    <div class="email-content">
+      <h2>New sale</h2>
+      <p>Someone just bought a resource.</p>
+      <div class="admin-list">
+        <div class="row"><span class="k">Item</span><span class="v">How to Build a Strong Business Brand&hellip;</span></div>
+        <div class="row"><span class="k">Buyer email</span><span class="v">jane.buyer@gmail.com</span></div>
+        <div class="row"><span class="k">Amount</span><span class="v">USD 15.00</span></div>
+        <div class="row"><span class="k">Order number</span><span class="v">CONTENT-1787512-A1F9</span></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -7,6 +7,108 @@ const ITEM_TABLE: Record<string, string> = {
   career_path: "career_paths",
 };
 
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  resource: "Resource",
+  course: "Course",
+  career_path: "Career Path",
+};
+
+const ITEM_URL_PATHS: Record<string, string> = {
+  resource: "resources",
+  course: "learn",
+  career_path: "career-paths",
+};
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+
+// Every email client that matters here (Gmail, Outlook, Apple Mail) has
+// wildly inconsistent CSS support - no flexbox/grid, no CSS custom
+// properties, iffy border-radius in Outlook. Tables + inline styles are the
+// only layout that reliably renders the same everywhere, unlike the modern
+// CSS the design mockup used for previewing this on the web.
+function orderConfirmationEmailHtml(params: {
+  itemTitle: string;
+  itemTypeLabel: string;
+  itemUrl: string;
+  amount: number;
+  currency: string;
+  reference: string;
+  dateLabel: string;
+}): string {
+  const { itemTitle, itemTypeLabel, itemUrl, amount, currency, reference, dateLabel } = params;
+  return `
+  <div style="background:#fafcfc;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dde6e6;border-radius:12px;overflow:hidden;">
+      <tr>
+        <td style="background:#507c80;padding:26px 28px;">
+          <span style="color:#ffffff;font-size:15px;font-weight:700;">Prowess Digital Solutions</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:32px 28px 8px;">
+          <span style="display:inline-block;background:#e7eeee;color:#3d5f62;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:18px;">&#10003; Payment confirmed</span>
+          <h2 style="margin:0 0 14px;font-size:19px;font-weight:700;color:#0b1b1d;">Hi there,</h2>
+          <p style="margin:0 0 20px;font-size:14.5px;line-height:1.65;color:#4b6062;">Your payment has gone through. Here is a summary of your order.</p>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dde6e6;border-radius:10px;overflow:hidden;margin-bottom:8px;">
+            <tr>
+              <td style="padding:16px 18px;border-bottom:1px solid #dde6e6;">
+                <p style="margin:0 0 2px;font-size:14.5px;font-weight:700;color:#0b1b1d;">${itemTitle}</p>
+                <p style="margin:0;font-size:12px;color:#4b6062;">${itemTypeLabel}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f2f6f6;padding:14px 18px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Order number</td><td style="font-size:13px;font-weight:600;color:#0b1b1d;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;">${reference}</td></tr>
+                  <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Date</td><td style="font-size:13px;font-weight:600;color:#0b1b1d;text-align:right;">${dateLabel}</td></tr>
+                  <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Amount paid</td><td style="font-size:14px;font-weight:700;color:#3d5f62;text-align:right;">${currency} ${amount.toLocaleString()}</td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding:12px 28px 8px;">
+          <a href="${itemUrl}" style="display:inline-block;background:#507c80;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:13px 30px;border-radius:8px;">Read your ${itemTypeLabel.toLowerCase()}</a>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:20px 28px 26px;">
+          <p style="margin:0;font-size:13px;line-height:1.6;color:#4b6062;">Need help with this order? Reply to this email and mention the order number above.</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:18px 28px;border-top:1px solid #dde6e6;text-align:center;">
+          <p style="margin:0;font-size:11.5px;color:#4b6062;">Prowess Digital Solutions &middot; prowessdigitalsolutions.com</p>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+}
+
+function adminSaleNotificationHtml(params: {
+  itemTitle: string;
+  buyerEmail: string;
+  amount: number;
+  currency: string;
+  reference: string;
+}): string {
+  const { itemTitle, buyerEmail, amount, currency, reference } = params;
+  return `
+  <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;padding:8px;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#0b1b1d;">New sale</h2>
+    <p style="margin:0 0 14px;font-size:14px;color:#4b6062;">Someone just bought a resource.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #dde6e6;border-radius:10px;background:#f2f6f6;padding:4px 18px;width:100%;max-width:460px;">
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;">Item</td><td style="font-size:13px;font-weight:700;text-align:right;">${itemTitle}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Buyer email</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${buyerEmail}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Amount</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${currency} ${amount.toLocaleString()}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Order number</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${reference}</td></tr>
+    </table>
+  </div>`;
+}
+
 /**
  * Marks a premium-content purchase paid and grants access. Idempotent, safe
  * to call from both the webhook and the client-side verify route -
@@ -53,20 +155,44 @@ export async function markContentPurchasePaid(purchaseId: string, reference: str
     : { data: null };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL;
   const itemTitle = item?.title || "your purchase";
+  const itemTypeLabel = ITEM_TYPE_LABELS[purchase.item_type] || "Item";
+  const itemUrl = item?.slug ? `${SITE_URL}/${ITEM_URL_PATHS[purchase.item_type] || "resources"}/${item.slug}` : SITE_URL;
+  const dateLabel = new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 
   await resend.emails.send({
     from: fromEmail,
     to: purchase.email,
-    subject: `You now have access - ${itemTitle}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2>Payment received</h2>
-        <p>Thanks for your purchase of <b>${itemTitle}</b> on Prowess Digital Solutions.</p>
-        <p>You now have full access. Payment reference: ${reference}</p>
-      </div>
-    `,
+    subject: `Payment confirmed for ${itemTitle}`,
+    html: orderConfirmationEmailHtml({
+      itemTitle,
+      itemTypeLabel,
+      itemUrl,
+      amount: purchase.amount,
+      currency: purchase.currency,
+      reference,
+      dateLabel,
+    }),
   }).catch(() => {});
+
+  // Same admin-notification pattern as markSkillToBusinessPaid/membership -
+  // every other paid flow already tells the admin about a new sale, this
+  // one didn't yet.
+  if (adminEmail) {
+    await resend.emails.send({
+      from: fromEmail,
+      to: adminEmail,
+      subject: `New sale: ${itemTitle}`,
+      html: adminSaleNotificationHtml({
+        itemTitle,
+        buyerEmail: purchase.email,
+        amount: purchase.amount,
+        currency: purchase.currency,
+        reference,
+      }),
+    }).catch(() => {});
+  }
 
   return { ok: true as const, alreadyPaid: false, itemType: purchase.item_type as string, itemSlug: item?.slug as string | undefined };
 }

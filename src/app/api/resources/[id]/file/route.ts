@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { verifyDownloadSignature } from "@/lib/resourceDownload";
+import { watermarkPdf } from "@/lib/watermarkPdf";
 
 export const runtime = "nodejs";
 
@@ -36,12 +37,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Only trusted once it's come through the same signature verification as
+  // the rest of this block - an unverified email query param on a free
+  // resource (no signature check at all) could be anything a caller typed,
+  // never safe to stamp onto a document as if it were real.
+  let watermarkEmail: string | null = null;
+
   if (resource.access === "premium") {
     const exp = searchParams.get("exp");
     const sig = searchParams.get("sig");
-    if (!exp || !sig || Date.now() > Number(exp) || !verifyDownloadSignature(id, exp, sig)) {
+    const email = searchParams.get("email");
+    if (!exp || !sig || Date.now() > Number(exp) || !verifyDownloadSignature(id, exp, sig, email)) {
       return NextResponse.json({ error: "This link has expired or is invalid." }, { status: 403 });
     }
+    watermarkEmail = email;
   }
 
   // Older resources (pre-B2C) store file_path with a "pdfs/" prefix that
@@ -53,7 +62,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "File not found in storage." }, { status: 404 });
   }
 
-  return new NextResponse(blob, {
+  const isPdf = (resource.file_type || "").toLowerCase() === "application/pdf" || cleanPath.toLowerCase().endsWith(".pdf");
+
+  let body: Blob = blob;
+  if (isPdf && watermarkEmail) {
+    try {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const watermarked = await watermarkPdf(bytes, watermarkEmail);
+      body = new Blob([Buffer.from(watermarked)], { type: "application/pdf" });
+    } catch {
+      // Malformed/unsupported PDF structure - serve the real file rather
+      // than blocking a legitimate buyer's access over a cosmetic feature.
+      body = blob;
+    }
+  }
+
+  return new NextResponse(body, {
     headers: {
       "Content-Type": resource.file_type || "application/octet-stream",
       "Content-Disposition": `inline; filename="${(resource.file_name || "download").replace(/"/g, "")}"`,
