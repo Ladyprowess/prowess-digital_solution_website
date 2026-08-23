@@ -63,8 +63,6 @@ function VideosPageContent() {
   const [loading, setLoading] = useState(true);
 
   const [featured, setFeatured] = useState<VideoRow | null>(null);
-  const [businessRail, setBusinessRail] = useState<VideoRow[]>([]);
-  const [careerRail, setCareerRail] = useState<VideoRow[]>([]);
   const [ideasRail, setIdeasRail] = useState<VideoRow[]>([]);
 
   useEffect(() => {
@@ -76,45 +74,41 @@ function VideosPageContent() {
       .then(({ data }) => setCategories(Array.from(new Set((data || []).map((r) => r.category as string))).sort()));
   }, []);
 
-  // Curated sections (featured, For Business Owners, For Your Career, Ideas
-  // Worth Watching) sit above the main discovery feed and don't participate
-  // in pagination -- only shown on the unfiltered, first-page view, same
-  // convention as /learn's Featured Learning strip.
+  // Curated sections (Featured, Ideas Worth Watching) sit above the main
+  // discovery feed and don't participate in pagination -- only shown on
+  // the unfiltered, first-page view, same convention as /learn's Featured
+  // Learning strip. No separate Business/Career rails here -- the
+  // Audience pill tabs above already filter by that exact dimension, so a
+  // dedicated rail for it was a redundant second way to do the same thing.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (activeFiltersPresent || filters.page > 1) {
-        if (!cancelled) { setFeatured(null); setBusinessRail([]); setCareerRail([]); setIdeasRail([]); }
+        if (!cancelled) { setFeatured(null); setIdeasRail([]); }
         return;
       }
       const base = () => supabase.from("resources").select(VIDEO_SELECT).eq("status", "published").eq("resource_type", "video").eq("show_in_library", true);
-      const [f, b, c, i] = await Promise.all([
+      const [f, i] = await Promise.all([
         base().eq("featured", true).order("created_at", { ascending: false }).limit(1),
-        base().eq("show_in_business", true).order("created_at", { ascending: false }).limit(8),
-        base().eq("show_in_career", true).order("created_at", { ascending: false }).limit(8),
         base().in("content_role", ["motivation", "interview"]).order("created_at", { ascending: false }).limit(8),
       ]);
       if (cancelled) return;
       setFeatured(((f.data as VideoRow[]) || [])[0] || null);
-      setBusinessRail((b.data as VideoRow[]) || []);
-      setCareerRail((c.data as VideoRow[]) || []);
       setIdeasRail((i.data as VideoRow[]) || []);
     })();
     return () => { cancelled = true; };
   }, [activeFiltersPresent, filters.page]);
 
-  // Every video already shown in a curated rail above (Featured, For
-  // Business Owners, For Your Career, Ideas Worth Watching) -- excluded
-  // from the main grid below so the same handful of videos don't appear
-  // twice on one page load, matching the same fix on /resources.
+  // Every video already shown in a curated rail above (Featured, Ideas
+  // Worth Watching) -- excluded from the main grid below so the same
+  // handful of videos don't appear twice on one page load, matching the
+  // same fix on /resources.
   const curatedVideoIds = useMemo(() => {
     const ids = new Set<string>();
     if (featured) ids.add(featured.id);
-    for (const v of businessRail) ids.add(v.id);
-    for (const v of careerRail) ids.add(v.id);
     for (const v of ideasRail) ids.add(v.id);
     return Array.from(ids);
-  }, [featured, businessRail, careerRail, ideasRail]);
+  }, [featured, ideasRail]);
 
   useEffect(() => {
     let cancelled = false;
@@ -159,12 +153,6 @@ function VideosPageContent() {
   const popularCategories = categories.slice(0, 6);
   const categoryTabs: PillTab<string>[] = [{ value: "", label: "All" }, ...categories.map((c) => ({ value: c, label: c }))];
   const featuredThumb = featured ? thumbnailFor(featured) : null;
-  const showCuratedVideos = Boolean(featured) || businessRail.length > 0 || careerRail.length > 0 || ideasRail.length > 0;
-  // Every video already appeared in a rail above -- an empty "no videos
-  // found" box directly beneath a fully-populated curated section reads as
-  // broken, not as "nothing here yet". Only suppressed on the unfiltered
-  // first page; a real "no results" for an active filter still needs to show.
-  const exploreIsRedundant = !loading && !activeFiltersPresent && filters.page === 1 && items.length === 0 && showCuratedVideos;
 
   return (
     <div className="min-h-screen bg-background">
@@ -258,88 +246,62 @@ function VideosPageContent() {
       )}
 
       {/* CONTINUE WATCHING + CURATED RAILS */}
-      {(businessRail.length > 0 || careerRail.length > 0 || ideasRail.length > 0) && (
+      {ideasRail.length > 0 && (
         <section className="border-b border-border bg-muted/40 py-14">
           <Container>
             <Reveal><ContinueWatching /></Reveal>
 
-            {businessRail.length > 0 && (
-              <Reveal delay={40}>
-                <div className="mt-10">
-                  <h2 className="text-lg font-bold text-foreground">For Business Owners</h2>
-                  <div className="mt-4"><ScrollCarousel>{businessRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
-                </div>
-              </Reveal>
-            )}
-
-            {careerRail.length > 0 && (
-              <Reveal delay={80}>
-                <div className="mt-10">
-                  <h2 className="text-lg font-bold text-foreground">For Your Career</h2>
-                  <div className="mt-4"><ScrollCarousel>{careerRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
-                </div>
-              </Reveal>
-            )}
-
-            {ideasRail.length > 0 && (
-              <Reveal delay={120}>
-                <div className="mt-10">
-                  <h2 className="text-lg font-bold text-foreground">Ideas Worth Watching</h2>
-                  <div className="mt-4"><ScrollCarousel>{ideasRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
-                </div>
-              </Reveal>
-            )}
+            <Reveal delay={40}>
+              <div className="mt-10">
+                <h2 className="text-lg font-bold text-foreground">Ideas Worth Watching</h2>
+                <div className="mt-4"><ScrollCarousel>{ideasRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
+              </div>
+            </Reveal>
           </Container>
         </section>
       )}
-      {!(businessRail.length > 0 || careerRail.length > 0 || ideasRail.length > 0) && !activeFiltersPresent && filters.page === 1 && (
+      {ideasRail.length === 0 && !activeFiltersPresent && filters.page === 1 && (
         <section className="border-b border-border py-8"><Container><ContinueWatching /></Container></section>
       )}
 
-      {/* EXPLORE VIDEOS -- hidden on the unfiltered first page once every
-          video is already shown in a curated rail above (an empty "no
-          videos found" box directly beneath a fully-populated curated
-          section reads as broken, not "nothing here yet"). An active
-          filter still shows its own real "no results" state. */}
-      {!exploreIsRedundant && (
-        <section className="py-12 sm:py-16">
-          <Container>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  More videos also live on our{" "}
-                  <a href="https://www.youtube.com/@ProwessDigitalSolutions" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">YouTube channel →</a>
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} video${total === 1 ? "" : "s"} found`}</p>
-              </div>
-              <select
-                value={filters.sort}
-                onChange={(e) => updateFilters({ sort: e.target.value as SortValue })}
-                className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground"
-              >
-                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+      {/* EXPLORE VIDEOS */}
+      <section className="py-12 sm:py-16">
+        <Container>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                More videos also live on our{" "}
+                <a href="https://www.youtube.com/@ProwessDigitalSolutions" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">YouTube channel →</a>
+              </p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} video${total === 1 ? "" : "s"} found`}</p>
             </div>
+            <select
+              value={filters.sort}
+              onChange={(e) => updateFilters({ sort: e.target.value as SortValue })}
+              className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground"
+            >
+              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
 
-            {loading ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
-            ) : items.length === 0 ? (
-              <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
-                <h2 className="text-lg font-semibold text-foreground">No videos found</h2>
-                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                  {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding videos here soon - check back shortly."}
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map((v) => <VideoCard key={v.id} video={v} />)}
-              </div>
-            )}
+          {loading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+          ) : items.length === 0 ? (
+            <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
+              <h2 className="text-lg font-semibold text-foreground">No videos found</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding videos here soon - check back shortly."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((v) => <VideoCard key={v.id} video={v} />)}
+            </div>
+          )}
 
-            <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
-          </Container>
-        </section>
-      )}
+          <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
+        </Container>
+      </section>
     </div>
   );
 }

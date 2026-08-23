@@ -70,37 +70,32 @@ function ResourcesPageContent() {
   const [loading, setLoading] = useState(true);
 
   const [featuredPicks, setFeaturedPicks] = useState<ResourceItem[]>([]);
-  const [businessRail, setBusinessRail] = useState<ResourceItem[]>([]);
-  const [careerRail, setCareerRail] = useState<ResourceItem[]>([]);
   const [templatesAndChecklists, setTemplatesAndChecklists] = useState<ResourceItem[]>([]);
 
-  // Curated sections (Featured, Popular Picks, Business/Career rails,
-  // Templates & Checklists table) sit above the main discovery feed and
-  // don't participate in pagination -- only shown on the unfiltered,
-  // first-page view, same convention as /videos' curated rails.
+  // Curated sections (Featured, Popular Picks, Templates & Checklists
+  // table) sit above the main discovery feed and don't participate in
+  // pagination -- only shown on the unfiltered, first-page view, same
+  // convention as /videos' curated rails. No separate Business/Career
+  // rails here -- the Audience pill tabs above already filter by that
+  // exact dimension, so a dedicated rail for it was a redundant second way
+  // to do the same thing.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (activeFiltersPresent || filters.page > 1) {
-        if (!cancelled) { setFeaturedPicks([]); setBusinessRail([]); setCareerRail([]); setTemplatesAndChecklists([]); }
+        if (!cancelled) { setFeaturedPicks([]); setTemplatesAndChecklists([]); }
         return;
       }
       const base = () => new URLSearchParams({ exclude_resource_type: "video" });
       const featuredParams = base(); featuredParams.set("featured", "true"); featuredParams.set("pageSize", "7");
-      const businessParams = base(); businessParams.set("show_in_business", "true"); businessParams.set("pageSize", "8");
-      const careerParams = base(); careerParams.set("show_in_career", "true"); careerParams.set("pageSize", "8");
       const templatesParams = new URLSearchParams({ resource_type: "template,checklist", pageSize: "8" });
 
-      const [f, b, c, t] = await Promise.all([
+      const [f, t] = await Promise.all([
         fetchResources(featuredParams),
-        fetchResources(businessParams),
-        fetchResources(careerParams),
         fetchResources(templatesParams),
       ]);
       if (cancelled) return;
       setFeaturedPicks(f.items);
-      setBusinessRail(b.items);
-      setCareerRail(c.items);
       setTemplatesAndChecklists(t.items);
     })();
     return () => { cancelled = true; };
@@ -111,8 +106,8 @@ function ResourcesPageContent() {
   // twice on one page load (obvious with only a couple of resources
   // published so far, but the exclusion holds regardless of count).
   const curatedIds = useMemo(
-    () => Array.from(new Set([...featuredPicks, ...businessRail, ...careerRail, ...templatesAndChecklists].map((r) => r.id))),
-    [featuredPicks, businessRail, careerRail, templatesAndChecklists]
+    () => Array.from(new Set([...featuredPicks, ...templatesAndChecklists].map((r) => r.id))),
+    [featuredPicks, templatesAndChecklists]
   );
 
   useEffect(() => {
@@ -154,13 +149,7 @@ function ResourcesPageContent() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hero = featuredPicks[0] || null;
   const popularPicks = featuredPicks.slice(1);
-  const showCurated = hero || popularPicks.length > 0 || businessRail.length > 0 || careerRail.length > 0 || templatesAndChecklists.length > 0;
-  // Every resource already appeared in a rail above -- an empty "no
-  // resources found" box directly beneath a fully-populated curated
-  // section reads as broken, not as "nothing here yet". Only suppressed on
-  // the unfiltered first page; a real "no results" for an active filter
-  // still needs to show.
-  const exploreIsRedundant = !loading && !activeFiltersPresent && filters.page === 1 && items.length === 0 && Boolean(showCurated);
+  const showCurated = hero || popularPicks.length > 0 || templatesAndChecklists.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -266,24 +255,6 @@ function ResourcesPageContent() {
               </Reveal>
             )}
 
-            {businessRail.length > 0 && (
-              <Reveal delay={40}>
-                <div className="mt-10">
-                  <h2 className="text-lg font-bold text-foreground">For Business Owners</h2>
-                  <div className="mt-4"><ScrollCarousel>{businessRail.map((r) => <div key={r.id} className="w-72 flex-shrink-0 snap-start"><ResourceCard item={r} /></div>)}</ScrollCarousel></div>
-                </div>
-              </Reveal>
-            )}
-
-            {careerRail.length > 0 && (
-              <Reveal delay={80}>
-                <div className="mt-10">
-                  <h2 className="text-lg font-bold text-foreground">For Your Career</h2>
-                  <div className="mt-4"><ScrollCarousel>{careerRail.map((r) => <div key={r.id} className="w-72 flex-shrink-0 snap-start"><ResourceCard item={r} /></div>)}</ScrollCarousel></div>
-                </div>
-              </Reveal>
-            )}
-
             {templatesAndChecklists.length > 0 && (
               <Reveal delay={120}>
                 <div className="mt-10">
@@ -321,35 +292,29 @@ function ResourcesPageContent() {
         </section>
       )}
 
-      {/* EXPLORE RESOURCES -- id="explore" stays mounted unconditionally so
-          the "Browse by need" tiles always have a scroll target, even when
-          the content below is suppressed. */}
+      {/* EXPLORE RESOURCES */}
       <section id="explore" className="scroll-mt-20 py-12 sm:py-16">
         <Container>
-          {!exploreIsRedundant && (
-            <>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-                <p className="text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} resource${total === 1 ? "" : "s"} found`}</p>
-              </div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} resource${total === 1 ? "" : "s"} found`}</p>
+          </div>
 
-              {loading ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
-              ) : items.length === 0 ? (
-                <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
-                  <h2 className="text-lg font-semibold text-foreground">No resources found</h2>
-                  <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                    {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding resources here soon - check back shortly."}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {items.map((r) => <ResourceCard key={r.id} item={r} />)}
-                </div>
-              )}
-
-              <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
-            </>
+          {loading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+          ) : items.length === 0 ? (
+            <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
+              <h2 className="text-lg font-semibold text-foreground">No resources found</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding resources here soon - check back shortly."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((r) => <ResourceCard key={r.id} item={r} />)}
+            </div>
           )}
+
+          <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
         </Container>
       </section>
 
