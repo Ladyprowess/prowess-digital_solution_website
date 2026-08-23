@@ -27,6 +27,11 @@ type Source = "prowess" | "youtube" | "external";
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 const AUDIENCES = ["consumer", "business", "both"] as const;
 const CONTENT_ROLES = ["general", "learning", "career", "business", "motivation", "interview", "webinar", "tutorial"] as const;
+const CONTENT_DISPLAYS = ["text", "pdf"] as const;
+const CONTENT_DISPLAY_LABELS: Record<(typeof CONTENT_DISPLAYS)[number], string> = {
+  text: "Written content (below)",
+  pdf: "Embedded PDF (visitors scroll the uploaded file itself)",
+};
 
 // Where a resource is eligible to surface, independent of its type/
 // audience/category. Applies to every resource type, not just video --
@@ -75,6 +80,7 @@ function ResourcesAdmin() {
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
+  const [contentDisplay, setContentDisplay] = useState<(typeof CONTENT_DISPLAYS)[number]>("text");
   const [fileUrl, setFileUrl] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [resourceFile, setResourceFile] = useState<File | null>(null);
@@ -152,7 +158,7 @@ function ResourcesAdmin() {
     setEditingResourceId(null);
     setTitle(""); setAudience("consumer"); setResourceType("guide"); setCategory(""); setLevel("");
     setSource("prowess"); setExternalUrl(""); setThumbnailUrl("");
-    setSummary(""); setContent(""); setFileUrl("");
+    setSummary(""); setContent(""); setContentDisplay("text"); setFileUrl("");
     setCoverFile(null); setResourceFile(null); setExistingFileName(null);
     setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
@@ -166,7 +172,7 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
+      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, content_display, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -175,7 +181,7 @@ function ResourcesAdmin() {
     const r = data as unknown as {
       id: string; slug: string; title: string; audience: (typeof AUDIENCES)[number]; resource_type: (typeof RESOURCE_TYPES)[number] | null;
       category: string | null; level: (typeof LEVELS)[number] | null; source: Source; external_url: string | null;
-      thumbnail_url: string | null; description: string | null; content: string | null; file_url: string | null; file_name: string | null;
+      thumbnail_url: string | null; description: string | null; content: string | null; content_display: (typeof CONTENT_DISPLAYS)[number]; file_url: string | null; file_name: string | null;
       access: "free" | "premium"; price: number | null; price_currency: string | null; featured: boolean;
       status: ResourceRow["status"]; meta_title: string | null; meta_description: string | null;
       content_role: (typeof CONTENT_ROLES)[number] | null; duration_minutes: number | null; why_recommended: string | null;
@@ -196,6 +202,7 @@ function ResourcesAdmin() {
     setThumbnailUrl(r.thumbnail_url || "");
     setSummary(r.description || "");
     setContent(r.content || "");
+    setContentDisplay(r.content_display || "text");
     setFileUrl(r.file_url || "");
     setCoverFile(null); setResourceFile(null); setExistingFileName(r.file_name || null);
     setAccess(r.access);
@@ -288,6 +295,7 @@ function ResourcesAdmin() {
         // field/state name here for a clearer form label, not the DB column.
         description: summary.trim() || null,
         content: content.trim() || null,
+        content_display: contentDisplay,
         file_url: fileUrl.trim() || null,
         ...(uploaded.file_path ? { file_path: uploaded.file_path, file_name: uploaded.file_name, file_type: uploaded.file_type, file_size: uploaded.file_size } : {}),
         ...(uploaded.cover_path ? { cover_path: uploaded.cover_path } : {}),
@@ -473,6 +481,14 @@ function ResourcesAdmin() {
 
             {source === "prowess" && (
               <>
+                <Field label="Content display">
+                  <select value={contentDisplay} onChange={(e) => setContentDisplay(e.target.value as (typeof CONTENT_DISPLAYS)[number])} className={inputCls}>
+                    {CONTENT_DISPLAYS.map((d) => <option key={d} value={d}>{CONTENT_DISPLAY_LABELS[d]}</option>)}
+                  </select>
+                  {contentDisplay === "pdf" && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">Make sure a PDF is uploaded below - the detail page will embed it in place of the written content.</p>
+                  )}
+                </Field>
                 <Field label="Content">
                   <RichTextEditor key={`content-${editingResourceId || "new"}`} value={content} onChange={setContent} placeholder="The actual guide/article/checklist content..." />
                 </Field>

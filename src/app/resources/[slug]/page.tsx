@@ -34,6 +34,7 @@ type ResourceDetail = {
   source: string;
   reading_minutes: number | null;
   page_count: number | null;
+  content_display: "text" | "pdf";
   published_at: string | null;
   cover_url: string | null;
   cover_path: string | null;
@@ -44,7 +45,7 @@ async function getResource(slug: string) {
   const { data } = await supabase
     .from("resources")
     .select(
-      "id, slug, title, description, category, resource_type, level, audience, access, price, price_currency, source, reading_minutes, page_count, published_at, cover_url, cover_path, resource_skill_map(skills(id, name, slug))"
+      "id, slug, title, description, category, resource_type, level, audience, access, price, price_currency, source, reading_minutes, page_count, content_display, published_at, cover_url, cover_path, resource_skill_map(skills(id, name, slug))"
     )
     // published check covers both the legacy is_published-driven rows and
     // the newer status field, kept in sync on every admin write
@@ -180,7 +181,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
           {resource.resource_type === "checklist" ? (
             <ChecklistBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} />
           ) : (
-            <ResourceBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} />
+            <ResourceBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} contentDisplay={resource.content_display} />
           )}
         </Reveal>
 

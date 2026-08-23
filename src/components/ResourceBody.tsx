@@ -19,10 +19,16 @@ export function ResourceBody({
   resourceId,
   price,
   currency,
+  contentDisplay = "text",
 }: {
   resourceId: string;
   price: number | null;
   currency: string | null;
+  // "pdf" embeds the uploaded file itself (scrollable, in place of the
+  // written content + table of contents) instead of rendering `content` --
+  // an admin choice for a resource that's really just a PDF, where
+  // retyping it as rich text would be pointless duplicate work.
+  contentDisplay?: "text" | "pdf";
 }) {
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [data, setData] = useState<ResourceBodyData | null>(null);
@@ -107,25 +113,40 @@ export function ResourceBody({
   // download available (an admin-typed external link).
   const downloadUrl = data?.download_url || data?.file_url || null;
 
+  // Only meaningful when there's actually a file to embed -- an admin who
+  // picked "pdf" display but never uploaded a file falls back to the
+  // normal written-content rendering below rather than showing nothing.
+  const showEmbeddedPdf = contentDisplay === "pdf" && Boolean(downloadUrl);
+
   return (
     <div className="mt-10 space-y-6">
-      {toc.length >= 3 && (
-        <nav className="rounded-2xl border border-border bg-card p-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">On this page</p>
-          <ul className="mt-3 space-y-1.5 text-sm">
-            {toc.map((item) => (
-              <li key={item.id} className={item.level === 3 ? "ml-4" : ""}>
-                <a href={`#${item.id}`} className="text-primary hover:underline">{item.text}</a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
+      {showEmbeddedPdf ? (
+        <iframe
+          src={downloadUrl!}
+          title="Document preview"
+          className="h-[85vh] w-full rounded-2xl border border-border"
+        />
+      ) : (
+        <>
+          {toc.length >= 3 && (
+            <nav className="rounded-2xl border border-border bg-card p-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">On this page</p>
+              <ul className="mt-3 space-y-1.5 text-sm">
+                {toc.map((item) => (
+                  <li key={item.id} className={item.level === 3 ? "ml-4" : ""}>
+                    <a href={`#${item.id}`} className="text-primary hover:underline">{item.text}</a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
-      {data?.content && (
-        <div ref={contentRef}>
-          <RichText html={data.content} />
-        </div>
+          {data?.content && (
+            <div ref={contentRef}>
+              <RichText html={data.content} />
+            </div>
+          )}
+        </>
       )}
 
       {data?.external_url && (
