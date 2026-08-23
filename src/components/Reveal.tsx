@@ -24,6 +24,15 @@ export function Reveal({ children, delay = 0, y = 22, className = "", as = "div"
     const el = ref.current;
     if (!el) return;
 
+    // threshold: 0 -- fires as soon as any part of the element enters the
+    // viewport, not once a fraction of its OWN height is visible. A
+    // percentage threshold (this used to be 0.15) breaks for tall content:
+    // 15% of a long guide/ebook body can be taller than the viewport
+    // itself, making that ratio impossible to reach, so the block never
+    // reveals and stays at opacity: 0 forever while still taking up its
+    // full layout height -- exactly the "long empty scroll" symptom this
+    // fixes. rootMargin still holds back the trigger until the element is
+    // meaningfully into view, not the instant its top pixel appears.
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -31,7 +40,7 @@ export function Reveal({ children, delay = 0, y = 22, className = "", as = "div"
           observer.disconnect();
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+      { threshold: 0, rootMargin: "0px 0px -8% 0px" }
     );
 
     observer.observe(el);
