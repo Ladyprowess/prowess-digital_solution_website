@@ -181,7 +181,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
           {resource.resource_type === "checklist" ? (
             <ChecklistBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} />
           ) : (
-            <ResourceBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} contentDisplay={resource.content_display} />
+            <ResourceBody resourceId={resource.id} title={resource.title} price={resource.price} currency={resource.price_currency} contentDisplay={resource.content_display} />
           )}
         </Reveal>
 

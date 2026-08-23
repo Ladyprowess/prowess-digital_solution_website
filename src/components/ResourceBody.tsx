@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { RichText } from "@/components/RichText";
+import { PdfViewer } from "@/components/resources/PdfViewer";
 
 type ResourceBodyData = {
   content: string | null;
@@ -17,11 +18,13 @@ type TocItem = { id: string; text: string; level: 2 | 3 };
 
 export function ResourceBody({
   resourceId,
+  title,
   price,
   currency,
   contentDisplay = "text",
 }: {
   resourceId: string;
+  title: string;
   price: number | null;
   currency: string | null;
   // "pdf" embeds the uploaded file itself (scrollable, in place of the
@@ -121,11 +124,7 @@ export function ResourceBody({
   return (
     <div className="mt-10 space-y-6">
       {showEmbeddedPdf ? (
-        <iframe
-          src={downloadUrl!}
-          title="Document preview"
-          className="h-[85vh] w-full rounded-2xl border border-border"
-        />
+        <PdfViewer url={downloadUrl!} title={title} />
       ) : (
         <>
           {toc.length >= 3 && (
