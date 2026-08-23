@@ -106,6 +106,15 @@ function ResourcesPageContent() {
     return () => { cancelled = true; };
   }, [activeFiltersPresent, filters.page]);
 
+  // Every resource already shown in a curated rail above -- excluded from
+  // the main grid below so the same handful of resources don't appear
+  // twice on one page load (obvious with only a couple of resources
+  // published so far, but the exclusion holds regardless of count).
+  const curatedIds = useMemo(
+    () => Array.from(new Set([...featuredPicks, ...businessRail, ...careerRail, ...templatesAndChecklists].map((r) => r.id))),
+    [featuredPicks, businessRail, careerRail, templatesAndChecklists]
+  );
+
   useEffect(() => {
     let cancelled = false;
     // Debounced, matching /videos and /learn's 150ms search-input pattern.
@@ -117,6 +126,7 @@ function ResourcesPageContent() {
       if (filters.type) params.set("resource_type", filters.type);
       if (filters.useCase) params.set("use_case", filters.useCase);
       if (filters.q.trim()) params.set("q", filters.q.trim());
+      if (curatedIds.length > 0) params.set("exclude_id", curatedIds.join(","));
       params.set("page", String(filters.page));
       params.set("pageSize", String(PAGE_SIZE));
 
@@ -127,7 +137,7 @@ function ResourcesPageContent() {
       setLoading(false);
     }, 150);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [filters.audience, filters.type, filters.useCase, filters.q, filters.page]);
+  }, [filters.audience, filters.type, filters.useCase, filters.q, filters.page, curatedIds]);
 
   function updateFilters(patch: Partial<ResourceFilters>) {
     const next: ResourceFilters = { ...filters, ...patch };

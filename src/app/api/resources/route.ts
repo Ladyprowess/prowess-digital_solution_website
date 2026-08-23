@@ -22,6 +22,7 @@ export async function GET(req: Request) {
     const showInCareer = (searchParams.get("show_in_career") || "").trim();
     const showOnHomepage = (searchParams.get("show_on_homepage") || "").trim();
     const excludeShowOnHomepage = (searchParams.get("exclude_show_on_homepage") || "").trim();
+    const excludeId = (searchParams.get("exclude_id") || "").trim();
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(24, Math.max(1, Number(searchParams.get("pageSize")) || 6));
 
@@ -56,6 +57,16 @@ export async function GET(req: Request) {
     if (featured === "true") query = query.eq("featured", true);
     if (showInBusiness === "true") query = query.eq("show_in_business", true);
     if (showInCareer === "true") query = query.eq("show_in_career", true);
+    // Lets a caller that already rendered a resource in its own curated
+    // rail (Featured, For Business Owners, For Your Career, Templates &
+    // Checklists) exclude those same ids from a separate "everything"
+    // section below, instead of the same handful of resources appearing
+    // twice on one page load -- most visible right now simply because so
+    // few resources exist, but the exclusion holds regardless of count.
+    if (excludeId) {
+      const excluded = excludeId.split(",").map((v) => v.trim()).filter(Boolean);
+      if (excluded.length > 0) query = query.not("id", "in", `(${excluded.join(",")})`);
+    }
 
     // search
     if (q) {

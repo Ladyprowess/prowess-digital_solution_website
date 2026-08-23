@@ -103,6 +103,19 @@ function VideosPageContent() {
     return () => { cancelled = true; };
   }, [activeFiltersPresent, filters.page]);
 
+  // Every video already shown in a curated rail above (Featured, For
+  // Business Owners, For Your Career, Ideas Worth Watching) -- excluded
+  // from the main grid below so the same handful of videos don't appear
+  // twice on one page load, matching the same fix on /resources.
+  const curatedVideoIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (featured) ids.add(featured.id);
+    for (const v of businessRail) ids.add(v.id);
+    for (const v of careerRail) ids.add(v.id);
+    for (const v of ideasRail) ids.add(v.id);
+    return Array.from(ids);
+  }, [featured, businessRail, careerRail, ideasRail]);
+
   useEffect(() => {
     let cancelled = false;
     // Debounced, matching /learn and /jobs' 150ms search-input pattern --
@@ -116,6 +129,7 @@ function VideosPageContent() {
         .in("audience", audienceValues(filters.audience));
       if (filters.category) q = q.eq("category", filters.category);
       if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);
+      if (curatedVideoIds.length > 0) q = q.not("id", "in", `(${curatedVideoIds.join(",")})`);
       // Secondary order by id -- duration_minutes is nullable and admins
       // often share the same value, and Postgres doesn't guarantee a
       // stable order among ties, which would let a row appear on two
@@ -132,7 +146,7 @@ function VideosPageContent() {
       setLoading(false);
     }, 150);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [filters.audience, filters.category, filters.q, filters.sort, filters.page]);
+  }, [filters.audience, filters.category, filters.q, filters.sort, filters.page, curatedVideoIds]);
 
   function updateFilters(patch: Partial<VideoFilters>) {
     const next: VideoFilters = { ...filters, ...patch };
