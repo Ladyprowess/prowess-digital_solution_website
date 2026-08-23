@@ -63,7 +63,7 @@ export function PdfViewer({ url, title }: { url: string; title: string }) {
         onLoadSuccess={({ numPages: n }) => setNumPages(n)}
         onLoadError={() => setFailed(true)}
         loading={<p className="py-10 text-center text-sm text-muted-foreground">Loading document…</p>}
-        className="max-h-[85vh] overflow-y-auto"
+        className="max-h-[95vh] overflow-y-auto"
       >
         {pageWidth > 0 &&
           Array.from({ length: numPages || 0 }, (_, i) => (
