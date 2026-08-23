@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { verifyMember } from "@/lib/auth/verifyMember";
 import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
@@ -7,6 +8,14 @@ const PRICE_USD = 100;
 
 export async function POST(req: Request) {
   try {
+    // A real signed-in session is required to pay - the intake form's own
+    // email field can still differ from the account email (a business
+    // contact address, say), this just gates who's allowed to check out.
+    const member = await verifyMember(req);
+    if (!member) {
+      return NextResponse.json({ ok: false, error: "Please sign in to continue." }, { status: 401 });
+    }
+
     const body = await req.json();
     const { fullName, email, phone, skillOrBusiness } = body || {};
 

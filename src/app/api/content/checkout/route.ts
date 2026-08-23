@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { verifyMember } from "@/lib/auth/verifyMember";
 import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
 import { getItemPrice } from "@/lib/payments/content";
 
@@ -9,10 +10,21 @@ const VALID_ITEM_TYPES = ["resource", "course", "career_path"];
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, itemType, itemId } = body || {};
+    // No more guest checkout by typing an email - a real signed-in session
+    // is required, and the email always comes from that verified session,
+    // never from client input (removes any risk of buying under someone
+    // else's address, and matches what the user asked for: every paid
+    // purchase requires being logged in first).
+    const member = await verifyMember(req);
+    if (!member) {
+      return NextResponse.json({ ok: false, error: "Please sign in to continue." }, { status: 401 });
+    }
+    const email = member.email;
 
-    if (!email || !itemType || !itemId) {
+    const body = await req.json();
+    const { itemType, itemId } = body || {};
+
+    if (!itemType || !itemId) {
       return NextResponse.json({ ok: false, error: "Missing required fields" }, { status: 400 });
     }
     if (!VALID_ITEM_TYPES.includes(itemType)) {
