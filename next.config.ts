@@ -3,6 +3,18 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
+  // pdfjs-dist ships an .mjs build that crashes webpack's ESM interop with
+  // "Object.defineProperty called on non-object" inside __webpack_require__.r
+  // -- a known, currently-open bug specific to pdfjs-dist 5.4.x + Next.js
+  // webpack (mozilla/pdf.js#20478), confirmed by reproducing it locally.
+  // transpilePackages alone (the usual fix for this class of problem)
+  // didn't resolve it; esmExternals: "loose" is the fix documented against
+  // this exact issue.
+  transpilePackages: ["pdfjs-dist", "react-pdf"],
+  experimental: {
+    esmExternals: "loose",
+  },
+
   images: {
     remotePatterns: [
       {

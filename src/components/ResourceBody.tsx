@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { RichText } from "@/components/RichText";
-import { PdfViewer } from "@/components/resources/PdfViewer";
+
+// ssr: false is load-bearing, not an optimization -- pdf.js (which
+// PdfViewer depends on) touches browser-only globals (Web Workers,
+// DOMMatrix, etc.) that don't exist during the server render Next.js still
+// does once for a "use client" component's initial HTML. Even with worker
+// setup deferred to an effect inside PdfViewer itself, react-pdf's own
+// module-level code crashed that server render with "Object.defineProperty
+// called on non-object" -- confirmed by reproducing it locally before this
+// was added.
+const PdfViewer = dynamic(() => import("@/components/resources/PdfViewer").then((m) => m.PdfViewer), { ssr: false });
 
 type ResourceBodyData = {
   content: string | null;

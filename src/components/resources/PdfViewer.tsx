@@ -14,20 +14,31 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 // it looks and scrolls identically on every device regardless of what PDF
 // support the browser happens to have built in.
 //
-// The worker script is loaded from unpkg at the exact version react-pdf's
-// own bundled pdfjs-dist reports (pdfjs.version), not from this project's
-// own top-level pdfjs-dist dependency -- react-pdf ships its own nested
-// pdfjs-dist (a different version), and pdf.js hard-fails if the main
-// thread and worker versions don't match exactly. Matching by version
-// number against a CDN sidesteps needing the exact right nested path to
-// resolve through Next.js's bundler.
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
 export function PdfViewer({ url, title }: { url: string; title: string }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [pageWidth, setPageWidth] = useState(0);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
+
+  // Configuring the worker (and touching pdfjs at all) has to happen
+  // inside an effect, not at module load time -- this component still
+  // gets server-rendered once for its initial HTML/hydration even though
+  // it's "use client" (that's how Next.js client components work), and
+  // pdf.js depends on browser-only globals (Web Workers, DOMMatrix, etc.)
+  // that don't exist in that Node.js render pass. Doing this at import
+  // time crashed the whole page with "Object.defineProperty called on
+  // non-object" on first render -- confirmed by reproducing it locally.
+  //
+  // The worker script itself loads from unpkg at the exact version
+  // react-pdf's own bundled pdfjs-dist reports (pdfjs.version), not this
+  // project's own top-level pdfjs-dist dependency -- react-pdf ships its
+  // own nested pdfjs-dist (a different version), and pdf.js hard-fails if
+  // the main thread and worker versions don't match exactly. Matching by
+  // version number against a CDN sidesteps needing the exact right nested
+  // path to resolve through Next.js's bundler.
+  useEffect(() => {
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+  }, []);
 
   useEffect(() => {
     const el = containerRef.current;
