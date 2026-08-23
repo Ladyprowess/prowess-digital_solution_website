@@ -60,21 +60,19 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
       href={`/resources/${item.slug}`}
       className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
     >
-      {/* Cover */}
-      <div className="relative h-48 w-full bg-slate-100">
+      {/* Cover -- aspect ratio, not a fixed pixel height, so the crop
+          window stays the same shape at every card width instead of
+          getting much more severe on a narrow mobile grid column than on
+          a wide desktop one (that mismatch was what chopped cover text
+          off on mobile before). object-cover fills the box completely,
+          no letterbox padding. */}
+      <div className="relative aspect-[3/2] w-full bg-slate-100">
         {coverSrc && !coverFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverSrc}
             alt={item.title}
-            // object-contain, not object-cover -- these covers are often
-            // marketing-style graphics with text baked into the image
-            // itself, not plain photos. Cropping (object-cover) can chop
-            // that text off, especially badly on mobile where a fixed-
-            // height box forces a much narrower effective aspect ratio
-            // than on desktop. Letterboxing (contain, on the slate-100 bg
-            // already behind this) never cuts anything off.
-            className="h-full w-full object-contain"
+            className="h-full w-full object-cover"
             onError={() => setCoverFailed(true)}
           />
         ) : (

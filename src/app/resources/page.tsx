@@ -198,14 +198,12 @@ function ResourcesPageContent() {
               <div className="grid gap-6 sm:grid-cols-[3fr_2fr]">
                 <Link href={`/resources/${hero.slug}`} className="group relative block aspect-[16/9] overflow-hidden rounded-2xl border border-border bg-muted">
                   {hero.cover_url ? (
-                    // object-contain, not object-cover -- resource covers
-                    // are often marketing graphics with text baked into
-                    // the image, which object-cover can crop illegibly
-                    // (worse on mobile, where this box's width shrinks a
-                    // lot more than a fixed aspect ratio would). Contain
-                    // never cuts anything off, just letterboxes on bg-muted.
+                    // Fixed aspect ratio (not a pixel height) keeps the
+                    // crop window the same shape at every width, so
+                    // object-cover doesn't crop far more aggressively on
+                    // mobile than on desktop the way a fixed height did.
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={hero.cover_url} alt={hero.title} className="h-full w-full object-contain" />
+                    <img src={hero.cover_url} alt={hero.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">No cover image</div>
                   )}
