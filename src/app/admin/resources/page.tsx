@@ -54,13 +54,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground";
 
-async function getToken(): Promise<string> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-  if (!token) throw new Error("Your session expired - refresh and try again.");
-  return token;
-}
-
 function ResourcesAdmin() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -241,22 +234,40 @@ function ResourcesAdmin() {
       // fields - both write into the same file_path/cover_path columns the
       // existing signing pipeline (/api/resources, /api/content/access)
       // already knows how to serve, so nothing downstream needs to change.
-      let uploaded: { file_path?: string; file_name?: string; file_type?: string; file_size?: number; cover_path?: string } = {};
+      //
+      // Uploaded directly to Supabase Storage from the browser (own admin
+      // session + RLS, see supabase/admin_storage_policies.sql) rather than
+      // routed through a Next.js API route - a real ebook PDF regularly
+      // exceeds Vercel's ~4.5MB serverless function request-body limit,
+      // which used to fail the whole save with FUNCTION_PAYLOAD_TOO_LARGE
+      // before this file's contents ever reached our own code. Uploading
+      // straight to Storage has no such limit (only Supabase's own
+      // project-level storage cap applies).
+      const uploaded: { file_path?: string; file_name?: string; file_type?: string; file_size?: number; cover_path?: string } = {};
       if (source === "prowess" && (resourceFile || coverFile)) {
         setUploading(true);
         try {
-          const token = await getToken();
-          const form = new FormData();
-          if (resourceFile) form.append("file", resourceFile);
-          if (coverFile) form.append("cover", coverFile);
-          const res = await fetch("/api/admin/resources/upload", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-            body: form,
-          });
-          const body = await res.json();
-          if (!res.ok) throw new Error(body?.error || "Upload failed.");
-          uploaded = body;
+          if (resourceFile) {
+            const filePath = `${Date.now()}-${resourceFile.name.replace(/\s+/g, "-").toLowerCase()}`;
+            const { error } = await supabase.storage.from("resources").upload(filePath, resourceFile, {
+              contentType: resourceFile.type || "application/octet-stream",
+              upsert: false,
+            });
+            if (error) throw new Error(`File upload failed: ${error.message}`);
+            uploaded.file_path = filePath;
+            uploaded.file_name = resourceFile.name;
+            uploaded.file_type = resourceFile.type || "application/octet-stream";
+            uploaded.file_size = resourceFile.size;
+          }
+          if (coverFile) {
+            const coverPath = `${Date.now()}-${coverFile.name.replace(/\s+/g, "-").toLowerCase()}`;
+            const { error } = await supabase.storage.from("resource-covers").upload(coverPath, coverFile, {
+              contentType: coverFile.type || "image/jpeg",
+              upsert: false,
+            });
+            if (error) throw new Error(`Cover upload failed: ${error.message}`);
+            uploaded.cover_path = coverPath;
+          }
         } finally {
           setUploading(false);
         }
