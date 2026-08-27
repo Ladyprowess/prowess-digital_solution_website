@@ -59,6 +59,11 @@ export default function AdminEventRegistrationsPage() {
             <p className="mt-1 text-sm text-slate-600">
               Event ID: <span className="font-semibold">{eventId}</span>
             </p>
+            {!loading && !error && (
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {rows.length.toLocaleString()} {rows.length === 1 ? "person" : "people"} registered
+              </p>
+            )}
           </div>
 
           <button

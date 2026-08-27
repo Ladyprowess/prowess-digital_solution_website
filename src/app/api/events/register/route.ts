@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
+import { sendEventRegistrationEmails } from "@/lib/events/emails";
 
 export const runtime = "nodejs";
 
@@ -45,6 +46,13 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: regError.message }, { status: 400 });
       }
 
+      await sendEventRegistrationEmails({
+        eventId: event_id,
+        registrantName: String(full_name).trim(),
+        registrantEmail: String(email).trim(),
+        paymentStatus: "free",
+      }).catch(() => {});
+
       return NextResponse.json({ ok: true, mode: "free" });
     }
 
@@ -67,6 +75,7 @@ export async function POST(req: Request) {
         type: "event",
         event_id,
         full_name: String(full_name).trim(),
+        email: String(email).trim(),
         phone: phone ? String(phone).trim() : "",
       },
     });

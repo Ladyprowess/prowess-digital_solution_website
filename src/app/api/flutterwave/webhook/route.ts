@@ -4,6 +4,7 @@ import { markMembershipPaid, markMembershipRenewalFailed, markMembershipCancelle
 import { markConsultationPaid } from "@/lib/payments/consultation";
 import { markSkillToBusinessPaid } from "@/lib/payments/skillToBusiness";
 import { markContentPurchasePaid } from "@/lib/payments/content";
+import { sendEventRegistrationEmails } from "@/lib/events/emails";
 
 export const runtime = "nodejs";
 
@@ -109,6 +110,7 @@ async function handleEventPayment(reference: string, metadata: Record<string, un
 
   const event_id = metadata?.event_id;
   const full_name = metadata?.full_name;
+  const email = metadata?.email;
   const phone = metadata?.phone || "";
   if (!event_id || !full_name) return;
 
@@ -116,11 +118,21 @@ async function handleEventPayment(reference: string, metadata: Record<string, un
     {
       event_id,
       full_name: String(full_name).trim(),
+      email: email ? String(email).trim() : null,
       phone: phone ? String(phone).trim() : null,
       payment_status: "paid",
       flutterwave_reference: reference,
     },
   ]);
+
+  if (email) {
+    await sendEventRegistrationEmails({
+      eventId: String(event_id),
+      registrantName: String(full_name).trim(),
+      registrantEmail: String(email).trim(),
+      paymentStatus: "paid",
+    }).catch(() => {});
+  }
 }
 
 // subscription.cancelled payloads vary by how the plan/subscription was

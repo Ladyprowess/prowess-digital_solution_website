@@ -10,9 +10,11 @@ type EventRow = {
   title: string;
   slug: string;
   description: string | null;
-  start_datetime: string;
+  date: string; // YYYY-MM-DD
+  time: string | null; // HH:mm
   registration_type: "free" | "paid";
   price_usd: number | null;
+  registration_count: number | null;
 };
 
 export default function EventRegistrationPage() {
@@ -20,6 +22,7 @@ export default function EventRegistrationPage() {
   const slug = String(params.slug);
 
   const [event, setEvent] = useState<EventRow | null>(null);
+  const [isPast, setIsPast] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
@@ -48,6 +51,10 @@ export default function EventRegistrationPage() {
       }
 
       setEvent(data.event);
+      // Date.now() belongs in an effect, not render - it's an impure call
+      // that would otherwise run on every render for no reason.
+      const eventStart = new Date(`${data.event.date}T${data.event.time || "00:00"}`);
+      setIsPast(eventStart.getTime() < Date.now());
     }
 
     loadEvent();
@@ -132,6 +139,12 @@ export default function EventRegistrationPage() {
     ? `$${Number(event.price_usd || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : "Free";
 
+  // date/time (not start_datetime, which the admin form never actually
+  // writes) is the real source of the event's date - see get-by-slug.
+  // isPast itself is computed in the effect above (Date.now() doesn't
+  // belong in render), this is just for display.
+  const startDate = new Date(`${event.date}T${event.time || "00:00"}`);
+
   return (
     <div className="pb-16">
       <section className="py-14">
@@ -146,57 +159,72 @@ export default function EventRegistrationPage() {
 
               <div className="mt-5 space-y-2 text-sm text-muted-foreground">
                 <div>
-                  <b className="text-foreground">Date:</b> {new Date(event.start_datetime).toLocaleString("en-GB")}
+                  <b className="text-foreground">Date:</b> {startDate.toLocaleString("en-GB")}
                 </div>
                 <div>
                   <b className="text-foreground">Type:</b> {isPaid ? "Paid" : "Free"} • <b className="text-foreground">Price:</b> {priceText}
                 </div>
+                {event.registration_count ? (
+                  <div>
+                    <b className="text-foreground">{event.registration_count.toLocaleString()}</b>{" "}
+                    {event.registration_count === 1 ? "person has" : "people have"} registered for this event.
+                  </div>
+                ) : null}
               </div>
             </Reveal>
 
-            <Reveal delay={100}>
-              <div className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-foreground">Register</h2>
-
-                <div className="mt-4">
-                  <label className="text-sm font-semibold text-foreground">Full name</label>
-                  <input
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-                  />
+            {isPast ? (
+              <Reveal delay={100}>
+                <div className="mt-8 rounded-3xl border border-border bg-card p-6 text-center shadow-sm">
+                  <h2 className="text-lg font-semibold text-foreground">This event has ended</h2>
+                  <p className="mt-2 text-sm text-muted-foreground">Registration is closed.</p>
                 </div>
+              </Reveal>
+            ) : (
+              <Reveal delay={100}>
+                <div className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm">
+                  <h2 className="text-lg font-semibold text-foreground">Register</h2>
 
-                <div className="mt-4">
-                  <label className="text-sm font-semibold text-foreground">Email</label>
-                  <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-                  />
+                  <div className="mt-4">
+                    <label className="text-sm font-semibold text-foreground">Full name</label>
+                    <input
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-sm font-semibold text-foreground">Email</label>
+                    <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-sm font-semibold text-foreground">Phone (optional)</label>
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleRegister}
+                    disabled={submitting}
+                    className="mt-6 w-full rounded-2xl bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+                  >
+                    {submitting ? "Please wait…" : isPaid ? "Pay & Register" : "Register"}
+                  </button>
+
+                  {msg ? <p className="mt-4 text-sm text-muted-foreground">{msg}</p> : null}
                 </div>
-
-                <div className="mt-4">
-                  <label className="text-sm font-semibold text-foreground">Phone (optional)</label>
-                  <input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleRegister}
-                  disabled={submitting}
-                  className="mt-6 w-full rounded-2xl bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
-                >
-                  {submitting ? "Please wait…" : isPaid ? "Pay & Register" : "Register"}
-                </button>
-
-                {msg ? <p className="mt-4 text-sm text-muted-foreground">{msg}</p> : null}
-              </div>
-            </Reveal>
+              </Reveal>
+            )}
           </div>
         </Container>
       </section>

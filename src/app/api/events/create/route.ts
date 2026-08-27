@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     const location = String(form.get("location") || "").trim();
 
     const registration_url = String(form.get("registration_url") || "").trim();
+    const join_link = String(form.get("join_link") || "").trim();
 
     // ✅ NEW: status + registration_type + price_usd (from your form)
     const statusRaw = String(form.get("status") || "published").trim().toLowerCase();
@@ -96,6 +97,7 @@ export async function POST(req: Request) {
       duration: duration || null,
       location: location || null,
       registration_url: registration_url || null,
+      join_link: join_link || null,
 
       // new fields
       status,

@@ -48,6 +48,7 @@ export default function AdminEventsPage() {
 
   const [registrationType, setRegistrationType] = useState<"free" | "paid">("free");
   const [priceUsd, setPriceUsd] = useState("");
+  const [joinLink, setJoinLink] = useState("");
 
   const [status, setStatus] = useState<"published" | "draft">("published");
 
@@ -161,6 +162,7 @@ export default function AdminEventsPage() {
       form.append("status", status);
       form.append("registration_type", registrationType);
       form.append("price_usd", registrationType === "paid" ? String(Number(priceUsd)) : "");
+      form.append("join_link", joinLink.trim());
 
       // optional slug
       if (slug.trim()) form.append("slug", slug.trim());
@@ -194,6 +196,7 @@ export default function AdminEventsPage() {
       setLocation("");
       setRegistrationType("free");
       setPriceUsd("");
+      setJoinLink("");
       setStatus("published");
       setCoverFile(null);
 
@@ -366,6 +369,19 @@ export default function AdminEventsPage() {
                 )}
                 placeholder="e.g. 5000"
               />
+            </div>
+
+            <div className="lg:col-span-2">
+              <label className="text-sm font-semibold text-slate-900">Join link (optional)</label>
+              <input
+                value={joinLink}
+                onChange={(e) => setJoinLink(e.target.value)}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                placeholder="e.g. WhatsApp group, Zoom, or community invite link"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Sent to each registrant in their confirmation email as a &quot;Join the event&quot; button.
+              </p>
             </div>
 
             <div className="lg:col-span-2">

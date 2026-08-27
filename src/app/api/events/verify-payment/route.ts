@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
+import { sendEventRegistrationEmails } from "@/lib/events/emails";
 
 export const runtime = "nodejs";
 
@@ -54,6 +55,13 @@ export async function POST(req: Request) {
     if (regError) {
       return NextResponse.json({ error: regError.message }, { status: 400 });
     }
+
+    await sendEventRegistrationEmails({
+      eventId: String(event_id),
+      registrantName: String(full_name).trim(),
+      registrantEmail: String(email).trim(),
+      paymentStatus: "paid",
+    }).catch(() => {});
 
     return NextResponse.json({ ok: true });
   } catch (e) {
