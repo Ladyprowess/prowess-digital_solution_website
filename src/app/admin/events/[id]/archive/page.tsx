@@ -144,10 +144,11 @@ export default function AdminEventArchivePage() {
 
             <div className="sm:col-span-2">
               <label className="text-sm font-semibold text-slate-900">Caption (optional)</label>
-              <input
+              <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="e.g. Group session, day 2"
+                placeholder="e.g. Group session, day 2 - hands-on portfolio building with the mentees."
+                rows={3}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
               />
             </div>
@@ -175,7 +176,7 @@ export default function AdminEventArchivePage() {
               <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-3">
                 {item.media_type === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.url} alt={item.caption || ""} className="h-40 w-full rounded-xl object-cover" />
+                  <img src={item.url} alt={item.caption || ""} className="max-h-64 w-full rounded-xl bg-slate-100 object-contain" />
                 ) : youtubeEmbedUrl(item.url) ? (
                   <iframe
                     src={youtubeEmbedUrl(item.url)!}

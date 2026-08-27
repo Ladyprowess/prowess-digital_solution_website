@@ -290,7 +290,7 @@ function ResourcesAdmin() {
         category: category.trim() || null,
         level: level || null,
         source,
-        external_url: source !== "prowess" ? externalUrl.trim() : null,
+        external_url: (source !== "prowess" || resourceType === "video") ? externalUrl.trim() : null,
         thumbnail_url: thumbnailUrl.trim() || null,
         // The real column on `resources` is `description` (pre-existing,
         // from before the B2C content model) - `summary` is only the local
@@ -416,8 +416,8 @@ function ResourcesAdmin() {
                   <option value="external">External site</option>
                 </select>
               </Field>
-              {source !== "prowess" && (
-                <Field label="External link *">
+              {(source !== "prowess" || resourceType === "video") && (
+                <Field label={resourceType === "video" ? "Video link (YouTube, etc.) *" : "External link *"}>
                   <input value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} className={inputCls} placeholder="https://..." />
                 </Field>
               )}
@@ -482,7 +482,7 @@ function ResourcesAdmin() {
               <textarea value={summary} onChange={(e) => setSummary(e.target.value)} className={`${inputCls} min-h-[80px]`} />
             </Field>
 
-            {source === "prowess" && (
+            {source === "prowess" && resourceType !== "video" && (
               <>
                 <Field label="Content display">
                   <select value={contentDisplay} onChange={(e) => setContentDisplay(e.target.value as (typeof CONTENT_DISPLAYS)[number])} className={inputCls}>

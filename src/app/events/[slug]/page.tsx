@@ -212,7 +212,7 @@ export default function EventRegistrationPage() {
                         <div key={item.id} className="overflow-hidden rounded-2xl border border-border bg-card">
                           {item.media_type === "image" ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={item.url} alt={item.caption || ""} className="h-48 w-full object-cover" />
+                            <img src={item.url} alt={item.caption || ""} className="max-h-96 w-full bg-muted object-contain" />
                           ) : youtubeEmbedUrl(item.url) ? (
                             <iframe
                               src={youtubeEmbedUrl(item.url)!}
