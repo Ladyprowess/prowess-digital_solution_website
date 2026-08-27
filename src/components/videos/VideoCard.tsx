@@ -15,7 +15,11 @@ export type VideoCardData = {
 
 export function thumbnailFor(v: VideoCardData): string | null {
   if (v.thumbnail_url) return v.thumbnail_url;
-  if (v.source === "youtube" && v.external_url) return getYoutubeThumbnail(v.external_url);
+  // Derived from the link itself, not gated on `source` -- an admin can
+  // paste a YouTube link while Source is left on its default, and
+  // getYoutubeThumbnail already returns null for anything that isn't a
+  // recognisable YouTube URL, so this is safe without the source check.
+  if (v.external_url) return getYoutubeThumbnail(v.external_url);
   return null;
 }
 

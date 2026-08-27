@@ -95,7 +95,7 @@ export function VideoPlayer({ resourceId, price, currency }: { resourceId: strin
   );
 
   useEffect(() => {
-    if (status !== "entitled" || !data?.external_url || data.source !== "youtube") return;
+    if (status !== "entitled" || !data?.external_url) return;
     const youtubeId = getYoutubeVideoId(data.external_url);
     if (!youtubeId || !containerRef.current) return;
 
@@ -160,7 +160,7 @@ export function VideoPlayer({ resourceId, price, currency }: { resourceId: strin
     );
   }
 
-  const youtubeId = data?.source === "youtube" && data.external_url ? getYoutubeVideoId(data.external_url) : null;
+  const youtubeId = data?.external_url ? getYoutubeVideoId(data.external_url) : null;
   const downloadUrl = data?.download_url || data?.file_url || null;
 
   return (
