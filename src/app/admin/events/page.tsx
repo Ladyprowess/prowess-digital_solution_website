@@ -519,12 +519,20 @@ export default function AdminEventsPage() {
                   </div>
 
                   <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
-                    <a
-                      href={`/admin/events/${ev.id}/registrations`}
-                      className="text-sm font-semibold text-[var(--steel-teal)] hover:underline"
-                    >
-                      View registrants →
-                    </a>
+                    <div className="flex items-center gap-4">
+                      <a
+                        href={`/admin/events/${ev.id}/registrations`}
+                        className="text-sm font-semibold text-[var(--steel-teal)] hover:underline"
+                      >
+                        View registrants →
+                      </a>
+                      <a
+                        href={`/admin/events/${ev.id}/archive`}
+                        className="text-sm font-semibold text-[var(--steel-teal)] hover:underline"
+                      >
+                        Manage archive →
+                      </a>
+                    </div>
 
                     {ev.slug ? (
                       <a

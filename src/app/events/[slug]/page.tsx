@@ -17,12 +17,25 @@ type EventRow = {
   registration_count: number | null;
 };
 
+type MediaRow = {
+  id: string;
+  media_type: "image" | "video";
+  url: string;
+  caption: string | null;
+};
+
+function youtubeEmbedUrl(url: string) {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{6,})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+}
+
 export default function EventRegistrationPage() {
   const params = useParams();
   const slug = String(params.slug);
 
   const [event, setEvent] = useState<EventRow | null>(null);
   const [isPast, setIsPast] = useState(false);
+  const [archive, setArchive] = useState<MediaRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
@@ -54,7 +67,18 @@ export default function EventRegistrationPage() {
       // Date.now() belongs in an effect, not render - it's an impure call
       // that would otherwise run on every render for no reason.
       const eventStart = new Date(`${data.event.date}T${data.event.time || "00:00"}`);
-      setIsPast(eventStart.getTime() < Date.now());
+      const past = eventStart.getTime() < Date.now();
+      setIsPast(past);
+
+      // Archive only ever matters once an event has happened, so it's not
+      // worth fetching for events still upcoming.
+      if (past) {
+        const archiveRes = await fetch(`/api/events/archive?event_id=${encodeURIComponent(data.event.id)}`, {
+          cache: "no-store",
+        });
+        const archiveData = await archiveRes.json().catch(() => null);
+        setArchive(archiveRes.ok ? archiveData?.items || [] : []);
+      }
     }
 
     loadEvent();
@@ -179,6 +203,41 @@ export default function EventRegistrationPage() {
                   <h2 className="text-lg font-semibold text-foreground">This event has ended</h2>
                   <p className="mt-2 text-sm text-muted-foreground">Registration is closed.</p>
                 </div>
+
+                {archive.length > 0 ? (
+                  <div className="mt-8">
+                    <h2 className="text-lg font-semibold text-foreground">Event archive</h2>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      {archive.map((item) => (
+                        <div key={item.id} className="overflow-hidden rounded-2xl border border-border bg-card">
+                          {item.media_type === "image" ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={item.url} alt={item.caption || ""} className="h-48 w-full object-cover" />
+                          ) : youtubeEmbedUrl(item.url) ? (
+                            <iframe
+                              src={youtubeEmbedUrl(item.url)!}
+                              className="h-48 w-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          ) : (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex h-48 w-full items-center justify-center bg-muted text-sm font-semibold text-foreground"
+                            >
+                              Watch the recording
+                            </a>
+                          )}
+                          {item.caption ? (
+                            <p className="px-4 py-3 text-sm text-muted-foreground">{item.caption}</p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </Reveal>
             ) : (
               <Reveal delay={100}>

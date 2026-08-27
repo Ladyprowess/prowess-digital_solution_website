@@ -603,6 +603,27 @@ export default function ModernHomePage() {
         </div>
       </section>
 
+      {/* ABOUT / FOUNDER PROOF */}
+      <section className="bg-muted py-20 sm:py-24">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 lg:grid-cols-2 lg:px-8">
+          <Reveal>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/training.JPG"
+              alt="Training a group in person"
+              className="w-full rounded-3xl border border-border object-cover shadow-sm"
+            />
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="text-xs font-bold uppercase tracking-widest text-primary">Hands-on, not just online</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Built by someone who has actually taught this.</h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              Before Prowess Digital Solutions was a platform, it was people in a room, learning skills that changed what they could do next. That same hands-on approach shapes every course, resource, and career path here.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
       {/* TESTIMONIALS */}
       <ManualGoogleReviews />
 
