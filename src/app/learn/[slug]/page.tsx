@@ -10,6 +10,7 @@ import { RelatedSection } from "@/components/RelatedSection";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
 import { getSkillGraph } from "@/lib/careerPathGraph";
+import { formatMoney } from "@/lib/formatMoney";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -24,8 +25,8 @@ type CourseDetail = {
   what_youll_learn: string | null;
   level: string | null;
   access: "free" | "premium";
-  price: number | null;
-  price_currency: string | null;
+  price_usd: number | null;
+  price_ngn: number | null;
   thumbnail_url: string | null;
   duration_label: string | null;
   featured: boolean;
@@ -35,7 +36,7 @@ type CourseDetail = {
 async function getCourse(slug: string) {
   const { data } = await supabase
     .from("courses")
-    .select("id, slug, title, description, what_youll_learn, level, access, price, price_currency, thumbnail_url, duration_label, featured, course_skill_map(skills(id, name, slug))")
+    .select("id, slug, title, description, what_youll_learn, level, access, price_usd, price_ngn, thumbnail_url, duration_label, featured, course_skill_map(skills(id, name, slug))")
     .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();
@@ -78,7 +79,16 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${course.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {course.access === "premium" ? `Premium${course.price ? ` - ${course.price_currency || "USD"} ${course.price}` : ""}` : "Free"}
+                  {course.access === "premium"
+                    ? `Premium${
+                        course.price_usd || course.price_ngn
+                          ? ` - ${[
+                              course.price_usd ? formatMoney(course.price_usd, "USD") : null,
+                              course.price_ngn ? formatMoney(course.price_ngn, "NGN") : null,
+                            ].filter(Boolean).join(" / ")}`
+                          : ""
+                      }`
+                    : "Free"}
                 </span>
                 {course.featured && (
                   <span className="rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">Featured</span>
@@ -115,7 +125,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
           </Reveal>
         )}
 
-        <CourseContent courseId={course.id} price={course.price} currency={course.price_currency} />
+        <CourseContent courseId={course.id} priceUsd={course.price_usd} priceNgn={course.price_ngn} />
 
         {graph.careerPaths.length > 0 && (
           <Reveal delay={280}>

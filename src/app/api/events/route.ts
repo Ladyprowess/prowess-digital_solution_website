@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     let query = supabase
       .from("events")
       .select(
-        "id,title,type,description,date,time,duration,location,price,spots_left,cover_url,registration_url,slug,start_datetime,registration_type,price_usd,status,created_at"
+        "id,title,type,description,date,time,duration,location,price,spots_left,cover_url,registration_url,slug,start_datetime,registration_type,price_usd,price_ngn,status,created_at"
       )
       .eq("status", "published")
       .range(from, to);
@@ -103,6 +103,7 @@ export async function GET(req: Request) {
           start_datetime: start,
           registration_type: e.registration_type || null,
           price_usd: typeof e.price_usd === "number" ? e.price_usd : null,
+          price_ngn: typeof e.price_ngn === "number" ? e.price_ngn : null,
         };
       }) ?? [];
 

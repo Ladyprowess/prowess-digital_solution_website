@@ -19,10 +19,11 @@ type Props = {
   onClose: () => void;
   plan: Plan | null;
   interval: BillingInterval;
+  currency: "USD" | "NGN";
   displayPrice: string; // e.g. "$320/mo" or "$3,072/yr" - already formatted by the caller
 };
 
-export default function MembershipIntakeModal({ open, onClose, plan, interval, displayPrice }: Props) {
+export default function MembershipIntakeModal({ open, onClose, plan, interval, currency, displayPrice }: Props) {
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export default function MembershipIntakeModal({ open, onClose, plan, interval, d
     const payload = {
       planSlug: plan!.slug,
       interval,
+      currency,
       fullName: formData.get("fullName"),
       email: formData.get("email"),
       phone: formData.get("phone"),

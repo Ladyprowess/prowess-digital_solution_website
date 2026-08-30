@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
+import { SKILL_TO_BUSINESS_PRICE_USD as PRICE_USD, SKILL_TO_BUSINESS_PRICE_NGN as PRICE_NGN } from "@/lib/skillToBusinessPricing";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
-const PRICE_USD = 100;
 
 export async function POST(req: Request) {
   try {
@@ -17,11 +17,16 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { fullName, email, phone, skillOrBusiness } = body || {};
+    const { fullName, email, phone, skillOrBusiness, currency } = body || {};
 
     if (!fullName || !email || !skillOrBusiness) {
       return NextResponse.json({ ok: false, error: "Missing required fields" }, { status: 400 });
     }
+
+    // The client picks which currency to pay in; the server picks the
+    // amount for that currency, never trusting an amount from the client.
+    const resolvedCurrency: "USD" | "NGN" = currency === "NGN" && PRICE_NGN != null ? "NGN" : "USD";
+    const amount = resolvedCurrency === "USD" ? PRICE_USD : (PRICE_NGN as number);
 
     const supabase = supabaseAdmin();
     const { data: row, error: insertErr } = await supabase
@@ -31,7 +36,9 @@ export async function POST(req: Request) {
         email,
         phone: phone || null,
         skill_or_business: skillOrBusiness,
-        amount_usd: PRICE_USD,
+        amount_usd: resolvedCurrency === "USD" ? amount : null,
+        amount_ngn: resolvedCurrency === "NGN" ? amount : null,
+        currency: resolvedCurrency,
         payment_status: "pending",
       })
       .select()
@@ -45,8 +52,8 @@ export async function POST(req: Request) {
 
     const { link } = await initializePayment({
       email,
-      amount: PRICE_USD,
-      currency: "USD",
+      amount,
+      currency: resolvedCurrency,
       reference,
       callbackUrl: `${SITE_URL}/skill-to-business/success`,
       metadata: { type: "skill_to_business", purchase_id: row.id },

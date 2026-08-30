@@ -5,30 +5,35 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useSignedIn } from "@/lib/useSignedIn";
+import { formatMoney } from "@/lib/formatMoney";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
 
-// Shared checkout trigger for any premium item (course or resource). The
-// amount is never sent from here - /api/content/checkout reads the real
-// price server-side. Buying now requires a real signed-in session (no more
-// guest checkout by typing an email) - /api/content/checkout verifies the
-// same access token this component sends and rejects anything else, so
-// this isn't just a UI-level gate.
+// Shared checkout trigger for any premium item (course, resource, or career
+// path). The amount is never sent from here - /api/content/checkout reads
+// the real price server-side for whichever currency is selected; this
+// component only ever sends which currency, never an amount. Buying now
+// requires a real signed-in session (no more guest checkout by typing an
+// email) - /api/content/checkout verifies the same access token this
+// component sends and rejects anything else, so this isn't just a UI-level
+// gate.
 export function BuyButton({
   itemType,
   itemId,
-  price,
-  currency,
+  priceUsd,
+  priceNgn,
   className = "",
 }: {
-  itemType: "resource" | "course";
+  itemType: "resource" | "course" | "career_path";
   itemId: string;
-  price: number | null;
-  currency: string | null;
+  priceUsd: number | null;
+  priceNgn: number | null;
   className?: string;
 }) {
   const pathname = usePathname();
   const { signedIn, checking: checkingSession } = useSignedIn();
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [currency, setCurrency] = useState<"USD" | "NGN">(priceUsd ? "USD" : "NGN");
 
   async function buy() {
     setErr("");
@@ -40,7 +45,7 @@ export function BuyButton({
       const res = await fetch("/api/content/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ itemType, itemId }),
+        body: JSON.stringify({ itemType, itemId, currency }),
       });
       const data = await res.json();
       if (!data.ok || !data.authorizationUrl) {
@@ -55,7 +60,9 @@ export function BuyButton({
     }
   }
 
-  const priceLabel = `${currency || "USD"} ${price?.toLocaleString() ?? ""}`;
+  const bothCurrenciesAvailable = Boolean(priceUsd && priceNgn);
+  const amount = currency === "USD" ? priceUsd : priceNgn;
+  const priceLabel = amount ? formatMoney(amount, currency) : "";
 
   if (checkingSession) {
     return (
@@ -68,6 +75,11 @@ export function BuyButton({
   if (!signedIn) {
     return (
       <div className={className}>
+        {bothCurrenciesAvailable && (
+          <div className="mb-3 flex justify-center">
+            <CurrencyToggle value={currency} onChange={setCurrency} />
+          </div>
+        )}
         <Link
           href={`/account/login?redirect=${encodeURIComponent(pathname)}`}
           className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90"
@@ -80,6 +92,11 @@ export function BuyButton({
 
   return (
     <div className={className}>
+      {bothCurrenciesAvailable && (
+        <div className="mb-3 flex justify-center">
+          <CurrencyToggle value={currency} onChange={setCurrency} />
+        </div>
+      )}
       <button
         type="button"
         onClick={buy}

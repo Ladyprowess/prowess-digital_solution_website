@@ -29,8 +29,8 @@ type VideoDetail = {
   source: string;
   external_url: string | null;
   access: "free" | "premium";
-  price: number | null;
-  price_currency: string | null;
+  price_usd: number | null;
+  price_ngn: number | null;
   duration_minutes: number | null;
   why_recommended: string | null;
   published_at: string | null;
@@ -41,7 +41,7 @@ async function getVideo(slug: string) {
   const { data } = await supabase
     .from("resources")
     .select(
-      "id, slug, title, description, category, audience, source, external_url, access, price, price_currency, duration_minutes, why_recommended, published_at, resource_skill_map(skills(id, slug, name))"
+      "id, slug, title, description, category, audience, source, external_url, access, price_usd, price_ngn, duration_minutes, why_recommended, published_at, resource_skill_map(skills(id, slug, name))"
     )
     .eq("slug", slug)
     .eq("status", "published")
@@ -126,7 +126,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
         </Reveal>
 
         <Reveal delay={40}>
-          <VideoPlayer resourceId={video.id} price={video.price} currency={video.price_currency} />
+          <VideoPlayer resourceId={video.id} priceUsd={video.price_usd} priceNgn={video.price_ngn} />
         </Reveal>
 
         <Reveal delay={80}>

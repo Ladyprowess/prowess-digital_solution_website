@@ -8,6 +8,7 @@ import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
+import { formatMoney } from "@/lib/formatMoney";
 
 const PAGE_SIZE = 20;
 
@@ -18,7 +19,8 @@ type CourseRow = {
   description: string | null;
   level: string | null;
   access: "free" | "premium";
-  price: number | null;
+  price_usd: number | null;
+  price_ngn: number | null;
   status: "draft" | "published";
 };
 
@@ -50,8 +52,8 @@ function LearnAdmin() {
   const [whatYoullLearn, setWhatYoullLearn] = useState("");
   const [level, setLevel] = useState<(typeof LEVELS)[number] | "">("");
   const [access, setAccess] = useState<"free" | "premium">("free");
-  const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [priceUsd, setPriceUsd] = useState("");
+  const [priceNgn, setPriceNgn] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [durationLabel, setDurationLabel] = useState("");
   const [featured, setFeatured] = useState(false);
@@ -77,7 +79,7 @@ function LearnAdmin() {
     setLoadingList(true);
     let query = supabase
       .from("courses")
-      .select("id, slug, title, description, level, access, price, status", { count: "exact" });
+      .select("id, slug, title, description, level, access, price_usd, price_ngn, status", { count: "exact" });
     if (statusFilter !== "all") query = query.eq("status", statusFilter);
     if (listSearch.trim()) query = query.ilike("title", `%${listSearch.trim()}%`);
 
@@ -110,7 +112,7 @@ function LearnAdmin() {
 
   const resetForm = () => {
     setEditingCourseId(null);
-    setTitle(""); setDescription(""); setWhatYoullLearn(""); setLevel(""); setAccess("free"); setPrice("");
+    setTitle(""); setDescription(""); setWhatYoullLearn(""); setLevel(""); setAccess("free"); setPriceUsd(""); setPriceNgn("");
     setThumbnailUrl(""); setDurationLabel(""); setFeatured(false); setPublishNow(false); setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
   };
@@ -120,7 +122,7 @@ function LearnAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("courses")
-      .select("id, slug, title, description, what_youll_learn, level, access, price, price_currency, thumbnail_url, duration_label, featured, status, meta_title, meta_description, course_skill_map(skill_id)")
+      .select("id, slug, title, description, what_youll_learn, level, access, price_usd, price_ngn, thumbnail_url, duration_label, featured, status, meta_title, meta_description, course_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -129,7 +131,7 @@ function LearnAdmin() {
     const course = data as unknown as {
       id: string; slug: string; title: string; description: string | null; what_youll_learn: string | null;
       level: (typeof LEVELS)[number] | null;
-      access: "free" | "premium"; price: number | null; price_currency: string | null;
+      access: "free" | "premium"; price_usd: number | null; price_ngn: number | null;
       thumbnail_url: string | null; duration_label: string | null; featured: boolean;
       status: CourseRow["status"]; meta_title: string | null; meta_description: string | null;
       course_skill_map: { skill_id: string }[];
@@ -141,8 +143,8 @@ function LearnAdmin() {
     setWhatYoullLearn(course.what_youll_learn || "");
     setLevel(course.level || "");
     setAccess(course.access);
-    setPrice(course.price?.toString() || "");
-    setCurrency(course.price_currency || "USD");
+    setPriceUsd(course.price_usd?.toString() || "");
+    setPriceNgn(course.price_ngn?.toString() || "");
     setThumbnailUrl(course.thumbnail_url || "");
     setDurationLabel(course.duration_label || "");
     setFeatured(course.featured);
@@ -169,8 +171,8 @@ function LearnAdmin() {
         what_youll_learn: whatYoullLearn.trim() || null,
         level: level || null,
         access,
-        price: access === "premium" && price ? Number(price) : null,
-        price_currency: access === "premium" && price ? currency : null,
+        price_usd: access === "premium" && priceUsd ? Number(priceUsd) : null,
+        price_ngn: access === "premium" && priceNgn ? Number(priceNgn) : null,
         thumbnail_url: thumbnailUrl.trim() || null,
         duration_label: durationLabel.trim() || null,
         featured,
@@ -261,8 +263,8 @@ function LearnAdmin() {
 
             <AccessPriceFields
               access={access} onAccessChange={setAccess}
-              price={price} onPriceChange={setPrice}
-              currency={currency} onCurrencyChange={setCurrency}
+              priceUsd={priceUsd} onPriceUsdChange={setPriceUsd}
+              priceNgn={priceNgn} onPriceNgnChange={setPriceNgn}
             />
 
             <Field label="Skills">
@@ -370,7 +372,16 @@ function LearnAdmin() {
                     <tr key={c.id} className="border-b border-border/60">
                       <td className="py-2 pr-4 font-medium text-foreground">{c.title}</td>
                       <td className="py-2 pr-4 text-muted-foreground">
-                        {c.access === "premium" ? `Premium${c.price ? ` (${c.price})` : ""}` : "Free"}
+                        {c.access === "premium"
+                          ? `Premium${
+                              c.price_usd || c.price_ngn
+                                ? ` (${[
+                                    c.price_usd ? formatMoney(c.price_usd, "USD") : null,
+                                    c.price_ngn ? formatMoney(c.price_ngn, "NGN") : null,
+                                  ].filter(Boolean).join(" / ")})`
+                                : ""
+                            }`
+                          : "Free"}
                       </td>
                       <td className="py-2 pr-4">
                         <select

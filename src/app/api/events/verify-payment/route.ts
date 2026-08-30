@@ -41,6 +41,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, already_registered: true });
     }
 
+    // Never trust the client's claimed currency - check that Flutterwave's
+    // own verified amount and currency actually match one of this event's
+    // real prices, not just that *some* payment succeeded.
+    const { data: event } = await supabase
+      .from("events")
+      .select("price_usd,price_ngn")
+      .eq("id", event_id)
+      .maybeSingle();
+
+    const chargedCurrency = String(data?.currency || "").toUpperCase();
+    const expectedAmount = chargedCurrency === "NGN" ? event?.price_ngn : chargedCurrency === "USD" ? event?.price_usd : null;
+    const amountMatches = expectedAmount != null && Math.round(Number(data?.amount || 0) * 100) === Math.round(Number(expectedAmount) * 100);
+
+    if (!amountMatches) {
+      return NextResponse.json({ error: "Payment amount or currency didn't match this event's price." }, { status: 400 });
+    }
+
     const { error: regError } = await supabase.from("event_registrations").insert([
       {
         event_id,

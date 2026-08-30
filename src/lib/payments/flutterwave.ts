@@ -40,23 +40,28 @@ const FLW_INTERVAL: Record<BillingInterval, string> = {
 };
 
 /**
- * Flutterwave bills a fixed amount per plan interval, so each (tier, interval)
- * pair needs its own plan. Plans are created lazily on first checkout and
- * cached in `payment_plans` so we don't recreate them on every request.
+ * Flutterwave bills a fixed amount per plan interval, so each (tier,
+ * interval, currency) triple needs its own plan - a USD subscriber and an
+ * NGN subscriber to the same tier are billed by two entirely separate
+ * Flutterwave plans. Plans are created lazily on first checkout and cached
+ * in `payment_plans` (primary key now includes currency - see
+ * supabase/dual_currency_pricing.sql) so we don't recreate them on every
+ * request.
  *
- * IMPORTANT: this passes currency: "USD" to Flutterwave. That only works if
+ * IMPORTANT: this can pass currency: "USD" to Flutterwave. That only works if
  * the connected Flutterwave account has USD/multi-currency enabled - that's a
  * business verification step done in the Flutterwave dashboard, not something
- * this code can turn on. If the account is NGN-only, this call will fail and
+ * this code can turn on. If the account is NGN-only, USD calls will fail and
  * the merchant needs to enable USD with Flutterwave support first.
  */
 export async function getOrCreatePaymentPlan(params: {
   slug: string;
   title: string;
   interval: BillingInterval;
-  amountUSD: number;
+  amount: number;
+  currency: "USD" | "NGN";
 }): Promise<string> {
-  const { slug, title, interval, amountUSD } = params;
+  const { slug, title, interval, amount, currency } = params;
   const supabase = supabaseAdmin();
 
   const { data: existing } = await supabase
@@ -65,17 +70,18 @@ export async function getOrCreatePaymentPlan(params: {
     .eq("provider", "flutterwave")
     .eq("slug", slug)
     .eq("interval", interval)
+    .eq("currency", currency)
     .maybeSingle();
 
   if (existing?.plan_id) return existing.plan_id;
 
-  const planName = `${title} (${interval === "monthly" ? "Monthly" : "Annual"})`;
+  const planName = `${title} (${interval === "monthly" ? "Monthly" : "Annual"}, ${currency})`;
   const created = await flwFetch("/payment-plans", {
     method: "POST",
     body: JSON.stringify({
       name: planName,
-      amount: amountUSD,
-      currency: "USD",
+      amount,
+      currency,
       interval: FLW_INTERVAL[interval],
     }),
   });
@@ -87,6 +93,7 @@ export async function getOrCreatePaymentPlan(params: {
     provider: "flutterwave",
     slug,
     interval,
+    currency,
     plan_id: planId,
   });
 

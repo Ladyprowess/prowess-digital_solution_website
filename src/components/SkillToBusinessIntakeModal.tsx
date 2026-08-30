@@ -6,21 +6,30 @@ import { usePathname } from "next/navigation";
 import Modal from "@/components/Modal";
 import { supabase } from "@/lib/supabase";
 import { useSignedIn } from "@/lib/useSignedIn";
+import { formatMoney } from "@/lib/formatMoney";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
+import { SKILL_TO_BUSINESS_PRICE_USD, SKILL_TO_BUSINESS_PRICE_NGN } from "@/lib/skillToBusinessPricing";
 
 type Props = {
   open: boolean;
   onClose: () => void;
 };
 
+const BOTH_CURRENCIES_AVAILABLE = SKILL_TO_BUSINESS_PRICE_NGN != null;
+
 export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<"USD" | "NGN">("USD");
   // Subscribes to real auth-state changes, not just a one-shot check tied
   // to `open` - catches a user who signs in from a different tab without
   // closing this modal, which a plain re-check-on-open never would (open
   // itself never changes value in that case).
   const { signedIn, checking: checkingSession } = useSignedIn();
+
+  const amount = currency === "USD" ? SKILL_TO_BUSINESS_PRICE_USD : (SKILL_TO_BUSINESS_PRICE_NGN as number);
+  const priceLabel = formatMoney(amount, currency);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,6 +47,7 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
       email: formData.get("email"),
       phone: formData.get("phone"),
       skillOrBusiness: formData.get("skillOrBusiness"),
+      currency,
     };
 
     try {
@@ -63,7 +73,7 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
 
   if (checkingSession) {
     return (
-      <Modal open={open} onClose={onClose} title="Enroll in Skill to Business - $100">
+      <Modal open={open} onClose={onClose} title={`Enroll in Skill to Business - ${priceLabel}`}>
         <p className="text-sm text-muted-foreground">Checking your session…</p>
       </Modal>
     );
@@ -71,7 +81,7 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
 
   if (!signedIn) {
     return (
-      <Modal open={open} onClose={onClose} title="Enroll in Skill to Business - $100">
+      <Modal open={open} onClose={onClose} title={`Enroll in Skill to Business - ${priceLabel}`}>
         <p className="mb-4 text-sm text-muted-foreground">You need to sign in first to enroll and pay.</p>
         <Link
           href={`/account/login?redirect=${encodeURIComponent(pathname)}`}
@@ -84,12 +94,18 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Enroll in Skill to Business - $100">
+    <Modal open={open} onClose={onClose} title={`Enroll in Skill to Business - ${priceLabel}`}>
       <p className="mb-4 text-sm text-muted-foreground">
         Tell us a bit about yourself. Once you pay, you get instant access to every premium
         business tool for a full year, and we&apos;ll reach out to schedule your Foundation Session
         and get your Starter Pack to you.
       </p>
+
+      {BOTH_CURRENCIES_AVAILABLE && (
+        <div className="mb-4 flex justify-center">
+          <CurrencyToggle value={currency} onChange={setCurrency} />
+        </div>
+      )}
 
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -139,7 +155,7 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
           disabled={loading}
           className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
         >
-          {loading ? "Starting checkout..." : "Continue to payment - $100"}
+          {loading ? "Starting checkout..." : `Continue to payment - ${priceLabel}`}
         </button>
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}

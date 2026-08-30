@@ -44,13 +44,18 @@ export async function markConsultationPaid(reference: string) {
 
   const { data: service } = await supabase
     .from("consultation_services")
-    .select("name,price_usd")
+    .select("name,price_usd,price_ngn")
     .eq("id", booking.service_id)
     .single();
 
-  const expectedAmount = Math.round(Number(service?.price_usd || 0) * 100);
+  // Never trust the currency the booking was created with - check that
+  // Flutterwave's own verified amount and currency actually match one of
+  // this service's real prices.
+  const chargedCurrency = String(data?.currency || "").toUpperCase();
+  const expectedRaw = chargedCurrency === "NGN" ? service?.price_ngn : chargedCurrency === "USD" ? service?.price_usd : null;
+  const expectedAmount = expectedRaw != null ? Math.round(Number(expectedRaw) * 100) : null;
   const paidAmount = Math.round(Number(data?.amount || 0) * 100);
-  if (paidAmount !== expectedAmount) {
+  if (expectedAmount == null || paidAmount !== expectedAmount) {
     await supabase
       .from("consultation_bookings")
       .update({ payment_status: "failed" })
@@ -60,7 +65,7 @@ export async function markConsultationPaid(reference: string) {
 
   const { error: updErr } = await supabase
     .from("consultation_bookings")
-    .update({ payment_status: "paid", flutterwave_reference: reference })
+    .update({ payment_status: "paid", flutterwave_reference: reference, currency: chargedCurrency })
     .eq("id", bookingId)
     .neq("payment_status", "paid");
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
+import { BuyButton } from "@/components/BuyButton";
 import { CareerInterestButton } from "@/components/CareerInterestButton";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { RichText } from "@/components/RichText";
@@ -22,6 +23,7 @@ import type { OpportunityCardData } from "@/components/opportunities/Opportunity
 import { getSkillGraph } from "@/lib/careerPathGraph";
 import { CAREER_PATH_ICON_PATHS } from "@/lib/careerPaths/icons";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
+import { formatMoney } from "@/lib/formatMoney";
 import {
   courseToLearnItem,
   resourceToLearnItem,
@@ -65,8 +67,8 @@ type CareerPathDetail = {
   title: string;
   description: string | null;
   access: "free" | "premium";
-  price: number | null;
-  price_currency: string | null;
+  price_usd: number | null;
+  price_ngn: number | null;
   featured: boolean;
   level: "beginner" | "intermediate" | "advanced" | null;
   category: string | null;
@@ -80,7 +82,7 @@ async function getCareerPath(slug: string) {
   const { data } = await supabase
     .from("career_paths")
     .select(
-      "id, slug, title, description, access, price, price_currency, featured, level, category, icon_key, image_url, who_its_for, career_path_skill_map(level, skills(id, name, slug))"
+      "id, slug, title, description, access, price_usd, price_ngn, featured, level, category, icon_key, image_url, who_its_for, career_path_skill_map(level, skills(id, name, slug))"
     )
     .eq("slug", slug)
     .eq("status", "published")
@@ -372,7 +374,16 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
           <Reveal>
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${path.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                {path.access === "premium" ? `Premium${path.price ? ` - ${path.price_currency || "USD"} ${path.price}` : ""}` : "Free"}
+                {path.access === "premium"
+                  ? `Premium${
+                      path.price_usd || path.price_ngn
+                        ? ` - ${[
+                            path.price_usd ? formatMoney(path.price_usd, "USD") : null,
+                            path.price_ngn ? formatMoney(path.price_ngn, "NGN") : null,
+                          ].filter(Boolean).join(" / ")}`
+                        : ""
+                    }`
+                  : "Free"}
               </span>
               {path.featured && (
                 <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">Featured</span>
@@ -396,6 +407,16 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
               <SaveButton itemType="career_path" itemId={path.id} />
               <CareerInterestButton careerPathId={path.id} className="text-xs" />
             </div>
+
+            {path.access === "premium" && (path.price_usd || path.price_ngn) && (
+              <BuyButton
+                itemType="career_path"
+                itemId={path.id}
+                priceUsd={path.price_usd}
+                priceNgn={path.price_ngn}
+                className="mt-4 max-w-xs"
+              />
+            )}
           </Reveal>
 
           <Reveal delay={80}>

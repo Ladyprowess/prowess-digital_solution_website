@@ -253,6 +253,7 @@ export const packages = [
     title: "Diagnostic",
     purpose: "The right starting point. Understand what is really happening in your business and keep a monthly pulse on it going forward.",
     monthlyPrice: 320,
+    monthlyPriceNGN: 441600, // 320 * 1380
     deliverables: [
       "A Business Structure Diagnostic when you join, then a fresh check in every month",
       "Access to the Startup Cost and Break Even Calculator and the Profit and Cashflow Tracker",
@@ -266,6 +267,7 @@ export const packages = [
     title: "Foundation",
     purpose: "Fix the foundations. Turn the diagnostic's findings into real systems and a clear way to bring in customers, kept current every month.",
     monthlyPrice: 1050,
+    monthlyPriceNGN: 1449000, // 1050 * 1380
     deliverables: [
       "Everything in Diagnostic",
       "SOP Vault for your core processes, updated as your business changes",
@@ -280,6 +282,7 @@ export const packages = [
     title: "Growth",
     purpose: "Scale with intention. Add the numbers and the team alignment that let you grow without losing control.",
     monthlyPrice: 1750,
+    monthlyPriceNGN: 2415000, // 1750 * 1380
     deliverables: [
       "Everything in Foundation",
       "Financial Tracking and Unit Economics Dashboard, monitored monthly",
@@ -294,6 +297,7 @@ export const packages = [
     title: "Full Support",
     purpose: "An ongoing partnership for founders who want continued support as the business grows, including the mentorship and accountability most clients ask for after the first three tiers.",
     monthlyPrice: 3900,
+    monthlyPriceNGN: 5382000, // 3900 * 1380
     deliverables: [
       "Everything in Growth",
       "Ongoing mentorship and accountability check ins",

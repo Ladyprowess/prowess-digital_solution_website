@@ -78,7 +78,7 @@ async function handleSuccessfulCharge(data: Record<string, unknown>, metadata: R
   }
 
   if (metadata?.type === "event") {
-    await handleEventPayment(reference, metadata);
+    await handleEventPayment(reference, metadata, data);
     return NextResponse.json({ ok: true });
   }
 
@@ -97,7 +97,7 @@ async function handleSuccessfulCharge(data: Record<string, unknown>, metadata: R
   return NextResponse.json({ ok: true });
 }
 
-async function handleEventPayment(reference: string, metadata: Record<string, unknown>) {
+async function handleEventPayment(reference: string, metadata: Record<string, unknown>, charge: Record<string, unknown>) {
   const supabase = supabaseAdmin();
 
   const { data: existing } = await supabase
@@ -113,6 +113,20 @@ async function handleEventPayment(reference: string, metadata: Record<string, un
   const email = metadata?.email;
   const phone = metadata?.phone || "";
   if (!event_id || !full_name) return;
+
+  // Never trust metadata alone - check that this webhook's own charge data
+  // (amount/currency, straight from Flutterwave, not the client) actually
+  // matches one of this event's real prices before registering anyone.
+  const { data: eventRow } = await supabase
+    .from("events")
+    .select("price_usd,price_ngn")
+    .eq("id", event_id)
+    .maybeSingle();
+
+  const chargedCurrency = String(charge?.currency || "").toUpperCase();
+  const expectedAmount = chargedCurrency === "NGN" ? eventRow?.price_ngn : chargedCurrency === "USD" ? eventRow?.price_usd : null;
+  const amountMatches = expectedAmount != null && Math.round(Number(charge?.amount || 0) * 100) === Math.round(Number(expectedAmount) * 100);
+  if (!amountMatches) return;
 
   await supabase.from("event_registrations").insert([
     {

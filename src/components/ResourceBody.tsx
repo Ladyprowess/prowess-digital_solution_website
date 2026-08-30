@@ -29,15 +29,15 @@ type TocItem = { id: string; text: string; level: 2 | 3 };
 export function ResourceBody({
   resourceId,
   title,
-  price,
-  currency,
+  priceUsd,
+  priceNgn,
   contentDisplay = "text",
   allowDownload = true,
 }: {
   resourceId: string;
   title: string;
-  price: number | null;
-  currency: string | null;
+  priceUsd: number | null;
+  priceNgn: number | null;
   // "pdf" embeds the uploaded file itself (scrollable, in place of the
   // written content + table of contents) instead of rendering `content` --
   // an admin choice for a resource that's really just a PDF, where
@@ -118,7 +118,7 @@ export function ResourceBody({
           {signedIn ? "You don't have access to this yet." : "Sign in if you've already bought this, or buy access below."}
         </p>
         <div className="mx-auto mt-6 max-w-xs">
-          <BuyButton itemType="resource" itemId={resourceId} price={price} currency={currency} />
+          <BuyButton itemType="resource" itemId={resourceId} priceUsd={priceUsd} priceNgn={priceNgn} />
         </div>
       </div>
     );

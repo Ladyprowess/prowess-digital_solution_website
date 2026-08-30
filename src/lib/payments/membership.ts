@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
 import { genAccessCode, toolsForPlan, PREMIUM_TOOL_NAMES } from "@/lib/tools/tierAccess";
+import { verifyTransaction } from "@/lib/payments/flutterwave";
+import { formatMoney } from "@/lib/formatMoney";
 
 /**
  * Marks a membership subscription paid and sends both confirmation emails.
@@ -18,6 +20,20 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     .single();
 
   if (subErr || !sub) return { ok: false as const };
+
+  // Never trust that the currency the client checked out with is what was
+  // actually charged - re-verify the real transaction and require both the
+  // amount and the currency to match what the server computed at checkout
+  // time (stored on this row) before doing anything else. Checked before
+  // the "already paid" branch below so this applies to every recurring
+  // renewal charge too, not just the initial one.
+  const verified = await verifyTransaction(reference);
+  const expectedAmount = sub.currency === "NGN" ? sub.amount_ngn : sub.amount_usd;
+  const amountMatches = expectedAmount != null && Math.round(Number(verified?.amount || 0) * 100) === Math.round(Number(expectedAmount) * 100);
+  const currencyMatches = String(verified?.currency || "").toUpperCase() === String(sub.currency || "USD").toUpperCase();
+  if (verified?.status !== "successful" || !amountMatches || !currencyMatches) {
+    return { ok: false as const };
+  }
 
   if (sub.payment_status === "paid") {
     // A renewal charge on an already-paid subscription - the access code
@@ -110,7 +126,7 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
         <p><b>Website:</b> ${sub.website || "-"}</p>
         <p><b>What their business does:</b> ${sub.business_description}</p>
         <p><b>What they want us to focus on:</b> ${sub.service_focus}</p>
-        <p><b>Amount:</b> $${sub.amount_usd} (${sub.billing_interval})</p>
+        <p><b>Amount:</b> ${formatMoney(expectedAmount, (sub.currency as "USD" | "NGN") || "USD")} (${sub.billing_interval})</p>
         <p><b>Ref:</b> ${reference}</p>
         <p><b>Tools access code auto-issued:</b> ${accessCode} (${unlockedTools.join(", ") || "no tools on this tier"})</p>
         <p style="color:#b45309;"><b>Reminder: reach out within 24 hours.</b></p>

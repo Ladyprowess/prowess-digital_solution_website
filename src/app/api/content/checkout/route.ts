@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const email = member.email;
 
     const body = await req.json();
-    const { itemType, itemId } = body || {};
+    const { itemType, itemId, currency } = body || {};
 
     if (!itemType || !itemId) {
       return NextResponse.json({ ok: false, error: "Missing required fields" }, { status: 400 });
@@ -32,10 +32,25 @@ export async function POST(req: Request) {
     }
 
     // The price is always read from the item's own row - never trust an
-    // amount supplied by the client.
+    // amount supplied by the client. The client picks which currency to pay
+    // in; the server picks the amount for that currency, or falls back to
+    // whichever currency the item actually has a price in if the client
+    // didn't send one (legacy single-currency items, or an old client).
     const priced = await getItemPrice(itemType, itemId);
     if (!priced) {
       return NextResponse.json({ ok: false, error: "This item isn't available for purchase." }, { status: 400 });
+    }
+
+    const requestedCurrency = currency === "NGN" || currency === "USD" ? currency : null;
+    const resolvedCurrency = requestedCurrency && priced[requestedCurrency === "USD" ? "usd" : "ngn"]
+      ? requestedCurrency
+      : priced.usd
+        ? "USD"
+        : "NGN";
+    const amount = resolvedCurrency === "USD" ? priced.usd : priced.ngn;
+
+    if (!amount) {
+      return NextResponse.json({ ok: false, error: "This item isn't priced in that currency." }, { status: 400 });
     }
 
     const supabase = supabaseAdmin();
@@ -45,8 +60,8 @@ export async function POST(req: Request) {
         email,
         item_type: itemType,
         item_id: itemId,
-        amount: priced.amount,
-        currency: priced.currency,
+        amount,
+        currency: resolvedCurrency,
         payment_status: "pending",
       })
       .select()
@@ -60,8 +75,8 @@ export async function POST(req: Request) {
 
     const { link } = await initializePayment({
       email,
-      amount: priced.amount,
-      currency: priced.currency === "NGN" ? "NGN" : "USD",
+      amount,
+      currency: resolvedCurrency,
       reference,
       callbackUrl: `${SITE_URL}/purchase/success`,
       metadata: { type: "content_purchase", purchase_id: row.id },

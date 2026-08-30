@@ -8,6 +8,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 import { RESOURCE_TYPES, USE_CASES, USE_CASE_LABELS } from "@/lib/resources/constants";
+import { formatMoney } from "@/lib/formatMoney";
 
 const PAGE_SIZE = 20;
 
@@ -19,7 +20,8 @@ type ResourceRow = {
   category: string | null;
   audience: "consumer" | "business" | "both";
   access: "free" | "premium";
-  price: number | null;
+  price_usd: number | null;
+  price_ngn: number | null;
   status: "draft" | "published" | "archived";
 };
 
@@ -88,8 +90,8 @@ function ResourcesAdmin() {
   const [existingFileName, setExistingFileName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [access, setAccess] = useState<"free" | "premium">("free");
-  const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [priceUsd, setPriceUsd] = useState("");
+  const [priceNgn, setPriceNgn] = useState("");
   const [featured, setFeatured] = useState(false);
   const [publishNow, setPublishNow] = useState(true);
   const [editingStatus, setEditingStatus] = useState<ResourceRow["status"] | null>(null);
@@ -123,7 +125,7 @@ function ResourcesAdmin() {
     setLoadingList(true);
     let query = supabase
       .from("resources")
-      .select("id, slug, title, resource_type, category, audience, access, price, status", { count: "exact" });
+      .select("id, slug, title, resource_type, category, audience, access, price_usd, price_ngn, status", { count: "exact" });
     if (statusFilter !== "all") query = query.eq("status", statusFilter);
     if (audienceFilter !== "all") query = query.eq("audience", audienceFilter);
     if (listSearch.trim()) query = query.ilike("title", `%${listSearch.trim()}%`);
@@ -161,7 +163,7 @@ function ResourcesAdmin() {
     setSource("prowess"); setExternalUrl(""); setThumbnailUrl("");
     setSummary(""); setContent(""); setContentDisplay("text"); setAllowDownload(true); setFileUrl("");
     setCoverFile(null); setResourceFile(null); setExistingFileName(null);
-    setAccess("free"); setPrice(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
+    setAccess("free"); setPriceUsd(""); setPriceNgn(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
     setContentRole(""); setDurationMinutes(""); setWhyRecommended("");
     setReadingMinutes(""); setPageCount(""); setUseCase("");
@@ -173,7 +175,7 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, content_display, allow_download, file_url, file_name, access, price, price_currency, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
+      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, content_display, allow_download, file_url, file_name, access, price_usd, price_ngn, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -183,7 +185,7 @@ function ResourcesAdmin() {
       id: string; slug: string; title: string; audience: (typeof AUDIENCES)[number]; resource_type: (typeof RESOURCE_TYPES)[number] | null;
       category: string | null; level: (typeof LEVELS)[number] | null; source: Source; external_url: string | null;
       thumbnail_url: string | null; description: string | null; content: string | null; content_display: (typeof CONTENT_DISPLAYS)[number]; allow_download: boolean; file_url: string | null; file_name: string | null;
-      access: "free" | "premium"; price: number | null; price_currency: string | null; featured: boolean;
+      access: "free" | "premium"; price_usd: number | null; price_ngn: number | null; featured: boolean;
       status: ResourceRow["status"]; meta_title: string | null; meta_description: string | null;
       content_role: (typeof CONTENT_ROLES)[number] | null; duration_minutes: number | null; why_recommended: string | null;
       reading_minutes: number | null; page_count: number | null; use_case: (typeof USE_CASES)[number] | null;
@@ -208,8 +210,8 @@ function ResourcesAdmin() {
     setFileUrl(r.file_url || "");
     setCoverFile(null); setResourceFile(null); setExistingFileName(r.file_name || null);
     setAccess(r.access);
-    setPrice(r.price?.toString() || "");
-    setCurrency(r.price_currency || "USD");
+    setPriceUsd(r.price_usd?.toString() || "");
+    setPriceNgn(r.price_ngn?.toString() || "");
     setFeatured(r.featured);
     setPublishNow(r.status === "published");
     setSelectedSkillIds(r.resource_skill_map.map((m) => m.skill_id));
@@ -303,8 +305,8 @@ function ResourcesAdmin() {
         ...(uploaded.file_path ? { file_path: uploaded.file_path, file_name: uploaded.file_name, file_type: uploaded.file_type, file_size: uploaded.file_size } : {}),
         ...(uploaded.cover_path ? { cover_path: uploaded.cover_path } : {}),
         access,
-        price: access === "premium" && price ? Number(price) : null,
-        price_currency: access === "premium" && price ? currency : null,
+        price_usd: access === "premium" && priceUsd ? Number(priceUsd) : null,
+        price_ngn: access === "premium" && priceNgn ? Number(priceNgn) : null,
         featured,
         status: publishNow ? "published" as const : "draft" as const,
         is_published: publishNow,
@@ -521,8 +523,8 @@ function ResourcesAdmin() {
 
             <AccessPriceFields
               access={access} onAccessChange={setAccess}
-              price={price} onPriceChange={setPrice}
-              currency={currency} onCurrencyChange={setCurrency}
+              priceUsd={priceUsd} onPriceUsdChange={setPriceUsd}
+              priceNgn={priceNgn} onPriceNgnChange={setPriceNgn}
             />
 
             <Field label="Skills">
@@ -667,7 +669,16 @@ function ResourcesAdmin() {
                       <td className="py-2 pr-4 text-muted-foreground">{r.audience}</td>
                       <td className="py-2 pr-4 text-muted-foreground">{r.resource_type ? r.resource_type.replace("_", " ") : "-"}</td>
                       <td className="py-2 pr-4 text-muted-foreground">
-                        {r.access === "premium" ? `Premium${r.price ? ` (${r.price})` : ""}` : "Free"}
+                        {r.access === "premium"
+                          ? `Premium${
+                              r.price_usd || r.price_ngn
+                                ? ` (${[
+                                    r.price_usd ? formatMoney(r.price_usd, "USD") : null,
+                                    r.price_ngn ? formatMoney(r.price_ngn, "NGN") : null,
+                                  ].filter(Boolean).join(" / ")})`
+                                : ""
+                            }`
+                          : "Free"}
                       </td>
                       <td className="py-2 pr-4">
                         <select

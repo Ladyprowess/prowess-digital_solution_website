@@ -26,7 +26,7 @@ const MIN_RESUME_SECONDS = 5;
 // API progress tracking. No server-side session reading exists anywhere in
 // this codebase, so entitlement + progress both have to be fetched here,
 // client-side, after mount -- mirrors ResourceBody's status state machine.
-export function VideoPlayer({ resourceId, price, currency }: { resourceId: string; price: number | null; currency: string | null }) {
+export function VideoPlayer({ resourceId, priceUsd, priceNgn }: { resourceId: string; priceUsd: number | null; priceNgn: number | null }) {
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [data, setData] = useState<VideoPlayerData | null>(null);
   const [signedIn, setSignedIn] = useState(false);
@@ -154,7 +154,7 @@ export function VideoPlayer({ resourceId, price, currency }: { resourceId: strin
           {signedIn ? "You don't have access to this yet." : "Sign in if you've already bought this, or buy access below."}
         </p>
         <div className="mx-auto mt-6 max-w-xs">
-          <BuyButton itemType="resource" itemId={resourceId} price={price} currency={currency} />
+          <BuyButton itemType="resource" itemId={resourceId} priceUsd={priceUsd} priceNgn={priceNgn} />
         </div>
       </div>
     );

@@ -6,6 +6,8 @@ import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
 import SkillToBusinessIntakeModal from "@/components/SkillToBusinessIntakeModal";
+import { formatMoney } from "@/lib/formatMoney";
+import { SKILL_TO_BUSINESS_PRICE_USD, SKILL_TO_BUSINESS_PRICE_NGN } from "@/lib/skillToBusinessPricing";
 
 const graduateSpotlights = [
   { src: "/images/skill to business/review 1.png", name: "Bolu Adebayo" },
@@ -154,7 +156,7 @@ export default function SkillToBusinessPage() {
           </>
         }
         description="A hands-on program for hairdressers, tailors, bakers, photographers, tech talent, and every other skilled person ready to turn what they do into a real, structured business, wherever they are."
-        primaryAction={{ label: "Enroll Now - $100", href: "#enroll" }}
+        primaryAction={{ label: `Enroll Now - ${formatMoney(SKILL_TO_BUSINESS_PRICE_USD, "USD")}`, href: "#enroll" }}
         secondaryAction={{ label: "See What's Included", href: "#whats-included" }}
         proof={[
           "Live Business Foundation Session",
@@ -456,7 +458,12 @@ export default function SkillToBusinessPage() {
                 One payment. Your Foundation Session, your full Starter Pack, your certificate, and
                 12 months of access to every premium business tool.
               </p>
-              <p className="mx-auto mt-6 text-4xl font-bold text-primary-foreground">$100</p>
+              <p className="mx-auto mt-6 text-4xl font-bold text-primary-foreground">
+                {[
+                  formatMoney(SKILL_TO_BUSINESS_PRICE_USD, "USD"),
+                  SKILL_TO_BUSINESS_PRICE_NGN ? formatMoney(SKILL_TO_BUSINESS_PRICE_NGN, "NGN") : null,
+                ].filter(Boolean).join(" / ")}
+              </p>
               <p className="mt-1 text-sm text-primary-foreground/70">One-time payment. Enroll again next year if you want to.</p>
 
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">

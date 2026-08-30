@@ -14,20 +14,25 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // Shared by every content type that can be free or premium (courses,
 // resources, career paths) so pricing behaves identically everywhere and a
 // change here doesn't need to be repeated per admin page.
+//
+// Two price fields, not one - the customer picks USD or Naira at checkout,
+// so both need a real price set by the admin. Either can be left blank (an
+// item priced in only one currency just won't show a currency toggle to the
+// customer), but at least one is required for a premium item.
 export function AccessPriceFields({
   access,
   onAccessChange,
-  price,
-  onPriceChange,
-  currency,
-  onCurrencyChange,
+  priceUsd,
+  onPriceUsdChange,
+  priceNgn,
+  onPriceNgnChange,
 }: {
   access: "free" | "premium";
   onAccessChange: (v: "free" | "premium") => void;
-  price: string;
-  onPriceChange: (v: string) => void;
-  currency: string;
-  onCurrencyChange: (v: string) => void;
+  priceUsd: string;
+  onPriceUsdChange: (v: string) => void;
+  priceNgn: string;
+  onPriceNgnChange: (v: string) => void;
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -39,11 +44,11 @@ export function AccessPriceFields({
       </Field>
       {access === "premium" && (
         <>
-          <Field label="Price">
-            <input value={price} onChange={(e) => onPriceChange(e.target.value)} className={inputCls} type="number" placeholder="e.g. 5000" />
+          <Field label="Price (USD)">
+            <input value={priceUsd} onChange={(e) => onPriceUsdChange(e.target.value)} className={inputCls} type="number" placeholder="e.g. 10" />
           </Field>
-          <Field label="Currency">
-            <input value={currency} onChange={(e) => onCurrencyChange(e.target.value)} className={inputCls} placeholder="USD" />
+          <Field label="Price (NGN)">
+            <input value={priceNgn} onChange={(e) => onPriceNgnChange(e.target.value)} className={inputCls} type="number" placeholder="e.g. 15000" />
           </Field>
         </>
       )}

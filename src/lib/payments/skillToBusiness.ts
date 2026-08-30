@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
 import { genAccessCode, PREMIUM_TOOL_KEYS, PREMIUM_TOOL_NAMES } from "@/lib/tools/tierAccess";
+import { verifyTransaction } from "@/lib/payments/flutterwave";
+import { formatMoney } from "@/lib/formatMoney";
 
 /**
  * Marks a Skill to Business enrollment paid, grants a full year of access to
@@ -20,6 +22,18 @@ export async function markSkillToBusinessPaid(purchaseId: string, reference: str
 
   if (purchaseErr || !purchase) return { ok: false as const };
   if (purchase.payment_status === "paid") return { ok: true as const, alreadyPaid: true };
+
+  // This previously did no amount/currency verification at all - trusted
+  // that a webhook or verify call for this purchase_id meant it was really
+  // paid in full. Now checks Flutterwave's own verified transaction against
+  // the amount the server computed at checkout time (stored on this row).
+  const verified = await verifyTransaction(reference);
+  const expectedAmount = purchase.currency === "NGN" ? purchase.amount_ngn : purchase.amount_usd;
+  const amountMatches = expectedAmount != null && Math.round(Number(verified?.amount || 0) * 100) === Math.round(Number(expectedAmount) * 100);
+  const currencyMatches = String(verified?.currency || "").toUpperCase() === String(purchase.currency || "USD").toUpperCase();
+  if (verified?.status !== "successful" || !amountMatches || !currencyMatches) {
+    return { ok: false as const };
+  }
 
   const { error: updErr } = await supabase
     .from("skill_to_business_purchases")
@@ -84,7 +98,7 @@ export async function markSkillToBusinessPaid(purchaseId: string, reference: str
         <p><b>Email:</b> ${purchase.email}</p>
         <p><b>Phone:</b> ${purchase.phone || "-"}</p>
         <p><b>Skill / business:</b> ${purchase.skill_or_business}</p>
-        <p><b>Amount:</b> $${purchase.amount_usd}</p>
+        <p><b>Amount:</b> ${formatMoney(expectedAmount, (purchase.currency as "USD" | "NGN") || "USD")}</p>
         <p><b>Ref:</b> ${reference}</p>
         <p><b>Tools access code auto-issued:</b> ${accessCode} (all tools, 1 year)</p>
       </div>

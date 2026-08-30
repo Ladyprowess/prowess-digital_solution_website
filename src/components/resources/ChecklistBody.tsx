@@ -58,13 +58,13 @@ function parseChecklistContent(html: string): { blocks: ChecklistBlock[]; totalI
 // no persistence and no forced login wall.
 export function ChecklistBody({
   resourceId,
-  price,
-  currency,
+  priceUsd,
+  priceNgn,
   allowDownload = true,
 }: {
   resourceId: string;
-  price: number | null;
-  currency: string | null;
+  priceUsd: number | null;
+  priceNgn: number | null;
   // Admin choice: some resources should only be readable/checkable on the
   // site, not downloadable as a raw file.
   allowDownload?: boolean;
@@ -149,7 +149,7 @@ export function ChecklistBody({
           {signedIn ? "You don't have access to this yet." : "Sign in if you've already bought this, or buy access below."}
         </p>
         <div className="mx-auto mt-6 max-w-xs">
-          <BuyButton itemType="resource" itemId={resourceId} price={price} currency={currency} />
+          <BuyButton itemType="resource" itemId={resourceId} priceUsd={priceUsd} priceNgn={priceNgn} />
         </div>
       </div>
     );

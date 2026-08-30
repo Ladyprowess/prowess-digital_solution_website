@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
+import { formatMoney } from "@/lib/formatMoney";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
 
 type EventRow = {
   id: string;
@@ -14,6 +16,7 @@ type EventRow = {
   time: string | null; // HH:mm
   registration_type: "free" | "paid";
   price_usd: number | null;
+  price_ngn: number | null;
   registration_count: number | null;
 };
 
@@ -42,6 +45,7 @@ export default function EventRegistrationPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [currency, setCurrency] = useState<"USD" | "NGN">("USD");
 
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState("");
@@ -64,6 +68,7 @@ export default function EventRegistrationPage() {
       }
 
       setEvent(data.event);
+      setCurrency(data.event.price_usd ? "USD" : "NGN");
       // Date.now() belongs in an effect, not render - it's an impure call
       // that would otherwise run on every render for no reason.
       const eventStart = new Date(`${data.event.date}T${data.event.time || "00:00"}`);
@@ -107,6 +112,7 @@ export default function EventRegistrationPage() {
         full_name: fullName.trim(),
         email: email.trim(),
         phone: phone.trim(),
+        currency,
       }),
     });
 
@@ -159,9 +165,9 @@ export default function EventRegistrationPage() {
   }
 
   const isPaid = event.registration_type === "paid";
-  const priceText = isPaid
-    ? `$${Number(event.price_usd || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : "Free";
+  const bothCurrenciesAvailable = Boolean(event.price_usd && event.price_ngn);
+  const priceAmount = currency === "USD" ? event.price_usd : event.price_ngn;
+  const priceText = isPaid && priceAmount ? formatMoney(priceAmount, currency) : "Free";
 
   // date/time (not start_datetime, which the admin form never actually
   // writes) is the real source of the event's date - see get-by-slug.
@@ -243,6 +249,12 @@ export default function EventRegistrationPage() {
               <Reveal delay={100}>
                 <div className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-sm">
                   <h2 className="text-lg font-semibold text-foreground">Register</h2>
+
+                  {isPaid && bothCurrenciesAvailable && (
+                    <div className="mt-4 flex justify-center">
+                      <CurrencyToggle value={currency} onChange={setCurrency} />
+                    </div>
+                  )}
 
                   <div className="mt-4">
                     <label className="text-sm font-semibold text-foreground">Full name</label>

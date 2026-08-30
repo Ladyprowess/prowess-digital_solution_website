@@ -4,20 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
+import { formatMoney } from "@/lib/formatMoney";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
 
 type Service = {
   id: string;
   name: string;
   duration_minutes: number;
   price_usd: number;
+  price_ngn: number | null;
 };
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
-}
-
-function fmtPrice(n: number) {
-  return `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function getNextBusinessDays(days = 14) {
@@ -61,6 +60,7 @@ export default function ConsultationPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [currency, setCurrency] = useState<"USD" | "NGN">("USD");
 
   const days = useMemo(() => getNextBusinessDays(14), []);
   const slots = useMemo(() => buildSlots(), []);
@@ -77,6 +77,15 @@ export default function ConsultationPage() {
     () => services.find((s) => s.id === serviceId) || null,
     [services, serviceId]
   );
+
+  // A page-wide toggle only makes sense once every service actually has an
+  // NGN price - a partial rollout would let a customer pick NGN then land
+  // on a service with no NGN amount at all.
+  const allServicesHaveNgn = services.length > 0 && services.every((s) => s.price_ngn != null);
+
+  function priceFor(s: Service) {
+    return currency === "USD" ? s.price_usd : (s.price_ngn as number);
+  }
 
   useEffect(() => {
     (async () => {
@@ -116,6 +125,7 @@ export default function ConsultationPage() {
           scheduled_time: selectedTime,
           timezone: "Africa/Lagos",
           notes: notes.trim() || null,
+          currency,
         }),
       });
 
@@ -183,8 +193,11 @@ export default function ConsultationPage() {
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-muted px-4 py-3 text-sm text-foreground">
-                <span className="font-semibold">Business Hours:</span> Mon–Fri, 10:00–17:00
+              <div className="flex items-center gap-3">
+                {allServicesHaveNgn && <CurrencyToggle value={currency} onChange={setCurrency} />}
+                <div className="rounded-2xl bg-muted px-4 py-3 text-sm text-foreground">
+                  <span className="font-semibold">Business Hours:</span> Mon–Fri, 10:00–17:00
+                </div>
               </div>
             </div>
 
@@ -199,7 +212,7 @@ export default function ConsultationPage() {
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name} - {s.price_usd > 0 ? fmtPrice(s.price_usd) : "Free"}
+                      {s.name} - {priceFor(s) > 0 ? formatMoney(priceFor(s), currency) : "Free"}
                     </option>
                   ))}
                 </select>
@@ -335,8 +348,8 @@ export default function ConsultationPage() {
               >
                 {loading
                   ? "Processing…"
-                  : selectedService?.price_usd && selectedService.price_usd > 0
-                    ? `Pay ${fmtPrice(selectedService.price_usd)} & Book`
+                  : selectedService && priceFor(selectedService) > 0
+                    ? `Pay ${formatMoney(priceFor(selectedService), currency)} & Book`
                     : "Book Consultation"}
               </button>
             </div>

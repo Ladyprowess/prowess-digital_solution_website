@@ -11,6 +11,7 @@ import { VideoCard, type VideoCardData } from "@/components/videos/VideoCard";
 import { ContinueWatching } from "@/components/videos/ContinueWatching";
 import { supabase } from "@/lib/supabase";
 import { goalCards, popularSearches, whyProwess, newsletterPreferences } from "@/content/site";
+import { formatMoney } from "@/lib/formatMoney";
 
 type OpportunityCard = {
   id: string;
@@ -23,7 +24,7 @@ type OpportunityCard = {
 };
 
 type CareerPathCard = { id: string; slug: string; title: string; description: string | null };
-type LearnCard = { id: string; slug: string; title: string; description: string | null; access: string; price: number | null; price_currency: string | null };
+type LearnCard = { id: string; slug: string; title: string; description: string | null; access: string; price_usd: number | null; price_ngn: number | null };
 type EventCard = { id: string; slug: string; title: string; date: string; type: string | null };
 
 function EmptyState({ children }: { children: React.ReactNode }) {
@@ -128,7 +129,7 @@ export default function ModernHomePage() {
         supabase.from("jobs").select("id, slug, title, location_type, country, published_at, featured, companies(name), job_categories(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("published_at", { ascending: false, nullsFirst: false }).limit(4),
         supabase.from("opportunities").select("id, slug, title, organisation_name, published_at, featured, opportunity_types(name)").eq("status", "published").or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`).order("published_at", { ascending: false, nullsFirst: false }).limit(4),
         supabase.from("career_paths").select("id, slug, title, description").eq("status", "published").order("created_at", { ascending: false }).limit(6),
-        supabase.from("courses").select("id, slug, title, description, access, price, price_currency").eq("status", "published").order("created_at", { ascending: false }).limit(6),
+        supabase.from("courses").select("id, slug, title, description, access, price_usd, price_ngn").eq("status", "published").order("created_at", { ascending: false }).limit(6),
         // exclude_resource_type keeps videos out of these two -- they get
         // their own dedicated section below instead of double-appearing.
         // exclude_show_on_homepage keeps out anything already shown in the
@@ -487,7 +488,14 @@ export default function ModernHomePage() {
                     eyebrow="Premium"
                     title={item.title}
                     description={item.description}
-                    footer={item.price ? `${item.price_currency || "USD"} ${item.price}` : null}
+                    footer={
+                      "price_usd" in item && (item.price_usd || item.price_ngn)
+                        ? [
+                            item.price_usd ? formatMoney(item.price_usd, "USD") : null,
+                            item.price_ngn ? formatMoney(item.price_ngn, "NGN") : null,
+                          ].filter(Boolean).join(" / ")
+                        : null
+                    }
                   />
                 )
               )}

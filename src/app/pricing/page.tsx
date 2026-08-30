@@ -8,6 +8,13 @@ import { Reveal } from "@/components/Reveal";
 import { packages, addOns, annualMonthlyPrice, annualTotalPrice } from "@/content/site";
 import MembershipIntakeModal from "@/components/MembershipIntakeModal";
 import type { BillingInterval } from "@/lib/payments/flutterwave";
+import { formatMoney } from "@/lib/formatMoney";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
+
+// The page-wide currency toggle only makes sense once every tier actually
+// has an NGN price set - a partial rollout would let a customer pick NGN
+// then hit a tier with no NGN amount at all.
+const ALL_TIERS_HAVE_NGN = packages.every((p) => p.monthlyPriceNGN != null);
 
 const DIAGNOSTIC_LINK = "/services/business-structure-diagnostic";
 
@@ -79,14 +86,15 @@ function Dash() {
   );
 }
 
-function formatUSD(amount: number) {
-  return `$${amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-}
-
 export default function PricingPage() {
   const popularIdx = 1; // Foundation
   const [interval, setInterval] = useState<BillingInterval>("monthly");
+  const [currency, setCurrency] = useState<"USD" | "NGN">("USD");
   const [modalPlan, setModalPlan] = useState<(typeof packages)[number] | null>(null);
+
+  function monthlyPriceFor(p: (typeof packages)[number]) {
+    return currency === "USD" ? p.monthlyPrice : (p.monthlyPriceNGN as number);
+  }
 
   return (
     <div className="pb-16">
@@ -160,6 +168,15 @@ export default function PricingPage() {
             </div>
           </Reveal>
 
+          {/* Currency toggle - only once every tier actually has an NGN price */}
+          {ALL_TIERS_HAVE_NGN && (
+            <Reveal delay={60}>
+              <div className="mx-auto mt-8 flex justify-center">
+                <CurrencyToggle value={currency} onChange={setCurrency} />
+              </div>
+            </Reveal>
+          )}
+
           {/* Monthly / Yearly toggle */}
           <Reveal delay={80}>
             <div className="mx-auto mt-8 flex w-fit items-center gap-1 rounded-full border border-border bg-card p-1">
@@ -190,10 +207,11 @@ export default function PricingPage() {
           <div className="mt-10 grid gap-6 lg:grid-cols-4">
             {packages.map((p, idx) => {
               const isPopular = idx === popularIdx;
+              const monthlyPrice = monthlyPriceFor(p);
               const priceLabel =
                 interval === "monthly"
-                  ? `${formatUSD(p.monthlyPrice)}/mo`
-                  : `${formatUSD(annualMonthlyPrice(p.monthlyPrice))}/mo`;
+                  ? `${formatMoney(monthlyPrice, currency)}/mo`
+                  : `${formatMoney(annualMonthlyPrice(monthlyPrice), currency)}/mo`;
 
               return (
                 <Reveal key={p.slug} delay={idx * 100} className="h-full">
@@ -218,7 +236,7 @@ export default function PricingPage() {
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {interval === "monthly"
                           ? "billed monthly"
-                          : `billed yearly (${formatUSD(annualTotalPrice(p.monthlyPrice))}/yr)`}
+                          : `billed yearly (${formatMoney(annualTotalPrice(monthlyPrice), currency)}/yr)`}
                       </p>
                     </div>
 
@@ -276,11 +294,12 @@ export default function PricingPage() {
         onClose={() => setModalPlan(null)}
         plan={modalPlan}
         interval={interval}
+        currency={currency}
         displayPrice={
           modalPlan
             ? interval === "monthly"
-              ? `${formatUSD(modalPlan.monthlyPrice)}/mo`
-              : `${formatUSD(annualTotalPrice(modalPlan.monthlyPrice))}/yr`
+              ? `${formatMoney(monthlyPriceFor(modalPlan), currency)}/mo`
+              : `${formatMoney(annualTotalPrice(monthlyPriceFor(modalPlan)), currency)}/yr`
             : ""
         }
       />

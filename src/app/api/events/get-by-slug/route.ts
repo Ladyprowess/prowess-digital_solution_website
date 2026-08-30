@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   // reading it alone produced new Date(null) -> Jan 1 1970 on this page.
   const { data, error } = await supabase
     .from("events")
-    .select("id,title,slug,description,date,time,registration_type,price_usd,status")
+    .select("id,title,slug,description,date,time,registration_type,price_usd,price_ngn,status")
     .eq("slug", slug)
     .eq("status", "published")
     .limit(1)

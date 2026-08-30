@@ -11,12 +11,12 @@ type Module = { id: string; title: string; position: number; course_lessons: Les
 
 export function CourseContent({
   courseId,
-  price,
-  currency,
+  priceUsd,
+  priceNgn,
 }: {
   courseId: string;
-  price: number | null;
-  currency: string | null;
+  priceUsd: number | null;
+  priceNgn: number | null;
 }) {
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [modules, setModules] = useState<Module[]>([]);
@@ -96,7 +96,7 @@ export function CourseContent({
           {signedIn ? "You don't have access to this course yet." : "Sign in if you've already purchased this, or buy access below."}
         </p>
         <div className="mx-auto mt-6 max-w-xs">
-          <BuyButton itemType="course" itemId={courseId} price={price} currency={currency} />
+          <BuyButton itemType="course" itemId={courseId} priceUsd={priceUsd} priceNgn={priceNgn} />
         </div>
       </div>
     );

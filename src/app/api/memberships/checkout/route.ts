@@ -20,6 +20,7 @@ export async function POST(req: Request) {
     const {
       planSlug,
       interval,
+      currency,
       fullName,
       email,
       phone,
@@ -41,7 +42,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Unknown plan" }, { status: 400 });
     }
 
-    const amountUSD = interval === "monthly" ? plan.monthlyPrice : annualTotalPrice(plan.monthlyPrice);
+    // The client picks which currency to pay in; the server picks the
+    // amount for that currency, never trusting an amount from the client.
+    // Falls back to USD if NGN wasn't requested or isn't set for this tier.
+    const resolvedCurrency: "USD" | "NGN" = currency === "NGN" && plan.monthlyPriceNGN != null ? "NGN" : "USD";
+    const monthlyAmount = resolvedCurrency === "USD" ? plan.monthlyPrice : (plan.monthlyPriceNGN as number);
+    const amount = interval === "monthly" ? monthlyAmount : annualTotalPrice(monthlyAmount);
 
     const supabase = supabaseAdmin();
     const { data: row, error: insertErr } = await supabase
@@ -49,7 +55,9 @@ export async function POST(req: Request) {
       .insert({
         plan_slug: planSlug,
         billing_interval: interval,
-        amount_usd: amountUSD,
+        amount_usd: resolvedCurrency === "USD" ? amount : null,
+        amount_ngn: resolvedCurrency === "NGN" ? amount : null,
+        currency: resolvedCurrency,
         full_name: fullName,
         email,
         phone: phone || null,
@@ -70,7 +78,8 @@ export async function POST(req: Request) {
       slug: planSlug,
       title: plan.title,
       interval,
-      amountUSD,
+      amount,
+      currency: resolvedCurrency,
     });
 
     await supabase
@@ -82,8 +91,8 @@ export async function POST(req: Request) {
 
     const { link } = await initializePayment({
       email,
-      amount: amountUSD,
-      currency: "USD",
+      amount,
+      currency: resolvedCurrency,
       reference,
       callbackUrl: `${SITE_URL}/pricing/success`,
       metadata: { type: "membership", subscription_id: row.id },

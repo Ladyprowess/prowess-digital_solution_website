@@ -10,6 +10,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { RelatedSection } from "@/components/RelatedSection";
 import { getSkillGraph } from "@/lib/careerPathGraph";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { formatMoney } from "@/lib/formatMoney";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -29,8 +30,8 @@ type ResourceDetail = {
   level: string | null;
   audience: "consumer" | "business" | "both";
   access: "free" | "premium";
-  price: number | null;
-  price_currency: string | null;
+  price_usd: number | null;
+  price_ngn: number | null;
   source: string;
   reading_minutes: number | null;
   page_count: number | null;
@@ -46,7 +47,7 @@ async function getResource(slug: string) {
   const { data } = await supabase
     .from("resources")
     .select(
-      "id, slug, title, description, category, resource_type, level, audience, access, price, price_currency, source, reading_minutes, page_count, content_display, allow_download, published_at, cover_url, cover_path, resource_skill_map(skills(id, name, slug))"
+      "id, slug, title, description, category, resource_type, level, audience, access, price_usd, price_ngn, source, reading_minutes, page_count, content_display, allow_download, published_at, cover_url, cover_path, resource_skill_map(skills(id, name, slug))"
     )
     // published check covers both the legacy is_published-driven rows and
     // the newer status field, kept in sync on every admin write
@@ -122,7 +123,16 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wide text-primary capitalize">{typeLabel}</span>
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${resource.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {resource.access === "premium" ? `Premium${resource.price ? ` - ${resource.price_currency || "USD"} ${resource.price}` : ""}` : "Free"}
+                  {resource.access === "premium"
+                    ? `Premium${
+                        resource.price_usd || resource.price_ngn
+                          ? ` - ${[
+                              resource.price_usd ? formatMoney(resource.price_usd, "USD") : null,
+                              resource.price_ngn ? formatMoney(resource.price_ngn, "NGN") : null,
+                            ].filter(Boolean).join(" / ")}`
+                          : ""
+                      }`
+                    : "Free"}
                 </span>
               </div>
               <h1 className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">{resource.title}</h1>
@@ -180,9 +190,9 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
 
         <Reveal delay={120}>
           {resource.resource_type === "checklist" ? (
-            <ChecklistBody resourceId={resource.id} price={resource.price} currency={resource.price_currency} allowDownload={resource.allow_download} />
+            <ChecklistBody resourceId={resource.id} priceUsd={resource.price_usd} priceNgn={resource.price_ngn} allowDownload={resource.allow_download} />
           ) : (
-            <ResourceBody resourceId={resource.id} title={resource.title} price={resource.price} currency={resource.price_currency} contentDisplay={resource.content_display} allowDownload={resource.allow_download} />
+            <ResourceBody resourceId={resource.id} title={resource.title} priceUsd={resource.price_usd} priceNgn={resource.price_ngn} contentDisplay={resource.content_display} allowDownload={resource.allow_download} />
           )}
         </Reveal>
 

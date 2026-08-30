@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
+import { formatMoney } from "@/lib/formatMoney";
 
 function CalendarIcon() {
   return (
@@ -66,6 +67,7 @@ type EventItem = {
   start_datetime?: string | null; // ISO datetime
   registration_type?: "free" | "paid" | null;
   price_usd?: number | null;
+  price_ngn?: number | null;
 };
 
 type RawEventItem = Partial<EventItem> & {
@@ -147,7 +149,16 @@ function normaliseEvent(e: RawEventItem): EventItem {
     start_datetime: start ? String(start) : null,
     registration_type: e.registration_type ?? null,
     price_usd: typeof e.price_usd === "number" ? e.price_usd : null,
+    price_ngn: typeof e.price_ngn === "number" ? e.price_ngn : null,
   };
+}
+
+function priceLabel(item: EventItem): string {
+  if (!item.price && !item.price_ngn) return "Free";
+  return [
+    item.price ? formatMoney(item.price, "USD") : null,
+    item.price_ngn ? formatMoney(item.price_ngn, "NGN") : null,
+  ].filter(Boolean).join(" / ");
 }
 
 export default function EventsPage() {
@@ -512,9 +523,7 @@ export default function EventsPage() {
 
                     <div className="mt-6 flex items-center justify-between border-t border-border pt-5">
                       <div className="text-lg font-semibold text-foreground">
-                        {e.price && e.price > 0
-                          ? `$${e.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                          : "Free"}
+                        {priceLabel(e)}
                       </div>
                       <span className="text-sm font-medium text-primary">View details →</span>
                     </div>
@@ -720,9 +729,7 @@ export default function EventsPage() {
 
               <div className="mt-6 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-lg font-semibold text-foreground">
-                  {selected.price && selected.price > 0
-                    ? `$${selected.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : "Free"}
+                  {priceLabel(selected)}
                 </div>
 
                 <div className="flex gap-3">

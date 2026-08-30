@@ -13,8 +13,8 @@ export type LearnItem = {
   description: string | null;
   level: "beginner" | "intermediate" | "advanced" | null;
   access: "free" | "premium";
-  price: number | null;
-  price_currency: string | null;
+  price_usd: number | null;
+  price_ngn: number | null;
   thumbnail_url: string | null;
   featured: boolean;
   skills: { slug: string; name: string }[];
@@ -24,7 +24,7 @@ export type LearnItem = {
 export type CourseRow = {
   id: string; slug: string; title: string; description: string | null;
   level: "beginner" | "intermediate" | "advanced" | null;
-  access: "free" | "premium"; price: number | null; price_currency: string | null;
+  access: "free" | "premium"; price_usd: number | null; price_ngn: number | null;
   thumbnail_url: string | null; featured: boolean; created_at: string;
   course_skill_map: { skills: { slug: string; name: string } | null }[];
 };
@@ -33,7 +33,7 @@ export type ResourceRow = {
   id: string; slug: string; title: string; description: string | null;
   resource_type: string | null;
   level: "beginner" | "intermediate" | "advanced" | null;
-  access: "free" | "premium"; price: number | null; price_currency: string | null;
+  access: "free" | "premium"; price_usd: number | null; price_ngn: number | null;
   thumbnail_url: string | null; featured: boolean; created_at: string;
   resource_skill_map: { skills: { slug: string; name: string } | null }[];
 };
@@ -42,15 +42,15 @@ export type ResourceRow = {
 // exported so any page needing a course/resource feed (currently /learn and
 // /skills/[slug]'s Recommended Learning section) uses the exact same shape
 // instead of two copies drifting apart.
-export const COURSE_SELECT = "id, slug, title, description, level, access, price, price_currency, thumbnail_url, featured, created_at, course_skill_map(skills(slug, name))";
-export const RESOURCE_SELECT = "id, slug, title, description, resource_type, level, access, price, price_currency, thumbnail_url, featured, created_at, resource_skill_map(skills(slug, name))";
+export const COURSE_SELECT = "id, slug, title, description, level, access, price_usd, price_ngn, thumbnail_url, featured, created_at, course_skill_map(skills(slug, name))";
+export const RESOURCE_SELECT = "id, slug, title, description, resource_type, level, access, price_usd, price_ngn, thumbnail_url, featured, created_at, resource_skill_map(skills(slug, name))";
 export const LEARN_RESOURCE_KINDS = ["video", "article", "guide", "ebook"];
 
 export function courseToLearnItem(c: CourseRow): LearnItem {
   return {
     id: c.id, slug: c.slug, href: `/learn/${c.slug}`, kind: "course",
     title: c.title, description: c.description,
-    level: c.level, access: c.access, price: c.price, price_currency: c.price_currency,
+    level: c.level, access: c.access, price_usd: c.price_usd, price_ngn: c.price_ngn,
     thumbnail_url: c.thumbnail_url, featured: c.featured,
     skills: c.course_skill_map.map((m) => m.skills).filter((s): s is { slug: string; name: string } => Boolean(s)),
     createdAt: c.created_at,
@@ -66,7 +66,7 @@ export function resourceToLearnItem(r: ResourceRow): LearnItem {
   return {
     id: r.id, slug: r.slug, href: r.resource_type === "video" ? `/videos/${r.slug}` : `/resources/${r.slug}`, kind: r.resource_type as LearnKind,
     title: r.title, description: r.description,
-    level: r.level, access: r.access, price: r.price, price_currency: r.price_currency,
+    level: r.level, access: r.access, price_usd: r.price_usd, price_ngn: r.price_ngn,
     thumbnail_url: r.thumbnail_url, featured: r.featured,
     skills: r.resource_skill_map.map((m) => m.skills).filter((s): s is { slug: string; name: string } => Boolean(s)),
     createdAt: r.created_at,

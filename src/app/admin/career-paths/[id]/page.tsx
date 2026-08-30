@@ -39,8 +39,8 @@ function CareerPathEditor({ id }: { id: string }) {
   const [skillLevels, setSkillLevels] = useState<Record<string, "" | (typeof LEVELS)[number]>>({});
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
   const [access, setAccess] = useState<"free" | "premium">("free");
-  const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [priceUsd, setPriceUsd] = useState("");
+  const [priceNgn, setPriceNgn] = useState("");
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [featured, setFeatured] = useState(false);
   const [level, setLevel] = useState<"" | (typeof LEVELS)[number]>("");
@@ -64,7 +64,7 @@ function CareerPathEditor({ id }: { id: string }) {
       const { data, error } = await supabase
         .from("career_paths")
         .select(
-          "id, title, slug, description, access, price, price_currency, status, featured, level, category, icon_key, image_url, who_its_for, career_path_skill_map(skill_id, level), career_path_tool_map(tool_id)"
+          "id, title, slug, description, access, price_usd, price_ngn, status, featured, level, category, icon_key, image_url, who_its_for, career_path_skill_map(skill_id, level), career_path_tool_map(tool_id)"
         )
         .eq("id", id)
         .single();
@@ -73,7 +73,7 @@ function CareerPathEditor({ id }: { id: string }) {
 
       const p = data as unknown as {
         title: string; slug: string; description: string | null; access: "free" | "premium";
-        price: number | null; price_currency: string | null; status: "draft" | "published";
+        price_usd: number | null; price_ngn: number | null; status: "draft" | "published";
         featured: boolean; level: (typeof LEVELS)[number] | null; category: (typeof CATEGORIES)[number] | null;
         icon_key: string; image_url: string | null; who_its_for: string[] | null;
         career_path_skill_map: { skill_id: string; level: (typeof LEVELS)[number] | null }[];
@@ -85,8 +85,8 @@ function CareerPathEditor({ id }: { id: string }) {
       setOriginalSlug(p.slug);
       setDescription(p.description || "");
       setAccess(p.access);
-      setPrice(p.price?.toString() || "");
-      setCurrency(p.price_currency || "USD");
+      setPriceUsd(p.price_usd?.toString() || "");
+      setPriceNgn(p.price_ngn?.toString() || "");
       setStatus(p.status);
       setFeatured(p.featured);
       setLevel(p.level || "");
@@ -121,8 +121,8 @@ function CareerPathEditor({ id }: { id: string }) {
         title: title.trim(),
         description: description.trim() || null,
         access,
-        price: access === "premium" && price ? Number(price) : null,
-        price_currency: access === "premium" && price ? currency : null,
+        price_usd: access === "premium" && priceUsd ? Number(priceUsd) : null,
+        price_ngn: access === "premium" && priceNgn ? Number(priceNgn) : null,
         status,
         featured,
         level: level || null,
@@ -269,7 +269,7 @@ function CareerPathEditor({ id }: { id: string }) {
           <ToolPicker selectedIds={selectedToolIds} onSelectedIdsChange={setSelectedToolIds} />
         </Field>
 
-        <AccessPriceFields access={access} onAccessChange={setAccess} price={price} onPriceChange={setPrice} currency={currency} onCurrencyChange={setCurrency} />
+        <AccessPriceFields access={access} onAccessChange={setAccess} priceUsd={priceUsd} onPriceUsdChange={setPriceUsd} priceNgn={priceNgn} onPriceNgnChange={setPriceNgn} />
 
         <div className="flex flex-wrap items-center gap-6">
           <label className="flex items-center gap-3 text-sm font-semibold text-foreground">

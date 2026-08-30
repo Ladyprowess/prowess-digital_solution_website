@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { event_id, full_name, email, phone } = body || {};
+    const { event_id, full_name, email, phone, currency } = body || {};
 
     if (!event_id || !full_name || !email) {
       return NextResponse.json(
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("id,registration_type,price_usd")
+      .select("id,registration_type,price_usd,price_ngn")
       .eq("id", event_id)
       .limit(1)
       .single();
@@ -56,10 +56,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, mode: "free" });
     }
 
-    // PAID EVENT
-    const amount = Number(event.price_usd || 0);
+    // PAID EVENT - the server picks the amount for whichever currency was
+    // requested, never trusting an amount from the client. Falls back to
+    // whichever currency the event actually has a price in if the client
+    // didn't send one (legacy single-currency events, or an old client).
+    const requestedCurrency = currency === "NGN" || currency === "USD" ? currency : null;
+    const resolvedCurrency = requestedCurrency && (requestedCurrency === "USD" ? event.price_usd : event.price_ngn)
+      ? requestedCurrency
+      : event.price_usd
+        ? "USD"
+        : "NGN";
+    const amount = Number((resolvedCurrency === "USD" ? event.price_usd : event.price_ngn) || 0);
+
     if (!amount || amount < 1) {
-      return NextResponse.json({ error: "Paid event price is not set." }, { status: 400 });
+      return NextResponse.json({ error: "This event isn't priced in that currency." }, { status: 400 });
     }
 
     const reference = generateReference("EVT");
@@ -68,7 +78,7 @@ export async function POST(req: Request) {
     const { link } = await initializePayment({
       email: String(email).trim(),
       amount,
-      currency: "USD",
+      currency: resolvedCurrency,
       reference,
       callbackUrl,
       metadata: {

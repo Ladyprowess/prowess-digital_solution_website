@@ -41,6 +41,10 @@ export async function POST(req: Request) {
     const price_usd =
       registration_type === "paid" ? Number(priceUsdRaw || 0) : null;
 
+    const priceNgnRaw = String(form.get("price_ngn") || "").trim();
+    const price_ngn =
+      registration_type === "paid" && priceNgnRaw ? Number(priceNgnRaw) : null;
+
     // keep your old fields too (in case your table still uses them)
     const priceRaw = String(form.get("price") || "0").trim();
     const spotsRaw = String(form.get("spots_left") || "").trim();
@@ -103,6 +107,7 @@ export async function POST(req: Request) {
       status,
       registration_type,
       price_usd,
+      price_ngn,
 
       // old fields (optional)
       price: Number.isFinite(price) ? price : 0,

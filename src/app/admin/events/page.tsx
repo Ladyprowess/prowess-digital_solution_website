@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase"; // ✅ use your existing client
 import { AdminPagination } from "@/components/admin/AdminPagination";
+import { formatMoney } from "@/lib/formatMoney";
 
 type EventRow = {
   id: string;
@@ -20,6 +21,7 @@ type EventRow = {
   status: "published" | "draft";
   registration_type: "free" | "paid";
   price_usd: number | null;
+  price_ngn: number | null;
 
   price: number | null;
   spots_left: number | null;
@@ -48,6 +50,7 @@ export default function AdminEventsPage() {
 
   const [registrationType, setRegistrationType] = useState<"free" | "paid">("free");
   const [priceUsd, setPriceUsd] = useState("");
+  const [priceNgn, setPriceNgn] = useState("");
   const [joinLink, setJoinLink] = useState("");
 
   const [status, setStatus] = useState<"published" | "draft">("published");
@@ -109,7 +112,7 @@ export default function AdminEventsPage() {
     const { data: eventsData, error: eventsError } = await supabase
       .from("events")
       .select(
-        "id,title,slug,description,type,date,time,duration,location,status,registration_type,price_usd,price,spots_left,cover_url,registration_url,created_at"
+        "id,title,slug,description,type,date,time,duration,location,status,registration_type,price_usd,price_ngn,price,spots_left,cover_url,registration_url,created_at"
       )
       .order("created_at", { ascending: false });
 
@@ -162,6 +165,7 @@ export default function AdminEventsPage() {
       form.append("status", status);
       form.append("registration_type", registrationType);
       form.append("price_usd", registrationType === "paid" ? String(Number(priceUsd)) : "");
+      form.append("price_ngn", registrationType === "paid" ? priceNgn.trim() : "");
       form.append("join_link", joinLink.trim());
 
       // optional slug
@@ -196,6 +200,7 @@ export default function AdminEventsPage() {
       setLocation("");
       setRegistrationType("free");
       setPriceUsd("");
+      setPriceNgn("");
       setJoinLink("");
       setStatus("published");
       setCoverFile(null);
@@ -371,6 +376,20 @@ export default function AdminEventsPage() {
               />
             </div>
 
+            <div>
+              <label className="text-sm font-semibold text-slate-900">Price (NGN, optional)</label>
+              <input
+                value={priceNgn}
+                onChange={(e) => setPriceNgn(e.target.value)}
+                disabled={registrationType !== "paid"}
+                className={cn(
+                  "mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm",
+                  registrationType !== "paid" ? "border-slate-200 text-slate-400" : "border-slate-200"
+                )}
+                placeholder="e.g. 7500000"
+              />
+            </div>
+
             <div className="lg:col-span-2">
               <label className="text-sm font-semibold text-slate-900">Join link (optional)</label>
               <input
@@ -507,7 +526,10 @@ export default function AdminEventsPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-9-9.5v10.5a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25h-15a2.25 2.25 0 00-2.25 2.25z" />
                       </svg>
                       {ev.registration_type === "paid"
-                        ? `Paid ($${Number(ev.price_usd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
+                        ? `Paid (${[
+                            ev.price_usd ? formatMoney(ev.price_usd, "USD") : null,
+                            ev.price_ngn ? formatMoney(ev.price_ngn, "NGN") : null,
+                          ].filter(Boolean).join(" / ")})`
                         : "Free"}
                     </div>
                     <div className="flex items-center gap-1.5">

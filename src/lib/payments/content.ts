@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
+import { verifyTransaction } from "@/lib/payments/flutterwave";
 
 const ITEM_TABLE: Record<string, string> = {
   resource: "resources",
@@ -127,6 +128,17 @@ export async function markContentPurchasePaid(purchaseId: string, reference: str
   if (purchaseErr || !purchase) return { ok: false as const };
   if (purchase.payment_status === "paid") return { ok: true as const, alreadyPaid: true };
 
+  // Never trust that the currency the client checked out with is what
+  // Flutterwave actually charged - re-verify the real transaction and
+  // require both the amount and the currency to match what the server
+  // computed at checkout time (stored on this row), before marking paid.
+  const verified = await verifyTransaction(reference);
+  const amountMatches = Math.round(Number(verified?.amount || 0) * 100) === Math.round(Number(purchase.amount) * 100);
+  const currencyMatches = String(verified?.currency || "").toUpperCase() === String(purchase.currency).toUpperCase();
+  if (verified?.status !== "successful" || !amountMatches || !currencyMatches) {
+    return { ok: false as const };
+  }
+
   // The initial select above is not atomic with this update: the webhook
   // and the client-side verify route can both read "pending" before either
   // write lands, and both would pass the check above. .neq("payment_status",
@@ -199,8 +211,12 @@ export async function markContentPurchasePaid(purchaseId: string, reference: str
 
 /**
  * Reads the current price of a premium item directly from its own table -
- * the amount charged is never taken from the client. Returns null if the
- * item doesn't exist, isn't premium, or has no price set.
+ * the amount charged is never taken from the client. Returns both
+ * currencies' prices (either can be null if the admin only set one, or if
+ * this item was priced under the old single price/price_currency columns
+ * and never updated) so the caller can validate whichever currency the
+ * customer actually chose. Returns null if the item doesn't exist, isn't
+ * premium, or has no price set in either currency.
  */
 export async function getItemPrice(itemType: string, itemId: string) {
   const table = ITEM_TABLE[itemType];
@@ -209,10 +225,23 @@ export async function getItemPrice(itemType: string, itemId: string) {
   const supabase = supabaseAdmin();
   const { data } = await supabase
     .from(table)
-    .select("title, access, price, price_currency")
+    .select("title, access, price_usd, price_ngn, price, price_currency")
     .eq("id", itemId)
     .maybeSingle();
 
-  if (!data || data.access !== "premium" || !data.price) return null;
-  return { title: data.title as string, amount: data.price as number, currency: (data.price_currency as string) || "USD" };
+  if (!data || data.access !== "premium") return null;
+  let usd = typeof data.price_usd === "number" ? data.price_usd : null;
+  let ngn = typeof data.price_ngn === "number" ? data.price_ngn : null;
+
+  // Legacy fallback: an item priced before the dual-currency columns
+  // existed only has the old single price/price_currency pair set - keep
+  // it purchasable exactly as before until an admin fills in the new
+  // fields, rather than silently making it unbuyable.
+  if (usd == null && ngn == null && typeof data.price === "number") {
+    if (data.price_currency === "NGN") ngn = data.price;
+    else usd = data.price;
+  }
+
+  if (usd == null && ngn == null) return null;
+  return { title: data.title as string, usd, ngn };
 }

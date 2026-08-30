@@ -5,6 +5,7 @@ import { SaveButton } from "@/components/SaveButton";
 import { CALM_ACCENT } from "@/lib/listingColors";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
 import type { LearnItem } from "@/lib/learn/types";
+import { formatMoney } from "@/lib/formatMoney";
 
 const KIND_LABELS: Record<LearnItem["kind"], string> = {
   course: "Course",
@@ -32,8 +33,11 @@ function KindIcon({ kind }: { kind: LearnItem["kind"] }) {
 
 function priceLabel(item: LearnItem): string | null {
   if (item.access !== "premium") return null;
-  if (!item.price) return "Premium";
-  return `${item.price_currency || ""} ${item.price.toLocaleString()}`.trim();
+  if (!item.price_usd && !item.price_ngn) return "Premium";
+  return [
+    item.price_usd ? formatMoney(item.price_usd, "USD") : null,
+    item.price_ngn ? formatMoney(item.price_ngn, "NGN") : null,
+  ].filter(Boolean).join(" / ");
 }
 
 export function LearnCard({ item }: { item: LearnItem }) {
