@@ -11,7 +11,16 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 // comment on Footer itself for the full explanation.
 export default function SiteShell({ children, footer }: { children: React.ReactNode; footer: React.ReactNode }) {
   const pathname = usePathname();
-  const hideShell = pathname.startsWith("/dashboard") || pathname.startsWith("/login") || pathname.startsWith("/admin");
+  // /account/login and /account/signup keep the public nav/footer (a plain
+  // centered auth card); every other /account/* route is the member
+  // dashboard, which gets its own sidebar shell instead - same treatment
+  // /admin already gets.
+  const isAccountAuthPage = pathname.startsWith("/account/login") || pathname.startsWith("/account/signup");
+  const hideShell =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/admin") ||
+    (pathname.startsWith("/account") && !isAccountAuthPage);
 
   if (hideShell) {
     return <>{children}</>;
