@@ -47,3 +47,43 @@ export async function hasEntitlement(
   const { data: purchase } = await query.maybeSingle();
   return purchase ? { entitled: true, reason: "purchased" } : { entitled: false, reason: "premium_no_access" };
 }
+
+/**
+ * Which ebook formats (read/download/hardcopy) a caller has actually paid
+ * for on a given resource - separate from hasEntitlement's plain boolean,
+ * since a format-priced ebook grants access per-format, not all-or-nothing.
+ * Same user_id/email matching as hasEntitlement, just grouped by the
+ * `format` column instead of collapsed into one yes/no. Buying more than
+ * one format over time returns the union of all of them.
+ */
+export async function getPurchasedFormats(
+  resourceId: string,
+  caller: { userId?: string | null; email?: string | null }
+): Promise<Set<"read" | "download" | "hardcopy">> {
+  const empty = new Set<"read" | "download" | "hardcopy">();
+  if (!caller.userId && !caller.email) return empty;
+
+  const supabase = supabaseAdmin();
+  let query = supabase
+    .from("purchases")
+    .select("format")
+    .eq("item_type", "resource")
+    .eq("item_id", resourceId)
+    .eq("payment_status", "paid")
+    .not("format", "is", null);
+
+  if (caller.userId && caller.email) {
+    query = query.or(`user_id.eq.${caller.userId},email.eq.${caller.email}`);
+  } else if (caller.userId) {
+    query = query.eq("user_id", caller.userId);
+  } else if (caller.email) {
+    query = query.eq("email", caller.email);
+  }
+
+  const { data } = await query;
+  const formats = empty;
+  for (const row of data || []) {
+    if (row.format === "read" || row.format === "download" || row.format === "hardcopy") formats.add(row.format);
+  }
+  return formats;
+}

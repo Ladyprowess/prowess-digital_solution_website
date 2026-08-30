@@ -24,10 +24,10 @@ drop policy if exists "admin_resources_storage_access" on storage.objects;
 create policy "admin_resources_storage_access" on storage.objects
   for all to authenticated
   using (
-    bucket_id in ('resources', 'resource-covers')
+    bucket_id in ('resources', 'resource-covers', 'resource-mockups')
     and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
   )
   with check (
-    bucket_id in ('resources', 'resource-covers')
+    bucket_id in ('resources', 'resource-covers', 'resource-mockups')
     and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
   );

@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const email = member.email;
 
     const body = await req.json();
-    const { itemType, itemId, currency } = body || {};
+    const { itemType, itemId, currency, format, shipping } = body || {};
 
     if (!itemType || !itemId) {
       return NextResponse.json({ ok: false, error: "Missing required fields" }, { status: 400 });
@@ -42,12 +42,47 @@ export async function POST(req: Request) {
     }
 
     const requestedCurrency = currency === "NGN" || currency === "USD" ? currency : null;
-    const resolvedCurrency = requestedCurrency && priced[requestedCurrency === "USD" ? "usd" : "ngn"]
-      ? requestedCurrency
-      : priced.usd
-        ? "USD"
-        : "NGN";
-    const amount = resolvedCurrency === "USD" ? priced.usd : priced.ngn;
+    let resolvedCurrency: "USD" | "NGN";
+    let amount: number | null;
+    let purchaseFormat: "read" | "download" | "hardcopy" | null = null;
+    let shippingFields: { full_name: string; phone: string; address: string } | null = null;
+
+    if (priced.formats) {
+      // Format pricing is a hard requirement here, not a fallback - there
+      // is no generic price left on this item for an unset/invalid format
+      // to fall back to (see getItemPrice).
+      const requestedFormat: "read" | "download" | "hardcopy" | null =
+        format === "read" || format === "download" || format === "hardcopy" ? format : null;
+      if (!requestedFormat || !priced.formats[requestedFormat]) {
+        return NextResponse.json({ ok: false, error: "Please choose a valid format for this ebook." }, { status: 400 });
+      }
+      purchaseFormat = requestedFormat;
+
+      const formatPrice = priced.formats[requestedFormat];
+      resolvedCurrency = requestedCurrency && formatPrice[requestedCurrency === "USD" ? "usd" : "ngn"]
+        ? requestedCurrency
+        : formatPrice.usd
+          ? "USD"
+          : "NGN";
+      amount = resolvedCurrency === "USD" ? formatPrice.usd : formatPrice.ngn;
+
+      if (requestedFormat === "hardcopy") {
+        const fullName = String(shipping?.fullName || "").trim();
+        const phone = String(shipping?.phone || "").trim();
+        const address = String(shipping?.address || "").trim();
+        if (!fullName || !phone || !address) {
+          return NextResponse.json({ ok: false, error: "Please fill in your delivery details." }, { status: 400 });
+        }
+        shippingFields = { full_name: fullName, phone, address };
+      }
+    } else {
+      resolvedCurrency = requestedCurrency && priced[requestedCurrency === "USD" ? "usd" : "ngn"]
+        ? requestedCurrency
+        : priced.usd
+          ? "USD"
+          : "NGN";
+      amount = resolvedCurrency === "USD" ? priced.usd : priced.ngn;
+    }
 
     if (!amount) {
       return NextResponse.json({ ok: false, error: "This item isn't priced in that currency." }, { status: 400 });
@@ -62,6 +97,10 @@ export async function POST(req: Request) {
         item_id: itemId,
         amount,
         currency: resolvedCurrency,
+        format: purchaseFormat,
+        shipping_full_name: shippingFields?.full_name ?? null,
+        shipping_phone: shippingFields?.phone ?? null,
+        shipping_address: shippingFields?.address ?? null,
         payment_status: "pending",
       })
       .select()

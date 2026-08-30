@@ -32,6 +32,12 @@ type ResourceDetail = {
   access: "free" | "premium";
   price_usd: number | null;
   price_ngn: number | null;
+  price_read_usd: number | null;
+  price_read_ngn: number | null;
+  price_download_usd: number | null;
+  price_download_ngn: number | null;
+  price_hardcopy_usd: number | null;
+  price_hardcopy_ngn: number | null;
   source: string;
   reading_minutes: number | null;
   page_count: number | null;
@@ -41,13 +47,14 @@ type ResourceDetail = {
   cover_url: string | null;
   cover_path: string | null;
   resource_skill_map: { skills: { id: string; name: string; slug: string } }[];
+  resource_mockups: { url: string; position: number }[];
 };
 
 async function getResource(slug: string) {
   const { data } = await supabase
     .from("resources")
     .select(
-      "id, slug, title, description, category, resource_type, level, audience, access, price_usd, price_ngn, source, reading_minutes, page_count, content_display, allow_download, published_at, cover_url, cover_path, resource_skill_map(skills(id, name, slug))"
+      "id, slug, title, description, category, resource_type, level, audience, access, price_usd, price_ngn, price_read_usd, price_read_ngn, price_download_usd, price_download_ngn, price_hardcopy_usd, price_hardcopy_ngn, source, reading_minutes, page_count, content_display, allow_download, published_at, cover_url, cover_path, resource_skill_map(skills(id, name, slug)), resource_mockups(url, position)"
     )
     // published check covers both the legacy is_published-driven rows and
     // the newer status field, kept in sync on every admin write
@@ -146,6 +153,17 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
               <img src={resource.cover_url} alt={resource.title} className="w-full object-cover" />
             </div>
           )}
+
+          {resource.resource_type === "ebook" && resource.resource_mockups.length > 0 && (
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+              {[...resource.resource_mockups]
+                .sort((a, b) => a.position - b.position)
+                .map((m, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={m.url} alt={`${resource.title} preview ${i + 1}`} className="h-40 w-28 flex-shrink-0 rounded-xl border border-border object-cover" />
+                ))}
+            </div>
+          )}
         </Reveal>
 
         <Reveal delay={40}>
@@ -192,7 +210,23 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
           {resource.resource_type === "checklist" ? (
             <ChecklistBody resourceId={resource.id} priceUsd={resource.price_usd} priceNgn={resource.price_ngn} allowDownload={resource.allow_download} />
           ) : (
-            <ResourceBody resourceId={resource.id} title={resource.title} priceUsd={resource.price_usd} priceNgn={resource.price_ngn} contentDisplay={resource.content_display} allowDownload={resource.allow_download} />
+            <ResourceBody
+              resourceId={resource.id}
+              title={resource.title}
+              priceUsd={resource.price_usd}
+              priceNgn={resource.price_ngn}
+              contentDisplay={resource.content_display}
+              allowDownload={resource.allow_download}
+              formatPrices={
+                resource.resource_type === "ebook"
+                  ? {
+                      read: { usd: resource.price_read_usd, ngn: resource.price_read_ngn },
+                      download: { usd: resource.price_download_usd, ngn: resource.price_download_ngn },
+                      hardcopy: { usd: resource.price_hardcopy_usd, ngn: resource.price_hardcopy_ngn },
+                    }
+                  : null
+              }
+            />
           )}
         </Reveal>
 

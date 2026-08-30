@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
+import { EbookPurchasePicker, FORMAT_LABELS, type EbookFormatPrices, type EbookFormat } from "@/components/resources/EbookPurchasePicker";
 import { RichText } from "@/components/RichText";
 
 // ssr: false is load-bearing, not an optimization -- pdf.js (which
@@ -22,6 +23,7 @@ type ResourceBodyData = {
   external_url: string | null;
   source: string;
   download_url: string | null;
+  unlocked_formats?: EbookFormat[];
 };
 
 type TocItem = { id: string; text: string; level: 2 | 3 };
@@ -33,6 +35,7 @@ export function ResourceBody({
   priceNgn,
   contentDisplay = "text",
   allowDownload = true,
+  formatPrices = null,
 }: {
   resourceId: string;
   title: string;
@@ -47,6 +50,11 @@ export function ResourceBody({
   // downloadable as a raw file (e.g. an embedded PDF meant to be read
   // in-place, not saved locally).
   allowDownload?: boolean;
+  // Ebook-only. Non-null (and containing at least one set price) switches
+  // this resource to format-based checkout (EbookPurchasePicker) instead of
+  // the plain BuyButton - see getItemPrice in content.ts for the same rule
+  // applied server-side at checkout time.
+  formatPrices?: EbookFormatPrices | null;
 }) {
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [data, setData] = useState<ResourceBodyData | null>(null);
@@ -110,6 +118,13 @@ export function ResourceBody({
     return <p className="mt-10 text-center text-sm text-muted-foreground">Loading…</p>;
   }
 
+  const hasFormatPricing = Boolean(
+    formatPrices &&
+      (formatPrices.read.usd || formatPrices.read.ngn ||
+       formatPrices.download.usd || formatPrices.download.ngn ||
+       formatPrices.hardcopy.usd || formatPrices.hardcopy.ngn)
+  );
+
   if (status === "locked") {
     return (
       <div className="mt-10 rounded-2xl border-2 border-primary/20 bg-muted p-8 text-center">
@@ -117,9 +132,13 @@ export function ResourceBody({
         <p className="mt-2 text-sm text-muted-foreground">
           {signedIn ? "You don't have access to this yet." : "Sign in if you've already bought this, or buy access below."}
         </p>
-        <div className="mx-auto mt-6 max-w-xs">
-          <BuyButton itemType="resource" itemId={resourceId} priceUsd={priceUsd} priceNgn={priceNgn} />
-        </div>
+        {hasFormatPricing ? (
+          <EbookPurchasePicker resourceId={resourceId} formatPrices={formatPrices!} />
+        ) : (
+          <div className="mx-auto mt-6 max-w-xs">
+            <BuyButton itemType="resource" itemId={resourceId} priceUsd={priceUsd} priceNgn={priceNgn} />
+          </div>
+        )}
       </div>
     );
   }
@@ -131,17 +150,41 @@ export function ResourceBody({
   // download available (an admin-typed external link).
   const downloadUrl = data?.download_url || data?.file_url || null;
 
+  // For a format-priced ebook, each digital format is gated on having
+  // actually been bought - a "read" purchase never implies "download" and
+  // vice versa (see the access route's unlocked_formats). Every other
+  // resource keeps today's behavior: both shown together, gated only by
+  // the admin's contentDisplay/allowDownload flags, unaffected by any of
+  // this since unlockedFormats stays empty for them.
+  const unlockedFormats = data?.unlocked_formats || [];
+  const ownsRead = !hasFormatPricing || unlockedFormats.includes("read");
+  const ownsDownload = !hasFormatPricing || unlockedFormats.includes("download");
+  const ownsHardcopy = hasFormatPricing && unlockedFormats.includes("hardcopy");
+
   // Only meaningful when there's actually a file to embed -- an admin who
   // picked "pdf" display but never uploaded a file falls back to the
   // normal written-content rendering below rather than showing nothing.
-  const showEmbeddedPdf = contentDisplay === "pdf" && Boolean(downloadUrl);
+  const showEmbeddedPdf = contentDisplay === "pdf" && Boolean(downloadUrl) && ownsRead;
   // allowDownload only gates the Download *button* -- an embedded PDF still
   // renders above regardless, since that's viewing it on the site, not
   // downloading the raw file.
-  const showDownloadLink = allowDownload && Boolean(downloadUrl);
+  const showDownloadLink = allowDownload && Boolean(downloadUrl) && ownsDownload;
 
   return (
     <div className="mt-10 space-y-6">
+      {hasFormatPricing && unlockedFormats.length > 0 && (
+        <p className="text-sm font-semibold text-foreground">
+          You own: {unlockedFormats.map((f) => FORMAT_LABELS[f]).join(" · ")}
+        </p>
+      )}
+
+      {ownsHardcopy && (
+        <div className="rounded-2xl border-2 border-primary/20 bg-muted p-6 text-center">
+          <h2 className="text-lg font-bold text-foreground">Hard copy ordered</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Your physical copy is being prepared. We&apos;ll contact you regarding delivery.</p>
+        </div>
+      )}
+
       {showEmbeddedPdf ? (
         <PdfViewer url={downloadUrl!} title={title} />
       ) : (
@@ -189,9 +232,14 @@ export function ResourceBody({
         </a>
       )}
 
-      {!data?.content && !data?.external_url && !downloadUrl && (
+      {!data?.content && !data?.external_url && !downloadUrl && !ownsHardcopy && (
         <p className="text-sm text-muted-foreground">No content has been added to this resource yet.</p>
       )}
+
+      {/* Owning one or two formats doesn't hide the rest - EbookPurchasePicker
+          already excludes ownedFormats from its own list, and renders
+          nothing at all once every offered format is owned. */}
+      {hasFormatPricing && <EbookPurchasePicker resourceId={resourceId} formatPrices={formatPrices!} ownedFormats={unlockedFormats} />}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 import { RESOURCE_TYPES, USE_CASES, USE_CASE_LABELS } from "@/lib/resources/constants";
 import { formatMoney } from "@/lib/formatMoney";
+import { MockupGallery, type MockupItem } from "@/components/admin/MockupGallery";
 
 const PAGE_SIZE = 20;
 
@@ -104,6 +105,13 @@ function ResourcesAdmin() {
   const [whyRecommended, setWhyRecommended] = useState("");
   const [readingMinutes, setReadingMinutes] = useState("");
   const [pageCount, setPageCount] = useState("");
+  const [priceReadUsd, setPriceReadUsd] = useState("");
+  const [priceReadNgn, setPriceReadNgn] = useState("");
+  const [priceDownloadUsd, setPriceDownloadUsd] = useState("");
+  const [priceDownloadNgn, setPriceDownloadNgn] = useState("");
+  const [priceHardcopyUsd, setPriceHardcopyUsd] = useState("");
+  const [priceHardcopyNgn, setPriceHardcopyNgn] = useState("");
+  const [mockups, setMockups] = useState<MockupItem[]>([]);
   const [useCase, setUseCase] = useState<(typeof USE_CASES)[number] | "">("");
   const [placements, setPlacements] = useState<Record<PlacementKey, boolean>>({
     show_in_library: true, show_in_learn: true, show_in_recommended: true,
@@ -167,6 +175,8 @@ function ResourcesAdmin() {
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
     setContentRole(""); setDurationMinutes(""); setWhyRecommended("");
     setReadingMinutes(""); setPageCount(""); setUseCase("");
+    setPriceReadUsd(""); setPriceReadNgn(""); setPriceDownloadUsd(""); setPriceDownloadNgn(""); setPriceHardcopyUsd(""); setPriceHardcopyNgn("");
+    setMockups([]);
     setPlacements({ show_in_library: true, show_in_learn: true, show_in_recommended: true, show_on_homepage: false, show_in_business: false, show_in_career: false });
   };
 
@@ -175,7 +185,7 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, content_display, allow_download, file_url, file_name, access, price_usd, price_ngn, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id)")
+      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, content_display, allow_download, file_url, file_name, access, price_usd, price_ngn, price_read_usd, price_read_ngn, price_download_usd, price_download_ngn, price_hardcopy_usd, price_hardcopy_ngn, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id), resource_mockups(url, position)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -186,12 +196,16 @@ function ResourcesAdmin() {
       category: string | null; level: (typeof LEVELS)[number] | null; source: Source; external_url: string | null;
       thumbnail_url: string | null; description: string | null; content: string | null; content_display: (typeof CONTENT_DISPLAYS)[number]; allow_download: boolean; file_url: string | null; file_name: string | null;
       access: "free" | "premium"; price_usd: number | null; price_ngn: number | null; featured: boolean;
+      price_read_usd: number | null; price_read_ngn: number | null;
+      price_download_usd: number | null; price_download_ngn: number | null;
+      price_hardcopy_usd: number | null; price_hardcopy_ngn: number | null;
       status: ResourceRow["status"]; meta_title: string | null; meta_description: string | null;
       content_role: (typeof CONTENT_ROLES)[number] | null; duration_minutes: number | null; why_recommended: string | null;
       reading_minutes: number | null; page_count: number | null; use_case: (typeof USE_CASES)[number] | null;
       show_in_library: boolean; show_in_learn: boolean; show_in_recommended: boolean;
       show_on_homepage: boolean; show_in_business: boolean; show_in_career: boolean;
       resource_skill_map: { skill_id: string }[];
+      resource_mockups: { url: string; position: number }[];
     };
 
     setEditingResourceId(r.id);
@@ -225,6 +239,17 @@ function ResourcesAdmin() {
     setWhyRecommended(r.why_recommended || "");
     setReadingMinutes(r.reading_minutes?.toString() || "");
     setPageCount(r.page_count?.toString() || "");
+    setPriceReadUsd(r.price_read_usd?.toString() || "");
+    setPriceReadNgn(r.price_read_ngn?.toString() || "");
+    setPriceDownloadUsd(r.price_download_usd?.toString() || "");
+    setPriceDownloadNgn(r.price_download_ngn?.toString() || "");
+    setPriceHardcopyUsd(r.price_hardcopy_usd?.toString() || "");
+    setPriceHardcopyNgn(r.price_hardcopy_ngn?.toString() || "");
+    setMockups(
+      [...r.resource_mockups]
+        .sort((a, b) => a.position - b.position)
+        .map((m, i) => ({ key: `existing-${i}-${m.url}`, kind: "existing" as const, url: m.url }))
+    );
     setUseCase(r.use_case || "");
     setPlacements({
       show_in_library: r.show_in_library, show_in_learn: r.show_in_learn, show_in_recommended: r.show_in_recommended,
@@ -317,6 +342,12 @@ function ResourcesAdmin() {
         why_recommended: resourceType === "video" ? (whyRecommended.trim() || null) : null,
         reading_minutes: resourceType === "article" && readingMinutes ? Number(readingMinutes) : null,
         page_count: resourceType === "ebook" && pageCount ? Number(pageCount) : null,
+        price_read_usd: resourceType === "ebook" && access === "premium" && priceReadUsd ? Number(priceReadUsd) : null,
+        price_read_ngn: resourceType === "ebook" && access === "premium" && priceReadNgn ? Number(priceReadNgn) : null,
+        price_download_usd: resourceType === "ebook" && access === "premium" && priceDownloadUsd ? Number(priceDownloadUsd) : null,
+        price_download_ngn: resourceType === "ebook" && access === "premium" && priceDownloadNgn ? Number(priceDownloadNgn) : null,
+        price_hardcopy_usd: resourceType === "ebook" && access === "premium" && priceHardcopyUsd ? Number(priceHardcopyUsd) : null,
+        price_hardcopy_ngn: resourceType === "ebook" && access === "premium" && priceHardcopyNgn ? Number(priceHardcopyNgn) : null,
         use_case: useCase || null,
         ...placements,
       };
@@ -345,6 +376,35 @@ function ResourcesAdmin() {
       }
 
       await saveSkillMap("resource_skill_map", "resource_id", resourceId!, selectedSkillIds);
+
+      if (resourceType === "ebook") {
+        // Upload any newly-added mockup files first, in their current
+        // order, then write the whole ordered list (existing + newly
+        // uploaded) as position = array index - delete-then-insert, same
+        // pattern as every other ordered join-table save this session.
+        const orderedUrls: string[] = [];
+        for (const item of mockups) {
+          if (item.kind === "existing") {
+            orderedUrls.push(item.url);
+          } else {
+            const mockupPath = `${Date.now()}-${Math.random().toString(16).slice(2)}-${item.file.name.replace(/\s+/g, "-").toLowerCase()}`;
+            const { error: mockupErr } = await supabase.storage.from("resource-mockups").upload(mockupPath, item.file, {
+              contentType: item.file.type || "image/jpeg",
+              upsert: false,
+            });
+            if (mockupErr) throw new Error(`Mockup upload failed: ${mockupErr.message}`);
+            const { data: pub } = supabase.storage.from("resource-mockups").getPublicUrl(mockupPath);
+            orderedUrls.push(pub.publicUrl);
+          }
+        }
+
+        await supabase.from("resource_mockups").delete().eq("resource_id", resourceId!);
+        if (orderedUrls.length > 0) {
+          await supabase.from("resource_mockups").insert(
+            orderedUrls.map((url, position) => ({ resource_id: resourceId!, url, position }))
+          );
+        }
+      }
 
       setMsg(editingResourceId ? "Resource updated." : "Resource saved.");
       resetForm();
@@ -459,6 +519,42 @@ function ResourcesAdmin() {
                     <input type="number" min="0" value={pageCount} onChange={(e) => setPageCount(e.target.value)} className={inputCls} placeholder="e.g. 42" />
                   </Field>
                 )}
+              </div>
+            )}
+
+            {resourceType === "ebook" && (
+              <div className="grid gap-4 rounded-xl border border-border/60 p-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Format pricing (optional - leave all blank to use the single Price above instead)
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Setting any price here switches this ebook to format-based checkout - buyers pick Read Online, Download, or Hard Copy, each priced separately. The single Price fields above stop being used for this ebook once any of these is set.
+                </p>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Read online - USD">
+                    <input type="number" min="0" value={priceReadUsd} onChange={(e) => setPriceReadUsd(e.target.value)} className={inputCls} placeholder="e.g. 5" />
+                  </Field>
+                  <Field label="Read online - NGN">
+                    <input type="number" min="0" value={priceReadNgn} onChange={(e) => setPriceReadNgn(e.target.value)} className={inputCls} placeholder="e.g. 7500" />
+                  </Field>
+                  <Field label="Download - USD">
+                    <input type="number" min="0" value={priceDownloadUsd} onChange={(e) => setPriceDownloadUsd(e.target.value)} className={inputCls} placeholder="e.g. 10" />
+                  </Field>
+                  <Field label="Download - NGN">
+                    <input type="number" min="0" value={priceDownloadNgn} onChange={(e) => setPriceDownloadNgn(e.target.value)} className={inputCls} placeholder="e.g. 15000" />
+                  </Field>
+                  <Field label="Hard copy - USD">
+                    <input type="number" min="0" value={priceHardcopyUsd} onChange={(e) => setPriceHardcopyUsd(e.target.value)} className={inputCls} placeholder="e.g. 30" />
+                  </Field>
+                  <Field label="Hard copy - NGN">
+                    <input type="number" min="0" value={priceHardcopyNgn} onChange={(e) => setPriceHardcopyNgn(e.target.value)} className={inputCls} placeholder="e.g. 45000" />
+                  </Field>
+                </div>
+
+                <Field label="Mockup images (shown before purchase and in the order confirmation email)">
+                  <MockupGallery coverPreviewUrl={thumbnailUrl.trim() || null} items={mockups} onItemsChange={setMockups} />
+                </Field>
               </div>
             )}
 

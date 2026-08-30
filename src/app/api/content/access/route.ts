@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
-import { hasEntitlement } from "@/lib/payments/entitlement";
+import { hasEntitlement, getPurchasedFormats } from "@/lib/payments/entitlement";
 import { signDownloadUrl } from "@/lib/resourceDownload";
 
 export const runtime = "nodejs";
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     if (itemType === "resource") {
       const { data } = await supabase
         .from("resources")
-        .select("id, title, content, file_url, external_url, source, file_path")
+        .select("id, title, content, file_url, external_url, source, file_path, resource_type")
         .eq("id", itemId)
         .single();
 
@@ -59,7 +59,15 @@ export async function POST(req: Request) {
       // the actual URL the user ever sees stays on our domain throughout.
       const downloadUrl = data?.file_path ? signDownloadUrl(itemId, member?.email ?? null) : null;
 
-      return NextResponse.json({ ok: true, resource: { ...data, download_url: downloadUrl } });
+      // Format-priced ebooks grant access per-format, not all-or-nothing -
+      // the caller (ResourceBody) uses this to decide whether to show the
+      // embedded reader, the download link, or a "hardcopy ordered" state.
+      // Every other resource type ignores this field entirely.
+      const unlockedFormats = data?.resource_type === "ebook"
+        ? Array.from(await getPurchasedFormats(itemId, { userId: member?.id ?? null, email: member?.email ?? null }))
+        : [];
+
+      return NextResponse.json({ ok: true, resource: { ...data, download_url: downloadUrl, unlocked_formats: unlockedFormats } });
     }
 
     if (itemType === "course") {
