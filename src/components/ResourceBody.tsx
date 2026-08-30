@@ -205,7 +205,7 @@ export function ResourceBody({
             </nav>
           )}
 
-          {data?.content && (
+          {data?.content && ownsRead && (
             <div ref={contentRef}>
               <RichText html={data.content} />
             </div>
@@ -235,7 +235,7 @@ export function ResourceBody({
         </a>
       )}
 
-      {!data?.content && !data?.external_url && !downloadUrl && !ownsHardcopy && (
+      {!(data?.content && ownsRead) && !data?.external_url && !downloadUrl && !ownsHardcopy && (
         <p className="text-sm text-muted-foreground">No content has been added to this resource yet.</p>
       )}
 

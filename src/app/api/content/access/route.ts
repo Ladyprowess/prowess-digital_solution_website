@@ -46,9 +46,37 @@ export async function POST(req: Request) {
     if (itemType === "resource") {
       const { data } = await supabase
         .from("resources")
-        .select("id, title, content, file_url, external_url, source, file_path, resource_type")
+        .select("id, title, content, file_url, external_url, source, file_path, resource_type, price_read_usd, price_read_ngn, price_download_usd, price_download_ngn, price_hardcopy_usd, price_hardcopy_ngn")
         .eq("id", itemId)
         .single();
+
+      // Same hard-override signal used everywhere else (getItemPrice,
+      // ResourceBody): this ebook only behaves as format-gated once at
+      // least one of the six format prices is actually set. A plain ebook
+      // or non-ebook resource keeps today's all-or-nothing behavior below.
+      const hasFormatPricing = data?.resource_type === "ebook" && Boolean(
+        data.price_read_usd || data.price_read_ngn ||
+        data.price_download_usd || data.price_download_ngn ||
+        data.price_hardcopy_usd || data.price_hardcopy_ngn
+      );
+
+      // Format-priced ebooks grant access per-format, not all-or-nothing -
+      // the caller (ResourceBody) uses this to decide whether to show the
+      // embedded reader, the download link, or a "hardcopy ordered" state.
+      // Every other resource type ignores this field entirely.
+      const unlockedFormats = hasFormatPricing
+        ? Array.from(await getPurchasedFormats(itemId, { userId: member?.id ?? null, email: member?.email ?? null }))
+        : [];
+
+      // hasEntitlement above only proves *some* paid purchase exists on this
+      // item - format-agnostic by design, since a hardcopy-only buyer still
+      // needs to reach the "entitled" branch to see their shipping status.
+      // But the file link itself is a digital unlock: a format-priced ebook
+      // must not mint a working link for someone who paid only for Hard
+      // Copy (no digital format at all) - hiding the Download *button*
+      // isn't enough if the signed URL is still sitting in this response for
+      // anyone to read out of the network tab.
+      const canAccessFile = !hasFormatPricing || unlockedFormats.includes("read") || unlockedFormats.includes("download");
 
       // Older resources (uploaded before the B2C content model existed)
       // store their file in Supabase Storage via file_path. Rather than
@@ -57,17 +85,25 @@ export async function POST(req: Request) {
       // behind a button beforehand), mint a same-origin proxy link that
       // streams the file through our own /api/resources/[id]/file route -
       // the actual URL the user ever sees stays on our domain throughout.
-      const downloadUrl = data?.file_path ? signDownloadUrl(itemId, member?.email ?? null) : null;
+      const downloadUrl = data?.file_path && canAccessFile ? signDownloadUrl(itemId, member?.email ?? null) : null;
 
-      // Format-priced ebooks grant access per-format, not all-or-nothing -
-      // the caller (ResourceBody) uses this to decide whether to show the
-      // embedded reader, the download link, or a "hardcopy ordered" state.
-      // Every other resource type ignores this field entirely.
-      const unlockedFormats = data?.resource_type === "ebook"
-        ? Array.from(await getPurchasedFormats(itemId, { userId: member?.id ?? null, email: member?.email ?? null }))
-        : [];
-
-      return NextResponse.json({ ok: true, resource: { ...data, download_url: downloadUrl, unlocked_formats: unlockedFormats } });
+      // Built explicitly rather than spreading `data` wholesale - file_path
+      // (an internal storage key) and the format price columns have no
+      // reason to reach the client here.
+      return NextResponse.json({
+        ok: true,
+        resource: {
+          id: data?.id,
+          title: data?.title,
+          content: data?.content,
+          file_url: data?.file_url,
+          external_url: data?.external_url,
+          source: data?.source,
+          resource_type: data?.resource_type,
+          download_url: downloadUrl,
+          unlocked_formats: unlockedFormats,
+        },
+      });
     }
 
     if (itemType === "course") {

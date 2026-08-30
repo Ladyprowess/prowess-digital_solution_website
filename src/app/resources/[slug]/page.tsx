@@ -101,6 +101,17 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
   const skillIds = skills.map((s) => s.id);
   const typeLabel = (resource.resource_type || "Resource").toString().replace(/_/g, " ");
 
+  // Same hard-override rule as checkout (see getItemPrice in content.ts):
+  // once any format price is set, price_usd/price_ngn are dead for this
+  // item - even if an admin's old plain price values are still sitting in
+  // those columns from before this ebook switched to format pricing, the
+  // "Premium" badge below must not show them as if they were real.
+  const hasFormatPricing = resource.resource_type === "ebook" && Boolean(
+    resource.price_read_usd || resource.price_read_ngn ||
+    resource.price_download_usd || resource.price_download_ngn ||
+    resource.price_hardcopy_usd || resource.price_hardcopy_ngn
+  );
+
   const graph = await getSkillGraph(skillIds, { limit: 4 });
 
   const publishedLabel = resource.published_at
@@ -132,7 +143,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${resource.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                   {resource.access === "premium"
                     ? `Premium${
-                        resource.price_usd || resource.price_ngn
+                        !hasFormatPricing && (resource.price_usd || resource.price_ngn)
                           ? ` - ${[
                               resource.price_usd ? formatMoney(resource.price_usd, "USD") : null,
                               resource.price_ngn ? formatMoney(resource.price_ngn, "NGN") : null,
