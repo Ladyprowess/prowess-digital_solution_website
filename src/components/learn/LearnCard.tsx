@@ -15,7 +15,7 @@ const KIND_LABELS: Record<LearnItem["kind"], string> = {
   guide: "Guide",
 };
 
-const KIND_ICON_PATHS: Record<LearnItem["kind"], string> = {
+export const KIND_ICON_PATHS: Record<LearnItem["kind"], string> = {
   course: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25",
   video: "M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z",
   article: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-1.519-3.75L12 17.25m0 0l-1.481-3.75M12 17.25V3.75M6.75 21h10.5a2.25 2.25 0 002.25-2.25V6.621a2.25 2.25 0 00-.659-1.591l-3.621-3.621A2.25 2.25 0 0013.629 0.75H6.75A2.25 2.25 0 004.5 3v15.75A2.25 2.25 0 006.75 21z",
@@ -23,7 +23,7 @@ const KIND_ICON_PATHS: Record<LearnItem["kind"], string> = {
   guide: "M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5",
 };
 
-function KindIcon({ kind }: { kind: LearnItem["kind"] }) {
+export function KindIcon({ kind }: { kind: LearnItem["kind"] }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
       <path strokeLinecap="round" strokeLinejoin="round" d={KIND_ICON_PATHS[kind]} />

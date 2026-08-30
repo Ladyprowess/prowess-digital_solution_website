@@ -48,7 +48,9 @@ begin
     'career_path_role_skill_map',
     'career_path_tool_map',
     'career_path_projects',
-    'career_path_project_skill_map'
+    'career_path_project_skill_map',
+    'career_path_course_map',
+    'career_path_resource_map'
   ]
   loop
     execute format('drop policy if exists "admin_full_access" on public.%I', t);

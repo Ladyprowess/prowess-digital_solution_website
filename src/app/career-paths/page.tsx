@@ -7,7 +7,6 @@ import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
 import { PillTabs, type PillTab } from "@/components/PillTabs";
 import { CareerPathCard, type CareerPathCardData } from "@/components/careerPaths/CareerPathCard";
-import { LEARN_RESOURCE_KINDS } from "@/lib/learn/types";
 import { supabase } from "@/lib/supabase";
 
 const PAGE_SIZE = 12;
@@ -73,14 +72,20 @@ export default function CareerPathsPage() {
       }
       const allSkillIds = Array.from(skillToPaths.keys());
 
-      const [{ data: jobRows }, { data: courseRows }, { data: resourceRows }] =
-        allSkillIds.length === 0
-          ? [{ data: [] }, { data: [] }, { data: [] }]
-          : await Promise.all([
-              supabase.from("job_skill_map").select("job_id, skill_id").in("skill_id", allSkillIds),
-              supabase.from("course_skill_map").select("course_id, skill_id").in("skill_id", allSkillIds),
-              supabase.from("resource_skill_map").select("resource_id, skill_id, resources(resource_type)").in("skill_id", allSkillIds),
-            ]);
+      const [{ data: jobRows }, { data: courseMapRows }, { data: resourceMapRows }] =
+        await Promise.all([
+          allSkillIds.length === 0
+            ? Promise.resolve({ data: [] })
+            : supabase.from("job_skill_map").select("job_id, skill_id").in("skill_id", allSkillIds),
+          // Learning is explicit curation now (career_path_course_map /
+          // career_path_resource_map), not skill-tag matching - a resource
+          // sharing a skill with this career path (e.g. every "Web3"-tagged
+          // video showing up on the Web3 career path just because both are
+          // tagged "Web3") no longer counts unless an admin actually
+          // attached it via the "Learning for this career" picker.
+          supabase.from("career_path_course_map").select("career_path_id, course_id"),
+          supabase.from("career_path_resource_map").select("career_path_id, resource_id"),
+        ]);
 
       const jobsByPath = new Map<string, Set<string>>();
       for (const row of jobRows || []) {
@@ -91,18 +96,13 @@ export default function CareerPathsPage() {
       }
 
       const learningByPath = new Map<string, Set<string>>();
-      for (const row of courseRows || []) {
-        for (const pathId of skillToPaths.get(row.skill_id) || []) {
-          if (!learningByPath.has(pathId)) learningByPath.set(pathId, new Set());
-          learningByPath.get(pathId)!.add(`course:${row.course_id}`);
-        }
+      for (const row of courseMapRows || []) {
+        if (!learningByPath.has(row.career_path_id)) learningByPath.set(row.career_path_id, new Set());
+        learningByPath.get(row.career_path_id)!.add(`course:${row.course_id}`);
       }
-      for (const row of (resourceRows as unknown as { resource_id: string; skill_id: string; resources: { resource_type: string | null } | null }[]) || []) {
-        if (!row.resources?.resource_type || !LEARN_RESOURCE_KINDS.includes(row.resources.resource_type)) continue;
-        for (const pathId of skillToPaths.get(row.skill_id) || []) {
-          if (!learningByPath.has(pathId)) learningByPath.set(pathId, new Set());
-          learningByPath.get(pathId)!.add(`resource:${row.resource_id}`);
-        }
+      for (const row of resourceMapRows || []) {
+        if (!learningByPath.has(row.career_path_id)) learningByPath.set(row.career_path_id, new Set());
+        learningByPath.get(row.career_path_id)!.add(`resource:${row.resource_id}`);
       }
 
       const withCounts: PathWithCounts[] = ((pathRows as PathRow[]) || []).map((p) => ({

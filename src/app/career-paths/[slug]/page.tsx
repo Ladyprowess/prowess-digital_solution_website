@@ -233,6 +233,20 @@ async function idsForSkills(table: string, idColumn: string, skillIds: string[])
   return Array.from(new Set(rows.map((r) => String(r[idColumn]))));
 }
 
+// Learning is explicit curation now (career_path_course_map /
+// career_path_resource_map), not skill-tag matching - unlike jobs/
+// opportunities below, which still use idsForSkills. Returns a Map so the
+// admin's chosen `position` survives into the combined sort further down,
+// not just a plain id array.
+async function learningMapForPath(table: string, idColumn: string, pathId: string): Promise<Map<string, number>> {
+  const { data } = await supabase.from(table).select(`${idColumn}, position`).eq("career_path_id", pathId);
+  const map = new Map<string, number>();
+  for (const row of (data || []) as unknown as Record<string, unknown>[]) {
+    map.set(String(row[idColumn]), Number(row.position) || 0);
+  }
+  return map;
+}
+
 async function jobsCountBySkill(skillIds: string[]): Promise<Map<string, number>> {
   const counts = new Map<string, number>();
   if (skillIds.length === 0) return counts;
@@ -263,7 +277,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   const skillSlugs = skills.map((s) => s.slug);
   const nowIso = new Date().toISOString();
 
-  const [responsibilities, roadmapStages, careerRoles, careerTools, projects, jobIds, oppIds, courseIds, resourceIds, jobCounts] = await Promise.all([
+  const [responsibilities, roadmapStages, careerRoles, careerTools, projects, jobIds, oppIds, courseMap, resourceMap, jobCounts] = await Promise.all([
     getResponsibilities(path.id),
     getRoadmapStages(path.id),
     getCareerRoles(path.id),
@@ -271,10 +285,19 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
     getProjects(path.id),
     idsForSkills("job_skill_map", "job_id", skillIds),
     idsForSkills("opportunity_skill_map", "opportunity_id", skillIds),
-    idsForSkills("course_skill_map", "course_id", skillIds),
-    idsForSkills("resource_skill_map", "resource_id", skillIds),
+    learningMapForPath("career_path_course_map", "course_id", path.id),
+    learningMapForPath("career_path_resource_map", "resource_id", path.id),
     jobsCountBySkill(skillIds),
   ]);
+
+  // Sorted by position and capped here, before the queries below - those
+  // queries order by featured/created_at (irrelevant now that order is an
+  // explicit admin choice) and only exist to fetch full rows for whichever
+  // ids survive this cut. Capping *after* that unrelated ordering instead
+  // would silently keep the wrong LEARNING_LIMIT items whenever a path is
+  // curated with more than LEARNING_LIMIT courses or resources.
+  const courseIds = Array.from(courseMap.keys()).sort((a, b) => courseMap.get(a)! - courseMap.get(b)!).slice(0, LEARNING_LIMIT);
+  const resourceIds = Array.from(resourceMap.keys()).sort((a, b) => resourceMap.get(a)! - resourceMap.get(b)!).slice(0, LEARNING_LIMIT);
 
   const [jobRows, oppRows, courseRows, resourceRows] = await Promise.all([
     jobIds.length
@@ -342,10 +365,19 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   // concatenated list would silently drop every resource (videos/articles/
   // guides/ebooks) whenever a path has LEARNING_LIMIT+ matching courses,
   // since courses are concatenated first.
+  //
+  // Sorted by `position` after concatenating (not before) - position lives
+  // in two separate tables (career_path_course_map/career_path_resource_map),
+  // but LearningItemPicker assigns it from one shared index sequence across
+  // both when the admin saves, so sorting the combined list by position
+  // here reconstructs that exact admin-chosen order regardless of which
+  // table each item actually came from.
   const learningItems: LearnItem[] = [
-    ...((courseRows.data as unknown as CourseRow[]) || []).map(courseToLearnItem),
-    ...((resourceRows.data as unknown as ResourceRow[]) || []).map(resourceToLearnItem),
-  ];
+    ...((courseRows.data as unknown as CourseRow[]) || []).map(courseToLearnItem).map((item) => ({ item, position: courseMap.get(item.id) ?? 0 })),
+    ...((resourceRows.data as unknown as ResourceRow[]) || []).map(resourceToLearnItem).map((item) => ({ item, position: resourceMap.get(item.id) ?? 0 })),
+  ]
+    .sort((a, b) => a.position - b.position)
+    .map(({ item }) => item);
 
   const skillMatrixRows: SkillMatrixRow[] = skills.map((s) => ({
     slug: s.slug, name: s.name, level: s.level, jobsCount: jobCounts.get(s.id) || 0,

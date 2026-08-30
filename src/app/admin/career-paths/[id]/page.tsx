@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AccessPriceFields } from "@/components/admin/AccessPriceFields";
 import { SkillPicker, type Skill } from "@/components/admin/SkillPicker";
 import { ToolPicker, saveToolMap } from "@/components/admin/ToolPicker";
+import { LearningItemPicker, saveLearningMap, type LearningItem } from "@/components/admin/LearningItemPicker";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { CAREER_PATH_ICON_KEYS } from "@/lib/careerPaths/icons";
 import { supabase } from "@/lib/supabase";
@@ -38,6 +39,7 @@ function CareerPathEditor({ id }: { id: string }) {
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [skillLevels, setSkillLevels] = useState<Record<string, "" | (typeof LEVELS)[number]>>({});
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
+  const [learningItems, setLearningItems] = useState<LearningItem[]>([]);
   const [access, setAccess] = useState<"free" | "premium">("free");
   const [priceUsd, setPriceUsd] = useState("");
   const [priceNgn, setPriceNgn] = useState("");
@@ -64,7 +66,7 @@ function CareerPathEditor({ id }: { id: string }) {
       const { data, error } = await supabase
         .from("career_paths")
         .select(
-          "id, title, slug, description, access, price_usd, price_ngn, status, featured, level, category, icon_key, image_url, who_its_for, career_path_skill_map(skill_id, level), career_path_tool_map(tool_id)"
+          "id, title, slug, description, access, price_usd, price_ngn, status, featured, level, category, icon_key, image_url, who_its_for, career_path_skill_map(skill_id, level), career_path_tool_map(tool_id), career_path_course_map(course_id, position, courses(title, thumbnail_url)), career_path_resource_map(resource_id, position, resources(title, resource_type, thumbnail_url))"
         )
         .eq("id", id)
         .single();
@@ -78,6 +80,8 @@ function CareerPathEditor({ id }: { id: string }) {
         icon_key: string; image_url: string | null; who_its_for: string[] | null;
         career_path_skill_map: { skill_id: string; level: (typeof LEVELS)[number] | null }[];
         career_path_tool_map: { tool_id: string }[];
+        career_path_course_map: { course_id: string; position: number; courses: { title: string; thumbnail_url: string | null } | null }[];
+        career_path_resource_map: { resource_id: string; position: number; resources: { title: string; resource_type: string | null; thumbnail_url: string | null } | null }[];
       };
 
       setTitle(p.title);
@@ -97,6 +101,21 @@ function CareerPathEditor({ id }: { id: string }) {
       setSelectedSkillIds(p.career_path_skill_map.map((m) => m.skill_id));
       setSkillLevels(Object.fromEntries(p.career_path_skill_map.map((m) => [m.skill_id, m.level || ""])));
       setSelectedToolIds(p.career_path_tool_map.map((m) => m.tool_id));
+
+      // Merge both join tables into one combined array, ordered by
+      // position - this reconstructs the admin's original combined order
+      // across courses and resources (see LearningItemPicker's saveLearningMap).
+      const courseItems: (LearningItem & { position: number })[] = p.career_path_course_map
+        .filter((m) => m.courses)
+        .map((m) => ({ id: m.course_id, type: "course", title: m.courses!.title, kind: "course", thumbnailUrl: m.courses!.thumbnail_url, position: m.position }));
+      const resourceItems: (LearningItem & { position: number })[] = p.career_path_resource_map
+        .filter((m) => m.resources)
+        .map((m) => ({ id: m.resource_id, type: "resource", title: m.resources!.title, kind: (m.resources!.resource_type as LearningItem["kind"]) || "article", thumbnailUrl: m.resources!.thumbnail_url, position: m.position }));
+      setLearningItems(
+        [...courseItems, ...resourceItems]
+          .sort((a, b) => a.position - b.position)
+          .map((item): LearningItem => ({ id: item.id, type: item.type, title: item.title, kind: item.kind, thumbnailUrl: item.thumbnailUrl }))
+      );
     })();
   }, [id, isNew]);
 
@@ -160,6 +179,7 @@ function CareerPathEditor({ id }: { id: string }) {
         );
       }
       await saveToolMap(pathId!, selectedToolIds);
+      await saveLearningMap(pathId!, learningItems);
 
       if (isNew) {
         router.push(`/admin/career-paths/${pathId}`);
@@ -267,6 +287,10 @@ function CareerPathEditor({ id }: { id: string }) {
 
         <Field label="Related tools">
           <ToolPicker selectedIds={selectedToolIds} onSelectedIdsChange={setSelectedToolIds} />
+        </Field>
+
+        <Field label="Learning for this career">
+          <LearningItemPicker items={learningItems} onItemsChange={setLearningItems} />
         </Field>
 
         <AccessPriceFields access={access} onAccessChange={setAccess} priceUsd={priceUsd} onPriceUsdChange={setPriceUsd} priceNgn={priceNgn} onPriceNgnChange={setPriceNgn} />
