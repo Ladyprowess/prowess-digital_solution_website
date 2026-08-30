@@ -12,6 +12,7 @@ export default function SettingsPage() {
   const [headline, setHeadline] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   // Loads in from context asynchronously (null at first, then the real row),
   // so the draft fields are (re)seeded the first time it shows up - a plain
@@ -29,11 +30,16 @@ export default function SettingsPage() {
     if (!profile) return;
     setSaving(true);
     setSaved(false);
-    await supabase
+    setSaveError("");
+    const { error } = await supabase
       .from("member_profiles")
       .update({ full_name: fullName.trim() || null, headline: headline.trim() || null, updated_at: new Date().toISOString() })
       .eq("id", profile.id);
     setSaving(false);
+    if (error) {
+      setSaveError("Couldn't save your changes. Please try again.");
+      return;
+    }
     setSaved(true);
     reload();
   }
@@ -54,7 +60,7 @@ export default function SettingsPage() {
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Full name</label>
               <input
                 value={fullName}
-                onChange={(e) => { setFullName(e.target.value); setSaved(false); }}
+                onChange={(e) => { setFullName(e.target.value); setSaved(false); setSaveError(""); }}
                 placeholder="Full name"
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground"
               />
@@ -63,7 +69,7 @@ export default function SettingsPage() {
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Headline</label>
               <input
                 value={headline}
-                onChange={(e) => { setHeadline(e.target.value); setSaved(false); }}
+                onChange={(e) => { setHeadline(e.target.value); setSaved(false); setSaveError(""); }}
                 placeholder="e.g. Aspiring Product Designer"
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground"
               />
@@ -77,6 +83,7 @@ export default function SettingsPage() {
                 {saving ? "Saving..." : "Save changes"}
               </button>
               {saved && <p className="text-sm text-muted-foreground">Saved.</p>}
+              {saveError && <p className="text-sm text-red-600">{saveError}</p>}
             </div>
           </div>
         </Card>

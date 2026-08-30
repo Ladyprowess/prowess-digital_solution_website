@@ -23,7 +23,12 @@ export function useMemberSession() {
   const [email, setEmail] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setStatus("loading");
+    // Only drop to "loading" on the very first call - `reload()` (e.g.
+    // after saving a profile edit) re-runs this same function, and if it
+    // re-armed "loading" every time, every consumer gating its render on
+    // status (the whole /account dashboard shell) would unmount and flash
+    // a blank loading screen for what should be a quiet background refresh.
+    setStatus((s) => (s === "ready" ? s : "loading"));
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (!user) {
@@ -62,7 +67,7 @@ export function useMemberSession() {
     }
   }, [router]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { (async () => { await load(); })(); }, [load]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
