@@ -309,6 +309,17 @@ function ResourcesAdmin() {
         }
       }
 
+      // An ebook with any format price entered must be premium, full stop -
+      // the "Format pricing" section says setting a price here is enough on
+      // its own, so the price fields can't quietly depend on the separate
+      // Access dropdown further down the form also being flipped to
+      // Premium. Without this, a forgotten Access toggle silently drops
+      // every format price on save and leaves the ebook fully free.
+      const hasAnyFormatPrice = resourceType === "ebook" && [
+        priceReadUsd, priceReadNgn, priceDownloadUsd, priceDownloadNgn, priceHardcopyUsd, priceHardcopyNgn,
+      ].some((v) => v.trim() !== "");
+      const effectiveAccess = hasAnyFormatPrice ? "premium" : access;
+
       const now = new Date().toISOString();
       const basePayload = {
         title: title.trim(),
@@ -329,9 +340,9 @@ function ResourcesAdmin() {
         file_url: fileUrl.trim() || null,
         ...(uploaded.file_path ? { file_path: uploaded.file_path, file_name: uploaded.file_name, file_type: uploaded.file_type, file_size: uploaded.file_size } : {}),
         ...(uploaded.cover_path ? { cover_path: uploaded.cover_path } : {}),
-        access,
-        price_usd: access === "premium" && priceUsd ? Number(priceUsd) : null,
-        price_ngn: access === "premium" && priceNgn ? Number(priceNgn) : null,
+        access: effectiveAccess,
+        price_usd: effectiveAccess === "premium" && priceUsd ? Number(priceUsd) : null,
+        price_ngn: effectiveAccess === "premium" && priceNgn ? Number(priceNgn) : null,
         featured,
         status: publishNow ? "published" as const : "draft" as const,
         is_published: publishNow,
@@ -342,12 +353,12 @@ function ResourcesAdmin() {
         why_recommended: resourceType === "video" ? (whyRecommended.trim() || null) : null,
         reading_minutes: resourceType === "article" && readingMinutes ? Number(readingMinutes) : null,
         page_count: resourceType === "ebook" && pageCount ? Number(pageCount) : null,
-        price_read_usd: resourceType === "ebook" && access === "premium" && priceReadUsd ? Number(priceReadUsd) : null,
-        price_read_ngn: resourceType === "ebook" && access === "premium" && priceReadNgn ? Number(priceReadNgn) : null,
-        price_download_usd: resourceType === "ebook" && access === "premium" && priceDownloadUsd ? Number(priceDownloadUsd) : null,
-        price_download_ngn: resourceType === "ebook" && access === "premium" && priceDownloadNgn ? Number(priceDownloadNgn) : null,
-        price_hardcopy_usd: resourceType === "ebook" && access === "premium" && priceHardcopyUsd ? Number(priceHardcopyUsd) : null,
-        price_hardcopy_ngn: resourceType === "ebook" && access === "premium" && priceHardcopyNgn ? Number(priceHardcopyNgn) : null,
+        price_read_usd: resourceType === "ebook" && priceReadUsd ? Number(priceReadUsd) : null,
+        price_read_ngn: resourceType === "ebook" && priceReadNgn ? Number(priceReadNgn) : null,
+        price_download_usd: resourceType === "ebook" && priceDownloadUsd ? Number(priceDownloadUsd) : null,
+        price_download_ngn: resourceType === "ebook" && priceDownloadNgn ? Number(priceDownloadNgn) : null,
+        price_hardcopy_usd: resourceType === "ebook" && priceHardcopyUsd ? Number(priceHardcopyUsd) : null,
+        price_hardcopy_ngn: resourceType === "ebook" && priceHardcopyNgn ? Number(priceHardcopyNgn) : null,
         use_case: useCase || null,
         ...placements,
       };
@@ -528,7 +539,7 @@ function ResourcesAdmin() {
                   Format pricing (optional - leave all blank to use the single Price above instead)
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Setting any price here switches this ebook to format-based checkout - buyers pick Read Online, Download, or Hard Copy, each priced separately. The single Price fields above stop being used for this ebook once any of these is set.
+                  Setting any price here switches this ebook to format-based checkout - buyers pick Read Online, Download, or Hard Copy, each priced separately. The single Price fields above stop being used for this ebook once any of these is set. Access is automatically set to Premium below once any format price is entered - you don&apos;t need to change it yourself.
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">

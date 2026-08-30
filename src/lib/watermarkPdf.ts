@@ -18,9 +18,12 @@ export async function watermarkPdf(bytes: Uint8Array, label: string): Promise<Ui
 
     // Repeated diagonally across the page rather than once in a corner -
     // a single stamp is trivial to crop out of a screenshot, a tiled one
-    // survives cropping to any reasonably-sized excerpt.
-    const stepX = textWidth + 80;
-    const stepY = 90;
+    // survives cropping to any reasonably-sized excerpt. Kept sparse (a
+    // handful of repeats per page, not a dense grid) and very faint -
+    // this only needs to be legible enough to trace a leak back to the
+    // buyer, not to compete with the actual page content for attention.
+    const stepX = Math.max(textWidth + 140, width / 2);
+    const stepY = height / 3;
     for (let y = -height; y < height * 2; y += stepY) {
       for (let x = -width; x < width * 2; x += stepX) {
         page.drawText(label, {
@@ -29,7 +32,7 @@ export async function watermarkPdf(bytes: Uint8Array, label: string): Promise<Ui
           size: fontSize,
           font,
           color: rgb(0.5, 0.5, 0.5),
-          opacity: 0.15,
+          opacity: 0.07,
           rotate: degrees(35),
         });
       }
