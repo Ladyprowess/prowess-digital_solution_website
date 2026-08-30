@@ -137,7 +137,7 @@ export function EbookPurchasePicker({
               }`}
             >
               <p className="text-sm font-bold text-foreground">{info.label}</p>
-              <p className="mt-1 text-xl font-bold text-primary">{amount ? formatMoney(amount, displayCurrency) : "—"}</p>
+              <p className="mt-1 text-xl font-bold text-primary">{amount ? formatMoney(amount, displayCurrency) : "-"}</p>
               <p className="mt-2 text-xs text-muted-foreground">{info.includes}</p>
               <p className="text-xs text-muted-foreground">{info.excludes}</p>
             </button>
