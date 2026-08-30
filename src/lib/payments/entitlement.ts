@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { withBonusReadAccess, type EbookFormat } from "@/lib/resources/ebookFormats";
 
 const ITEM_TABLE: Record<string, string> = {
   resource: "resources",
@@ -54,14 +55,15 @@ export async function hasEntitlement(
  * since a format-priced ebook grants access per-format, not all-or-nothing.
  * Same user_id/email matching as hasEntitlement, just grouped by the
  * `format` column instead of collapsed into one yes/no. Buying more than
- * one format over time returns the union of all of them.
+ * one format over time returns the union of all of them, and buying
+ * "download" or "hardcopy" also bundles in "read" (withBonusReadAccess) -
+ * confirmed directly: only buying "read" alone stays exclusive to just that.
  */
 export async function getPurchasedFormats(
   resourceId: string,
   caller: { userId?: string | null; email?: string | null }
-): Promise<Set<"read" | "download" | "hardcopy">> {
-  const empty = new Set<"read" | "download" | "hardcopy">();
-  if (!caller.userId && !caller.email) return empty;
+): Promise<Set<EbookFormat>> {
+  if (!caller.userId && !caller.email) return new Set();
 
   const supabase = supabaseAdmin();
   let query = supabase
@@ -81,9 +83,9 @@ export async function getPurchasedFormats(
   }
 
   const { data } = await query;
-  const formats = empty;
+  const purchasedFormats: EbookFormat[] = [];
   for (const row of data || []) {
-    if (row.format === "read" || row.format === "download" || row.format === "hardcopy") formats.add(row.format);
+    if (row.format === "read" || row.format === "download" || row.format === "hardcopy") purchasedFormats.push(row.format);
   }
-  return formats;
+  return new Set(withBonusReadAccess(purchasedFormats));
 }

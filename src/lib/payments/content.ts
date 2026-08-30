@@ -33,6 +33,18 @@ const FORMAT_TITLE_SUFFIXES: Record<string, string> = {
   hardcopy: " (Hard Copy)",
 };
 
+// Plain labels (no parentheses) for the customer email's type line - the
+// format used to be appended straight onto the item title there, which
+// read as clutter next to the product name. Kept as a small separate line
+// under the title instead. adminSaleNotificationHtml and the email subject
+// still use the parenthetical form - the request was specifically about
+// what appears "by the side of the name" in the customer's copy.
+const FORMAT_LABELS: Record<string, string> = {
+  read: "Read Online",
+  download: "Download",
+  hardcopy: "Hard Copy",
+};
+
 function orderConfirmationEmailHtml(params: {
   itemTitle: string;
   itemTypeLabel: string;
@@ -41,25 +53,26 @@ function orderConfirmationEmailHtml(params: {
   currency: string;
   reference: string;
   dateLabel: string;
-  // Ebook-only: mockup images (genuinely public URLs - see resource-mockups
-  // bucket, chosen specifically so these still load whenever the recipient
-  // opens this email, not just right after purchase) shown as a small
-  // strip, not a full gallery. format/shippingAddress adjust the copy for
-  // which specific purchase this was.
+  // Ebook-only: one mockup image (a genuinely public URL - see
+  // resource-mockups bucket, chosen specifically so it still loads
+  // whenever the recipient opens this email, not just right after
+  // purchase), shown as the product photo on the order line itself -
+  // like a normal online order summary (photo, name, price together),
+  // not a strip tacked on separately. format/shippingAddress adjust the
+  // copy for which specific purchase this was.
   mockupUrls?: string[];
   format?: string | null;
   shippingAddress?: string | null;
 }): string {
   const { itemTitle, itemTypeLabel, itemUrl, amount, currency, reference, dateLabel, mockupUrls, format, shippingAddress } = params;
-  const displayTitle = format ? `${itemTitle}${FORMAT_TITLE_SUFFIXES[format] || ""}` : itemTitle;
+  const typeLine = format ? `${itemTypeLabel} · ${FORMAT_LABELS[format] || format}` : itemTypeLabel;
   const ctaLabel = format === "hardcopy" ? "View order" : `Read your ${itemTypeLabel.toLowerCase()}`;
+  const mockupUrl = mockupUrls && mockupUrls[0];
 
-  const mockupStrip = mockupUrls && mockupUrls.length > 0
-    ? `<tr><td style="padding:0 28px 20px;">
-        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-          ${mockupUrls.map((url) => `<td style="padding-right:8px;"><img src="${url}" width="72" height="96" style="width:72px;height:96px;object-fit:cover;border-radius:8px;border:1px solid #dde6e6;display:block;" alt="" /></td>`).join("")}
-        </tr></table>
-      </td></tr>`
+  const itemImageCell = mockupUrl
+    ? `<td style="width:64px;padding-right:14px;vertical-align:top;">
+        <img src="${mockupUrl}" width="64" height="85" style="width:64px;height:85px;object-fit:cover;border-radius:8px;border:1px solid #dde6e6;display:block;" alt="" />
+      </td>`
     : "";
 
   const shippingRow = format === "hardcopy" && shippingAddress
@@ -86,8 +99,24 @@ function orderConfirmationEmailHtml(params: {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dde6e6;border-radius:10px;overflow:hidden;margin-bottom:8px;">
             <tr>
               <td style="padding:16px 18px;border-bottom:1px solid #dde6e6;">
-                <p style="margin:0 0 2px;font-size:14.5px;font-weight:700;color:#0b1b1d;">${displayTitle}</p>
-                <p style="margin:0;font-size:12px;color:#4b6062;">${itemTypeLabel}</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    ${itemImageCell}
+                    <td style="vertical-align:top;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="vertical-align:top;">
+                            <p style="margin:0 0 2px;font-size:14.5px;font-weight:700;color:#0b1b1d;">${itemTitle}</p>
+                            <p style="margin:0;font-size:12px;color:#4b6062;">${typeLine}</p>
+                          </td>
+                          <td style="vertical-align:top;text-align:right;white-space:nowrap;">
+                            <p style="margin:0;font-size:14px;font-weight:700;color:#3d5f62;">${currency} ${amount.toLocaleString()}</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
@@ -95,14 +124,12 @@ function orderConfirmationEmailHtml(params: {
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                   <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Order number</td><td style="font-size:13px;font-weight:600;color:#0b1b1d;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;">${reference}</td></tr>
                   <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Date</td><td style="font-size:13px;font-weight:600;color:#0b1b1d;text-align:right;">${dateLabel}</td></tr>
-                  <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Amount paid</td><td style="font-size:14px;font-weight:700;color:#3d5f62;text-align:right;">${currency} ${amount.toLocaleString()}</td></tr>
                 </table>
               </td>
             </tr>
           </table>
         </td>
       </tr>
-      ${mockupStrip}
       ${shippingRow}
       <tr>
         <td align="center" style="padding:12px 28px 8px;">

@@ -7,7 +7,14 @@ import { useMemberSession } from "@/lib/useMemberSession";
 import { supabase } from "@/lib/supabase";
 
 type SavedItem = { id: string; item_type: string; item_id: string; title?: string; slug?: string };
-type Purchase = { id: string; item_type: string; item_id: string; amount: number; currency: string; title: string; slug: string | null; created_at: string };
+type EbookFormat = "read" | "download" | "hardcopy";
+type Purchase = {
+  id: string; item_type: string; item_id: string; amount: number; currency: string;
+  title: string; slug: string | null; created_at: string;
+  formats: EbookFormat[]; download_url: string | null;
+};
+
+const FORMAT_LABELS: Record<EbookFormat, string> = { read: "Read Online", download: "Download", hardcopy: "Hard Copy" };
 type LearningRow = { id: string; course_id: string; status: string; progress_percent: number; title?: string; slug?: string };
 type InterestRow = { career_path_id: string; title?: string; slug?: string };
 
@@ -314,14 +321,45 @@ export default function AccountDashboardPage() {
               <ul className="space-y-2">
                 {purchases.map((p) => {
                   const href = hrefFor(p.item_type, p.slug);
+                  const hasFormats = p.formats && p.formats.length > 0;
                   return (
-                    <li key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-4 py-3 text-sm">
-                      {href ? (
-                        <Link href={href} className="font-medium text-foreground hover:text-primary hover:underline">{p.title}</Link>
-                      ) : (
-                        <span className="font-medium text-foreground">{p.title}</span>
+                    <li key={p.id} className="rounded-xl border border-border/60 px-4 py-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        {href ? (
+                          <Link href={href} className="font-medium text-foreground hover:text-primary hover:underline">{p.title}</Link>
+                        ) : (
+                          <span className="font-medium text-foreground">{p.title}</span>
+                        )}
+                        <span className="flex-shrink-0 text-xs text-muted-foreground">{p.currency} {p.amount.toLocaleString()}</span>
+                      </div>
+
+                      {hasFormats && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            You own: {p.formats.map((f) => FORMAT_LABELS[f]).join(" · ")}
+                          </span>
+                        </div>
                       )}
-                      <span className="flex-shrink-0 text-xs text-muted-foreground">{p.currency} {p.amount.toLocaleString()}</span>
+
+                      {hasFormats && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {p.formats.includes("read") && href && (
+                            <Link href={href} className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted">
+                              Read online →
+                            </Link>
+                          )}
+                          {p.formats.includes("download") && p.download_url && (
+                            <a href={p.download_url} target="_blank" rel="noreferrer" className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted">
+                              Download →
+                            </a>
+                          )}
+                          {p.formats.includes("hardcopy") && (
+                            <span className="rounded-lg bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                              Hard copy ordered
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </li>
                   );
                 })}

@@ -7,10 +7,11 @@ import { supabase } from "@/lib/supabase";
 import { useSignedIn } from "@/lib/useSignedIn";
 import { formatMoney } from "@/lib/formatMoney";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import type { EbookFormat } from "@/lib/resources/ebookFormats";
 
+export type { EbookFormat };
 export type FormatPrice = { usd: number | null; ngn: number | null };
 export type EbookFormatPrices = { read: FormatPrice; download: FormatPrice; hardcopy: FormatPrice };
-export type EbookFormat = "read" | "download" | "hardcopy";
 
 const FORMAT_INFO: Record<EbookFormat, { label: string; includes: string; excludes: string }> = {
   read: { label: "Read Online", includes: "Read inside Prowess Digital Solutions", excludes: "No PDF download" },
