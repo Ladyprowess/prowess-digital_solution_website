@@ -164,11 +164,14 @@ export function ResourceBody({
   // Only meaningful when there's actually a file to embed -- an admin who
   // picked "pdf" display but never uploaded a file falls back to the
   // normal written-content rendering below rather than showing nothing.
-  const showEmbeddedPdf = contentDisplay === "pdf" && Boolean(downloadUrl) && ownsRead;
-  // allowDownload only gates the Download *button* -- an embedded PDF still
-  // renders above regardless, since that's viewing it on the site, not
-  // downloading the raw file.
-  const showDownloadLink = allowDownload && Boolean(downloadUrl) && ownsDownload;
+  // For a format-priced ebook, owning "read" is itself sufficient - the
+  // admin's contentDisplay toggle predates per-format purchases and was
+  // never meant to gate access someone already paid for.
+  const showEmbeddedPdf = Boolean(downloadUrl) && ownsRead && (hasFormatPricing || contentDisplay === "pdf");
+  // Same reasoning for allowDownload: once "download" is actually owned on
+  // a format-priced ebook, that legacy checkbox shouldn't be able to hide
+  // the link the customer just paid for.
+  const showDownloadLink = Boolean(downloadUrl) && ownsDownload && (hasFormatPricing || allowDownload);
 
   return (
     <div className="mt-10 space-y-6">
