@@ -37,6 +37,10 @@ function CareerPathEditor({ id }: { id: string }) {
   const [originalSlug, setOriginalSlug] = useState("");
   const [description, setDescription] = useState("");
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  // What was actually loaded from the DB, kept separate from the live
+  // selection so saving can tell "the admin unchecked this" apart from "this
+  // was never part of what this tab knows about" - see submit()'s comment.
+  const [originalSkillIds, setOriginalSkillIds] = useState<string[]>([]);
   const [skillLevels, setSkillLevels] = useState<Record<string, "" | (typeof LEVELS)[number]>>({});
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
   const [learningItems, setLearningItems] = useState<LearningItem[]>([]);
@@ -99,6 +103,7 @@ function CareerPathEditor({ id }: { id: string }) {
       setImageUrl(p.image_url || "");
       setWhoItsFor((p.who_its_for || []).join("\n"));
       setSelectedSkillIds(p.career_path_skill_map.map((m) => m.skill_id));
+      setOriginalSkillIds(p.career_path_skill_map.map((m) => m.skill_id));
       setSkillLevels(Object.fromEntries(p.career_path_skill_map.map((m) => [m.skill_id, m.level || ""])));
       setSelectedToolIds(p.career_path_tool_map.map((m) => m.tool_id));
 
@@ -161,7 +166,6 @@ function CareerPathEditor({ id }: { id: string }) {
         const slugUpdate = wantsSlugChange ? { slug: await getUniqueSlug(slugify(manualSlug)) } : {};
         const { error } = await supabase.from("career_paths").update({ ...payload, ...slugUpdate }).eq("id", id);
         if (error) throw new Error(error.message);
-        await supabase.from("career_path_skill_map").delete().eq("career_path_id", id);
       } else {
         const slug = await getUniqueSlug(slugify(manualSlug.trim() || title));
         const { data: created, error } = await supabase
@@ -173,9 +177,21 @@ function CareerPathEditor({ id }: { id: string }) {
         pathId = created.id;
       }
 
+      // Diffed against what this tab originally loaded, not a blanket
+      // delete-then-insert - Career Options and Projects can also add a
+      // skill straight to this career path (via PathSkillPicker's "Add
+      // more skills"), and this tab has no way to know about that if it's
+      // been open since before that happened. A blanket delete would
+      // silently wipe any such addition; only removing skills the admin
+      // explicitly unchecked *in this tab* avoids that.
+      const removedSkillIds = originalSkillIds.filter((skillId) => !selectedSkillIds.includes(skillId));
+      if (removedSkillIds.length > 0) {
+        await supabase.from("career_path_skill_map").delete().eq("career_path_id", pathId!).in("skill_id", removedSkillIds);
+      }
       if (selectedSkillIds.length > 0) {
-        await supabase.from("career_path_skill_map").insert(
-          selectedSkillIds.map((skillId) => ({ career_path_id: pathId!, skill_id: skillId, level: skillLevels[skillId] || null }))
+        await supabase.from("career_path_skill_map").upsert(
+          selectedSkillIds.map((skillId) => ({ career_path_id: pathId!, skill_id: skillId, level: skillLevels[skillId] || null })),
+          { onConflict: "career_path_id,skill_id" }
         );
       }
       await saveToolMap(pathId!, selectedToolIds);

@@ -2,7 +2,8 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
-import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { PathSkillPicker } from "@/components/admin/PathSkillPicker";
 import { supabase } from "@/lib/supabase";
 
 type Role = { id: string; parent_role_id: string | null; position: number; title: string; description: string | null };
@@ -57,7 +58,12 @@ function RoleRow({
 }
 
 function RolesAdmin({ careerPathId }: { careerPathId: string }) {
-  const [skills, setSkills] = useState<Skill[]>([]);
+  // The path's own skill list (career_path_skill_map) - what the picker
+  // shows by default. Separate from `skillNamesById`, which covers every
+  // skill actually tagged on a role even if it later fell outside the
+  // path's list, so an existing role never silently loses its label.
+  const [pathSkills, setPathSkills] = useState<Skill[]>([]);
+  const [skillNamesById, setSkillNamesById] = useState<Record<string, string>>({});
   const [roles, setRoles] = useState<Role[]>([]);
   const [roleSkillIds, setRoleSkillIds] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
@@ -70,8 +76,8 @@ function RolesAdmin({ careerPathId }: { careerPathId: string }) {
   const [err, setErr] = useState("");
 
   const fetchAll = useCallback(async () => {
-    const [{ data: skillRows }, { data: roleRows }] = await Promise.all([
-      supabase.from("skills").select("id, slug, name").order("name"),
+    const [{ data: pathSkillRows }, { data: roleRows }] = await Promise.all([
+      supabase.from("career_path_skill_map").select("skills(id, slug, name)").eq("career_path_id", careerPathId),
       supabase
         .from("career_path_roles")
         .select("id, parent_role_id, position, title, description")
@@ -79,30 +85,39 @@ function RolesAdmin({ careerPathId }: { careerPathId: string }) {
         .order("position"),
     ]);
 
+    const pathSkillsList = ((pathSkillRows as unknown as { skills: Skill | null }[]) || [])
+      .map((r) => r.skills)
+      .filter((s): s is Skill => !!s)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
     const rolesList = roleRows || [];
     const roleSkillMap: Record<string, string[]> = {};
+    const namesById: Record<string, string> = Object.fromEntries(pathSkillsList.map((s) => [s.id, s.name]));
+
     if (rolesList.length > 0) {
       const { data: roleSkillRows } = await supabase
         .from("career_path_role_skill_map")
-        .select("role_id, skill_id")
+        .select("role_id, skill_id, skills(name)")
         .in("role_id", rolesList.map((r) => r.id));
-      for (const row of roleSkillRows || []) {
+      for (const row of (roleSkillRows as unknown as { role_id: string; skill_id: string; skills: { name: string } | null }[]) || []) {
         roleSkillMap[row.role_id] = [...(roleSkillMap[row.role_id] || []), row.skill_id];
+        if (row.skills) namesById[row.skill_id] = row.skills.name;
       }
     }
 
-    return { skillsList: skillRows || [], rolesList, roleSkillMap };
+    return { pathSkillsList, rolesList, roleSkillMap, namesById };
   }, [careerPathId]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { skillsList, rolesList, roleSkillMap } = await fetchAll();
+      const { pathSkillsList, rolesList, roleSkillMap, namesById } = await fetchAll();
       if (!cancelled) {
-        setSkills(skillsList);
+        setPathSkills(pathSkillsList);
         setRoles(rolesList);
         setRoleSkillIds(roleSkillMap);
+        setSkillNamesById(namesById);
         setLoading(false);
       }
     })();
@@ -110,14 +125,15 @@ function RolesAdmin({ careerPathId }: { careerPathId: string }) {
   }, [fetchAll]);
 
   async function reload() {
-    const { skillsList, rolesList, roleSkillMap } = await fetchAll();
-    setSkills(skillsList);
+    const { pathSkillsList, rolesList, roleSkillMap, namesById } = await fetchAll();
+    setPathSkills(pathSkillsList);
     setRoles(rolesList);
     setRoleSkillIds(roleSkillMap);
+    setSkillNamesById(namesById);
   }
 
   function skillNames(ids: string[]) {
-    return ids.map((id) => skills.find((s) => s.id === id)?.name).filter((n): n is string => !!n);
+    return ids.map((id) => skillNamesById[id]).filter((n): n is string => !!n);
   }
 
   function resetForm() {
@@ -238,7 +254,13 @@ function RolesAdmin({ careerPathId }: { careerPathId: string }) {
           <RichTextEditor key={`role-${editingId || parentRoleId || "new"}`} value={description} onChange={setDescription} placeholder="What does someone in this role actually do?" />
         </Field>
         <Field label="Skills">
-          <SkillPicker skills={skills} onSkillsChange={setSkills} selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds} />
+          <PathSkillPicker
+            careerPathId={careerPathId}
+            pathSkills={pathSkills}
+            onPathSkillsChange={setPathSkills}
+            selectedIds={selectedSkillIds}
+            onSelectedIdsChange={setSelectedSkillIds}
+          />
         </Field>
         {err ? <p className="text-sm text-red-600">{err}</p> : null}
         <div className="flex gap-2">

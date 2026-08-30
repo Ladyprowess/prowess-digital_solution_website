@@ -2,7 +2,8 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
-import { SkillPicker, saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { saveSkillMap, type Skill } from "@/components/admin/SkillPicker";
+import { PathSkillPicker } from "@/components/admin/PathSkillPicker";
 import { supabase } from "@/lib/supabase";
 
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
@@ -28,12 +29,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-// "Build experience while you learn" -- practice projects. Uses the global
-// SkillPicker (not restricted to the path's own skills, same reasoning as
-// Career Options: a project can reasonably practice a skill the path
-// doesn't list as core).
+// "Build experience while you learn" -- practice projects. Skills are
+// scoped to the path's own skill list by default (PathSkillPicker), same
+// as Career Options - picking from a huge full taxonomy every time was the
+// actual complaint. The picker's "Add more skills" escape hatch still
+// covers the case where a project practices a skill the path doesn't list
+// as core, by adding it to the path's list permanently rather than just
+// this one project.
 function ProjectsAdmin({ careerPathId }: { careerPathId: string }) {
-  const [skills, setSkills] = useState<Skill[]>([]);
+  // The path's own skill list (career_path_skill_map) - what the picker
+  // shows by default. Nothing here displays project skill names today
+  // (unlike Career Options' role rows), so no separate name-lookup map is
+  // needed - only the id lists below.
+  const [pathSkills, setPathSkills] = useState<Skill[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectSkillIds, setProjectSkillIds] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
@@ -48,14 +56,19 @@ function ProjectsAdmin({ careerPathId }: { careerPathId: string }) {
   const [err, setErr] = useState("");
 
   const fetchAll = useCallback(async () => {
-    const [{ data: skillRows }, { data: projectRows }] = await Promise.all([
-      supabase.from("skills").select("id, slug, name").order("name"),
+    const [{ data: pathSkillRows }, { data: projectRows }] = await Promise.all([
+      supabase.from("career_path_skill_map").select("skills(id, slug, name)").eq("career_path_id", careerPathId),
       supabase
         .from("career_path_projects")
         .select("id, position, title, level, description, external_link, status")
         .eq("career_path_id", careerPathId)
         .order("position"),
     ]);
+
+    const pathSkillsList = ((pathSkillRows as unknown as { skills: Skill | null }[]) || [])
+      .map((r) => r.skills)
+      .filter((s): s is Skill => !!s)
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     const projectsList = (projectRows as Project[]) || [];
     const skillMap: Record<string, string[]> = {};
@@ -69,16 +82,16 @@ function ProjectsAdmin({ careerPathId }: { careerPathId: string }) {
       }
     }
 
-    return { skillsList: skillRows || [], projectsList, skillMap };
+    return { pathSkillsList, projectsList, skillMap };
   }, [careerPathId]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { skillsList, projectsList, skillMap } = await fetchAll();
+      const { pathSkillsList, projectsList, skillMap } = await fetchAll();
       if (!cancelled) {
-        setSkills(skillsList);
+        setPathSkills(pathSkillsList);
         setProjects(projectsList);
         setProjectSkillIds(skillMap);
         setLoading(false);
@@ -88,8 +101,8 @@ function ProjectsAdmin({ careerPathId }: { careerPathId: string }) {
   }, [fetchAll]);
 
   async function reload() {
-    const { skillsList, projectsList, skillMap } = await fetchAll();
-    setSkills(skillsList);
+    const { pathSkillsList, projectsList, skillMap } = await fetchAll();
+    setPathSkills(pathSkillsList);
     setProjects(projectsList);
     setProjectSkillIds(skillMap);
   }
@@ -195,7 +208,13 @@ function ProjectsAdmin({ careerPathId }: { careerPathId: string }) {
           <input value={externalLink} onChange={(e) => setExternalLink(e.target.value)} className={inputCls} placeholder="https://... (a brief, template, or example)" />
         </Field>
         <Field label="Skills practiced">
-          <SkillPicker skills={skills} onSkillsChange={setSkills} selectedIds={selectedSkillIds} onSelectedIdsChange={setSelectedSkillIds} />
+          <PathSkillPicker
+            careerPathId={careerPathId}
+            pathSkills={pathSkills}
+            onPathSkillsChange={setPathSkills}
+            selectedIds={selectedSkillIds}
+            onSelectedIdsChange={setSelectedSkillIds}
+          />
         </Field>
         <label className="flex items-center gap-3 text-sm font-semibold text-foreground">
           <input type="checkbox" checked={status === "published"} onChange={(e) => setStatus(e.target.checked ? "published" : "draft")} />
