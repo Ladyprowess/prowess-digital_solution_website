@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { hasEntitlement, getPurchasedFormats } from "@/lib/payments/entitlement";
 import { signDownloadUrl } from "@/lib/resourceDownload";
+import { isFormatPriceableType } from "@/lib/resources/ebookFormats";
 
 export const runtime = "nodejs";
 
@@ -51,13 +52,14 @@ export async function POST(req: Request) {
         .single();
 
       // Same hard-override signal used everywhere else (getItemPrice,
-      // ResourceBody): this ebook only behaves as format-gated once at
-      // least one of the six format prices is actually set. A plain ebook
-      // or non-ebook resource keeps today's all-or-nothing behavior below.
-      const hasFormatPricing = data?.resource_type === "ebook" && Boolean(
-        data.price_read_usd || data.price_read_ngn ||
-        data.price_download_usd || data.price_download_ngn ||
-        data.price_hardcopy_usd || data.price_hardcopy_ngn
+      // ResourceBody): a format-priceable resource (ebook/guide/template/
+      // checklist - see isFormatPriceableType) only behaves as format-gated
+      // once at least one of the six format prices is actually set. Any
+      // other resource_type keeps today's all-or-nothing behavior below.
+      const hasFormatPricing = Boolean(data) && isFormatPriceableType(data!.resource_type) && Boolean(
+        data!.price_read_usd || data!.price_read_ngn ||
+        data!.price_download_usd || data!.price_download_ngn ||
+        data!.price_hardcopy_usd || data!.price_hardcopy_ngn
       );
 
       // Format-priced ebooks grant access per-format, not all-or-nothing -

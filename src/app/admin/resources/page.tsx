@@ -10,6 +10,7 @@ import { slugify } from "@/lib/slugify";
 import { RESOURCE_TYPES, USE_CASES, USE_CASE_LABELS } from "@/lib/resources/constants";
 import { formatMoney } from "@/lib/formatMoney";
 import { MockupGallery, type MockupItem } from "@/components/admin/MockupGallery";
+import { isFormatPriceableType } from "@/lib/resources/ebookFormats";
 
 const PAGE_SIZE = 20;
 
@@ -309,13 +310,14 @@ function ResourcesAdmin() {
         }
       }
 
-      // An ebook with any format price entered must be premium, full stop -
-      // the "Format pricing" section says setting a price here is enough on
-      // its own, so the price fields can't quietly depend on the separate
-      // Access dropdown further down the form also being flipped to
-      // Premium. Without this, a forgotten Access toggle silently drops
-      // every format price on save and leaves the ebook fully free.
-      const hasAnyFormatPrice = resourceType === "ebook" && [
+      // A format-priceable resource (ebook/guide/template/checklist) with
+      // any format price entered must be premium, full stop - the "Format
+      // pricing" section says setting a price here is enough on its own, so
+      // the price fields can't quietly depend on the separate Access
+      // dropdown further down the form also being flipped to Premium.
+      // Without this, a forgotten Access toggle silently drops every format
+      // price on save and leaves the item fully free.
+      const hasAnyFormatPrice = isFormatPriceableType(resourceType) && [
         priceReadUsd, priceReadNgn, priceDownloadUsd, priceDownloadNgn, priceHardcopyUsd, priceHardcopyNgn,
       ].some((v) => v.trim() !== "");
       const effectiveAccess = hasAnyFormatPrice ? "premium" : access;
@@ -353,12 +355,12 @@ function ResourcesAdmin() {
         why_recommended: resourceType === "video" ? (whyRecommended.trim() || null) : null,
         reading_minutes: resourceType === "article" && readingMinutes ? Number(readingMinutes) : null,
         page_count: resourceType === "ebook" && pageCount ? Number(pageCount) : null,
-        price_read_usd: resourceType === "ebook" && priceReadUsd ? Number(priceReadUsd) : null,
-        price_read_ngn: resourceType === "ebook" && priceReadNgn ? Number(priceReadNgn) : null,
-        price_download_usd: resourceType === "ebook" && priceDownloadUsd ? Number(priceDownloadUsd) : null,
-        price_download_ngn: resourceType === "ebook" && priceDownloadNgn ? Number(priceDownloadNgn) : null,
-        price_hardcopy_usd: resourceType === "ebook" && priceHardcopyUsd ? Number(priceHardcopyUsd) : null,
-        price_hardcopy_ngn: resourceType === "ebook" && priceHardcopyNgn ? Number(priceHardcopyNgn) : null,
+        price_read_usd: isFormatPriceableType(resourceType) && priceReadUsd ? Number(priceReadUsd) : null,
+        price_read_ngn: isFormatPriceableType(resourceType) && priceReadNgn ? Number(priceReadNgn) : null,
+        price_download_usd: isFormatPriceableType(resourceType) && priceDownloadUsd ? Number(priceDownloadUsd) : null,
+        price_download_ngn: isFormatPriceableType(resourceType) && priceDownloadNgn ? Number(priceDownloadNgn) : null,
+        price_hardcopy_usd: isFormatPriceableType(resourceType) && priceHardcopyUsd ? Number(priceHardcopyUsd) : null,
+        price_hardcopy_ngn: isFormatPriceableType(resourceType) && priceHardcopyNgn ? Number(priceHardcopyNgn) : null,
         use_case: useCase || null,
         ...placements,
       };
@@ -388,7 +390,7 @@ function ResourcesAdmin() {
 
       await saveSkillMap("resource_skill_map", "resource_id", resourceId!, selectedSkillIds);
 
-      if (resourceType === "ebook") {
+      if (isFormatPriceableType(resourceType)) {
         // Upload any newly-added mockup files first, in their current
         // order, then write the whole ordered list (existing + newly
         // uploaded) as position = array index - delete-then-insert, same
@@ -533,13 +535,13 @@ function ResourcesAdmin() {
               </div>
             )}
 
-            {resourceType === "ebook" && (
+            {isFormatPriceableType(resourceType) && (
               <div className="grid gap-4 rounded-xl border border-border/60 p-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   Format pricing (optional - leave all blank to use the single Price above instead)
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Setting any price here switches this ebook to format-based checkout - buyers pick Read Online, Download, or Hard Copy, each priced separately. The single Price fields above stop being used for this ebook once any of these is set. Access is automatically set to Premium below once any format price is entered - you don&apos;t need to change it yourself.
+                  Setting any price here switches this item to format-based checkout - buyers pick Read Online, Download, or Hard Copy, each priced separately. The single Price fields above stop being used for this item once any of these is set. Access is automatically set to Premium below once any format price is entered - you don&apos;t need to change it yourself.
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">

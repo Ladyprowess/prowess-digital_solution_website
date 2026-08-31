@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
+import { isFormatPriceableType } from "@/lib/resources/ebookFormats";
 
 const ITEM_TABLE: Record<string, string> = {
   resource: "resources",
@@ -350,7 +351,7 @@ export async function getItemPrice(itemType: string, itemId: string) {
       .maybeSingle();
     data = resourceData;
 
-    if (resourceData?.resource_type === "ebook") {
+    if (resourceData && isFormatPriceableType(resourceData.resource_type)) {
       const candidate: EbookFormatPrices = {
         read: { usd: resourceData.price_read_usd, ngn: resourceData.price_read_ngn },
         download: { usd: resourceData.price_download_usd, ngn: resourceData.price_download_ngn },

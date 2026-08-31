@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { sanitizeRichTextHtml } from "@/components/RichText";
+import { EbookPurchasePicker, FORMAT_LABELS, type EbookFormatPrices, type EbookFormat } from "@/components/resources/EbookPurchasePicker";
 
 type ChecklistBodyData = {
   content: string | null;
@@ -11,6 +12,7 @@ type ChecklistBodyData = {
   external_url: string | null;
   source: string;
   download_url: string | null;
+  unlocked_formats?: EbookFormat[];
 };
 
 type ChecklistBlock =
@@ -61,6 +63,7 @@ export function ChecklistBody({
   priceUsd,
   priceNgn,
   allowDownload = true,
+  formatPrices = null,
 }: {
   resourceId: string;
   priceUsd: number | null;
@@ -68,6 +71,10 @@ export function ChecklistBody({
   // Admin choice: some resources should only be readable/checkable on the
   // site, not downloadable as a raw file.
   allowDownload?: boolean;
+  // Same format-priced treatment ebooks get - see ResourceBody. Non-null
+  // (with at least one price set) switches this checklist to format-based
+  // checkout (EbookPurchasePicker) instead of the plain BuyButton.
+  formatPrices?: EbookFormatPrices | null;
 }) {
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [data, setData] = useState<ChecklistBodyData | null>(null);
@@ -141,6 +148,13 @@ export function ChecklistBody({
     return <p className="mt-10 text-center text-sm text-muted-foreground">Loading…</p>;
   }
 
+  const hasFormatPricing = Boolean(
+    formatPrices &&
+      (formatPrices.read.usd || formatPrices.read.ngn ||
+       formatPrices.download.usd || formatPrices.download.ngn ||
+       formatPrices.hardcopy.usd || formatPrices.hardcopy.ngn)
+  );
+
   if (status === "locked") {
     return (
       <div className="mt-10 rounded-2xl border-2 border-primary/20 bg-muted p-8 text-center">
@@ -148,48 +162,76 @@ export function ChecklistBody({
         <p className="mt-2 text-sm text-muted-foreground">
           {signedIn ? "You don't have access to this yet." : "Sign in if you've already bought this, or buy access below."}
         </p>
-        <div className="mx-auto mt-6 max-w-xs">
-          <BuyButton itemType="resource" itemId={resourceId} priceUsd={priceUsd} priceNgn={priceNgn} />
-        </div>
+        {hasFormatPricing ? (
+          <EbookPurchasePicker resourceId={resourceId} formatPrices={formatPrices!} />
+        ) : (
+          <div className="mx-auto mt-6 max-w-xs">
+            <BuyButton itemType="resource" itemId={resourceId} priceUsd={priceUsd} priceNgn={priceNgn} />
+          </div>
+        )}
       </div>
     );
   }
 
   const downloadUrl = data?.download_url || data?.file_url || null;
 
+  // Same per-format gating as ResourceBody: "read" here means the
+  // interactive checklist itself (the checkbox list below), not a separate
+  // embedded viewer - a checklist has no PDF reader, checking things off
+  // on-site *is* the read-online experience.
+  const unlockedFormats = data?.unlocked_formats || [];
+  const ownsRead = !hasFormatPricing || unlockedFormats.includes("read");
+  const ownsDownload = !hasFormatPricing || unlockedFormats.includes("download");
+  const ownsHardcopy = hasFormatPricing && unlockedFormats.includes("hardcopy");
+  const showDownloadLink = Boolean(downloadUrl) && ownsDownload && (hasFormatPricing || allowDownload);
+
   return (
     <div className="mt-10 space-y-6">
-      {totalItems > 0 && (
+      {hasFormatPricing && unlockedFormats.length > 0 && (
+        <p className="text-sm font-semibold text-foreground">
+          You own: {unlockedFormats.map((f) => FORMAT_LABELS[f]).join(" · ")}
+        </p>
+      )}
+
+      {ownsHardcopy && (
+        <div className="rounded-2xl border-2 border-primary/20 bg-muted p-6 text-center">
+          <h2 className="text-lg font-bold text-foreground">Hard copy ordered</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Your physical copy is being prepared. We&apos;ll contact you regarding delivery.</p>
+        </div>
+      )}
+
+      {ownsRead && totalItems > 0 && (
         <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
           <p className="text-sm font-semibold text-foreground">{checkedItems.size} of {totalItems} checked</p>
           {!signedIn && <p className="text-xs text-muted-foreground">Sign in to save your progress</p>}
         </div>
       )}
 
-      {blocks.map((block) =>
-        block.type === "list" ? (
-          <ul key={block.key} className="space-y-2">
-            {block.items.map((item) => (
-              <li key={item.index}>
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3 transition hover:border-primary/30">
-                  <input
-                    type="checkbox"
-                    checked={checkedItems.has(item.index)}
-                    onChange={() => toggleItem(item.index)}
-                    className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-border text-primary focus:ring-primary"
-                  />
-                  <span
-                    className={`text-sm ${checkedItems.has(item.index) ? "text-muted-foreground line-through" : "text-foreground"}`}
-                    dangerouslySetInnerHTML={{ __html: item.html }}
-                  />
-                </label>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div key={block.key} className="blog-content" dangerouslySetInnerHTML={{ __html: block.html }} />
-        )
-      )}
+      {ownsRead &&
+        blocks.map((block) =>
+          block.type === "list" ? (
+            <ul key={block.key} className="space-y-2">
+              {block.items.map((item) => (
+                <li key={item.index}>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3 transition hover:border-primary/30">
+                    <input
+                      type="checkbox"
+                      checked={checkedItems.has(item.index)}
+                      onChange={() => toggleItem(item.index)}
+                      className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <span
+                      className={`text-sm ${checkedItems.has(item.index) ? "text-muted-foreground line-through" : "text-foreground"}`}
+                      dangerouslySetInnerHTML={{ __html: item.html }}
+                    />
+                  </label>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div key={block.key} className="blog-content" dangerouslySetInnerHTML={{ __html: block.html }} />
+          )
+        )}
 
       {data?.external_url && (
         <a
@@ -202,9 +244,9 @@ export function ChecklistBody({
         </a>
       )}
 
-      {allowDownload && downloadUrl && (
+      {showDownloadLink && (
         <a
-          href={downloadUrl}
+          href={downloadUrl!}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
@@ -213,9 +255,11 @@ export function ChecklistBody({
         </a>
       )}
 
-      {!data?.content && !data?.external_url && !downloadUrl && (
+      {!(data?.content && ownsRead) && !data?.external_url && !downloadUrl && !ownsHardcopy && (
         <p className="text-sm text-muted-foreground">No content has been added to this checklist yet.</p>
       )}
+
+      {hasFormatPricing && <EbookPurchasePicker resourceId={resourceId} formatPrices={formatPrices!} ownedFormats={unlockedFormats} />}
     </div>
   );
 }

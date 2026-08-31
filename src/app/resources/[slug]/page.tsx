@@ -11,6 +11,7 @@ import { RelatedSection } from "@/components/RelatedSection";
 import { getSkillGraph } from "@/lib/careerPathGraph";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/formatMoney";
+import { isFormatPriceableType } from "@/lib/resources/ebookFormats";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -106,11 +107,18 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
   // item - even if an admin's old plain price values are still sitting in
   // those columns from before this ebook switched to format pricing, the
   // "Premium" badge below must not show them as if they were real.
-  const hasFormatPricing = resource.resource_type === "ebook" && Boolean(
+  const hasFormatPricing = isFormatPriceableType(resource.resource_type) && Boolean(
     resource.price_read_usd || resource.price_read_ngn ||
     resource.price_download_usd || resource.price_download_ngn ||
     resource.price_hardcopy_usd || resource.price_hardcopy_ngn
   );
+  const formatPrices = isFormatPriceableType(resource.resource_type)
+    ? {
+        read: { usd: resource.price_read_usd, ngn: resource.price_read_ngn },
+        download: { usd: resource.price_download_usd, ngn: resource.price_download_ngn },
+        hardcopy: { usd: resource.price_hardcopy_usd, ngn: resource.price_hardcopy_ngn },
+      }
+    : null;
 
   const graph = await getSkillGraph(skillIds, { limit: 4 });
 
@@ -165,7 +173,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
             </div>
           )}
 
-          {resource.resource_type === "ebook" && resource.resource_mockups.length > 0 && (
+          {isFormatPriceableType(resource.resource_type) && resource.resource_mockups.length > 0 && (
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
               {[...resource.resource_mockups]
                 .sort((a, b) => a.position - b.position)
@@ -219,7 +227,13 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
 
         <Reveal delay={120}>
           {resource.resource_type === "checklist" ? (
-            <ChecklistBody resourceId={resource.id} priceUsd={resource.price_usd} priceNgn={resource.price_ngn} allowDownload={resource.allow_download} />
+            <ChecklistBody
+              resourceId={resource.id}
+              priceUsd={resource.price_usd}
+              priceNgn={resource.price_ngn}
+              allowDownload={resource.allow_download}
+              formatPrices={formatPrices}
+            />
           ) : (
             <ResourceBody
               resourceId={resource.id}
@@ -228,15 +242,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
               priceNgn={resource.price_ngn}
               contentDisplay={resource.content_display}
               allowDownload={resource.allow_download}
-              formatPrices={
-                resource.resource_type === "ebook"
-                  ? {
-                      read: { usd: resource.price_read_usd, ngn: resource.price_read_ngn },
-                      download: { usd: resource.price_download_usd, ngn: resource.price_download_ngn },
-                      hardcopy: { usd: resource.price_hardcopy_usd, ngn: resource.price_hardcopy_ngn },
-                    }
-                  : null
-              }
+              formatPrices={formatPrices}
             />
           )}
         </Reveal>
