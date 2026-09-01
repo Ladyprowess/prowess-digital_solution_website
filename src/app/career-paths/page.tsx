@@ -169,70 +169,141 @@ export default function CareerPathsPage() {
       .slice(0, 5);
   }, [paths]);
 
+  const totals = useMemo(() => {
+    return paths.reduce(
+      (acc, path) => ({
+        skills: acc.skills + path.skillsCount,
+        learning: acc.learning + path.learningCount,
+        jobs: acc.jobs + path.jobsCount,
+      }),
+      { skills: 0, learning: 0, jobs: 0 }
+    );
+  }, [paths]);
+
   return (
     <div className="min-h-screen bg-background">
-      {/* HERO */}
-      <section className="border-b border-border bg-muted py-16 sm:py-20">
+      <section className="border-b border-border bg-brand-bg py-12 sm:py-16">
         <Container>
-          <Reveal>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Find a career path that fits where you want to go.</h1>
-            <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-              Explore careers, understand the skills they require, and discover the learning resources, jobs and opportunities connected to each one.
-            </p>
-          </Reveal>
-          <Reveal delay={80}>
-            <div className="mt-6">
-              <input
-                value={search}
-                onChange={(e) => updateSearch(e.target.value)}
-                placeholder="Search career paths..."
-                className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-sm text-foreground shadow-sm sm:max-w-xl"
-              />
-            </div>
-          </Reveal>
-          {!loading && popularPaths.length > 0 && (
-            <Reveal delay={120}>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Popular:</span>
-                {popularPaths.map((p) => (
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+            <Reveal>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">Career Path Explorer</p>
+                <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
+                  Choose a path, then build the skills to enter it.
+                </h1>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+                  Explore structured career paths with the skills, learning, jobs, opportunities and tools connected to each direction.
+                </p>
+                <div className="mt-7 max-w-2xl">
+                  <label htmlFor="career-path-search" className="sr-only">Search career paths</label>
+                  <input
+                    id="career-path-search"
+                    value={search}
+                    onChange={(e) => updateSearch(e.target.value)}
+                    placeholder="Search by career name"
+                    className="min-h-12 w-full rounded-lg border border-border bg-card px-5 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={80}>
+              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+                <p className="text-sm font-bold text-foreground">What you get in each path</p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Skills", value: totals.skills },
+                    { label: "Learning", value: totals.learning },
+                    { label: "Jobs", value: totals.jobs },
+                  ].map((stat) => (
+                    <div key={stat.label} className="rounded-lg bg-muted p-3 text-center">
+                      <p className="text-lg font-bold text-foreground">{stat.value}</p>
+                      <p className="mt-1 text-xs font-semibold text-muted-foreground">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                  Start with the path that matches your interest. The guide shows what to learn, what to practise and where to apply.
+                </p>
+              </div>
+            </Reveal>
+          </div>
+
+          <Reveal delay={120}>
+            <div className="mt-7 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Popular</span>
+              {!loading && popularPaths.length > 0 ? (
+                popularPaths.map((p) => (
                   <button
                     key={p.slug}
                     type="button"
                     onClick={() => updateSearch(p.title)}
-                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+                    className="min-h-10 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {p.title}
                   </button>
-                ))}
-              </div>
-            </Reveal>
-          )}
+                ))
+              ) : (
+                <span className="text-sm text-muted-foreground">Loading paths</span>
+              )}
+            </div>
+          </Reveal>
+
           <Reveal delay={160}>
-            <Link href="/skills" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
-              Not sure what to choose? Explore by skill →
+            <Link href="/skills" className="mt-5 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              Not sure what to choose? Explore by skill
             </Link>
           </Reveal>
         </Container>
       </section>
 
-      <section className="py-14">
+      <section className="py-10 sm:py-14">
         <Container>
-          <PillTabs tabs={CATEGORY_TABS} active={category} onChange={updateCategory} />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Browse paths</p>
+              <h2 className="mt-2 text-2xl font-bold text-foreground">Find your next direction</h2>
+            </div>
+            <PillTabs tabs={CATEGORY_TABS} active={category} onChange={updateCategory} />
+          </div>
 
           {loading ? (
-            <p className="mt-8 py-16 text-center text-sm text-muted-foreground">Loading…</p>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="min-h-[320px] rounded-lg border border-border bg-card p-5">
+                  <div className="h-12 w-12 rounded-lg bg-muted" />
+                  <div className="mt-6 h-4 w-24 rounded bg-muted" />
+                  <div className="mt-3 h-7 w-3/5 rounded bg-muted" />
+                  <div className="mt-4 space-y-2">
+                    <div className="h-3 w-full rounded bg-muted" />
+                    <div className="h-3 w-5/6 rounded bg-muted" />
+                    <div className="h-3 w-2/3 rounded bg-muted" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : paths.length === 0 ? (
-            <div className="mx-auto my-16 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+            <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
               <p className="font-semibold text-foreground">No career paths published yet.</p>
               <p className="mt-1 text-sm text-muted-foreground">Check back soon.</p>
             </div>
           ) : sorted.length === 0 ? (
-            <div className="mx-auto my-16 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+            <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
               <p className="font-semibold text-foreground">No career paths match these filters.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  updateSearch("");
+                  updateCategory("");
+                }}
+                className="mt-4 min-h-10 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                Clear filters
+              </button>
             </div>
           ) : (
             <>
-              <p className="mt-6 text-sm text-muted-foreground">{sorted.length} career path{sorted.length === 1 ? "" : "s"}</p>
+              <p className="mt-6 text-sm font-semibold text-muted-foreground">{sorted.length} career path{sorted.length === 1 ? "" : "s"} available</p>
               <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {paged.map((p) => <CareerPathCard key={p.id} path={p} />)}
               </div>

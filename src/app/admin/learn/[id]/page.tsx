@@ -234,10 +234,14 @@ function CompletionCard({
     setErr("");
     setSaved(false);
 
-    // Block a checked-but-targetless rule from ever being saved - the
-    // evaluator would refuse to complete anyone under it anyway (its own
-    // non-vacuous-ruleset check), so catching it here gives a clear,
-    // actionable message instead of a silent "nobody's course completes".
+    // Block a vacuous ruleset from ever being saved - the evaluator would
+    // refuse to complete anyone under it anyway (its own non-vacuous-ruleset
+    // check), so catching it here gives a clear, actionable message instead
+    // of a silent "nobody's course completes". Two distinct vacuous shapes:
+    // nothing checked at all, or something checked with no real target.
+    if (!rules.require_all_required_activities && !rules.require_all_quizzes_passed && !rules.require_final_assessment) {
+      return setErr("Enable at least one completion rule below - otherwise this course can never be marked complete.");
+    }
     if (rules.require_all_required_activities && !hasRequiredLesson) {
       return setErr("This course has no lessons yet, so \"require all required lessons\" has nothing to check.");
     }

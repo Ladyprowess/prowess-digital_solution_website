@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const { code } = await params;
   const certificate = await getCertificate(code);
   if (!certificate) return { title: "Certificate not found" };
-  return { title: `Certificate verification — ${certificate.learner_name}` };
+  return { title: `Certificate verification - ${certificate.learner_name}` };
 }
 
 export default async function VerifyCertificatePage({ params }: { params: Promise<{ code: string }> }) {

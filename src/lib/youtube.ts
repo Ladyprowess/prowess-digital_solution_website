@@ -10,3 +10,10 @@ export function getYoutubeThumbnail(url: string): string | null {
   const id = getYoutubeVideoId(url);
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
+
+// Shorts are embedded at their native ~9:16 portrait size (confirmed via
+// YouTube's own oEmbed response), not 16:9 - a player forced into a
+// landscape box crops/zooms the vertical video badly.
+export function isYoutubeShorts(url: string): boolean {
+  return /youtube\.com\/shorts\//.test(url);
+}

@@ -165,8 +165,10 @@ export function LearningItemPicker({
 // index in the single combined array, so a later cross-table sort by
 // position reconstructs this exact order.
 export async function saveLearningMap(careerPathId: string, items: LearningItem[]) {
-  await supabase.from("career_path_course_map").delete().eq("career_path_id", careerPathId);
-  await supabase.from("career_path_resource_map").delete().eq("career_path_id", careerPathId);
+  const { error: deleteCourseErr } = await supabase.from("career_path_course_map").delete().eq("career_path_id", careerPathId);
+  if (deleteCourseErr) throw new Error(`Could not save learning content: ${deleteCourseErr.message}`);
+  const { error: deleteResourceErr } = await supabase.from("career_path_resource_map").delete().eq("career_path_id", careerPathId);
+  if (deleteResourceErr) throw new Error(`Could not save learning content: ${deleteResourceErr.message}`);
 
   const courseRows = items
     .map((item, position) => ({ item, position }))
@@ -178,6 +180,12 @@ export async function saveLearningMap(careerPathId: string, items: LearningItem[
     .filter(({ item }) => item.type === "resource")
     .map(({ item, position }) => ({ career_path_id: careerPathId, resource_id: item.id, position }));
 
-  if (courseRows.length) await supabase.from("career_path_course_map").insert(courseRows);
-  if (resourceRows.length) await supabase.from("career_path_resource_map").insert(resourceRows);
+  if (courseRows.length) {
+    const { error } = await supabase.from("career_path_course_map").insert(courseRows);
+    if (error) throw new Error(`Could not save learning content: ${error.message}`);
+  }
+  if (resourceRows.length) {
+    const { error } = await supabase.from("career_path_resource_map").insert(resourceRows);
+    if (error) throw new Error(`Could not save learning content: ${error.message}`);
+  }
 }

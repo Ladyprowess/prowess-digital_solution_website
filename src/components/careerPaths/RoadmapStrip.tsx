@@ -32,7 +32,7 @@ export function RoadmapStrip({ stages }: { stages: RoadmapStageData[] }) {
             key={stage.id}
             type="button"
             onClick={() => setOpenId(openId === stage.id ? null : stage.id)}
-            className={`flex-shrink-0 rounded-2xl border px-5 py-4 text-left transition ${
+            className={`min-h-24 flex-shrink-0 rounded-lg border px-5 py-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
               openId === stage.id ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
             }`}
           >
@@ -43,7 +43,7 @@ export function RoadmapStrip({ stages }: { stages: RoadmapStageData[] }) {
       </div>
 
       {openStage && (
-        <div className="mt-4 rounded-2xl border border-border bg-card p-6">
+        <div className="mt-4 rounded-lg border border-border bg-card p-6">
           {openStage.description && <RichText html={openStage.description} />}
 
           {openStage.items && openStage.items.length > 0 && (
@@ -69,12 +69,12 @@ export function RoadmapStrip({ stages }: { stages: RoadmapStageData[] }) {
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Recommended learning</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {openStage.recommendedCourses.map((c) => (
-                  <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-foreground hover:border-primary/30">
+                  <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-lg border border-border px-4 py-3 text-sm font-semibold text-foreground hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     {c.title}
                   </Link>
                 ))}
                 {openStage.recommendedResources.map((r) => (
-                  <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-foreground hover:border-primary/30">
+                  <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-lg border border-border px-4 py-3 text-sm font-semibold text-foreground hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     {r.title}
                   </Link>
                 ))}

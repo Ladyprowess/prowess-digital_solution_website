@@ -4,6 +4,20 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function searchTermsForQuery(q: string): string[] {
+  const terms = [q];
+  const normalized = q.toLowerCase();
+  if (normalized.includes("sexual wellness")) {
+    terms.push("sex");
+  }
+  return Array.from(new Set(terms.map((term) => term.trim()).filter(Boolean)));
+}
+
+type ResourceRow = {
+  cover_path?: string | null;
+  [key: string]: unknown;
+};
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -70,7 +84,8 @@ export async function GET(req: Request) {
 
     // search
     if (q) {
-      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+      const searchTerms = searchTermsForQuery(q);
+      query = query.or(searchTerms.flatMap((term) => [`title.ilike.%${term}%`, `description.ilike.%${term}%`]).join(","));
     }
 
     // Newest-first only -- "popular"/"rating" sorts used to order by
@@ -92,10 +107,9 @@ export async function GET(req: Request) {
 
     const items = data || [];
 
-    // ✅ Always return a usable cover_url (fresh signed url from cover_path)
+    // Always return a usable cover_url from cover_path.
     const itemsWithCover = await Promise.all(
-      items.map(async (r: any) => {
-        // ✅ If we have cover_path, ALWAYS return a signed url (works even if bucket is private)
+      (items as ResourceRow[]).map(async (r) => {
         if (r.cover_path) {
           const { data: signed, error: signErr } = await supabaseAdmin().storage
             .from("resource-covers")
@@ -113,9 +127,10 @@ export async function GET(req: Request) {
     );
 
     return NextResponse.json({ ok: true, items: itemsWithCover, total: count || 0 }, { status: 200 });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Server error";
     return NextResponse.json(
-      { ok: false, error: e?.message || "Server error" },
+      { ok: false, error: message },
       { status: 500 }
     );
   }

@@ -30,11 +30,11 @@ export function CareerToolsGrid({ tools }: { tools: CareerTool[] }) {
           </>
         );
         return tool.href ? (
-          <Link key={tool.key} href={tool.href} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 transition hover:border-primary/30">
+          <Link key={tool.key} href={tool.href} className="flex min-h-24 items-start gap-3 rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
             {content}
           </Link>
         ) : (
-          <div key={tool.key} className="flex items-start gap-3 rounded-2xl border border-dashed border-border bg-card p-4 opacity-70">
+          <div key={tool.key} className="flex min-h-24 items-start gap-3 rounded-lg border border-dashed border-border bg-card p-4 opacity-70">
             {content}
           </div>
         );

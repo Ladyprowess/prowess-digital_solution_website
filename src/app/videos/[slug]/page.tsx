@@ -34,6 +34,7 @@ type VideoDetail = {
   duration_minutes: number | null;
   why_recommended: string | null;
   published_at: string | null;
+  show_in_learn: boolean;
   resource_skill_map: { skills: { id: string; slug: string; name: string } }[];
 };
 
@@ -41,7 +42,7 @@ async function getVideo(slug: string) {
   const { data } = await supabase
     .from("resources")
     .select(
-      "id, slug, title, description, category, audience, source, external_url, access, price_usd, price_ngn, duration_minutes, why_recommended, published_at, resource_skill_map(skills(id, slug, name))"
+      "id, slug, title, description, category, audience, source, external_url, access, price_usd, price_ngn, duration_minutes, why_recommended, published_at, show_in_learn, resource_skill_map(skills(id, slug, name))"
     )
     .eq("slug", slug)
     .eq("status", "published")
@@ -53,12 +54,20 @@ async function getVideo(slug: string) {
 async function getMoreVideos(video: VideoDetail): Promise<VideoCardData[]> {
   const skillIds = video.resource_skill_map.map((m) => m.skills?.id).filter((id): id is string => Boolean(id));
 
+  // A video reached through Learn (show_in_learn) should only recommend
+  // other videos that were themselves deliberately curated into Learn -
+  // otherwise "more videos" leaks in general-library content an admin
+  // never added to the Learn catalog, even though it happens to share a
+  // category/skill tag. A general-library video (show_in_learn = false)
+  // keeps recommending from the whole library, as before.
+  const learnScope = video.show_in_learn ? { show_in_learn: true } : {};
+
   const [byCategory, bySkill] = await Promise.all([
     video.category
       ? supabase
           .from("resources")
           .select("id, slug, title, description, category, source, external_url, thumbnail_url, access")
-          .eq("status", "published").eq("resource_type", "video").eq("show_in_library", true)
+          .eq("status", "published").eq("resource_type", "video").eq("show_in_library", true).match(learnScope)
           .eq("category", video.category).neq("id", video.id).limit(6)
       : Promise.resolve({ data: [] }),
     skillIds.length > 0
@@ -71,7 +80,7 @@ async function getMoreVideos(video: VideoDetail): Promise<VideoCardData[]> {
     ? await supabase
         .from("resources")
         .select("id, slug, title, description, category, source, external_url, thumbnail_url, access")
-        .eq("status", "published").eq("resource_type", "video").eq("show_in_library", true)
+        .eq("status", "published").eq("resource_type", "video").eq("show_in_library", true).match(learnScope)
         .in("id", skillMatchIds).limit(6)
     : { data: [] };
 

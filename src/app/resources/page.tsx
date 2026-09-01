@@ -182,7 +182,7 @@ function ResourcesPageContent() {
                 Read, learn, save, and come back to what matters.
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-                A growing library for people and businesses. Find ebooks, guides, templates, checklists, articles, and practical reading across careers, business, wellness, Web3, education, relationships, and personal growth.
+                Practical ebooks, guides, templates and articles for your career, business, and personal life.
               </p>
             </Reveal>
             <Reveal delay={80}>

@@ -393,90 +393,128 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   };
 
   const iconPath = CAREER_PATH_ICON_PATHS[path.icon_key] || CAREER_PATH_ICON_PATHS.path;
+  const learningCount = learningItems.length;
+  const jobsCount = jobs.length;
+  const opportunitiesCount = opportunities.length;
+  const accessLabel =
+    path.access === "premium"
+      ? [
+          "Premium",
+          path.price_usd ? formatMoney(path.price_usd, "USD") : null,
+          path.price_ngn ? formatMoney(path.price_ngn, "NGN") : null,
+        ].filter(Boolean).join(" ")
+      : "Free";
 
   return (
     <div className="min-h-screen bg-background pb-16">
-      <div className="mx-auto max-w-5xl px-4 pt-10">
+      <div className="border-b border-border bg-brand-bg">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
         <Reveal>
           <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Career Paths", href: "/career-paths" }, { label: path.title }]} />
         </Reveal>
 
-        {/* HERO / OVERVIEW */}
-        <section id="overview" className="mt-6 grid gap-8 sm:grid-cols-[1fr_auto] sm:items-start">
+        <section id="overview" className="mt-7 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <Reveal>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${path.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                {path.access === "premium"
-                  ? `Premium${
-                      path.price_usd || path.price_ngn
-                        ? ` - ${[
-                            path.price_usd ? formatMoney(path.price_usd, "USD") : null,
-                            path.price_ngn ? formatMoney(path.price_ngn, "NGN") : null,
-                          ].filter(Boolean).join(" / ")}`
-                        : ""
-                    }`
-                  : "Free"}
-              </span>
-              {path.featured && (
-                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">Featured</span>
-              )}
-              {path.level && (
-                <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide capitalize text-muted-foreground">{path.level}</span>
-              )}
-              {path.category && (
-                <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide capitalize text-muted-foreground">{path.category}</span>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${path.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                  {accessLabel}
+                </span>
+                {path.featured && (
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">Featured</span>
+                )}
+                {path.level && (
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold uppercase tracking-wide capitalize text-muted-foreground">{path.level}</span>
+                )}
+                {path.category && (
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold uppercase tracking-wide capitalize text-muted-foreground">{path.category}</span>
+                )}
+              </div>
+
+              <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">{path.title}</h1>
+
+              {path.description && <RichText html={path.description} className="mt-5 max-w-3xl" />}
+
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Link href="#learning" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  Start Learning
+                </Link>
+                <SaveButton itemType="career_path" itemId={path.id} />
+                <CareerInterestButton careerPathId={path.id} className="text-xs" />
+              </div>
+
+              {path.access === "premium" && (path.price_usd || path.price_ngn) && (
+                <BuyButton
+                  itemType="career_path"
+                  itemId={path.id}
+                  priceUsd={path.price_usd}
+                  priceNgn={path.price_ngn}
+                  className="mt-4 max-w-xs"
+                />
               )}
             </div>
-
-            <h1 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">{path.title}</h1>
-
-            {path.description && <RichText html={path.description} className="mt-4" />}
-
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Link href="#learning" className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                Start Learning
-              </Link>
-              <SaveButton itemType="career_path" itemId={path.id} />
-              <CareerInterestButton careerPathId={path.id} className="text-xs" />
-            </div>
-
-            {path.access === "premium" && (path.price_usd || path.price_ngn) && (
-              <BuyButton
-                itemType="career_path"
-                itemId={path.id}
-                priceUsd={path.price_usd}
-                priceNgn={path.price_ngn}
-                className="mt-4 max-w-xs"
-              />
-            )}
           </Reveal>
 
           <Reveal delay={80}>
-            <div className="flex h-40 w-40 flex-shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 to-primary/5 sm:h-48 sm:w-48">
-              {path.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={path.image_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} className="text-primary/40">
-                  <path strokeLinecap="round" strokeLinejoin="round" d={iconPath} />
-                </svg>
-              )}
-            </div>
+            <aside className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+                  {path.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={path.image_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d={iconPath} />
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">Path snapshot</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">A guided view of what to learn, practise and use while building toward {path.title}.</p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-2">
+                {[
+                  { label: "Skills", value: skills.length },
+                  { label: "Learning", value: learningCount },
+                  { label: "Jobs", value: jobsCount },
+                  { label: "Opportunities", value: opportunitiesCount },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-lg bg-muted p-3">
+                    <p className="text-lg font-bold text-foreground">{stat.value}</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 border-t border-border pt-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Best next step</p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  {learningCount > 0 ? "Start with the curated learning list." : "Review the skills and choose one to learn first."}
+                </p>
+              </div>
+            </aside>
           </Reveal>
         </section>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-4">
 
         <SectionNav items={NAV_ITEMS} />
 
         {/* IS THIS FOR YOU */}
         {path.who_its_for && path.who_its_for.length > 0 && (
           <Reveal>
-            <section className="mt-10">
-              <h2 className="text-xl font-bold text-foreground">Is this path for you?</h2>
-              <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
+            <section className="mt-10 rounded-lg border border-border bg-card p-6 sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Fit check</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">Is this path for you?</h2>
+              <ul className="mt-5 grid gap-3 sm:grid-cols-2">
                 {path.who_its_for.map((line) => (
-                  <li key={line} className="flex items-start gap-2.5 text-sm text-foreground">
-                    <span className="mt-0.5 flex-shrink-0 text-primary">✓</span>
-                    {line}
+                  <li key={line} className="flex items-start gap-3 text-sm leading-6 text-foreground">
+                    <span className="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">✓</span>
+                    <span>{line}</span>
                   </li>
                 ))}
               </ul>
@@ -487,9 +525,10 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {/* WHAT YOU'LL DO */}
         {responsibilities.length > 0 && (
           <Reveal>
-            <section className="mt-10">
-              <h2 className="text-xl font-bold text-foreground">What you&apos;ll do</h2>
-              <div className="mt-4">
+            <section className="mt-10 rounded-lg border border-border bg-card p-6 sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Role reality</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">What you will do</h2>
+              <div className="mt-5">
                 <ResponsibilitiesAccordion items={responsibilities} />
               </div>
             </section>
@@ -500,8 +539,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {roadmapStages.length > 0 && (
           <Reveal>
             <section id="roadmap" className="mt-10 scroll-mt-32">
-              <h2 className="text-xl font-bold text-foreground">Career roadmap</h2>
-              <div className="mt-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Roadmap</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">Follow the path step by step</h2>
+              <div className="mt-5">
                 <RoadmapStrip stages={roadmapStages} />
               </div>
             </section>
@@ -512,8 +552,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {skillMatrixRows.length > 0 && (
           <Reveal>
             <section id="skills" className="mt-10 scroll-mt-32">
-              <h2 className="text-xl font-bold text-foreground">Skills you need</h2>
-              <div className="mt-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Skills</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">Skills you need</h2>
+              <div className="mt-5">
                 <SkillMatrix rows={skillMatrixRows} />
               </div>
             </section>
@@ -523,23 +564,24 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {/* CHOOSE YOUR STARTING POINT */}
         {skillSlugs.length > 0 && (
           <Reveal>
-            <section className="mt-10">
-              <h2 className="text-xl font-bold text-foreground">Choose your starting point</h2>
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-border bg-card p-5">
-                  <p className="text-sm font-bold text-foreground">I&apos;m completely new</p>
-                  <p className="mt-1.5 text-sm text-muted-foreground">Start with the fundamentals.</p>
-                  <Link href={`/learn?skills=${bucketSlugs("beginner").join(",")}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Start here →</Link>
+            <section className="mt-10 rounded-lg border border-border bg-card p-6 sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Starting point</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">Choose where to begin</h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-lg bg-muted p-5">
+                  <p className="text-sm font-bold text-foreground">I am completely new</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">Start with fundamentals and simple practice.</p>
+                  <Link href={`/learn?skills=${bucketSlugs("beginner").join(",")}`} className="mt-4 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Start here</Link>
                 </div>
-                <div className="rounded-2xl border border-border bg-card p-5">
+                <div className="rounded-lg bg-muted p-5">
                   <p className="text-sm font-bold text-foreground">I have some experience</p>
-                  <p className="mt-1.5 text-sm text-muted-foreground">Build on what you already know.</p>
-                  <Link href={`/learn?skills=${bucketSlugs("intermediate").join(",")}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Continue →</Link>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">Strengthen the skills you already understand.</p>
+                  <Link href={`/learn?skills=${bucketSlugs("intermediate").join(",")}`} className="mt-4 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Continue learning</Link>
                 </div>
-                <div className="rounded-2xl border border-border bg-card p-5">
-                  <p className="text-sm font-bold text-foreground">I&apos;m ready for work</p>
-                  <p className="mt-1.5 text-sm text-muted-foreground">Focus on job readiness.</p>
-                  <Link href={`/jobs?skills=${skillSlugs.join(",")}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Get job ready →</Link>
+                <div className="rounded-lg bg-muted p-5">
+                  <p className="text-sm font-bold text-foreground">I am ready for work</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">Focus on job readiness and applications.</p>
+                  <Link href={`/jobs?skills=${skillSlugs.join(",")}`} className="mt-4 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">View matching jobs</Link>
                 </div>
               </div>
             </section>
@@ -549,8 +591,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {/* LEARNING */}
         <Reveal delay={80}>
           <section id="learning" className="mt-10 scroll-mt-32">
-            <h2 className="text-xl font-bold text-foreground">Learn for this career</h2>
-            <div className="mt-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary">Learning</p>
+            <h2 className="mt-2 text-xl font-bold text-foreground">Learn for this career</h2>
+            <div className="mt-5">
               <LearningSection items={learningItems} skillSlugs={skillSlugs} />
             </div>
           </section>
@@ -559,8 +602,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {/* JOBS */}
         <Reveal delay={120}>
           <section id="jobs" className="mt-10 scroll-mt-32">
-            <h2 className="text-xl font-bold text-foreground">Jobs for this career</h2>
-            <div className="mt-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary">Jobs</p>
+            <h2 className="mt-2 text-xl font-bold text-foreground">Jobs for this career</h2>
+            <div className="mt-5">
               <JobsSection jobs={jobs} skillSlugs={skillSlugs} />
             </div>
           </section>
@@ -569,8 +613,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {/* OPPORTUNITIES */}
         <Reveal delay={160}>
           <section id="opportunities" className="mt-10 scroll-mt-32">
-            <h2 className="text-xl font-bold text-foreground">Opportunities</h2>
-            <div className="mt-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary">Opportunities</p>
+            <h2 className="mt-2 text-xl font-bold text-foreground">Opportunities to build experience</h2>
+            <div className="mt-5">
               <OpportunitiesSection opportunities={opportunities} types={opportunityTypes} skillSlugs={skillSlugs} />
             </div>
           </section>
@@ -580,8 +625,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {careerRoles.length > 0 && (
           <Reveal delay={200}>
             <section id="career-options" className="mt-10 scroll-mt-32">
-              <h2 className="text-xl font-bold text-foreground">What can you become?</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Click a role to see its own skills, learning and jobs.</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Career options</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">Roles this path can lead to</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Select a role to see its skills, learning and jobs.</p>
               <div className="mt-6">
                 <RoleBranchDiagram pathTitle={path.title} roles={careerRoles} />
               </div>
@@ -593,8 +639,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {careerTools.length > 0 && (
           <Reveal>
             <section id="tools" className="mt-10 scroll-mt-32">
-              <h2 className="text-xl font-bold text-foreground">Tools you&apos;ll use</h2>
-              <div className="mt-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Tools</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">Tools you will use</h2>
+              <div className="mt-5">
                 <CareerToolsGrid tools={careerTools} />
               </div>
             </section>
@@ -605,8 +652,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {projects.length > 0 && (
           <Reveal>
             <section id="projects" className="mt-10 scroll-mt-32">
-              <h2 className="text-xl font-bold text-foreground">Build experience while you learn</h2>
-              <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Projects</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">Build experience while you learn</h2>
+              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.map((p) => <ProjectCard key={p.id} project={p} />)}
               </div>
             </section>
@@ -630,20 +678,20 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         </Reveal>
 
         {skillIds.length === 0 && (
-          <p className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">
-            This career path hasn&rsquo;t been tagged with skills yet, so there&rsquo;s nothing to connect it to yet - once it is, related learning, jobs and opportunities will show up here automatically.
+          <p className="mt-10 rounded-lg border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">
+            This career path has not been tagged with skills yet. Once skills are added, related learning, jobs and opportunities will show here automatically.
           </p>
         )}
 
         {/* FINAL CTA */}
         <Reveal>
-          <section className="mt-14 rounded-3xl bg-foreground px-8 py-12 text-center">
+          <section className="mt-14 rounded-lg bg-foreground px-6 py-10 text-center sm:px-8">
             <h2 className="text-2xl font-bold text-background sm:text-3xl">Ready to start your career in {path.title}?</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-background/70">You don&apos;t need to figure everything out at once. Start with the first skill.</p>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-background/75">Start with one skill, practise with real projects, then use the connected jobs and opportunities to take the next step.</p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Link href="#learning" className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90">Start Learning</Link>
-              <Link href={`/jobs?skills=${skillSlugs.join(",")}`} className="rounded-xl border border-background/30 px-6 py-3 text-sm font-semibold text-background hover:bg-background/10">Explore Jobs</Link>
-              <Link href={`/opportunities?skills=${skillSlugs.join(",")}`} className="rounded-xl border border-background/30 px-6 py-3 text-sm font-semibold text-background hover:bg-background/10">Find Opportunities</Link>
+              <Link href="#learning" className="inline-flex min-h-12 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Start Learning</Link>
+              <Link href={`/jobs?skills=${skillSlugs.join(",")}`} className="inline-flex min-h-12 items-center rounded-lg border border-background/30 px-6 text-sm font-semibold text-background hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore Jobs</Link>
+              <Link href={`/opportunities?skills=${skillSlugs.join(",")}`} className="inline-flex min-h-12 items-center rounded-lg border border-background/30 px-6 text-sm font-semibold text-background hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Find Opportunities</Link>
             </div>
           </section>
         </Reveal>

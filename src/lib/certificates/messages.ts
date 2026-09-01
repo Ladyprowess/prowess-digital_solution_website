@@ -12,7 +12,7 @@ export type CompletionBanner = { type: "certificate" | "missing_name" | "complet
 
 export function completionBanner(result: CompletionSignal): CompletionBanner | null {
   if (result.certificateIssued) {
-    return { type: "certificate", text: "🎓 You've earned a certificate for this course — view it in your account." };
+    return { type: "certificate", text: "🎓 You've earned a certificate for this course - view it in your account." };
   }
   if (result.certificateBlockedReason === "missing_profile_name") {
     return { type: "missing_name", text: "You've completed this course! Add your name in Account → Settings to receive your certificate." };

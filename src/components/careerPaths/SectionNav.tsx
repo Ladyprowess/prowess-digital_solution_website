@@ -59,7 +59,7 @@ export function SectionNav({ items }: { items: SectionNavItem[] }) {
             key={tab.id}
             type="button"
             onClick={() => scrollTo(tab.id)}
-            className={`flex-shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
+            className={`min-h-10 flex-shrink-0 rounded-full px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
               active === tab.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
             }`}
           >

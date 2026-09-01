@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
-import { getYoutubeVideoId } from "@/lib/youtube";
+import { getYoutubeVideoId, getYoutubeThumbnail, isYoutubeShorts } from "@/lib/youtube";
 import { RichText } from "@/components/RichText";
 import { loadYoutubeIframeApi, YOUTUBE_PLAYER_STATE, type YouTubePlayer } from "@/lib/youtubePlayer";
 
@@ -161,13 +161,31 @@ export function VideoPlayer({ resourceId, priceUsd, priceNgn }: { resourceId: st
   }
 
   const youtubeId = data?.external_url ? getYoutubeVideoId(data.external_url) : null;
+  const isShorts = data?.external_url ? isYoutubeShorts(data.external_url) : false;
+  const shortsBackdrop = isShorts && data?.external_url ? getYoutubeThumbnail(data.external_url) : null;
   const downloadUrl = data?.download_url || data?.file_url || null;
 
   return (
     <div className="mt-10 space-y-6">
       {youtubeId && (
-        <div className="aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black">
-          <div ref={containerRef} className="h-full w-full" />
+        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black">
+          {shortsBackdrop && (
+            // eslint-disable-next-line @next/next/no-img-element -- ambient blurred backdrop, not real content
+            <img
+              src={shortsBackdrop}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full scale-125 object-cover opacity-70 blur-2xl"
+            />
+          )}
+          {/* A Short's native embed is ~9:16 (confirmed via YouTube's oEmbed) -
+              keeping the outer box landscape (consistent with every other
+              video on the page) while sizing the actual player to its real
+              aspect ratio and centering it, rather than stretching/cropping
+              it to fill the full landscape box. */}
+          <div className={`relative h-full ${isShorts ? "mx-auto aspect-[9/16]" : "w-full"}`}>
+            <div ref={containerRef} className="h-full w-full" />
+          </div>
         </div>
       )}
 

@@ -64,7 +64,9 @@ export function ToolPicker({
 // Writes the career_path_tool_map rows, same delete-then-insert shape as
 // saveSkillMap in SkillPicker.tsx.
 export async function saveToolMap(careerPathId: string, toolIds: string[]) {
-  await supabase.from("career_path_tool_map").delete().eq("career_path_id", careerPathId);
+  const { error: deleteErr } = await supabase.from("career_path_tool_map").delete().eq("career_path_id", careerPathId);
+  if (deleteErr) throw new Error(`Could not save tools: ${deleteErr.message}`);
   if (toolIds.length === 0) return;
-  await supabase.from("career_path_tool_map").insert(toolIds.map((toolId) => ({ career_path_id: careerPathId, tool_id: toolId })));
+  const { error: insertErr } = await supabase.from("career_path_tool_map").insert(toolIds.map((toolId) => ({ career_path_id: careerPathId, tool_id: toolId })));
+  if (insertErr) throw new Error(`Could not save tools: ${insertErr.message}`);
 }
