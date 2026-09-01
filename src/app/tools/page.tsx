@@ -65,21 +65,21 @@ const CAREER_PLANS = [
     slug: "basic",
     name: "Basic",
     access: "CV Builder and CV Checker",
-    bestFor: "You want to build a stronger CV and get practical review before applying.",
+    bestFor: "Create a polished CV and get clear feedback before you send it out.",
     tools: ["Paid CV templates", "Manual CV review", "Saved CV drafts"],
   },
   {
     slug: "premium",
     name: "Premium",
     access: "CV Builder, CV Checker and Interview Prep",
-    bestFor: "You are applying actively and want your CV and answers ready together.",
+    bestFor: "Prepare your CV and interview answers with one connected career toolkit.",
     tools: ["Everything in Basic", "Manual CV review", "Interview preparation"],
   },
   {
     slug: "pro",
     name: "Pro",
     access: "All career tools",
-    bestFor: "You want your CV, interviews and portfolio to tell one clear story.",
+    bestFor: "Bring your CV, interview preparation and portfolio into one confident career profile.",
     tools: ["Everything in Premium", "Portfolio Builder", "Full career toolkit access"],
   },
 ] as const;
@@ -256,7 +256,7 @@ function CareerSection({ prices }: { prices: CareerPrices }) {
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">One payment, clear access.</h2>
             </div>
             <p className="max-w-lg text-sm leading-6 text-muted-foreground">
-              Start with CV building and review. Move up when you need interview preparation, portfolio support and the full career toolkit.
+              Choose the level of support you need, from building a stronger CV to preparing for interviews and presenting your work professionally.
             </p>
           </div>
         </Reveal>

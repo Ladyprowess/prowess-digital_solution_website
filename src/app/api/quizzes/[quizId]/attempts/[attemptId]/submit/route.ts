@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { resolveQuizAccess } from "@/lib/quizzes/access";
+import { evaluateCourseCompletion, type EvaluationResult } from "@/lib/certificates/evaluate";
 
 export const runtime = "nodejs";
 
@@ -137,6 +138,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ quizId:
       explanation: explanationById.get(a.question_id) || null,
     }));
 
+    // A completion-evaluation failure must not break the quiz-submit
+    // response itself, but it must still be visible in server logs, not
+    // fully silent.
+    let completion: EvaluationResult | null = null;
+    if (access.courseId) {
+      try {
+        completion = await evaluateCourseCompletion(access.courseId, member.id);
+      } catch (err) {
+        console.error("course completion evaluation failed:", err);
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       scorePercent,
@@ -144,6 +157,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ quizId:
       lessonCompleted,
       lessonId: access.lessonId,
       answers: breakdown,
+      newlyCompleted: completion?.newlyCompleted ?? false,
+      certificateIssued: completion?.certificateIssued ?? false,
+      certificateBlockedReason: completion?.certificateBlockedReason ?? null,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Something went wrong";

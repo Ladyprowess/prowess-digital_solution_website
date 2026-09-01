@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { completionBanner } from "@/lib/certificates/messages";
 
 type QuestionType = "single_choice" | "multiple_select" | "true_false" | "short_answer";
 type QuizOption = { id: string; option_text: string; position: number };
@@ -36,6 +37,9 @@ type SubmitResult = {
   passed: boolean | null;
   lessonCompleted: boolean;
   answers: { questionId: string; isCorrect: boolean; explanation: string | null }[];
+  newlyCompleted: boolean;
+  certificateIssued: boolean;
+  certificateBlockedReason: "missing_profile_name" | null;
 };
 
 async function authHeader() {
@@ -241,6 +245,7 @@ export function QuizRunner({ quizId, onComplete }: { quizId: string; lessonId: s
   if (!quiz) return null;
 
   if (quiz.quizType === "knowledge_check") {
+    const kcBanner = submitResult ? completionBanner(submitResult) : null;
     return (
       <div className="mt-3 space-y-4 rounded-xl border border-border/60 p-4">
         <div>
@@ -259,18 +264,35 @@ export function QuizRunner({ quizId, onComplete }: { quizId: string; lessonId: s
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         {submitResult && <p className="text-sm font-semibold text-primary">✓ You&rsquo;ve completed this knowledge check.</p>}
+        {kcBanner && (
+          <p className="text-sm font-semibold text-foreground">
+            {kcBanner.text}
+            {kcBanner.type === "certificate" && (
+              <a href="/account/certificates" className="ml-2 text-primary hover:underline">View certificates →</a>
+            )}
+          </p>
+        )}
       </div>
     );
   }
 
   // assessment
   if (submitResult) {
+    const assessmentBanner = completionBanner(submitResult);
     return (
       <div className="mt-3 rounded-xl border border-border/60 p-4">
         <p className="text-lg font-bold text-foreground">You scored {submitResult.scorePercent}%</p>
         {submitResult.passed !== null && (
           <p className={`mt-1 text-sm font-semibold ${submitResult.passed ? "text-primary" : "text-destructive"}`}>
             {submitResult.passed ? "✓ Passed" : `Not quite - you need ${quiz.passMarkPercent}% to pass.`}
+          </p>
+        )}
+        {assessmentBanner && (
+          <p className="mt-2 text-sm font-semibold text-foreground">
+            {assessmentBanner.text}
+            {assessmentBanner.type === "certificate" && (
+              <a href="/account/certificates" className="ml-2 text-primary hover:underline">View certificates →</a>
+            )}
           </p>
         )}
         <div className="mt-3 flex flex-wrap gap-3">

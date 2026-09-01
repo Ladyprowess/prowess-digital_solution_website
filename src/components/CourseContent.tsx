@@ -6,6 +6,7 @@ import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeThumbnail } from "@/lib/youtube";
 import { RichText } from "@/components/RichText";
 import { QuizRunner } from "@/components/learn/QuizRunner";
+import { completionBanner, type CompletionBanner } from "@/lib/certificates/messages";
 
 type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; quiz_id: string | null; position: number };
 type Module = { id: string; title: string; position: number; course_lessons: Lesson[] };
@@ -23,6 +24,18 @@ export function CourseContent({
   const [modules, setModules] = useState<Module[]>([]);
   const [signedIn, setSignedIn] = useState(false);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [banner, setBanner] = useState<CompletionBanner | null>(null);
+
+  const evaluateCompletion = useCallback(async (accessToken: string) => {
+    const res = await fetch(`/api/courses/${courseId}/evaluate-completion`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }).then((r) => r.json()).catch(() => null);
+    if (res?.ok) {
+      const next = completionBanner(res);
+      if (next) setBanner(next);
+    }
+  }, [courseId]);
 
   const load = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -51,8 +64,14 @@ export function CourseContent({
         const { data: done } = await supabase.from("lesson_completions").select("lesson_id").in("lesson_id", lessonIds);
         setCompleted(new Set((done || []).map((d) => d.lesson_id)));
       }
+
+      // Catch-up path: a learner who already satisfied this course's rules
+      // before an admin turned on certificate issuance (or before the rules
+      // existed at all) gets evaluated just by opening the page - safe to
+      // call on every load since the evaluator is idempotent.
+      if (session.access_token) evaluateCompletion(session.access_token);
     }
-  }, [courseId]);
+  }, [courseId, evaluateCompletion]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -62,6 +81,8 @@ export function CourseContent({
 
     const allLessonIds = modules.flatMap((m) => m.course_lessons.map((l) => l.id));
     const next = new Set(completed);
+
+    const markingComplete = !next.has(lessonId);
 
     if (next.has(lessonId)) {
       await supabase.from("lesson_completions").delete().eq("user_id", session.user.id).eq("lesson_id", lessonId);
@@ -83,6 +104,8 @@ export function CourseContent({
       },
       { onConflict: "user_id,course_id" }
     );
+
+    if (markingComplete && session.access_token) await evaluateCompletion(session.access_token);
   }
 
   if (status === "loading") {
@@ -109,6 +132,14 @@ export function CourseContent({
 
   return (
     <div className="mt-10 space-y-6">
+      {banner && (
+        <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-4 text-sm font-semibold text-foreground">
+          {banner.text}
+          {banner.type === "certificate" && (
+            <a href="/account/certificates" className="ml-2 text-primary hover:underline">View certificates →</a>
+          )}
+        </div>
+      )}
       {modules.map((m) => (
         <div key={m.id} className="rounded-2xl border border-border bg-card p-6">
           <h3 className="text-base font-bold text-foreground">{m.title}</h3>

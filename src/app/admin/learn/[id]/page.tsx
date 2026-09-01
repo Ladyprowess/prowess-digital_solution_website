@@ -15,7 +15,17 @@ type Lesson = {
   content_url: string | null;
   content_text: string | null;
   quiz_id: string | null;
+  required: boolean;
   position: number;
+};
+type QuizOption = { id: string; title: string; quiz_type: string; pass_mark_percent: number | null };
+type CompletionRules = {
+  require_all_required_activities: boolean;
+  require_all_quizzes_passed: boolean;
+  require_final_assessment: boolean;
+  final_assessment_quiz_id: string | null;
+  minimum_final_score_percent: number | null;
+  issue_certificate_automatically: boolean;
 };
 
 const CONTENT_TYPES = ["video", "text", "youtube", "pdf", "external", "quiz"] as const;
@@ -191,10 +201,160 @@ function ModuleCard({ courseId, module, lessons, onChange }: { courseId: string;
   );
 }
 
+function CompletionCard({
+  courseId,
+  hasRequiredLesson,
+  assessmentQuizzes,
+}: {
+  courseId: string;
+  hasRequiredLesson: boolean;
+  assessmentQuizzes: QuizOption[];
+}) {
+  const [rules, setRules] = useState<CompletionRules>({
+    require_all_required_activities: true,
+    require_all_quizzes_passed: false,
+    require_final_assessment: false,
+    final_assessment_quiz_id: null,
+    minimum_final_score_percent: null,
+    issue_certificate_automatically: false,
+  });
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("course_completion_rules").select("*").eq("course_id", courseId).maybeSingle();
+      if (data) setRules(data as CompletionRules);
+      setLoading(false);
+    })();
+  }, [courseId]);
+
+  const save = async () => {
+    setErr("");
+    setSaved(false);
+
+    // Block a checked-but-targetless rule from ever being saved - the
+    // evaluator would refuse to complete anyone under it anyway (its own
+    // non-vacuous-ruleset check), so catching it here gives a clear,
+    // actionable message instead of a silent "nobody's course completes".
+    if (rules.require_all_required_activities && !hasRequiredLesson) {
+      return setErr("This course has no lessons yet, so \"require all required lessons\" has nothing to check.");
+    }
+    if (rules.require_all_quizzes_passed && assessmentQuizzes.length === 0) {
+      return setErr("This course has no assessment quizzes with a pass mark, so \"require all quizzes passed\" has nothing to check.");
+    }
+    if (rules.require_final_assessment && !rules.final_assessment_quiz_id) {
+      return setErr("Select a final assessment quiz, or uncheck \"require final assessment\".");
+    }
+
+    const { error } = await supabase.from("course_completion_rules").upsert(
+      { course_id: courseId, ...rules },
+      { onConflict: "course_id" }
+    );
+    if (error) return setErr(error.message);
+    setSaved(true);
+  };
+
+  if (loading) return null;
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6">
+      <h3 className="text-base font-bold text-foreground">Completion &amp; Certificate</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Decide what a learner must do to formally complete this course, and whether that earns them a certificate.
+      </p>
+
+      <div className="mt-4 space-y-3">
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={rules.require_all_required_activities}
+            onChange={(e) => setRules({ ...rules, require_all_required_activities: e.target.checked })}
+          />
+          Require all required lessons
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={rules.require_all_quizzes_passed}
+            onChange={(e) => setRules({ ...rules, require_all_quizzes_passed: e.target.checked })}
+          />
+          Require all quizzes passed
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={rules.require_final_assessment}
+            onChange={(e) => setRules({ ...rules, require_final_assessment: e.target.checked })}
+          />
+          Require final assessment
+        </label>
+
+        {rules.require_final_assessment && (
+          <div className="ml-6 grid gap-3 sm:grid-cols-2">
+            <Field label="Final assessment quiz">
+              <select
+                value={rules.final_assessment_quiz_id || ""}
+                onChange={(e) => setRules({ ...rules, final_assessment_quiz_id: e.target.value || null })}
+                className={inputCls}
+              >
+                <option value="">Select a quiz…</option>
+                {assessmentQuizzes.map((q) => (
+                  <option key={q.id} value={q.id}>{q.title}</option>
+                ))}
+              </select>
+              {assessmentQuizzes.length === 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  No assessment-type quizzes with a pass mark exist in this course yet.
+                </p>
+              )}
+            </Field>
+            <Field label="Minimum final score %">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={rules.minimum_final_score_percent ?? ""}
+                onChange={(e) => setRules({ ...rules, minimum_final_score_percent: e.target.value === "" ? null : Number(e.target.value) })}
+                className={inputCls}
+                placeholder="e.g. 70"
+              />
+            </Field>
+          </div>
+        )}
+
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={rules.issue_certificate_automatically}
+            onChange={(e) => setRules({ ...rules, issue_certificate_automatically: e.target.checked })}
+          />
+          Issue certificate automatically
+        </label>
+      </div>
+
+      {err ? <p className="mt-3 text-sm text-red-600">{err}</p> : null}
+      {saved ? <p className="mt-3 text-sm text-primary">Saved.</p> : null}
+
+      <button
+        type="button"
+        onClick={save}
+        className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+      >
+        Save completion rules
+      </button>
+    </div>
+  );
+}
+
 function CourseManageAdmin({ courseId }: { courseId: string }) {
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [assessmentQuizzes, setAssessmentQuizzes] = useState<QuizOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [err, setErr] = useState("");
@@ -212,12 +372,28 @@ function CourseManageAdmin({ courseId }: { courseId: string }) {
     if (moduleIds.length > 0) {
       const { data: lessonRows } = await supabase
         .from("course_lessons")
-        .select("id, module_id, title, content_type, content_url, content_text, quiz_id, position")
+        .select("id, module_id, title, content_type, content_url, content_text, quiz_id, required, position")
         .in("module_id", moduleIds)
         .order("position");
       setLessons(lessonRows || []);
+
+      // Same two-step fetch the evaluator uses: this course's lessons'
+      // quiz_ids, then those quizzes filtered client-side to assessment
+      // type with a real pass mark - a knowledge-check or a pass-mark-less
+      // assessment can never produce quiz_attempts.passed = true, so
+      // offering one here would let this picker configure an
+      // unsatisfiable rule (the evaluator independently re-verifies this
+      // regardless of what this dropdown ever offered).
+      const quizIds = (lessonRows || []).filter((l) => l.quiz_id).map((l) => l.quiz_id as string);
+      if (quizIds.length > 0) {
+        const { data: quizRows } = await supabase.from("quizzes").select("id, title, quiz_type, pass_mark_percent").in("id", quizIds);
+        setAssessmentQuizzes((quizRows || []).filter((q) => q.quiz_type === "assessment" && q.pass_mark_percent != null));
+      } else {
+        setAssessmentQuizzes([]);
+      }
     } else {
       setLessons([]);
+      setAssessmentQuizzes([]);
     }
     setLoading(false);
   }, [courseId]);
@@ -278,6 +454,14 @@ function CourseManageAdmin({ courseId }: { courseId: string }) {
               />
             ))
           )}
+        </div>
+
+        <div className="mt-6">
+          <CompletionCard
+            courseId={courseId}
+            hasRequiredLesson={lessons.some((l) => l.required !== false)}
+            assessmentQuizzes={assessmentQuizzes}
+          />
         </div>
       </div>
     </div>
