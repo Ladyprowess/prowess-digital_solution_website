@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CAREER_PATH_ICON_PATHS } from "@/lib/careerPaths/icons";
+import { stripHtmlForMeta } from "@/lib/stripHtml";
 
 export type CareerPathCardData = {
   id: string;
@@ -44,7 +45,7 @@ export function CareerPathCard({ path }: { path: CareerPathCardData }) {
 
       <h3 className="mt-4 text-lg font-bold text-foreground">{path.title}</h3>
       {path.level && <span className="mt-1 text-xs font-semibold capitalize text-muted-foreground">{path.level}</span>}
-      {path.description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{path.description}</p>}
+      {path.description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{stripHtmlForMeta(path.description, 140)}</p>}
 
       <div className="flex-1" />
 

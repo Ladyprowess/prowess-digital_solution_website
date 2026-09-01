@@ -12,6 +12,7 @@ import { ContinueWatching } from "@/components/videos/ContinueWatching";
 import { supabase } from "@/lib/supabase";
 import { goalCards, popularSearches, whyProwess, newsletterPreferences } from "@/content/site";
 import { formatMoney } from "@/lib/formatMoney";
+import { stripHtmlForMeta } from "@/lib/stripHtml";
 
 type OpportunityCard = {
   id: string;
@@ -289,7 +290,7 @@ export default function ModernHomePage() {
                   colorSeed={c.title}
                   eyebrow="Career Path"
                   title={c.title}
-                  description={c.description}
+                  description={c.description ? stripHtmlForMeta(c.description, 140) : null}
                 />
               ))}
             </div>
@@ -326,7 +327,7 @@ export default function ModernHomePage() {
                   colorSeed={c.title}
                   eyebrow={c.access === "premium" ? "Premium" : "Free"}
                   title={c.title}
-                  description={c.description}
+                  description={c.description ? stripHtmlForMeta(c.description, 140) : null}
                   footer={
                     c.access === "premium" && (c.price_usd || c.price_ngn)
                       ? [
