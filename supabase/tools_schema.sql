@@ -63,8 +63,22 @@ values
   ('business-structure', 'business', 'Business Structure Template', 'Map out your business structure step by step. Define roles, responsibilities, decision making, and communication flow.', 'Role mapping · Decision flow · Downloadable output', 'business-structure', 'Free', false, '/tools/business-structure', 7, 'published'),
   ('customer-support', 'business', 'Customer Service Guide', 'A practical guide to handling client communication, complaints, and retention.', 'Response scripts · Complaint handling · Retention', 'customer-support', 'Free', false, '/tools/customer-support', 8, 'published'),
 
-  ('cv-builder', 'career', 'CV Builder', 'Build a clean, professional CV in minutes.', null, 'career-generic', 'Coming Soon', false, null, 0, 'published'),
-  ('cv-checker', 'career', 'CV Checker', 'Get feedback on an existing CV before you send it out.', null, 'career-generic', 'Coming Soon', false, null, 1, 'published'),
+  ('cv-builder', 'career', 'CV Builder', 'Build a clean, professional CV in minutes.', null, 'career-generic', 'Free Starter', false, '/tools/cv-builder', 0, 'published'),
+  ('cv-checker', 'career', 'CV Checker', 'Get feedback on an existing CV before you send it out.', null, 'career-generic', 'Manual Review', true, '/tools/cv-checker', 1, 'published'),
   ('interview-prep', 'career', 'Interview Prep', 'Practice answers to common interview questions.', null, 'career-generic', 'Coming Soon', false, null, 2, 'published'),
   ('portfolio-builder', 'career', 'Portfolio Builder', 'Put your work together into a shareable portfolio.', null, 'career-generic', 'Coming Soon', false, null, 3, 'published')
 on conflict (key) do nothing;
+
+update tools
+set badge = 'Free Starter',
+    gated = false,
+    href = '/tools/cv-builder',
+    status = 'published'
+where key = 'cv-builder';
+
+update tools
+set badge = 'Manual Review',
+    gated = true,
+    href = '/tools/cv-checker',
+    status = 'published'
+where key = 'cv-checker';

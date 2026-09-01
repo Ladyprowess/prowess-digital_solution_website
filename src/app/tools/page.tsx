@@ -42,19 +42,19 @@ const CAREER_TOOLS = [
     description: "Submit your CV for a manual review. The team gets notified and responds with practical fixes.",
     href: "/tools/cv-checker",
     icon: ClipboardCheck,
-    badge: "Manual review",
+    badge: "Basic",
   },
   {
     title: "Interview Prep",
     description: "Practice answers, role specific questions and confidence notes for your next interview.",
-    href: null,
+    href: "/tools/interview-prep",
     icon: MessagesSquare,
     badge: "Premium",
   },
   {
     title: "Portfolio Builder",
     description: "Turn your projects, proof of work and case studies into a clean career portfolio.",
-    href: null,
+    href: "/tools/portfolio-builder",
     icon: MonitorUp,
     badge: "Pro",
   },
@@ -65,15 +65,15 @@ const CAREER_PLANS = [
     slug: "basic",
     name: "Basic",
     access: "CV Builder and CV Checker",
-    bestFor: "You need a stronger CV and direct feedback before applying.",
-    tools: ["Free template plus paid CV templates", "Manual CV review", "Saved CV drafts"],
+    bestFor: "You want to build a stronger CV and get practical review before applying.",
+    tools: ["Paid CV templates", "Manual CV review", "Saved CV drafts"],
   },
   {
     slug: "premium",
     name: "Premium",
     access: "CV Builder, CV Checker and Interview Prep",
     bestFor: "You are applying actively and want your CV and answers ready together.",
-    tools: ["Everything in Basic", "Interview preparation", "Role specific practice prompts"],
+    tools: ["Everything in Basic", "Manual CV review", "Interview preparation"],
   },
   {
     slug: "pro",
@@ -256,7 +256,7 @@ function CareerSection({ prices }: { prices: CareerPrices }) {
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">One payment, clear access.</h2>
             </div>
             <p className="max-w-lg text-sm leading-6 text-muted-foreground">
-              Basic starts with the tools being built now. Premium adds interview prep. Pro adds the full career suite when portfolio builder goes live.
+              Basic is paid and unlocks CV Builder plus CV Checker. Premium adds interview prep. Pro adds the full career suite when portfolio builder goes live.
             </p>
           </div>
         </Reveal>

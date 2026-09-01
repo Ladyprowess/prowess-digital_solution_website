@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
 });
 
 function CvPdf(data: CVData, template: string) {
-  const { personalInfo, summary, experience, education, skills } = data;
+  const { personalInfo, summary, experience, education, skills, highlights = [], extras = [] } = data;
   const theme = TEMPLATE_THEMES[template] || TEMPLATE_THEMES.plain;
 
   const contactParts = [personalInfo.location, personalInfo.phone, personalInfo.email, personalInfo.linkedin, personalInfo.website]
@@ -138,6 +138,13 @@ function CvPdf(data: CVData, template: string) {
         { style: styles.section },
         el(Text, { style: [styles.h2, { color: theme.accent, textTransform: theme.sectionCase }] }, "Summary"),
         el(Text, { style: styles.paragraph }, safeText(summary))
+      ),
+
+      highlights.length > 0 && el(
+        View,
+        { style: styles.section },
+        el(Text, { style: [styles.h2, { color: theme.accent, textTransform: theme.sectionCase }] }, "Highlights"),
+        el(Text, { style: styles.skillsText }, highlights.map(safeText).filter(Boolean).join("  ·  "))
       ),
 
       experience.length > 0 && el(
@@ -199,6 +206,20 @@ function CvPdf(data: CVData, template: string) {
         { style: styles.section },
         el(Text, { style: [styles.h2, { color: theme.accent, textTransform: theme.sectionCase }] }, "Skills"),
         el(Text, { style: styles.skillsText }, skills.map(safeText).join("  ·  "))
+      ),
+
+      extras.length > 0 && el(
+        View,
+        { style: styles.section },
+        el(Text, { style: [styles.h2, { color: theme.accent, textTransform: theme.sectionCase }] }, "Additional Information"),
+        ...extras.map((item, i) =>
+          el(
+            View,
+            { key: i, style: styles.bulletRow },
+            el(Text, { style: [styles.bulletDot, { color: theme.accent }] }, "•"),
+            el(Text, { style: styles.bulletText }, safeText(item))
+          )
+        )
       )
     )
   );

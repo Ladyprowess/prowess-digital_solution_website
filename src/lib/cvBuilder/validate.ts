@@ -37,6 +37,8 @@ export type CVData = {
   experience: CVExperience[];
   education: CVEducation[];
   skills: string[];
+  highlights?: string[];
+  extras?: string[];
 };
 
 const LIMITS = {
@@ -50,6 +52,10 @@ const LIMITS = {
   educationFieldMax: 200,
   skillsMax: 30,
   skillMax: 40,
+  highlightsMax: 6,
+  highlightMax: 80,
+  extrasMax: 8,
+  extraMax: 180,
 };
 
 export type ValidationResult = { ok: true; data: CVData } | { ok: false; error: string };
@@ -189,5 +195,35 @@ export function validateCvData(input: unknown): ValidationResult {
     skills.push(s);
   }
 
-  return { ok: true, data: { personalInfo, summary, experience, education, skills } };
+  const highlightsRaw = raw.highlights;
+  if (highlightsRaw !== undefined && !Array.isArray(highlightsRaw)) {
+    return { ok: false, error: "Highlights must be a list." };
+  }
+  const highlightsList = (highlightsRaw as unknown[] | undefined) || [];
+  if (highlightsList.length > LIMITS.highlightsMax) {
+    return { ok: false, error: `Too many highlights (max ${LIMITS.highlightsMax}).` };
+  }
+  const highlights: string[] = [];
+  for (const h of highlightsList) {
+    if (!isString(h)) return { ok: false, error: "Each highlight must be text." };
+    if (h.length > LIMITS.highlightMax) return { ok: false, error: `A highlight is too long (max ${LIMITS.highlightMax} characters).` };
+    if (h.trim()) highlights.push(h);
+  }
+
+  const extrasRaw = raw.extras;
+  if (extrasRaw !== undefined && !Array.isArray(extrasRaw)) {
+    return { ok: false, error: "Additional information must be a list." };
+  }
+  const extrasList = (extrasRaw as unknown[] | undefined) || [];
+  if (extrasList.length > LIMITS.extrasMax) {
+    return { ok: false, error: `Too many additional information entries (max ${LIMITS.extrasMax}).` };
+  }
+  const extras: string[] = [];
+  for (const item of extrasList) {
+    if (!isString(item)) return { ok: false, error: "Each additional information entry must be text." };
+    if (item.length > LIMITS.extraMax) return { ok: false, error: `An additional information entry is too long (max ${LIMITS.extraMax} characters).` };
+    if (item.trim()) extras.push(item);
+  }
+
+  return { ok: true, data: { personalInfo, summary, experience, education, skills, highlights, extras } };
 }

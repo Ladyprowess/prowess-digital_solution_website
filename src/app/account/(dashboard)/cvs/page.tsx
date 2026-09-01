@@ -84,7 +84,7 @@ export default function CvsPage() {
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <Link href={`/tools/cv-builder?id=${cv.id}`} className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted">
+                    <Link href={`/tools/cv-builder/editor?id=${cv.id}&template=${cv.template}`} className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted">
                       Edit →
                     </Link>
                     <button
