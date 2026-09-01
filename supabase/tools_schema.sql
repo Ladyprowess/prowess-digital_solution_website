@@ -65,8 +65,8 @@ values
 
   ('cv-builder', 'career', 'CV Builder', 'Build a clean, professional CV in minutes.', null, 'career-generic', 'Free Starter', false, '/tools/cv-builder', 0, 'published'),
   ('cv-checker', 'career', 'CV Checker', 'Get feedback on an existing CV before you send it out.', null, 'career-generic', 'Manual Review', true, '/tools/cv-checker', 1, 'published'),
-  ('interview-prep', 'career', 'Interview Prep', 'Practice answers to common interview questions.', null, 'career-generic', 'Coming Soon', false, null, 2, 'published'),
-  ('portfolio-builder', 'career', 'Portfolio Builder', 'Put your work together into a shareable portfolio.', null, 'career-generic', 'Coming Soon', false, null, 3, 'published')
+  ('interview-prep', 'career', 'Interview Prep', 'Practice answers to common interview questions.', null, 'career-generic', 'Premium', true, '/tools/interview-prep', 2, 'published'),
+  ('portfolio-builder', 'career', 'Portfolio Builder', 'Put your work together into a shareable portfolio.', null, 'career-generic', 'Pro', true, '/tools/portfolio-builder', 3, 'published')
 on conflict (key) do nothing;
 
 update tools
@@ -82,3 +82,17 @@ set badge = 'Manual Review',
     href = '/tools/cv-checker',
     status = 'published'
 where key = 'cv-checker';
+
+update tools
+set badge = 'Premium',
+    gated = true,
+    href = '/tools/interview-prep',
+    status = 'published'
+where key = 'interview-prep';
+
+update tools
+set badge = 'Pro',
+    gated = true,
+    href = '/tools/portfolio-builder',
+    status = 'published'
+where key = 'portfolio-builder';

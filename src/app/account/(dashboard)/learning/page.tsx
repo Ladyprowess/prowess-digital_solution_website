@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark, BookOpen, Clock3, Library, PlayCircle } from "lucide-react";
+import { Bookmark, BookOpen, Clock3, Library, ListChecks, PlayCircle } from "lucide-react";
 import { Card, EmptyState } from "@/components/account/AccountUI";
 import { attachTitles, hrefFor, ITEM_LABEL } from "@/lib/account/itemLinks";
 import { supabase } from "@/lib/supabase";
@@ -42,12 +42,13 @@ export default function LearningPage() {
   const [learning, setLearning] = useState<LearningRow[]>([]);
   const [videos, setVideos] = useState<VideoProgressRow[]>([]);
   const [savedLibrary, setSavedLibrary] = useState<SavedLibraryItem[]>([]);
+  const [quizzesCompleted, setQuizzesCompleted] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data }, { data: videoRows }, { data: savedRows }] = await Promise.all([
+      const [{ data }, { data: videoRows }, { data: savedRows }, { data: quizAttemptRows }] = await Promise.all([
         supabase.from("learning_progress").select("id, course_id, status, progress_percent").order("updated_at", { ascending: false }),
         supabase
           .from("video_progress")
@@ -60,6 +61,11 @@ export default function LearningPage() {
           .in("item_type", ["resource", "course"])
           .order("created_at", { ascending: false })
           .limit(12),
+        // "Completed" (submitted, any quiz type), not "passed" - a
+        // knowledge check has no pass_mark_percent, so `passed` is null
+        // for every one of them, and a query filtered on passed=true would
+        // silently only ever count assessments.
+        supabase.from("quiz_attempts").select("quiz_id").eq("status", "submitted"),
       ]);
       const withTitles = await Promise.all(
         (data || []).map(async (row) => {
@@ -70,6 +76,7 @@ export default function LearningPage() {
       setLearning(withTitles);
       setVideos(((videoRows as unknown as VideoProgressRow[]) || []).filter((row) => row.resources));
       setSavedLibrary(await attachTitles((savedRows || []) as SavedLibraryItem[]));
+      setQuizzesCompleted(new Set((quizAttemptRows || []).map((r) => r.quiz_id)).size);
       setLoading(false);
     })();
   }, []);
@@ -97,7 +104,7 @@ export default function LearningPage() {
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <div className="rounded-lg border border-border bg-card p-4">
           <BookOpen className="text-primary" size={18} aria-hidden="true" />
           <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : activeCourses.length}</p>
@@ -112,6 +119,11 @@ export default function LearningPage() {
           <Bookmark className="text-primary" size={18} aria-hidden="true" />
           <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : savedLibrary.length}</p>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Saved items</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <ListChecks className="text-primary" size={18} aria-hidden="true" />
+          <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : quizzesCompleted}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quizzes completed</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <Clock3 className="text-primary" size={18} aria-hidden="true" />

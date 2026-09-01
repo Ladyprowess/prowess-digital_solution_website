@@ -11,13 +11,14 @@ type Lesson = {
   id: string;
   module_id: string;
   title: string;
-  content_type: "video" | "text" | "youtube" | "pdf" | "external";
+  content_type: "video" | "text" | "youtube" | "pdf" | "external" | "quiz";
   content_url: string | null;
   content_text: string | null;
+  quiz_id: string | null;
   position: number;
 };
 
-const CONTENT_TYPES = ["video", "text", "youtube", "pdf", "external"] as const;
+const CONTENT_TYPES = ["video", "text", "youtube", "pdf", "external", "quiz"] as const;
 const inputCls = "w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -29,7 +30,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function ModuleCard({ module, lessons, onChange }: { module: Module; lessons: Lesson[]; onChange: () => void }) {
+function ModuleCard({ courseId, module, lessons, onChange }: { courseId: string; module: Module; lessons: Lesson[]; onChange: () => void }) {
   const [title, setTitle] = useState("");
   const [contentType, setContentType] = useState<(typeof CONTENT_TYPES)[number]>("text");
   const [contentUrl, setContentUrl] = useState("");
@@ -54,12 +55,45 @@ function ModuleCard({ module, lessons, onChange }: { module: Module; lessons: Le
   const saveLesson = async () => {
     setErr("");
     if (!title.trim()) return setErr("Lesson title is required.");
-    const payload = {
-      title: title.trim(),
-      content_type: contentType,
-      content_url: contentType !== "text" ? contentUrl.trim() || null : null,
-      content_text: contentType === "text" ? contentText.trim() || null : null,
-    };
+
+    if (contentType === "quiz" && !editingLessonId) {
+      // A quiz lesson needs its own quizzes row to point at - two
+      // sequential inserts, no transaction, consistent with this file's
+      // existing no-rollback precedent everywhere else (e.g. deleteModule
+      // relying on FK cascade rather than manual cleanup).
+      const { data: quizRow, error: quizErr } = await supabase
+        .from("quizzes")
+        .insert({ title: title.trim(), quiz_type: "knowledge_check" })
+        .select("id")
+        .single();
+      if (quizErr) return setErr(quizErr.message);
+
+      const { error: lessonErr } = await supabase.from("course_lessons").insert({
+        title: title.trim(),
+        content_type: "quiz",
+        quiz_id: quizRow.id,
+        module_id: module.id,
+        position: lessons.length,
+      });
+      if (lessonErr) return setErr(lessonErr.message);
+
+      resetLessonForm();
+      onChange();
+      return;
+    }
+
+    // Editing an existing quiz-lesson only ever updates its title here -
+    // the linked quiz's settings/questions are edited on its own sub-page.
+    const payload =
+      contentType === "quiz"
+        ? { title: title.trim() }
+        : {
+            title: title.trim(),
+            content_type: contentType,
+            content_url: contentType !== "text" ? contentUrl.trim() || null : null,
+            content_text: contentType === "text" ? contentText.trim() || null : null,
+          };
+
     const { error } = editingLessonId
       ? await supabase.from("course_lessons").update(payload).eq("id", editingLessonId)
       : await supabase.from("course_lessons").insert({ ...payload, module_id: module.id, position: lessons.length });
@@ -94,7 +128,11 @@ function ModuleCard({ module, lessons, onChange }: { module: Module; lessons: Le
             <li key={l.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2 text-sm">
               <span className="text-foreground">{l.title} <span className="text-muted-foreground">({l.content_type})</span></span>
               <span className="flex-shrink-0">
-                <button onClick={() => startEditLesson(l)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>
+                {l.content_type === "quiz" && l.quiz_id ? (
+                  <Link href={`/admin/learn/${courseId}/quiz/${l.quiz_id}`} className="mr-3 text-xs font-semibold text-primary hover:underline">Manage quiz →</Link>
+                ) : (
+                  <button onClick={() => startEditLesson(l)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>
+                )}
                 <button onClick={() => deleteLesson(l.id)} className="text-xs font-semibold text-red-600 hover:underline">Delete</button>
               </span>
             </li>
@@ -114,7 +152,13 @@ function ModuleCard({ module, lessons, onChange }: { module: Module; lessons: Le
             </select>
           </Field>
         </div>
-        {contentType === "text" ? (
+        {contentType === "quiz" ? (
+          <p className="text-sm text-muted-foreground">
+            {editingLessonId
+              ? "This lesson's quiz settings and questions are edited from its own page - use \"Manage quiz\" in the list above."
+              : "Adding this creates a new quiz. You'll set its questions and settings on its own page right after."}
+          </p>
+        ) : contentType === "text" ? (
           <Field label="Content">
             <RichTextEditor key={`lesson-${editingLessonId || "new"}`} value={contentText} onChange={setContentText} placeholder="The lesson content..." />
           </Field>
@@ -168,7 +212,7 @@ function CourseManageAdmin({ courseId }: { courseId: string }) {
     if (moduleIds.length > 0) {
       const { data: lessonRows } = await supabase
         .from("course_lessons")
-        .select("id, module_id, title, content_type, content_url, content_text, position")
+        .select("id, module_id, title, content_type, content_url, content_text, quiz_id, position")
         .in("module_id", moduleIds)
         .order("position");
       setLessons(lessonRows || []);
@@ -227,6 +271,7 @@ function CourseManageAdmin({ courseId }: { courseId: string }) {
             modules.map((m) => (
               <ModuleCard
                 key={m.id}
+                courseId={courseId}
                 module={m}
                 lessons={lessons.filter((l) => l.module_id === m.id)}
                 onChange={loadAll}

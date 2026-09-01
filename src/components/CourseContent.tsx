@@ -5,8 +5,9 @@ import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeThumbnail } from "@/lib/youtube";
 import { RichText } from "@/components/RichText";
+import { QuizRunner } from "@/components/learn/QuizRunner";
 
-type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; position: number };
+type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; quiz_id: string | null; position: number };
 type Module = { id: string; title: string; position: number; course_lessons: Lesson[] };
 
 export function CourseContent({
@@ -116,13 +117,16 @@ export function CourseContent({
               <li key={l.id} className="rounded-xl border border-border/60 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-semibold text-foreground">{l.title}</span>
-                  {signedIn && (
+                  {signedIn && l.content_type !== "quiz" && (
                     <button
                       onClick={() => toggleComplete(l.id)}
                       className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${completed.has(l.id) ? "bg-primary/10 text-primary" : "border border-border text-muted-foreground"}`}
                     >
                       {completed.has(l.id) ? "✓ Completed" : "Mark complete"}
                     </button>
+                  )}
+                  {signedIn && l.content_type === "quiz" && completed.has(l.id) && (
+                    <span className="flex-shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">✓ Completed</span>
                   )}
                 </div>
                 {l.content_type === "text" && l.content_text && (
@@ -150,6 +154,13 @@ export function CourseContent({
                 })()}
                 {["video", "pdf", "external"].includes(l.content_type) && l.content_url && (
                   <a href={l.content_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">Open →</a>
+                )}
+                {l.content_type === "quiz" && l.quiz_id && (
+                  <QuizRunner
+                    quizId={l.quiz_id}
+                    lessonId={l.id}
+                    onComplete={() => setCompleted((prev) => new Set(prev).add(l.id))}
+                  />
                 )}
               </li>
             ))}

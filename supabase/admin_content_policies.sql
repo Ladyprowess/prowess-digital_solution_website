@@ -52,7 +52,11 @@ begin
     'career_path_course_map',
     'career_path_resource_map',
     'resource_mockups',
-    'interview_questions'
+    'interview_questions',
+    'quizzes',
+    'quiz_questions',
+    'quiz_options',
+    'course_completion_rules'
   ]
   loop
     execute format('drop policy if exists "admin_full_access" on public.%I', t);

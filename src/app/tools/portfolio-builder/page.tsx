@@ -4,11 +4,11 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ImagePlus, LockKeyhole, Loader2, User } from "lucide-react";
+import { Download, Eye, EyeOff, FileText, ImagePlus, Link as LinkIcon, LockKeyhole, Loader2, Share2, User } from "lucide-react";
 import { useMemberSession } from "@/lib/useMemberSession";
 import { supabase } from "@/lib/supabase";
 
-const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground";
+const inputCls = "w-full rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 const AUTOSAVE_DELAY = 1800;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
 // Must match MAX_PROJECTS in src/app/api/portfolio-builder/save/route.ts -
@@ -32,11 +32,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function SectionCard({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-6">
+    <section className="rounded-lg border border-border bg-card p-5">
       <h2 className="text-lg font-bold text-foreground">{title}</h2>
       {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       <div className="mt-4 space-y-4">{children}</div>
-    </div>
+    </section>
   );
 }
 
@@ -54,7 +54,7 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[
         {tags.map((tag, i) => (
           <span key={`${tag}-${i}`} className="inline-flex min-h-7 items-center gap-1 rounded-full bg-muted px-2.5 text-xs font-semibold text-foreground">
             {tag}
-            <button type="button" onClick={() => onChange(tags.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive">×</button>
+            <button type="button" onClick={() => onChange(tags.filter((_, idx) => idx !== i))} className="rounded-full px-1 text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">×</button>
           </span>
         ))}
       </div>
@@ -64,8 +64,71 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
         onBlur={addTag}
         className={`${inputCls} mt-2`}
-        placeholder="e.g. Branding -press Enter"
+        placeholder="e.g. Brand strategy"
       />
+    </div>
+  );
+}
+
+function ProjectPreviewCard({ project }: { project: Project }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-background">
+      <div className="relative aspect-video bg-muted">
+        {project.coverImageUrl ? (
+          <Image src={project.coverImageUrl} alt={project.title || "Project cover"} fill sizes="380px" className="object-cover" />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <FileText className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        <h3 className="text-sm font-bold text-foreground">{project.title || "Project title"}</h3>
+        <p className="mt-1 text-xs font-semibold text-primary">{project.role || "Your role"}</p>
+        <p className="mt-2 line-clamp-3 text-xs leading-5 text-muted-foreground">
+          {project.description || "Add a short result focused description of the project, your contribution and the outcome."}
+        </p>
+        {project.tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {project.tags.slice(0, 4).map((tag) => (
+              <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PortfolioPreview({ fullName, headline, bio, photoUrl, projects }: { fullName: string; headline: string; bio: string; photoUrl: string; projects: Project[] }) {
+  const visibleProjects = projects.filter((project) => project.title.trim()).slice(0, 3);
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex items-start gap-4">
+        <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
+          {photoUrl ? (
+            <Image src={photoUrl} alt={fullName || "Portfolio owner"} fill sizes="64px" className="object-cover" />
+          ) : (
+            <User className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-bold text-foreground">{fullName || "Your name"}</h2>
+          <p className="mt-1 text-sm font-semibold text-primary">{headline || "Your professional headline"}</p>
+          <p className="mt-2 line-clamp-4 text-sm leading-6 text-muted-foreground">{bio || "Write a focused bio that explains what you do, who you help and the kind of work you want to be known for."}</p>
+        </div>
+      </div>
+      <div className="mt-5 space-y-3">
+        {visibleProjects.length ? visibleProjects.map((project, i) => (
+          <ProjectPreviewCard key={`${project.title}-${i}`} project={project} />
+        )) : (
+          <div className="rounded-lg border border-dashed border-border bg-background p-6 text-center">
+            <ImagePlus className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
+            <p className="mt-2 text-sm font-semibold text-foreground">Add your first project</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">Projects appear here as you fill the form.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -272,24 +335,26 @@ function PortfolioBuilder() {
 
   return (
     <div className="min-h-screen bg-background py-12">
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-7xl px-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Portfolio Builder</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Built for designers, videographers, and writers alike -add a cover image or a video link to a project, or leave both off for a clean text piece.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Turn your best projects into a polished portfolio.
             </p>
           </div>
-          <div className="text-right text-xs text-muted-foreground">{saving ? "Saving…" : saveMsg}</div>
+          <div className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+            {saving ? "Saving..." : saveMsg || "Autosave ready"}
+          </div>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
           <div className="space-y-6">
-            <SectionCard title="About you">
-              <div className="flex items-center gap-4">
-                <div className="relative flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
+            <SectionCard title="Profile" description="This appears at the top of your public portfolio and PDF.">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="relative flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
                   {photoUrl ? (
-                    <Image src={photoUrl} alt="" fill sizes="80px" className="object-cover" />
+                    <Image src={photoUrl} alt={fullName || "Profile photo"} fill sizes="96px" className="object-cover" />
                   ) : (
                     <User className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
                   )}
@@ -299,19 +364,23 @@ function PortfolioBuilder() {
                     </div>
                   )}
                 </div>
-                <label className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold text-foreground transition hover:bg-muted">
-                  {photoUrl ? "Change photo" : "Upload photo"}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    className="hidden"
-                    onChange={(e) => { const file = e.target.files?.[0]; if (file) void handlePhotoUpload(file); e.target.value = ""; }}
-                  />
-                </label>
+                <div>
+                  <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold text-foreground transition hover:bg-muted focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                    <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                    {photoUrl ? "Change photo" : "Upload photo"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="sr-only"
+                      onChange={(e) => { const file = e.target.files?.[0]; if (file) void handlePhotoUpload(file); e.target.value = ""; }}
+                    />
+                  </label>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">Use a clear headshot or brand photo. JPG, PNG, WebP or GIF.</p>
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Full name"><input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} /></Field>
+                <Field label="Full name"><input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} autoComplete="name" /></Field>
                 <Field label="Headline"><input value={headline} onChange={(e) => setHeadline(e.target.value)} className={inputCls} placeholder="Product Designer" /></Field>
               </div>
               <Field label="Bio">
@@ -319,9 +388,20 @@ function PortfolioBuilder() {
               </Field>
             </SectionCard>
 
-            <SectionCard title="Projects" description="A project with a video link shows as a video card, one with a cover image shows as an image card, and one with neither shows as a text card.">
+            <SectionCard title="Projects" description="Lead with outcomes. Add a cover image for visual work, a video link for motion work, or text for writing and strategy work.">
+              {projects.length === 0 && (
+                <div className="rounded-lg border border-dashed border-border bg-background p-6 text-center">
+                  <ImagePlus className="mx-auto h-7 w-7 text-muted-foreground" aria-hidden="true" />
+                  <p className="mt-3 text-sm font-semibold text-foreground">No projects yet.</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">Add one strong project to start shaping your portfolio.</p>
+                </div>
+              )}
               {projects.map((p, i) => (
-                <div key={i} className="rounded-xl border border-border/60 p-4">
+                <div key={i} className="rounded-lg border border-border/70 bg-background p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-foreground">Project {i + 1}</p>
+                    <button type="button" onClick={() => removeProject(i)} className="min-h-10 rounded-lg px-2 text-xs font-semibold text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Remove</button>
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Project title"><input value={p.title} onChange={(e) => updateProject(i, { title: e.target.value })} className={inputCls} /></Field>
                     <Field label="Your role"><input value={p.role} onChange={(e) => updateProject(i, { role: e.target.value })} className={inputCls} /></Field>
@@ -336,17 +416,17 @@ function PortfolioBuilder() {
                     <Field label="Cover image">
                       {p.coverImageUrl ? (
                         <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
-                          <Image src={p.coverImageUrl} alt="" fill sizes="300px" className="object-cover" />
+                          <Image src={p.coverImageUrl} alt={p.title || "Project cover"} fill sizes="420px" className="object-cover" />
                           <button
                             type="button"
                             onClick={() => updateProject(i, { coverImageUrl: "" })}
-                            className="absolute right-1.5 top-1.5 rounded-full bg-background/90 px-2 py-1 text-[10px] font-bold text-destructive"
+                            className="absolute right-1.5 top-1.5 min-h-8 rounded-full bg-background/90 px-3 text-[10px] font-bold text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           >
                             Remove
                           </button>
                         </div>
                       ) : (
-                        <label className="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-xs font-semibold text-muted-foreground transition hover:border-primary hover:text-primary">
+                        <label className="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-xs font-semibold text-muted-foreground transition hover:border-primary hover:text-primary focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                           {uploadingCoverFor === i ? (
                             <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
                           ) : (
@@ -358,7 +438,7 @@ function PortfolioBuilder() {
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/webp,image/gif"
-                            className="hidden"
+                            className="sr-only"
                             onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleCoverUpload(i, file); e.target.value = ""; }}
                           />
                         </label>
@@ -380,45 +460,62 @@ function PortfolioBuilder() {
                       <TagInput tags={p.tags} onChange={(tags) => updateProject(i, { tags })} />
                     </Field>
                   </div>
-                  <button type="button" onClick={() => removeProject(i)} className="mt-3 text-xs font-semibold text-red-600 hover:underline">Remove project</button>
                 </div>
               ))}
               <button
                 type="button"
                 onClick={addProject}
                 disabled={projects.length >= MAX_PROJECTS}
-                className="rounded-xl border border-dashed border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted-foreground"
+                className="min-h-11 rounded-lg border border-dashed border-border px-4 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted-foreground"
               >
-                {projects.length >= MAX_PROJECTS ? `Maximum ${MAX_PROJECTS} projects reached` : "+ Add project"}
+                {projects.length >= MAX_PROJECTS ? `Maximum ${MAX_PROJECTS} projects reached` : "Add project"}
               </button>
             </SectionCard>
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <SectionCard title="Sharing">
+          <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+            <PortfolioPreview fullName={fullName} headline={headline} bio={bio} photoUrl={photoUrl} projects={projects} />
+
+            <SectionCard title="Share settings">
               <Field label="Public URL slug">
                 <input value={slug} onChange={(e) => setSlug(e.target.value)} className={inputCls} placeholder="your-name" />
               </Field>
-              <label className="flex items-center gap-2 text-sm text-foreground">
+              <label className="flex min-h-10 items-center gap-2 text-sm text-foreground">
                 <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
+                {isPublic ? <Eye className="h-4 w-4 text-primary" aria-hidden="true" /> : <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
                 Make this portfolio publicly viewable
               </label>
               {portfolioId && isPublic && slug && (
-                <a href={`${SITE_URL}/portfolio/${slug}`} target="_blank" rel="noreferrer" className="block break-all text-xs font-semibold text-primary hover:underline">
-                  {SITE_URL}/portfolio/{slug}
+                <a href={`${SITE_URL}/portfolio/${slug}`} target="_blank" rel="noreferrer" className="flex min-h-10 items-center gap-2 break-all rounded-lg border border-border bg-background px-3 text-xs font-semibold text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  <LinkIcon className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+                  <span>{SITE_URL}/portfolio/{slug}</span>
                 </a>
               )}
             </SectionCard>
 
             {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 
-            <button
-              type="button"
-              onClick={downloadPdf}
-              className="min-h-11 w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-            >
-              Download PDF
-            </button>
+            <div className="grid gap-2">
+              {portfolioId && isPublic && slug && (
+                <a
+                  href={`${SITE_URL}/portfolio/${slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <Share2 className="h-4 w-4" aria-hidden="true" />
+                  View public page
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={downloadPdf}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <Download className="h-4 w-4" aria-hidden="true" />
+                Download PDF
+              </button>
+            </div>
           </aside>
         </div>
       </div>

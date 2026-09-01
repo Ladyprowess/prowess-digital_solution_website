@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  BookOpenCheck,
   CheckCircle2,
   ChevronDown,
+  CircleHelp,
   ListChecks,
   LockKeyhole,
   Mic,
@@ -115,7 +117,29 @@ function GuideSubsectionCard({ number, heading, blocks }: GuideSubsection) {
 
 function GuideView() {
   return (
-    <div className="mx-auto max-w-4xl space-y-12">
+    <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="lg:sticky lg:top-24 lg:self-start">
+        <div className="rounded-lg border border-border bg-card p-5">
+          <p className="text-xs font-bold uppercase tracking-wide text-primary">Interview path</p>
+          <nav className="mt-4 space-y-2" aria-label="Interview guide sections">
+            {GUIDE_STAGES.map((stage) => {
+              const Icon = STAGE_ICON[stage.key];
+              return (
+                <a
+                  key={stage.key}
+                  href={`#${stage.key}`}
+                  className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
+                  <span>{stage.label}</span>
+                </a>
+              );
+            })}
+          </nav>
+        </div>
+      </aside>
+
+      <div className="space-y-10">
       <div className="rounded-lg border border-border bg-card p-6">
         <div className="flex items-center gap-2.5">
           <Target className="h-5 w-5 text-primary" aria-hidden="true" />
@@ -181,6 +205,7 @@ function GuideView() {
           ))}
         </ul>
       </div>
+      </div>
     </div>
   );
 }
@@ -205,7 +230,74 @@ function QuestionAccordionItem({ question, open, onToggle }: { question: Questio
       </button>
       <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
         <div className="overflow-hidden">
-          <p className="px-5 pb-5 text-sm leading-6 text-muted-foreground">{question.answer_tips}</p>
+          <div className="border-t border-border px-5 py-5">
+            <p className="text-xs font-bold uppercase tracking-wide text-primary">What a strong answer should cover</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{question.answer_tips}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PracticeView({
+  questions,
+  visible,
+  tabs,
+  category,
+  setCategory,
+  openQuestionId,
+  setOpenQuestionId,
+}: {
+  questions: Question[];
+  visible: Question[];
+  tabs: PillTab<string>[];
+  category: string;
+  setCategory: (value: string) => void;
+  openQuestionId: string | null;
+  setOpenQuestionId: React.Dispatch<React.SetStateAction<string | null>>;
+}) {
+  if (questions.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-lg border border-dashed border-border bg-card p-10 text-center">
+        <CircleHelp className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden="true" />
+        <h2 className="mt-4 text-lg font-bold text-foreground">Questions are being added.</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">Once the admin publishes questions, they will appear here by role category.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="lg:sticky lg:top-24 lg:self-start">
+        <div className="rounded-lg border border-border bg-card p-5">
+          <p className="text-xs font-bold uppercase tracking-wide text-primary">Question library</p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-2xl font-bold text-foreground">{questions.length}</p>
+              <p className="text-xs text-muted-foreground">Questions</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-2xl font-bold text-foreground">{tabs.length - 1}</p>
+              <p className="text-xs text-muted-foreground">Categories</p>
+            </div>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">Choose a role category, open a question, then shape your answer around the guidance.</p>
+        </div>
+      </aside>
+      <div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <PillTabs tabs={tabs} active={category} onChange={setCategory} />
+        </div>
+        <div className="mt-4 space-y-3">
+          {visible.map((q) => (
+            <QuestionAccordionItem
+              key={q.id}
+              question={q}
+              open={openQuestionId === q.id}
+              onToggle={() => setOpenQuestionId((prev) => (prev === q.id ? null : q.id))}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -263,12 +355,21 @@ export default function InterviewPrepPage() {
     <main className="min-h-screen bg-background">
       <section className="border-b border-border bg-muted py-14 sm:py-16">
         <Container>
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <MessagesSquare className="h-3.5 w-3.5" aria-hidden="true" />
-            Interview Prep
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.35fr)] lg:items-end">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                <MessagesSquare className="h-3.5 w-3.5" aria-hidden="true" />
+                Interview Prep
+              </div>
+              <h1 className="mt-4 max-w-2xl text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Prepare with structure, then answer with confidence.</h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Prepare with a clear interview plan, then practise with curated questions and answer guidance for the roles you want.</p>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-5">
+              <BookOpenCheck className="h-5 w-5 text-primary" aria-hidden="true" />
+              <p className="mt-3 text-sm font-bold text-foreground">Included in Premium and Pro</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">A focused space to plan your answers, sharpen your examples and feel ready for the conversation.</p>
+            </div>
           </div>
-          <h1 className="mt-4 max-w-2xl text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Walk in ready, not just rehearsed.</h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">A full guide for before, during, and after the interview, plus a practice library of real questions with tips on what a strong answer covers.</p>
         </Container>
       </section>
 
@@ -277,7 +378,7 @@ export default function InterviewPrepPage() {
           {locked ? (
             <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center">
               <LockKeyhole className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden="true" />
-              <p className="mt-3 text-sm font-semibold text-foreground">Interview Prep is part of Premium and Pro career access.</p>
+                  <p className="mt-3 text-sm font-semibold text-foreground">Interview Prep is included in Premium and Pro career access.</p>
               <p className="mt-1 text-sm text-muted-foreground">Upgrade to unlock the full guide and question library.</p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
                 <Link href="/tools#career" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
@@ -297,22 +398,16 @@ export default function InterviewPrepPage() {
               <div className="mt-8">
                 {view === "guide" ? (
                   <GuideView />
-                ) : questions.length === 0 ? (
-                  <p className="text-center text-sm text-muted-foreground">Questions are being added. Check back soon.</p>
                 ) : (
-                  <div className="mx-auto max-w-3xl">
-                    <PillTabs tabs={tabs} active={category} onChange={setCategory} />
-                    <div className="mt-6 space-y-3">
-                      {visible.map((q) => (
-                        <QuestionAccordionItem
-                          key={q.id}
-                          question={q}
-                          open={openQuestionId === q.id}
-                          onToggle={() => setOpenQuestionId((prev) => (prev === q.id ? null : q.id))}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  <PracticeView
+                    questions={questions}
+                    visible={visible}
+                    tabs={tabs}
+                    category={category}
+                    setCategory={setCategory}
+                    openQuestionId={openQuestionId}
+                    setOpenQuestionId={setOpenQuestionId}
+                  />
                 )}
               </div>
             </>
