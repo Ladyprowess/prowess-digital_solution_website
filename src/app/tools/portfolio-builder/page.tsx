@@ -11,6 +11,10 @@ import { supabase } from "@/lib/supabase";
 const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground";
 const AUTOSAVE_DELAY = 1800;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+// Must match MAX_PROJECTS in src/app/api/portfolio-builder/save/route.ts -
+// otherwise "Add project" lets someone build past the cap the server will
+// silently reject on the next autosave.
+const MAX_PROJECTS = 12;
 
 type Project = { title: string; role: string; description: string; link: string; tags: string[]; coverImageUrl: string; videoUrl: string };
 type PortfolioRow = { id: string; slug: string; full_name: string; headline: string; bio: string; photo_url: string; projects: Project[]; is_public: boolean; updated_at: string };
@@ -60,7 +64,7 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
         onBlur={addTag}
         className={`${inputCls} mt-2`}
-        placeholder="e.g. Branding — press Enter"
+        placeholder="e.g. Branding -press Enter"
       />
     </div>
   );
@@ -235,7 +239,9 @@ function PortfolioBuilder() {
     URL.revokeObjectURL(url);
   }
 
-  function addProject() { setProjects((prev) => [...prev, EMPTY_PROJECT()]); }
+  function addProject() {
+    setProjects((prev) => (prev.length >= MAX_PROJECTS ? prev : [...prev, EMPTY_PROJECT()]));
+  }
   function updateProject(i: number, patch: Partial<Project>) {
     setProjects((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
   }
@@ -271,7 +277,7 @@ function PortfolioBuilder() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Portfolio Builder</h1>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Built for designers, videographers, and writers alike — add a cover image or a video link to a project, or leave both off for a clean text piece.
+              Built for designers, videographers, and writers alike -add a cover image or a video link to a project, or leave both off for a clean text piece.
             </p>
           </div>
           <div className="text-right text-xs text-muted-foreground">{saving ? "Saving…" : saveMsg}</div>
@@ -377,8 +383,13 @@ function PortfolioBuilder() {
                   <button type="button" onClick={() => removeProject(i)} className="mt-3 text-xs font-semibold text-red-600 hover:underline">Remove project</button>
                 </div>
               ))}
-              <button type="button" onClick={addProject} className="rounded-xl border border-dashed border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:border-primary hover:text-primary">
-                + Add project
+              <button
+                type="button"
+                onClick={addProject}
+                disabled={projects.length >= MAX_PROJECTS}
+                className="rounded-xl border border-dashed border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted-foreground"
+              >
+                {projects.length >= MAX_PROJECTS ? `Maximum ${MAX_PROJECTS} projects reached` : "+ Add project"}
               </button>
             </SectionCard>
           </div>

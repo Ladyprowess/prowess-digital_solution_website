@@ -43,6 +43,7 @@ export async function POST(req: Request) {
   if (!member) {
     return NextResponse.json({ ok: false, error: "Please sign in to continue." }, { status: 401 });
   }
+  const caller = { userId: member.id, email: member.email };
 
   const body = await req.json().catch(() => null);
   const id = body?.id as string | undefined;
@@ -70,12 +71,21 @@ export async function POST(req: Request) {
     // premium thing" - gated the same as the free-tier cap below, not just
     // the cap on its own, so a free member can't sidestep the template gate
     // by only ever creating (never updating into) a premium template.
-    if (!isFreeCvTemplate(requestedTemplate)) {
-      const active = await hasPremiumAccess({ userId: member.id, email: member.email })
-        || await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_builder");
-      if (!active) {
-        return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to use this template." }, { status: 403 });
+    // `active` is checked at most once - the template gate and the
+    // free-tier cap gate below can both apply to the same request (a
+    // second CV using a paid template), and re-running the same two
+    // DB-backed access checks a second time in that case would just
+    // double the latency for a boolean already known.
+    let active: boolean | undefined;
+    async function isActive() {
+      if (active === undefined) {
+        active = await hasPremiumAccess(caller) || await hasCareerToolAccess(caller, "cv_builder");
       }
+      return active;
+    }
+
+    if (!isFreeCvTemplate(requestedTemplate) && !(await isActive())) {
+      return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to use this template." }, { status: 403 });
     }
 
     const { count } = await supabase
@@ -83,12 +93,8 @@ export async function POST(req: Request) {
       .select("id", { count: "exact", head: true })
       .eq("user_id", member.id);
 
-    if ((count || 0) >= 1) {
-      const active = await hasPremiumAccess({ userId: member.id, email: member.email })
-        || await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_builder");
-      if (!active) {
-        return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to save more than one CV." }, { status: 403 });
-      }
+    if ((count || 0) >= 1 && !(await isActive())) {
+      return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to save more than one CV." }, { status: 403 });
     }
 
     const { data: created, error: insertErr } = await supabase

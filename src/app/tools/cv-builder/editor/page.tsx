@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sampleCvDataForTemplate, TemplatePreview } from "@/components/cvBuilder/TemplatePreview";
-import type { CVData, CVEducation, CVExperience } from "@/lib/cvBuilder/validate";
+import { LIMITS, type CVData, type CVEducation, type CVExperience } from "@/lib/cvBuilder/validate";
 import { CV_TEMPLATES, isKnownCvTemplate } from "@/lib/cvBuilder/templates";
 import { supabase } from "@/lib/supabase";
 import { useMemberSession } from "@/lib/useMemberSession";
@@ -124,7 +124,8 @@ function CvBuilderEditor() {
 
       setLoading(false);
     })();
-  }, [authHeader, initialTemplate, searchParams, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   const save = useCallback(async (): Promise<CvRow | null> => {
     setSaveError("");
@@ -229,7 +230,7 @@ function CvBuilderEditor() {
   }
 
   function addExperience() {
-    setCv((prev) => ({ ...prev, experience: [...prev.experience, emptyExperience()] }));
+    setCv((prev) => (prev.experience.length >= LIMITS.experienceMax ? prev : { ...prev, experience: [...prev.experience, emptyExperience()] }));
   }
 
   function updateExperience(index: number, patch: Partial<CVExperience>) {
@@ -241,6 +242,7 @@ function CvBuilderEditor() {
   }
 
   function addBullet(expIndex: number) {
+    if (cv.experience[expIndex].bullets.length >= LIMITS.experienceBulletsMax) return;
     updateExperience(expIndex, { bullets: [...cv.experience[expIndex].bullets, ""] });
   }
 
@@ -254,7 +256,7 @@ function CvBuilderEditor() {
   }
 
   function addEducation() {
-    setCv((prev) => ({ ...prev, education: [...prev.education, emptyEducation()] }));
+    setCv((prev) => (prev.education.length >= LIMITS.educationMax ? prev : { ...prev, education: [...prev.education, emptyEducation()] }));
   }
 
   function updateEducation(index: number, patch: Partial<CVEducation>) {
@@ -267,7 +269,7 @@ function CvBuilderEditor() {
 
   function addSkill() {
     const value = skillDraft.trim();
-    if (!value) return;
+    if (!value || cv.skills.length >= LIMITS.skillsMax) return;
     setCv((prev) => ({ ...prev, skills: [...prev.skills, value] }));
     setSkillDraft("");
   }
@@ -283,8 +285,13 @@ function CvBuilderEditor() {
     }));
   }
 
+  const LIST_ITEM_MAX = { highlights: LIMITS.highlightsMax, extras: LIMITS.extrasMax };
+
   function addListItem(field: "highlights" | "extras") {
-    setCv((prev) => ({ ...prev, [field]: [...(prev[field] || []), ""] }));
+    setCv((prev) => {
+      const current = prev[field] || [];
+      return current.length >= LIST_ITEM_MAX[field] ? prev : { ...prev, [field]: [...current, ""] };
+    });
   }
 
   function removeListItem(field: "highlights" | "extras", index: number) {
@@ -374,14 +381,26 @@ function CvBuilderEditor() {
                         <button type="button" onClick={() => removeBullet(i, bi)} className="min-h-10 flex-shrink-0 rounded-lg px-2 text-xs font-semibold text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Remove</button>
                       </div>
                     ))}
-                    <button type="button" onClick={() => addBullet(i)} className="min-h-10 rounded-lg px-1 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Add bullet</button>
+                    <button
+                      type="button"
+                      onClick={() => addBullet(i)}
+                      disabled={exp.bullets.length >= LIMITS.experienceBulletsMax}
+                      className="min-h-10 rounded-lg px-1 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+                    >
+                      {exp.bullets.length >= LIMITS.experienceBulletsMax ? `Maximum ${LIMITS.experienceBulletsMax} bullets reached` : "Add bullet"}
+                    </button>
                   </div>
 
                   <button type="button" onClick={() => removeExperience(i)} className="mt-3 min-h-10 rounded-lg px-1 text-xs font-semibold text-destructive hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Remove this role</button>
                 </div>
               ))}
-              <button type="button" onClick={addExperience} className="min-h-11 rounded-lg border border-dashed border-border px-4 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                Add experience
+              <button
+                type="button"
+                onClick={addExperience}
+                disabled={cv.experience.length >= LIMITS.experienceMax}
+                className="min-h-11 rounded-lg border border-dashed border-border px-4 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted-foreground"
+              >
+                {cv.experience.length >= LIMITS.experienceMax ? `Maximum ${LIMITS.experienceMax} roles reached` : "Add experience"}
               </button>
             </SectionCard>
 
@@ -401,8 +420,13 @@ function CvBuilderEditor() {
                   <button type="button" onClick={() => removeEducation(i)} className="mt-3 min-h-10 rounded-lg px-1 text-xs font-semibold text-destructive hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Remove education</button>
                 </div>
               ))}
-              <button type="button" onClick={addEducation} className="min-h-11 rounded-lg border border-dashed border-border px-4 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                Add education
+              <button
+                type="button"
+                onClick={addEducation}
+                disabled={cv.education.length >= LIMITS.educationMax}
+                className="min-h-11 rounded-lg border border-dashed border-border px-4 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted-foreground"
+              >
+                {cv.education.length >= LIMITS.educationMax ? `Maximum ${LIMITS.educationMax} entries reached` : "Add education"}
               </button>
             </SectionCard>
 
@@ -415,21 +439,25 @@ function CvBuilderEditor() {
                   </span>
                 ))}
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  value={skillDraft}
-                  onChange={(e) => setSkillDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addSkill();
-                    }
-                  }}
-                  className={inputCls}
-                  placeholder="e.g. Customer service"
-                />
-                <button type="button" onClick={addSkill} className="min-h-11 flex-shrink-0 rounded-lg border border-border px-4 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Add</button>
-              </div>
+              {cv.skills.length >= LIMITS.skillsMax ? (
+                <p className="text-xs text-muted-foreground">Maximum {LIMITS.skillsMax} skills reached.</p>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    value={skillDraft}
+                    onChange={(e) => setSkillDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addSkill();
+                      }
+                    }}
+                    className={inputCls}
+                    placeholder="e.g. Customer service"
+                  />
+                  <button type="button" onClick={addSkill} className="min-h-11 flex-shrink-0 rounded-lg border border-border px-4 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Add</button>
+                </div>
+              )}
             </SectionCard>
 
             <SectionCard title="Highlights" description="Short proof points that appear in templates with a highlights area.">
@@ -441,7 +469,14 @@ function CvBuilderEditor() {
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={() => addListItem("highlights")} className="min-h-10 rounded-lg px-1 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Add highlight</button>
+              <button
+                type="button"
+                onClick={() => addListItem("highlights")}
+                disabled={(cv.highlights || []).length >= LIMITS.highlightsMax}
+                className="min-h-10 rounded-lg px-1 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+              >
+                {(cv.highlights || []).length >= LIMITS.highlightsMax ? `Maximum ${LIMITS.highlightsMax} highlights reached` : "Add highlight"}
+              </button>
             </SectionCard>
 
             <SectionCard title="Additional information" description="Portfolio links, tools, certifications, publications or relevant notes shown on the CV.">
@@ -453,7 +488,14 @@ function CvBuilderEditor() {
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={() => addListItem("extras")} className="min-h-10 rounded-lg px-1 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Add information</button>
+              <button
+                type="button"
+                onClick={() => addListItem("extras")}
+                disabled={(cv.extras || []).length >= LIMITS.extrasMax}
+                className="min-h-10 rounded-lg px-1 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+              >
+                {(cv.extras || []).length >= LIMITS.extrasMax ? `Maximum ${LIMITS.extrasMax} entries reached` : "Add information"}
+              </button>
             </SectionCard>
 
             {saveError && <p className="text-sm font-medium text-destructive">{saveError}</p>}

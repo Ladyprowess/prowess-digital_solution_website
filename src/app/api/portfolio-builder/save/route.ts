@@ -21,15 +21,49 @@ type Project = {
   videoUrl?: string;
 };
 
+// Both the public portfolio page and the PDF export render these
+// unauthenticated/unescaped (an <a href>, or handed straight to
+// next/image or @react-pdf/renderer's Image). The builder UI only ever
+// produces http(s) links and our own upload route's URLs, but this API
+// route itself has no such guarantee for a direct caller - reject
+// anything else (javascript:, data:, etc.) rather than trust the client.
 function safeUrl(value: unknown): string {
-  return typeof value === "string" ? value.trim().slice(0, MAX_URL) : "";
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim().slice(0, MAX_URL);
+  if (!trimmed) return "";
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+  } catch {
+    return "";
+  }
+  return trimmed;
+}
+
+// Images additionally go through next/image on the public page, which
+// throws at render time for any host not in next.config.ts's
+// `images.remotePatterns` - crashing that member's entire public
+// portfolio page for every visitor, not just failing to load one image.
+// The builder UI only ever sets these from our own upload route's
+// response, so restricting to our own storage host costs nothing for
+// real usage and closes off a direct-API-call bypass.
+function safeImageUrl(value: unknown): string {
+  const url = safeUrl(value);
+  if (!url) return "";
+  try {
+    const own = new URL(process.env.SUPABASE_URL || "");
+    if (new URL(url).hostname !== own.hostname) return "";
+  } catch {
+    return "";
+  }
+  return url;
 }
 
 function validatePortfolio(body: Record<string, unknown>) {
   const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
   const headline = typeof body.headline === "string" ? body.headline.trim() : "";
   const bio = typeof body.bio === "string" ? body.bio.trim() : "";
-  const photoUrl = safeUrl(body.photoUrl);
+  const photoUrl = safeImageUrl(body.photoUrl);
   if (!fullName) return { ok: false as const, error: "Full name is required." };
   if (bio.length > MAX_TEXT) return { ok: false as const, error: `Bio is too long (max ${MAX_TEXT} characters).` };
 
@@ -46,9 +80,9 @@ function validatePortfolio(body: Record<string, unknown>) {
       title,
       role: typeof p.role === "string" ? p.role.trim() : "",
       description: typeof p.description === "string" ? p.description.trim().slice(0, MAX_TEXT) : "",
-      link: typeof p.link === "string" ? p.link.trim() : "",
+      link: safeUrl(p.link),
       tags: Array.isArray(p.tags) ? p.tags.filter((t): t is string => typeof t === "string").slice(0, 10) : [],
-      coverImageUrl: safeUrl(p.coverImageUrl),
+      coverImageUrl: safeImageUrl(p.coverImageUrl),
       videoUrl: safeUrl(p.videoUrl),
     });
   }

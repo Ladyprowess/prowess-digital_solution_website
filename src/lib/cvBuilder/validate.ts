@@ -42,7 +42,11 @@ export type CVData = {
   extras?: string[];
 };
 
-const LIMITS = {
+// Exported so the editor UI can cap "Add" buttons at the same counts the
+// server enforces, instead of letting someone add an 8th highlight only
+// to have every autosave after that silently fail with no client-side
+// warning why.
+export const LIMITS = {
   personalInfoFieldMax: 200,
   summaryMax: 2000,
   experienceMax: 15,
