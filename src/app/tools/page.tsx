@@ -171,7 +171,7 @@ function CareerCheckoutButton({ plan, currency, amount }: { plan: CareerPlanSlug
         disabled={loading || !amount}
         className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
       >
-        {amount ? `${loading ? "Starting" : "Pay"} ${formatMoney(amount, currency)}` : `${currency} price not set`}
+        {amount ? `${loading ? "Starting " : ""}${formatMoney(amount, currency)}` : `${currency} price not set`}
       </button>
       {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
     </div>
@@ -256,7 +256,7 @@ function CareerSection({ prices }: { prices: CareerPrices }) {
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">One payment, clear access.</h2>
             </div>
             <p className="max-w-lg text-sm leading-6 text-muted-foreground">
-              Basic is paid and unlocks CV Builder plus CV Checker. Premium adds interview prep. Pro adds the full career suite when portfolio builder goes live.
+              Start with CV building and review. Move up when you need interview preparation, portfolio support and the full career toolkit.
             </p>
           </div>
         </Reveal>

@@ -331,6 +331,18 @@ export const PREVIEWS: Record<string, PreviewData> = {
 
 const DEFAULT_PREVIEW = PREVIEWS.plain;
 
+const FONT_STACKS: Record<string, string> = {
+  plain: "Arial, Helvetica, sans-serif",
+  modern: "Avenir Next, Segoe UI, Helvetica, Arial, sans-serif",
+  executive: "Garamond, Georgia, Times New Roman, serif",
+  compact: "Arial Narrow, Arial, Helvetica, sans-serif",
+  creative: "Avenir Next, Helvetica Neue, Arial, sans-serif",
+  tech: "Roboto, Segoe UI, Helvetica, Arial, sans-serif",
+  academic: "Georgia, Garamond, Times New Roman, serif",
+  graduate: "Calibri, Segoe UI, Arial, sans-serif",
+  consulting: "Helvetica Neue, Helvetica, Arial, sans-serif",
+};
+
 function cleanList(items: string[]) {
   return items.map((item) => item.trim()).filter(Boolean);
 }
@@ -450,7 +462,7 @@ function previewFromCv(cvData: CVData | undefined, fallback: PreviewData): Previ
 
 function SectionTitle({ children, color }: { children: React.ReactNode; color: string }) {
   return (
-    <div className="mb-1 border-b border-border pb-0.5">
+    <div className="mb-1 border-b border-slate-200 pb-0.5">
       <p className="text-[6.5px] font-bold uppercase leading-none" style={{ color }}>{children}</p>
     </div>
   );
@@ -461,12 +473,12 @@ function ExperienceBlock({ item, dense = false }: { item: ExperienceItem; dense?
     <div className={dense ? "mt-1.5" : "mt-2"}>
       <div className="flex items-start justify-between gap-1">
         <div>
-          <p className="text-[6.7px] font-bold leading-tight text-foreground">{item.role}</p>
-          <p className="text-[5.8px] leading-tight text-muted-foreground">{item.company}</p>
+          <p className="text-[6.7px] font-bold leading-tight text-slate-950">{item.role}</p>
+          <p className="text-[5.8px] leading-tight text-slate-700">{item.company}</p>
         </div>
-        <p className="max-w-[34%] text-right text-[5.4px] leading-tight text-muted-foreground">{item.dates}</p>
+        <p className="max-w-[34%] text-right text-[5.4px] leading-tight text-slate-600">{item.dates}</p>
       </div>
-      <ul className="mt-1 list-disc space-y-0.5 pl-2 text-[5.9px] leading-snug text-muted-foreground">
+      <ul className="mt-1 list-disc space-y-0.5 pl-2 text-[5.9px] leading-snug text-slate-700 marker:text-[4px] marker:text-slate-500">
         {item.bullets.slice(0, dense ? 2 : 3).map((itemText) => <li key={itemText}>{itemText}</li>)}
       </ul>
     </div>
@@ -485,7 +497,7 @@ function SkillsList({ data, chips = false, limit = 6 }: { data: PreviewData; chi
   }
 
   return (
-    <p className="text-[5.9px] leading-snug text-muted-foreground">{data.skills.slice(0, limit).join(" | ")}</p>
+    <p className="text-[5.9px] leading-snug text-slate-700">{data.skills.slice(0, limit).join(" | ")}</p>
   );
 }
 
@@ -494,7 +506,7 @@ function StandardBody({ data, dense = false }: { data: PreviewData; dense?: bool
     <div className={dense ? "space-y-1.5" : "space-y-2"}>
       <section>
         <SectionTitle color={data.accent}>Profile</SectionTitle>
-        <p className="text-[6.1px] leading-snug text-muted-foreground">{data.summary}</p>
+        <p className="text-[6.1px] leading-snug text-slate-700">{data.summary}</p>
       </section>
       <section>
         <SectionTitle color={data.accent}>Experience</SectionTitle>
@@ -508,7 +520,7 @@ function StandardBody({ data, dense = false }: { data: PreviewData; dense?: bool
       </section>
       <section>
         <SectionTitle color={data.accent}>Education</SectionTitle>
-        <p className="text-[5.9px] leading-snug text-muted-foreground">{data.education.join(" | ")}</p>
+        <p className="text-[5.9px] leading-snug text-slate-700">{data.education.join(" | ")}</p>
       </section>
     </div>
   );
@@ -516,18 +528,19 @@ function StandardBody({ data, dense = false }: { data: PreviewData; dense?: bool
 
 export function TemplatePreview({ templateKey, cvData }: { templateKey: string; cvData?: CVData }) {
   const data = previewFromCv(cvData, PREVIEWS[templateKey] || DEFAULT_PREVIEW);
+  const fontFamily = FONT_STACKS[templateKey] || FONT_STACKS.plain;
 
   if (templateKey === "creative") {
     return (
-      <div className="grid h-full grid-cols-[34%_1fr] bg-card text-foreground">
-        <aside className="p-2 text-primary-foreground" style={{ backgroundColor: data.accent }}>
-          <div className="h-10 rounded-md bg-primary-foreground/90" />
+      <div className="grid h-full grid-cols-[32%_1fr] bg-white text-slate-950" style={{ fontFamily }}>
+        <aside className="p-2 text-white" style={{ backgroundColor: data.accent }}>
+          <div className="h-10 rounded-sm bg-white/90" />
           <p className="mt-2.5 text-[7px] font-bold leading-tight">{data.name}</p>
           <p className="mt-0.5 text-[5.8px] leading-tight opacity-85">{data.title}</p>
           <p className="mt-2 text-[5px] leading-snug opacity-80">{data.contact}</p>
           <div className="mt-3 space-y-1">
             {data.skills.slice(0, 5).map((skill) => (
-              <p key={skill} className="rounded-sm bg-primary-foreground/18 px-1.5 py-0.5 text-[5.3px] font-semibold leading-tight">{skill}</p>
+              <p key={skill} className="rounded-sm bg-white/15 px-1.5 py-0.5 text-[5.3px] font-semibold leading-tight">{skill}</p>
             ))}
           </div>
           <div className="mt-3 text-[5px] leading-snug opacity-80">
@@ -543,11 +556,11 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
 
   if (templateKey === "executive") {
     return (
-      <div className="h-full bg-card p-4 text-foreground">
+      <div className="h-full bg-white p-4 text-slate-950" style={{ fontFamily }}>
         <header className="text-center">
           <p className="text-[12px] font-bold leading-tight" style={{ color: data.dark }}>{data.name}</p>
           <p className="mt-1 text-[6.8px] font-semibold leading-tight" style={{ color: data.accent }}>{data.title}</p>
-          <p className="mt-1 border-y border-border py-1 text-[5.2px] leading-tight text-muted-foreground">{data.contact}</p>
+          <p className="mt-1 border-y border-slate-200 py-1 text-[5.2px] leading-tight text-slate-600">{data.contact}</p>
         </header>
         {data.metrics?.length ? <div className="mt-2.5 grid grid-cols-3 gap-1">
           {data.metrics?.map((metric) => (
@@ -563,20 +576,20 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
 
   if (templateKey === "academic") {
     return (
-      <div className="h-full bg-card p-4 text-foreground">
+      <div className="h-full bg-white p-4 text-slate-950" style={{ fontFamily }}>
         <header className="text-center">
           <p className="text-[11.5px] font-bold leading-tight" style={{ color: data.dark }}>{data.name}</p>
           <p className="mt-1 text-[6.8px] font-semibold leading-tight" style={{ color: data.accent }}>{data.title}</p>
-          <p className="mt-1 border-y border-border py-1 text-[5.2px] leading-tight text-muted-foreground">{data.contact}</p>
+          <p className="mt-1 border-y border-slate-200 py-1 text-[5.2px] leading-tight text-slate-600">{data.contact}</p>
         </header>
         <div className="mt-2.5 space-y-1.5">
           <section>
             <SectionTitle color={data.accent}>Research Profile</SectionTitle>
-            <p className="text-[6px] leading-snug text-muted-foreground">{data.summary}</p>
+            <p className="text-[6px] leading-snug text-slate-700">{data.summary}</p>
           </section>
           <section>
             <SectionTitle color={data.accent}>Education</SectionTitle>
-            {data.education.map((item) => <p key={item} className="text-[5.8px] leading-snug text-muted-foreground">{item}</p>)}
+            {data.education.map((item) => <p key={item} className="text-[5.8px] leading-snug text-slate-700">{item}</p>)}
           </section>
           <section>
             <SectionTitle color={data.accent}>Academic Experience</SectionTitle>
@@ -584,7 +597,7 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
           </section>
           {data.extras.length ? <section>
             <SectionTitle color={data.accent}>Publications and Grants</SectionTitle>
-            {data.extras.map((extra) => <p key={extra} className="text-[5.8px] leading-snug text-muted-foreground">{extra}</p>)}
+            {data.extras.map((extra) => <p key={extra} className="text-[5.8px] leading-snug text-slate-700">{extra}</p>)}
           </section> : null}
         </div>
       </div>
@@ -593,11 +606,11 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
 
   if (templateKey === "tech") {
     return (
-      <div className="h-full bg-card p-3 text-foreground">
-        <header className="border-b border-border pb-2">
+      <div className="h-full bg-white p-3 text-slate-950" style={{ fontFamily }}>
+        <header className="border-b border-slate-200 pb-2">
           <p className="text-[11px] font-bold leading-tight" style={{ color: data.dark }}>{data.name}</p>
           <p className="text-[6.8px] font-semibold leading-tight" style={{ color: data.accent }}>{data.title}</p>
-          <p className="mt-1 text-[5.2px] text-muted-foreground">{data.contact}</p>
+          <p className="mt-1 text-[5.2px] text-slate-600">{data.contact}</p>
         </header>
         <div className="mt-2">
           <SkillsList data={data} chips />
@@ -605,23 +618,23 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
         <div className="mt-2.5">
           <StandardBody data={data} dense />
         </div>
-        <section className="mt-1.5">
+        {data.extras.length ? <section className="mt-1.5">
           <SectionTitle color={data.accent}>Selected Projects</SectionTitle>
-          <p className="text-[5.8px] leading-snug text-muted-foreground">{data.extras.join(" | ")}</p>
-        </section>
+          <p className="text-[5.8px] leading-snug text-slate-700">{data.extras.join(" | ")}</p>
+        </section> : null}
       </div>
     );
   }
 
   if (templateKey === "compact") {
     return (
-      <div className="h-full bg-card p-3 text-foreground">
-        <header className="flex items-start justify-between gap-2 border-b border-border pb-2">
+      <div className="h-full bg-white p-3 text-slate-950" style={{ fontFamily }}>
+        <header className="flex items-start justify-between gap-2 border-b border-slate-200 pb-2">
           <div>
             <p className="text-[10.5px] font-bold leading-tight" style={{ color: data.dark }}>{data.name}</p>
             <p className="text-[6.2px] font-semibold leading-tight" style={{ color: data.accent }}>{data.title}</p>
           </div>
-          <p className="max-w-[42%] text-right text-[4.8px] leading-tight text-muted-foreground">{data.contact}</p>
+          <p className="max-w-[42%] text-right text-[4.8px] leading-tight text-slate-600">{data.contact}</p>
         </header>
         <div className="mt-2 grid grid-cols-[1fr_35%] gap-2">
           <StandardBody data={data} dense />
@@ -636,7 +649,7 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
             </section>
             {data.extras.length ? <section>
               <SectionTitle color={data.accent}>Tools</SectionTitle>
-              <p className="text-[5.8px] leading-snug text-muted-foreground">{data.extras[0]}</p>
+              <p className="text-[5.8px] leading-snug text-slate-700">{data.extras[0]}</p>
             </section> : null}
           </aside>
         </div>
@@ -646,23 +659,23 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
 
   if (templateKey === "modern" || templateKey === "graduate") {
     return (
-      <div className="h-full bg-card text-foreground">
+      <div className="h-full bg-white text-slate-950" style={{ fontFamily }}>
         <header className="p-3" style={{ backgroundColor: data.soft }}>
           <p className="text-[11.5px] font-bold leading-tight" style={{ color: data.dark }}>{data.name}</p>
           <p className="mt-0.5 text-[6.8px] font-semibold leading-tight" style={{ color: data.accent }}>{data.title}</p>
-          <p className="mt-1 text-[5.2px] text-muted-foreground">{data.contact}</p>
+          <p className="mt-1 text-[5.2px] text-slate-600">{data.contact}</p>
         </header>
         <div className="p-3">
           {templateKey === "graduate" ? (
             <section className="mb-2 rounded-md p-2" style={{ backgroundColor: data.soft }}>
               <SectionTitle color={data.accent}>Education and Early Experience</SectionTitle>
-              <p className="text-[5.9px] leading-snug text-muted-foreground">{data.education.join(" | ")}</p>
+              <p className="text-[5.9px] leading-snug text-slate-700">{data.education.join(" | ")}</p>
             </section>
           ) : null}
           <StandardBody data={data} dense />
           {data.extras.length ? <section className="mt-1.5">
             <SectionTitle color={data.accent}>{templateKey === "graduate" ? "Activities" : "Additional Strengths"}</SectionTitle>
-            <p className="text-[5.8px] leading-snug text-muted-foreground">{data.extras.join(" | ")}</p>
+            <p className="text-[5.8px] leading-snug text-slate-700">{data.extras.join(" | ")}</p>
           </section> : null}
         </div>
       </div>
@@ -671,11 +684,11 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
 
   if (templateKey === "consulting") {
     return (
-      <div className="h-full bg-card p-3 text-foreground">
+      <div className="h-full bg-white p-3 text-slate-950" style={{ fontFamily }}>
         <header>
           <p className="text-[11px] font-bold leading-tight" style={{ color: data.dark }}>{data.name}</p>
           <p className="text-[6.8px] font-semibold leading-tight" style={{ color: data.accent }}>{data.title}</p>
-          <p className="mt-1 text-[5.2px] text-muted-foreground">{data.contact}</p>
+          <p className="mt-1 text-[5.2px] text-slate-600">{data.contact}</p>
         </header>
         {data.metrics?.length ? <div className="mt-2 grid grid-cols-3 gap-1">
           {data.metrics?.map((metric) => (
@@ -689,25 +702,25 @@ export function TemplatePreview({ templateKey, cvData }: { templateKey: string; 
         </div>
         {data.extras.length ? <section className="mt-1.5">
           <SectionTitle color={data.accent}>Engagement Scope</SectionTitle>
-          <p className="text-[5.8px] leading-snug text-muted-foreground">{data.extras.join(" | ")}</p>
+          <p className="text-[5.8px] leading-snug text-slate-700">{data.extras.join(" | ")}</p>
         </section> : null}
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-card p-4 text-foreground">
-      <header className="border-b border-border pb-2.5">
+    <div className="h-full bg-white p-4 text-slate-950" style={{ fontFamily }}>
+      <header className="border-b border-slate-200 pb-2.5">
         <p className="text-[12px] font-bold leading-tight" style={{ color: data.dark }}>{data.name}</p>
         <p className="mt-0.5 text-[6.8px] font-semibold leading-tight" style={{ color: data.accent }}>{data.title}</p>
-        <p className="mt-1 text-[5.2px] text-muted-foreground">{data.contact}</p>
+        <p className="mt-1 text-[5.2px] text-slate-600">{data.contact}</p>
       </header>
       <div className="mt-3">
         <StandardBody data={data} />
       </div>
       {data.extras.length ? <section className="mt-2">
         <SectionTitle color={data.accent}>Additional Information</SectionTitle>
-        <p className="text-[5.8px] leading-snug text-muted-foreground">{data.extras.join(" | ")}</p>
+        <p className="text-[5.8px] leading-snug text-slate-700">{data.extras.join(" | ")}</p>
       </section> : null}
     </div>
   );

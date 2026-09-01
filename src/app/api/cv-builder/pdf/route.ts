@@ -13,16 +13,16 @@ export const runtime = "nodejs";
 const BRAND = "#507c80";
 const el = React.createElement;
 
-const TEMPLATE_THEMES: Record<string, { accent: string; nameSize: number; dividerWidth: number; align: "left" | "center"; sectionCase?: "uppercase" }> = {
-  plain: { accent: BRAND, nameSize: 22, dividerWidth: 1, align: "left", sectionCase: "uppercase" },
-  modern: { accent: "#315f63", nameSize: 24, dividerWidth: 3, align: "left", sectionCase: "uppercase" },
-  executive: { accent: "#24383a", nameSize: 23, dividerWidth: 2, align: "center", sectionCase: "uppercase" },
-  compact: { accent: "#507c80", nameSize: 19, dividerWidth: 1, align: "left", sectionCase: "uppercase" },
-  creative: { accent: "#6c7d4f", nameSize: 24, dividerWidth: 4, align: "left" },
-  tech: { accent: "#3f6f68", nameSize: 22, dividerWidth: 2, align: "left", sectionCase: "uppercase" },
-  academic: { accent: "#40565a", nameSize: 21, dividerWidth: 1, align: "center", sectionCase: "uppercase" },
-  graduate: { accent: "#5f7b80", nameSize: 23, dividerWidth: 2, align: "left" },
-  consulting: { accent: "#2f595d", nameSize: 22, dividerWidth: 3, align: "left", sectionCase: "uppercase" },
+const TEMPLATE_THEMES: Record<string, { accent: string; nameSize: number; dividerWidth: number; align: "left" | "center"; fontFamily: "Helvetica" | "Times-Roman"; sectionCase?: "uppercase" }> = {
+  plain: { accent: BRAND, nameSize: 22, dividerWidth: 1, align: "left", fontFamily: "Helvetica", sectionCase: "uppercase" },
+  modern: { accent: "#315f63", nameSize: 24, dividerWidth: 2, align: "left", fontFamily: "Helvetica", sectionCase: "uppercase" },
+  executive: { accent: "#24383a", nameSize: 23, dividerWidth: 1, align: "center", fontFamily: "Times-Roman", sectionCase: "uppercase" },
+  compact: { accent: "#507c80", nameSize: 19, dividerWidth: 1, align: "left", fontFamily: "Helvetica", sectionCase: "uppercase" },
+  creative: { accent: "#6c7d4f", nameSize: 24, dividerWidth: 2, align: "left", fontFamily: "Helvetica" },
+  tech: { accent: "#3f6f68", nameSize: 22, dividerWidth: 1, align: "left", fontFamily: "Helvetica", sectionCase: "uppercase" },
+  academic: { accent: "#40565a", nameSize: 21, dividerWidth: 1, align: "center", fontFamily: "Times-Roman", sectionCase: "uppercase" },
+  graduate: { accent: "#5f7b80", nameSize: 23, dividerWidth: 1, align: "left", fontFamily: "Helvetica" },
+  consulting: { accent: "#2f595d", nameSize: 22, dividerWidth: 2, align: "left", fontFamily: "Helvetica", sectionCase: "uppercase" },
 };
 
 function safeText(s: unknown): string {
@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   bulletDot: {
-    width: 10,
-    fontSize: 10.5,
+    width: 8,
+    fontSize: 8.5,
   },
   bulletText: {
     flex: 1,
@@ -128,7 +128,7 @@ function CvPdf(data: CVData, template: string) {
     null,
     el(
       Page,
-      { size: "A4", style: styles.page },
+      { size: "A4", style: [styles.page, { fontFamily: theme.fontFamily }] },
       el(Text, { style: [styles.name, { color: theme.accent, fontSize: theme.nameSize, textAlign: theme.align }] }, safeText(personalInfo.fullName)),
       contactParts.length > 0 && el(Text, { style: [styles.contactRow, { textAlign: theme.align }] }, contactParts.join("  ·  ")),
       el(View, { style: [styles.divider, { borderBottomColor: theme.accent, borderBottomWidth: theme.dividerWidth }] }),
