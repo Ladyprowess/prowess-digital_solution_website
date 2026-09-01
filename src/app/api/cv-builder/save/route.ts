@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { validateCvData } from "@/lib/cvBuilder/validate";
+import { isFreeCvTemplate, isKnownCvTemplate } from "@/lib/cvBuilder/templates";
 import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
+import { getActiveCareerPlan, hasCareerToolAccess } from "@/lib/payments/careerTools";
 
 export const runtime = "nodejs";
 
@@ -19,20 +21,21 @@ export async function GET(req: Request) {
   }
 
   const supabase = supabaseAdmin();
-  const [{ data: cvs, error }, premiumActive] = await Promise.all([
+  const [{ data: cvs, error }, premiumActive, careerPlan] = await Promise.all([
     supabase
       .from("member_cvs")
       .select("id, title, template, data, created_at, updated_at")
       .eq("user_id", member.id)
       .order("updated_at", { ascending: false }),
     hasPremiumAccess({ userId: member.id, email: member.email }),
+    getActiveCareerPlan({ userId: member.id, email: member.email }),
   ]);
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, cvs: cvs || [], premiumActive });
+  return NextResponse.json({ ok: true, cvs: cvs || [], premiumActive, careerPlan, careerAccessActive: Boolean(careerPlan) });
 }
 
 export async function POST(req: Request) {
@@ -46,6 +49,15 @@ export async function POST(req: Request) {
   const title = (typeof body?.title === "string" && body.title.trim()) || "My CV";
   const requestedTemplate = (typeof body?.template === "string" && body.template) || "plain";
 
+  // A template that isn't actually built yet can never be legitimately
+  // stored on a row - checked before any entitlement question, since an
+  // unknown template is a bad request regardless of who's asking. This is
+  // what stops a CV ever ending up with a template value the PDF route can
+  // never render for anyone, active member or not.
+  if (!isKnownCvTemplate(requestedTemplate)) {
+    return NextResponse.json({ ok: false, error: "That template doesn't exist yet." }, { status: 400 });
+  }
+
   const validated = validateCvData(body?.data);
   if (!validated.ok) {
     return NextResponse.json({ ok: false, error: validated.error }, { status: 400 });
@@ -58,8 +70,9 @@ export async function POST(req: Request) {
     // premium thing" - gated the same as the free-tier cap below, not just
     // the cap on its own, so a free member can't sidestep the template gate
     // by only ever creating (never updating into) a premium template.
-    if (requestedTemplate !== "plain") {
-      const active = await hasPremiumAccess({ userId: member.id, email: member.email });
+    if (!isFreeCvTemplate(requestedTemplate)) {
+      const active = await hasPremiumAccess({ userId: member.id, email: member.email })
+        || await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_builder");
       if (!active) {
         return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to use this template." }, { status: 403 });
       }
@@ -71,7 +84,8 @@ export async function POST(req: Request) {
       .eq("user_id", member.id);
 
     if ((count || 0) >= 1) {
-      const active = await hasPremiumAccess({ userId: member.id, email: member.email });
+      const active = await hasPremiumAccess({ userId: member.id, email: member.email })
+        || await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_builder");
       if (!active) {
         return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to save more than one CV." }, { status: 403 });
       }
@@ -115,8 +129,9 @@ export async function POST(req: Request) {
   // unchanged (even if it's already premium) or moving to "plain" is
   // always allowed, active or not - editing content never requires
   // Premium Membership.
-  if (requestedTemplate !== existing.template && requestedTemplate !== "plain") {
-    const active = await hasPremiumAccess({ userId: member.id, email: member.email });
+  if (requestedTemplate !== existing.template && !isFreeCvTemplate(requestedTemplate)) {
+    const active = await hasPremiumAccess({ userId: member.id, email: member.email })
+      || await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_builder");
     if (!active) {
       return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to switch to this template." }, { status: 403 });
     }

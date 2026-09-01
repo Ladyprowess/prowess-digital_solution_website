@@ -4,12 +4,26 @@ import { Document, Page, Text, View, StyleSheet, pdf } from "@react-pdf/renderer
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { validateCvData, type CVData } from "@/lib/cvBuilder/validate";
+import { isFreeCvTemplate, isKnownCvTemplate } from "@/lib/cvBuilder/templates";
 import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
+import { hasCareerToolAccess } from "@/lib/payments/careerTools";
 
 export const runtime = "nodejs";
 
 const BRAND = "#507c80";
 const el = React.createElement;
+
+const TEMPLATE_THEMES: Record<string, { accent: string; nameSize: number; dividerWidth: number; align: "left" | "center"; sectionCase?: "uppercase" }> = {
+  plain: { accent: BRAND, nameSize: 22, dividerWidth: 1, align: "left", sectionCase: "uppercase" },
+  modern: { accent: "#315f63", nameSize: 24, dividerWidth: 3, align: "left", sectionCase: "uppercase" },
+  executive: { accent: "#24383a", nameSize: 23, dividerWidth: 2, align: "center", sectionCase: "uppercase" },
+  compact: { accent: "#507c80", nameSize: 19, dividerWidth: 1, align: "left", sectionCase: "uppercase" },
+  creative: { accent: "#6c7d4f", nameSize: 24, dividerWidth: 4, align: "left" },
+  tech: { accent: "#3f6f68", nameSize: 22, dividerWidth: 2, align: "left", sectionCase: "uppercase" },
+  academic: { accent: "#40565a", nameSize: 21, dividerWidth: 1, align: "center", sectionCase: "uppercase" },
+  graduate: { accent: "#5f7b80", nameSize: 23, dividerWidth: 2, align: "left" },
+  consulting: { accent: "#2f595d", nameSize: 22, dividerWidth: 3, align: "left", sectionCase: "uppercase" },
+};
 
 function safeText(s: unknown): string {
   return String(s ?? "").replace(/\s+/g, " ").trim();
@@ -101,8 +115,9 @@ const styles = StyleSheet.create({
   },
 });
 
-function CvPdf(data: CVData) {
+function CvPdf(data: CVData, template: string) {
   const { personalInfo, summary, experience, education, skills } = data;
+  const theme = TEMPLATE_THEMES[template] || TEMPLATE_THEMES.plain;
 
   const contactParts = [personalInfo.location, personalInfo.phone, personalInfo.email, personalInfo.linkedin, personalInfo.website]
     .map(safeText)
@@ -114,21 +129,21 @@ function CvPdf(data: CVData) {
     el(
       Page,
       { size: "A4", style: styles.page },
-      el(Text, { style: styles.name }, safeText(personalInfo.fullName)),
-      contactParts.length > 0 && el(Text, { style: styles.contactRow }, contactParts.join("  ·  ")),
-      el(View, { style: styles.divider }),
+      el(Text, { style: [styles.name, { color: theme.accent, fontSize: theme.nameSize, textAlign: theme.align }] }, safeText(personalInfo.fullName)),
+      contactParts.length > 0 && el(Text, { style: [styles.contactRow, { textAlign: theme.align }] }, contactParts.join("  ·  ")),
+      el(View, { style: [styles.divider, { borderBottomColor: theme.accent, borderBottomWidth: theme.dividerWidth }] }),
 
       summary && el(
         View,
         { style: styles.section },
-        el(Text, { style: styles.h2 }, "Summary"),
+        el(Text, { style: [styles.h2, { color: theme.accent, textTransform: theme.sectionCase }] }, "Summary"),
         el(Text, { style: styles.paragraph }, safeText(summary))
       ),
 
       experience.length > 0 && el(
         View,
         { style: styles.section },
-        el(Text, { style: styles.h2 }, "Experience"),
+        el(Text, { style: [styles.h2, { color: theme.accent, textTransform: theme.sectionCase }] }, "Experience"),
         ...experience.map((exp, i) =>
           el(
             View,
@@ -148,7 +163,7 @@ function CvPdf(data: CVData) {
               el(
                 View,
                 { key: bi, style: styles.bulletRow },
-                el(Text, { style: styles.bulletDot }, "•"),
+                el(Text, { style: [styles.bulletDot, { color: theme.accent }] }, "•"),
                 el(Text, { style: styles.bulletText }, safeText(b))
               )
             )
@@ -159,7 +174,7 @@ function CvPdf(data: CVData) {
       education.length > 0 && el(
         View,
         { style: styles.section },
-        el(Text, { style: styles.h2 }, "Education"),
+        el(Text, { style: [styles.h2, { color: theme.accent, textTransform: theme.sectionCase }] }, "Education"),
         ...education.map((edu, i) =>
           el(
             View,
@@ -182,19 +197,12 @@ function CvPdf(data: CVData) {
       skills.length > 0 && el(
         View,
         { style: styles.section },
-        el(Text, { style: styles.h2 }, "Skills"),
+        el(Text, { style: [styles.h2, { color: theme.accent, textTransform: theme.sectionCase }] }, "Skills"),
         el(Text, { style: styles.skillsText }, skills.map(safeText).join("  ·  "))
       )
     )
   );
 }
-
-// The only real (non-plain) CV template so far is a placeholder concept -
-// v1 ships exactly one working template ("plain", the layout above). Any
-// other template name is treated as "not built yet" rather than silently
-// falling back to plain, so a bug in the picker UI can't accidentally let
-// someone download a "premium" template that's actually identical to free.
-const KNOWN_TEMPLATES = new Set(["plain"]);
 
 export async function POST(req: Request) {
   try {
@@ -210,7 +218,13 @@ export async function POST(req: Request) {
     if (!cvId || !requestedTemplate) {
       return NextResponse.json({ ok: false, error: "cvId and template are required." }, { status: 400 });
     }
-    if (!KNOWN_TEMPLATES.has(requestedTemplate)) {
+    // A template that isn't actually built can never be rendered, no
+    // matter who's asking or what's saved on the row - this can only ever
+    // trip if the save route's own matching check (or the picker UI) has a
+    // bug letting an unbuilt template get stored in the first place, since
+    // the save route now rejects an unknown template before it can ever
+    // reach member_cvs.
+    if (!isKnownCvTemplate(requestedTemplate)) {
       return NextResponse.json({ ok: false, error: "That template doesn't exist yet." }, { status: 400 });
     }
 
@@ -242,14 +256,15 @@ export async function POST(req: Request) {
     // to create/switch to something new premium is gated. Only a genuine
     // switch to a different, non-plain template at export time requires
     // active access right now.
-    if (requestedTemplate !== "plain" && requestedTemplate !== cv.template) {
-      const active = await hasPremiumAccess({ userId: member.id, email: member.email });
+    if (!isFreeCvTemplate(requestedTemplate) && requestedTemplate !== cv.template) {
+      const active = await hasPremiumAccess({ userId: member.id, email: member.email })
+        || await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_builder");
       if (!active) {
         return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to use this template." }, { status: 403 });
       }
     }
 
-    const doc = CvPdf(validated.data);
+    const doc = CvPdf(validated.data, requestedTemplate);
     const buffer = await pdf(doc).toBuffer();
 
     const fileName = `${(validated.data.personalInfo.fullName || "CV").replace(/[^a-z0-9]+/gi, "_")}_CV.pdf`;

@@ -17,6 +17,12 @@ type SettingsRow = {
   premium_membership_monthly_ngn: number | null;
   premium_membership_annual_usd: number | null;
   premium_membership_annual_ngn: number | null;
+  career_basic_usd: number | null;
+  career_basic_ngn: number | null;
+  career_premium_usd: number | null;
+  career_premium_ngn: number | null;
+  career_pro_usd: number | null;
+  career_pro_ngn: number | null;
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -48,12 +54,18 @@ function SettingsAdmin() {
   const [premiumMonthlyNgn, setPremiumMonthlyNgn] = useState("");
   const [premiumAnnualUsd, setPremiumAnnualUsd] = useState("");
   const [premiumAnnualNgn, setPremiumAnnualNgn] = useState("");
+  const [careerBasicUsd, setCareerBasicUsd] = useState("");
+  const [careerBasicNgn, setCareerBasicNgn] = useState("");
+  const [careerPremiumUsd, setCareerPremiumUsd] = useState("");
+  const [careerPremiumNgn, setCareerPremiumNgn] = useState("");
+  const [careerProUsd, setCareerProUsd] = useState("");
+  const [careerProNgn, setCareerProNgn] = useState("");
 
   useEffect(() => {
     async function load() {
       const { data, error } = await supabase
         .from("site_settings")
-        .select("contact_email, contact_phone, contact_location, social_linkedin, social_instagram, social_twitter, seo_title, seo_description, premium_membership_monthly_usd, premium_membership_monthly_ngn, premium_membership_annual_usd, premium_membership_annual_ngn")
+        .select("contact_email, contact_phone, contact_location, social_linkedin, social_instagram, social_twitter, seo_title, seo_description, premium_membership_monthly_usd, premium_membership_monthly_ngn, premium_membership_annual_usd, premium_membership_annual_ngn, career_basic_usd, career_basic_ngn, career_premium_usd, career_premium_ngn, career_pro_usd, career_pro_ngn")
         .eq("id", 1)
         .maybeSingle();
       if (error) { setErr(error.message); setLoading(false); return; }
@@ -72,6 +84,12 @@ function SettingsAdmin() {
         setPremiumMonthlyNgn(row.premium_membership_monthly_ngn?.toString() || "");
         setPremiumAnnualUsd(row.premium_membership_annual_usd?.toString() || "");
         setPremiumAnnualNgn(row.premium_membership_annual_ngn?.toString() || "");
+        setCareerBasicUsd(row.career_basic_usd?.toString() || "");
+        setCareerBasicNgn(row.career_basic_ngn?.toString() || "");
+        setCareerPremiumUsd(row.career_premium_usd?.toString() || "");
+        setCareerPremiumNgn(row.career_premium_ngn?.toString() || "");
+        setCareerProUsd(row.career_pro_usd?.toString() || "");
+        setCareerProNgn(row.career_pro_ngn?.toString() || "");
       }
       setLoading(false);
     }
@@ -95,6 +113,12 @@ function SettingsAdmin() {
         premium_membership_monthly_ngn: premiumMonthlyNgn ? Number(premiumMonthlyNgn) : null,
         premium_membership_annual_usd: premiumAnnualUsd ? Number(premiumAnnualUsd) : null,
         premium_membership_annual_ngn: premiumAnnualNgn ? Number(premiumAnnualNgn) : null,
+        career_basic_usd: careerBasicUsd ? Number(careerBasicUsd) : null,
+        career_basic_ngn: careerBasicNgn ? Number(careerBasicNgn) : null,
+        career_premium_usd: careerPremiumUsd ? Number(careerPremiumUsd) : null,
+        career_premium_ngn: careerPremiumNgn ? Number(careerPremiumNgn) : null,
+        career_pro_usd: careerProUsd ? Number(careerProUsd) : null,
+        career_pro_ngn: careerProNgn ? Number(careerProNgn) : null,
         updated_at: new Date().toISOString(),
       });
       if (error) throw new Error(error.message);
@@ -113,6 +137,33 @@ function SettingsAdmin() {
       <div>
         <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
         <p className="mt-2 text-sm text-muted-foreground">Site-wide contact info, social links, and SEO defaults.</p>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-8">
+        <h2 className="text-lg font-semibold text-foreground">Career Tools One Time Pricing</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Prices for Basic, Premium and Pro on the Tools page. Leave a currency blank if that plan should not be sold in that currency yet.
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <Field label="Basic (USD)">
+            <input type="number" min="0" value={careerBasicUsd} onChange={(e) => setCareerBasicUsd(e.target.value)} className={inputCls} placeholder="e.g. 10" />
+          </Field>
+          <Field label="Basic (NGN)">
+            <input type="number" min="0" value={careerBasicNgn} onChange={(e) => setCareerBasicNgn(e.target.value)} className={inputCls} placeholder="e.g. 15000" />
+          </Field>
+          <Field label="Premium (USD)">
+            <input type="number" min="0" value={careerPremiumUsd} onChange={(e) => setCareerPremiumUsd(e.target.value)} className={inputCls} placeholder="e.g. 20" />
+          </Field>
+          <Field label="Premium (NGN)">
+            <input type="number" min="0" value={careerPremiumNgn} onChange={(e) => setCareerPremiumNgn(e.target.value)} className={inputCls} placeholder="e.g. 30000" />
+          </Field>
+          <Field label="Pro (USD)">
+            <input type="number" min="0" value={careerProUsd} onChange={(e) => setCareerProUsd(e.target.value)} className={inputCls} placeholder="e.g. 35" />
+          </Field>
+          <Field label="Pro (NGN)">
+            <input type="number" min="0" value={careerProNgn} onChange={(e) => setCareerProNgn(e.target.value)} className={inputCls} placeholder="e.g. 50000" />
+          </Field>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-8">

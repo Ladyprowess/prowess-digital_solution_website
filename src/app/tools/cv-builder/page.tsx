@@ -2,9 +2,12 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMemberSession } from "@/lib/useMemberSession";
 import { supabase } from "@/lib/supabase";
 import type { CVData, CVExperience, CVEducation } from "@/lib/cvBuilder/validate";
+import { CV_TEMPLATES } from "@/lib/cvBuilder/templates";
+import { TemplatePreview } from "@/components/cvBuilder/TemplatePreview";
 
 const inputCls = "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground";
 const AUTOSAVE_DELAY = 1800;
@@ -62,12 +65,12 @@ function CvBuilder() {
   const [title, setTitle] = useState("My CV");
   const [cv, setCv] = useState<CVData>(EMPTY_CV);
   const [template, setTemplate] = useState("plain");
-  const [premiumActive, setPremiumActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveMsg, setSaveMsg] = useState("");
+  const [premiumActive, setPremiumActive] = useState(false);
 
   const skipNextAutosaveRef = useRef(true);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -91,9 +94,9 @@ function CvBuilder() {
 
       const res = await fetch("/api/cv-builder/save", { headers }).then((r) => r.json()).catch(() => null);
       if (!res?.ok) { setLoading(false); return; }
+      setPremiumActive(Boolean(res.premiumActive || res.careerAccessActive));
 
       const cvs = (res.cvs || []) as CvRow[];
-      setPremiumActive(Boolean(res.premiumActive));
 
       const targetId = searchParams.get("id");
       const target = targetId
@@ -242,29 +245,21 @@ function CvBuilder() {
   }
   if (status === "signed-out") return null;
 
-  // A template already saved on this CV stays selectable even while
-  // lapsed/cancelled - only switching to a DIFFERENT non-plain template
-  // needs active access right now.
-  const templates = [
-    { key: "plain", label: "Plain", locked: false },
-    { key: "modern", label: "Modern (coming soon)", locked: template !== "modern" },
-    { key: "executive", label: "Executive (coming soon)", locked: template !== "executive" },
-  ];
-
   return (
     <div className="min-h-screen bg-background py-12">
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">CV Builder</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Fill in your details, then download a formatted PDF.</p>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Choose a CV style, edit each section, then download a formatted PDF. The starter template is free. Paid templates unlock when your career tools access is active.</p>
           </div>
           <div className="text-right text-xs text-muted-foreground">
             {saving ? "Saving…" : saveMsg ? saveMsg : ""}
           </div>
         </div>
 
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="space-y-6">
           <SectionCard title="Personal info">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Full name"><input value={cv.personalInfo.fullName} onChange={(e) => updatePersonalInfo("fullName", e.target.value)} className={inputCls} /></Field>
@@ -355,40 +350,57 @@ function CvBuilder() {
               <button type="button" onClick={addSkill} className="flex-shrink-0 rounded-xl border border-border px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted">Add</button>
             </div>
           </SectionCard>
+          </div>
 
-          <SectionCard title="Template">
-            <div className="grid gap-3 sm:grid-cols-3">
-              {templates.map((t) => {
-                const isLocked = t.key !== "plain" && t.locked && !premiumActive;
-                const isSelected = template === t.key;
-                return (
-                  <button
-                    key={t.key}
-                    type="button"
-                    disabled={t.key !== "plain" && t.key !== template && !premiumActive}
-                    onClick={() => setTemplate(t.key)}
-                    className={`rounded-xl border p-4 text-left transition ${
-                      isSelected ? "border-primary bg-card shadow-sm" : "border-border bg-card/60 hover:border-primary/40"
-                    } ${isLocked ? "opacity-50" : ""}`}
-                  >
-                    <p className="text-sm font-bold text-foreground">{t.label}</p>
-                    {isLocked && <p className="mt-1 text-xs text-muted-foreground">Unlock with Premium Membership</p>}
-                  </button>
-                );
-              })}
-            </div>
-          </SectionCard>
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <SectionCard title="Templates" description="Nine styles for different career stages.">
+              <div className="space-y-3">
+                {CV_TEMPLATES.map((t) => {
+                  const isSelected = template === t.key;
+                  const isLocked = t.access === "paid" && !premiumActive;
+                  return (
+                    <div key={t.key} className={`rounded-xl border p-3 transition ${isSelected ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+                      <button
+                        type="button"
+                        disabled={isLocked}
+                        onClick={() => setTemplate(t.key)}
+                        className="grid w-full grid-cols-[74px_minmax(0,1fr)] gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <div className="relative aspect-[1/1.414] overflow-hidden rounded-lg border border-border bg-muted">
+                          <TemplatePreview templateKey={t.key} />
+                        </div>
+                        <span className="min-w-0">
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-bold text-foreground">{t.label}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${t.access === "free" ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>
+                              {t.access}
+                            </span>
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{t.audience}</span>
+                        </span>
+                      </button>
+                      {isLocked && (
+                        <Link href="/account/membership" className="mt-2 inline-flex min-h-10 items-center rounded-lg px-2 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                          Unlock this template
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </SectionCard>
 
-          {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+            {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 
-          <button
-            type="button"
-            onClick={downloadPdf}
-            disabled={downloading}
-            className="w-full rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-          >
-            {downloading ? "Preparing your PDF…" : "Download PDF"}
-          </button>
+            <button
+              type="button"
+              onClick={downloadPdf}
+              disabled={downloading}
+              className="min-h-11 w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
+            >
+              {downloading ? "Preparing your PDF…" : "Download PDF"}
+            </button>
+          </aside>
         </div>
       </div>
     </div>
