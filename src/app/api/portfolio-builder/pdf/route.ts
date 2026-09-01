@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import React from "react";
-import { Document, Page, Text, View, StyleSheet, Link as PdfLink, pdf } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image as PdfImage, StyleSheet, Link as PdfLink, pdf } from "@react-pdf/renderer";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
 
@@ -15,13 +15,16 @@ function safeText(s: unknown): string {
 
 const styles = StyleSheet.create({
   page: { paddingTop: 44, paddingBottom: 44, paddingHorizontal: 44, fontFamily: "Helvetica", color: "#111827", fontSize: 10.5, lineHeight: 1.5 },
+  headerRow: { flexDirection: "row", alignItems: "center" },
+  photo: { width: 60, height: 60, borderRadius: 30, marginRight: 14, objectFit: "cover" },
   name: { fontSize: 22, fontWeight: 800, color: BRAND },
   headline: { marginTop: 4, fontSize: 12, color: "#374151" },
   divider: { marginTop: 14, marginBottom: 14, borderBottomWidth: 1, borderBottomColor: "#e5e7eb", borderBottomStyle: "solid" },
   section: { marginTop: 16 },
   h2: { fontSize: 11.5, fontWeight: 800, color: BRAND, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 },
   paragraph: { textAlign: "justify" },
-  project: { marginBottom: 12 },
+  project: { marginBottom: 14 },
+  projectCover: { width: "100%", height: 130, borderRadius: 4, marginBottom: 6, objectFit: "cover" },
   projectTitleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   projectTitle: { fontSize: 11.5, fontWeight: 700 },
   projectRole: { fontSize: 10, color: "#374151", marginTop: 1 },
@@ -30,8 +33,26 @@ const styles = StyleSheet.create({
   tagsRow: { marginTop: 3, fontSize: 9, color: "#6b7280" },
 });
 
-type Project = { title: string; role?: string; description?: string; link?: string; tags?: string[] };
-type PortfolioData = { full_name: string; headline: string; bio: string; projects: Project[] };
+type Project = { title: string; role?: string; description?: string; link?: string; tags?: string[]; coverImageUrl?: string; videoUrl?: string };
+type PortfolioData = { full_name: string; headline: string; bio: string; photo_url?: string; projects: Project[] };
+
+function ProjectBlock(p: Project, i: number) {
+  return el(
+    View,
+    { key: i, style: styles.project },
+    p.coverImageUrl && el(PdfImage, { style: styles.projectCover, src: p.coverImageUrl }),
+    el(
+      View,
+      { style: styles.projectTitleRow },
+      el(Text, { style: styles.projectTitle }, safeText(p.title)),
+    ),
+    p.role && el(Text, { style: styles.projectRole }, safeText(p.role)),
+    p.description && el(Text, { style: styles.projectDesc }, safeText(p.description)),
+    p.videoUrl && el(PdfLink, { style: styles.projectLink, src: p.videoUrl }, `Watch: ${safeText(p.videoUrl)}`),
+    p.link && el(PdfLink, { style: styles.projectLink, src: p.link }, safeText(p.link)),
+    p.tags && p.tags.length > 0 && el(Text, { style: styles.tagsRow }, p.tags.map(safeText).join("  ·  "))
+  );
+}
 
 function PortfolioPdf(data: PortfolioData) {
   return el(
@@ -40,8 +61,17 @@ function PortfolioPdf(data: PortfolioData) {
     el(
       Page,
       { size: "A4", style: styles.page },
-      el(Text, { style: styles.name }, safeText(data.full_name)),
-      data.headline && el(Text, { style: styles.headline }, safeText(data.headline)),
+      el(
+        View,
+        { style: styles.headerRow },
+        data.photo_url && el(PdfImage, { style: styles.photo, src: data.photo_url }),
+        el(
+          View,
+          null,
+          el(Text, { style: styles.name }, safeText(data.full_name)),
+          data.headline && el(Text, { style: styles.headline }, safeText(data.headline)),
+        )
+      ),
       el(View, { style: styles.divider }),
 
       data.bio && el(
@@ -55,21 +85,7 @@ function PortfolioPdf(data: PortfolioData) {
         View,
         { style: styles.section },
         el(Text, { style: styles.h2 }, "Projects"),
-        ...data.projects.map((p, i) =>
-          el(
-            View,
-            { key: i, style: styles.project },
-            el(
-              View,
-              { style: styles.projectTitleRow },
-              el(Text, { style: styles.projectTitle }, safeText(p.title)),
-            ),
-            p.role && el(Text, { style: styles.projectRole }, safeText(p.role)),
-            p.description && el(Text, { style: styles.projectDesc }, safeText(p.description)),
-            p.link && el(PdfLink, { style: styles.projectLink, src: p.link }, safeText(p.link)),
-            p.tags && p.tags.length > 0 && el(Text, { style: styles.tagsRow }, p.tags.map(safeText).join("  ·  "))
-          )
-        )
+        ...data.projects.map(ProjectBlock)
       )
     )
   );
@@ -96,7 +112,7 @@ export async function POST(req: Request) {
     // the save route).
     const { data: portfolio, error } = await supabase
       .from("member_portfolios")
-      .select("full_name, headline, bio, projects")
+      .select("full_name, headline, bio, photo_url, projects")
       .eq("id", portfolioId)
       .eq("user_id", member.id)
       .maybeSingle();

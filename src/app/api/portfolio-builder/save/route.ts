@@ -9,13 +9,27 @@ export const runtime = "nodejs";
 
 const MAX_PROJECTS = 12;
 const MAX_TEXT = 4000;
+const MAX_URL = 600;
 
-type Project = { title: string; role?: string; description?: string; link?: string; tags?: string[] };
+type Project = {
+  title: string;
+  role?: string;
+  description?: string;
+  link?: string;
+  tags?: string[];
+  coverImageUrl?: string;
+  videoUrl?: string;
+};
+
+function safeUrl(value: unknown): string {
+  return typeof value === "string" ? value.trim().slice(0, MAX_URL) : "";
+}
 
 function validatePortfolio(body: Record<string, unknown>) {
   const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
   const headline = typeof body.headline === "string" ? body.headline.trim() : "";
   const bio = typeof body.bio === "string" ? body.bio.trim() : "";
+  const photoUrl = safeUrl(body.photoUrl);
   if (!fullName) return { ok: false as const, error: "Full name is required." };
   if (bio.length > MAX_TEXT) return { ok: false as const, error: `Bio is too long (max ${MAX_TEXT} characters).` };
 
@@ -34,10 +48,12 @@ function validatePortfolio(body: Record<string, unknown>) {
       description: typeof p.description === "string" ? p.description.trim().slice(0, MAX_TEXT) : "",
       link: typeof p.link === "string" ? p.link.trim() : "",
       tags: Array.isArray(p.tags) ? p.tags.filter((t): t is string => typeof t === "string").slice(0, 10) : [],
+      coverImageUrl: safeUrl(p.coverImageUrl),
+      videoUrl: safeUrl(p.videoUrl),
     });
   }
 
-  return { ok: true as const, data: { fullName, headline, bio, projects } };
+  return { ok: true as const, data: { fullName, headline, bio, photoUrl, projects } };
 }
 
 async function getUniqueSlug(base: string, excludeId?: string): Promise<string> {
@@ -64,7 +80,7 @@ export async function GET(req: Request) {
   const [{ data: portfolios, error }, hasAccess] = await Promise.all([
     supabase
       .from("member_portfolios")
-      .select("id, slug, full_name, headline, bio, projects, is_public, created_at, updated_at")
+      .select("id, slug, full_name, headline, bio, photo_url, projects, is_public, created_at, updated_at")
       .eq("user_id", member.id)
       .order("updated_at", { ascending: false }),
     hasCareerToolAccess({ userId: member.id, email: member.email }, "portfolio_builder")
@@ -117,10 +133,11 @@ export async function POST(req: Request) {
         full_name: validated.data.fullName,
         headline: validated.data.headline,
         bio: validated.data.bio,
+        photo_url: validated.data.photoUrl,
         projects: validated.data.projects,
         is_public: isPublic,
       })
-      .select("id, slug, full_name, headline, bio, projects, is_public, created_at, updated_at")
+      .select("id, slug, full_name, headline, bio, photo_url, projects, is_public, created_at, updated_at")
       .single();
 
     if (insertErr || !created) {
@@ -155,13 +172,14 @@ export async function POST(req: Request) {
       full_name: validated.data.fullName,
       headline: validated.data.headline,
       bio: validated.data.bio,
+      photo_url: validated.data.photoUrl,
       projects: validated.data.projects,
       is_public: isPublic,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
     .eq("user_id", member.id)
-    .select("id, slug, full_name, headline, bio, projects, is_public, created_at, updated_at")
+    .select("id, slug, full_name, headline, bio, photo_url, projects, is_public, created_at, updated_at")
     .single();
 
   if (updateErr || !updated) {

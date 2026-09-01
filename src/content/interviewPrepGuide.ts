@@ -113,7 +113,7 @@ export const INTERVIEW_PREP_GUIDE: GuideSection[] = [
         number: "5",
         heading: "Practice Your Pitch Out Loud",
         blocks: [
-          { type: "paragraph", text: "Don’t just think about your answers — say them out loud. Practicing helps you hear if you’re rambling, speaking too fast, or sounding flat." },
+          { type: "paragraph", text: "Don’t just think about your answers -say them out loud. Practicing helps you hear if you’re rambling, speaking too fast, or sounding flat." },
         ],
       },
     ],
@@ -127,7 +127,7 @@ export const INTERVIEW_PREP_GUIDE: GuideSection[] = [
         number: "1",
         heading: "Making a Strong First Impression",
         blocks: [
-          { type: "paragraph", text: "The first 30 seconds matter. Smile, greet them warmly, and thank them for the opportunity. Even if you’re nervous, start with energy — you’ll settle into calmness as you go." },
+          { type: "paragraph", text: "The first 30 seconds matter. Smile, greet them warmly, and thank them for the opportunity. Even if you’re nervous, start with energy -you’ll settle into calmness as you go." },
         ],
       },
       {
@@ -263,12 +263,12 @@ export const INTERVIEW_PREP_GUIDE: GuideSection[] = [
           {
             type: "bullets",
             items: [
-              "Stop thinking remote jobs are “out of reach” — they are not reserved for tech experts. Many roles only require skills you already have.",
+              "Stop thinking remote jobs are “out of reach” -they are not reserved for tech experts. Many roles only require skills you already have.",
               "Replace “I’m not experienced enough” with “I can learn, adapt, and grow.” Companies hire for potential and problem-solving, not just years of experience.",
-              "Shift from waiting for opportunities to creating them — reach out, network, and pitch yourself instead of only applying passively.",
-              "Understand that rejection is not failure — it’s redirection. Every “no” is part of the journey to your “yes.”",
+              "Shift from waiting for opportunities to creating them -reach out, network, and pitch yourself instead of only applying passively.",
+              "Understand that rejection is not failure -it’s redirection. Every “no” is part of the journey to your “yes.”",
               "Stop undervaluing your skills. What feels normal to you (organizing, writing emails, managing tasks) may be highly valuable to someone else.",
-              "Move from “I just want a job” to “I want the right job” — one that aligns with your goals, values, and lifestyle.",
+              "Move from “I just want a job” to “I want the right job” -one that aligns with your goals, values, and lifestyle.",
               "Believe you deserve a seat at the table. Confidence in your worth is what will set you apart in interviews, negotiations, and opportunities.",
             ],
           },
