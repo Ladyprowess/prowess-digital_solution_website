@@ -395,6 +395,7 @@ export function sampleCvDataForTemplate(templateKey: string): CVData {
     personalInfo: {
       fullName: preview.name,
       email: contact.email,
+      headline: preview.title,
       phone: contact.phone,
       location: contact.location,
       linkedin: contact.linkedin,
@@ -449,7 +450,7 @@ function previewFromCv(cvData: CVData | undefined, fallback: PreviewData): Previ
   return {
     ...fallback,
     name: cvData.personalInfo.fullName.trim() || fallback.name,
-    title: experience[0]?.role || fallback.title,
+    title: cvData.personalInfo.headline?.trim() || fallback.title,
     contact: contact || fallback.contact,
     summary: cvData.summary.trim() || fallback.summary,
     experience: experience.length ? experience : fallback.experience,

@@ -51,6 +51,12 @@ const styles = StyleSheet.create({
     fontWeight: 800,
     color: BRAND,
   },
+  headline: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#374151",
+  },
   contactRow: {
     marginTop: 6,
     fontSize: 9.5,
@@ -130,6 +136,7 @@ function CvPdf(data: CVData, template: string) {
       Page,
       { size: "A4", style: [styles.page, { fontFamily: theme.fontFamily }] },
       el(Text, { style: [styles.name, { color: theme.accent, fontSize: theme.nameSize, textAlign: theme.align }] }, safeText(personalInfo.fullName)),
+      personalInfo.headline && el(Text, { style: [styles.headline, { color: theme.accent, textAlign: theme.align }] }, safeText(personalInfo.headline)),
       contactParts.length > 0 && el(Text, { style: [styles.contactRow, { textAlign: theme.align }] }, contactParts.join("  ·  ")),
       el(View, { style: [styles.divider, { borderBottomColor: theme.accent, borderBottomWidth: theme.dividerWidth }] }),
 

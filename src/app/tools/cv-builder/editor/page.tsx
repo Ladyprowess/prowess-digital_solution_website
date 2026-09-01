@@ -15,7 +15,7 @@ const AUTOSAVE_DELAY = 1800;
 type CvRow = { id: string; title: string; template: string; data: CVData; updated_at: string };
 
 const EMPTY_CV: CVData = {
-  personalInfo: { fullName: "", email: "", phone: "", location: "", linkedin: "", website: "" },
+  personalInfo: { fullName: "", email: "", headline: "", phone: "", location: "", linkedin: "", website: "" },
   summary: "",
   experience: [],
   education: [],
@@ -313,7 +313,7 @@ function CvBuilderEditor() {
             </Link>
             <h1 className="mt-3 text-2xl font-bold text-foreground">Edit {currentTemplate.label}</h1>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Edit each section on the form. The CV preview updates immediately on the side.
+              Edit each section on the form..
             </p>
           </div>
           <div className="min-h-10 text-right text-xs font-semibold text-muted-foreground">
@@ -327,6 +327,18 @@ function CvBuilderEditor() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="CV title"><input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} autoComplete="off" /></Field>
                 <Field label="Full name"><input value={cv.personalInfo.fullName} onChange={(e) => updatePersonalInfo("fullName", e.target.value)} className={inputCls} autoComplete="name" /></Field>
+                <div className="sm:col-span-2">
+                  <Field label="Headline">
+                    <input
+                      value={cv.personalInfo.headline || ""}
+                      onChange={(e) => updatePersonalInfo("headline", e.target.value)}
+                      className={inputCls}
+                      placeholder="e.g. Operations Associate"
+                      autoComplete="off"
+                    />
+                  </Field>
+                  <p className="mt-1.5 text-xs text-muted-foreground">This is the title shown right under your name at the top of the CV. It doesn&rsquo;t have to match a job title from your Experience section.</p>
+                </div>
                 <Field label="Email"><input value={cv.personalInfo.email} onChange={(e) => updatePersonalInfo("email", e.target.value)} className={inputCls} type="email" autoComplete="email" /></Field>
                 <Field label="Phone"><input value={cv.personalInfo.phone || ""} onChange={(e) => updatePersonalInfo("phone", e.target.value)} className={inputCls} type="tel" autoComplete="tel" /></Field>
                 <Field label="Location"><input value={cv.personalInfo.location || ""} onChange={(e) => updatePersonalInfo("location", e.target.value)} className={inputCls} autoComplete="address-level2" /></Field>

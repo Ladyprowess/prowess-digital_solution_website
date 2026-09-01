@@ -8,6 +8,7 @@
 export type CVPersonalInfo = {
   fullName: string;
   email: string;
+  headline?: string;
   phone?: string;
   location?: string;
   linkedin?: string;
@@ -96,7 +97,7 @@ export function validateCvData(input: unknown): ValidationResult {
     return { ok: false, error: `Email is too long (max ${LIMITS.personalInfoFieldMax} characters).` };
   }
 
-  const optionalFields: (keyof CVPersonalInfo)[] = ["phone", "location", "linkedin", "website"];
+  const optionalFields: (keyof CVPersonalInfo)[] = ["headline", "phone", "location", "linkedin", "website"];
   const personalInfo: CVPersonalInfo = { fullName: pi.fullName.trim(), email: pi.email.trim() };
   for (const field of optionalFields) {
     const result = optionalString(pi[field], field, LIMITS.personalInfoFieldMax);
