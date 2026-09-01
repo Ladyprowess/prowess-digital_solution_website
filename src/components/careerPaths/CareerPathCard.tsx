@@ -29,6 +29,7 @@ function CareerPathIcon({ iconKey }: { iconKey: string }) {
 // Calm, no colorForSeed -- follows SkillCard's precedent (a destination
 // preview, not a category-hued product card like Job/OpportunityCard).
 export function CareerPathCard({ path }: { path: CareerPathCardData }) {
+  const description = path.description ? stripHtmlForMeta(path.description, 140) : "";
   return (
     <Link
       href={`/career-paths/${path.slug}`}
@@ -45,7 +46,7 @@ export function CareerPathCard({ path }: { path: CareerPathCardData }) {
 
       <h3 className="mt-4 text-lg font-bold text-foreground">{path.title}</h3>
       {path.level && <span className="mt-1 text-xs font-semibold capitalize text-muted-foreground">{path.level}</span>}
-      {path.description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{stripHtmlForMeta(path.description, 140)}</p>}
+      {description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{description}</p>}
 
       <div className="flex-1" />
 
