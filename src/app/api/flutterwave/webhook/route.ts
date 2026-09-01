@@ -5,7 +5,6 @@ import { markConsultationPaid } from "@/lib/payments/consultation";
 import { markSkillToBusinessPaid } from "@/lib/payments/skillToBusiness";
 import { markContentPurchasePaid } from "@/lib/payments/content";
 import { markPremiumMembershipPaid, markPremiumMembershipRenewalFailed, markPremiumMembershipCancelled } from "@/lib/payments/premiumMembership";
-import { markCareerToolPurchasePaid } from "@/lib/payments/careerTools";
 import { sendEventRegistrationEmails } from "@/lib/events/emails";
 
 export const runtime = "nodejs";
@@ -106,12 +105,6 @@ async function handleSuccessfulCharge(data: Record<string, unknown>, metadata: R
   if (metadata?.type === "content_purchase") {
     const purchaseId = metadata?.purchase_id as string | undefined;
     if (purchaseId) await markContentPurchasePaid(purchaseId, reference);
-    return NextResponse.json({ ok: true });
-  }
-
-  if (metadata?.type === "career_tools") {
-    const purchaseId = metadata?.purchase_id as string | undefined;
-    if (purchaseId) await markCareerToolPurchasePaid(purchaseId, reference);
     return NextResponse.json({ ok: true });
   }
 

@@ -6,7 +6,7 @@ import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeThumbnail } from "@/lib/youtube";
 import { RichText } from "@/components/RichText";
 import { QuizRunner } from "@/components/learn/QuizRunner";
-import { completionBanner, type CompletionBanner } from "@/lib/certificates/messages";
+import { completionBanner, activityBanner, type CompletionBanner } from "@/lib/certificates/messages";
 
 type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; quiz_id: string | null; position: number };
 type Module = { id: string; title: string; position: number; course_lessons: Lesson[] };
@@ -25,15 +25,19 @@ export function CourseContent({
   const [signedIn, setSignedIn] = useState(false);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [banner, setBanner] = useState<CompletionBanner | null>(null);
+  const [activityLine, setActivityLine] = useState<string | null>(null);
 
-  const evaluateCompletion = useCallback(async (accessToken: string) => {
+  const evaluateCompletion = useCallback(async (accessToken: string, lessonId?: string) => {
     const res = await fetch(`/api/courses/${courseId}/evaluate-completion`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify(lessonId ? { lessonId } : {}),
     }).then((r) => r.json()).catch(() => null);
     if (res?.ok) {
       const next = completionBanner(res);
       if (next) setBanner(next);
+      const activity = activityBanner(res);
+      if (activity) setActivityLine(activity);
     }
   }, [courseId]);
 
@@ -105,7 +109,7 @@ export function CourseContent({
       { onConflict: "user_id,course_id" }
     );
 
-    if (markingComplete && session.access_token) await evaluateCompletion(session.access_token);
+    if (markingComplete && session.access_token) await evaluateCompletion(session.access_token, lessonId);
   }
 
   if (status === "loading") {
@@ -139,6 +143,9 @@ export function CourseContent({
             <a href="/account/certificates" className="ml-2 text-primary hover:underline">View certificates →</a>
           )}
         </div>
+      )}
+      {activityLine && (
+        <p className="text-sm font-semibold text-primary">{activityLine}</p>
       )}
       {modules.map((m) => (
         <div key={m.id} className="rounded-2xl border border-border bg-card p-6">

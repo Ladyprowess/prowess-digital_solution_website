@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
 import { verifyMember } from "@/lib/auth/verifyMember";
-import { hasCareerToolAccess } from "@/lib/payments/careerTools";
 import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
 
 export const runtime = "nodejs";
@@ -36,10 +35,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Please sign in to continue." }, { status: 401 });
     }
 
-    const hasAccess = await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_checker")
-      || await hasPremiumAccess({ userId: member.id, email: member.email });
+    const hasAccess = await hasPremiumAccess({ userId: member.id, email: member.email });
     if (!hasAccess) {
-      return NextResponse.json({ ok: false, error: "Please activate Basic, Premium or Pro career access before submitting your CV." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Please activate Premium Membership before submitting your CV." }, { status: 403 });
     }
 
     const formData = await req.formData();

@@ -56,7 +56,9 @@ begin
     'quizzes',
     'quiz_questions',
     'quiz_options',
-    'course_completion_rules'
+    'course_completion_rules',
+    'achievement_point_rules',
+    'badges'
   ]
   loop
     execute format('drop policy if exists "admin_full_access" on public.%I', t);

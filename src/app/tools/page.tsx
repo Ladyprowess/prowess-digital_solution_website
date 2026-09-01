@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BadgeCheck, BriefcaseBusiness, CheckCircle2, ClipboardCheck, FileText, Layers3, LockKeyhole, MessagesSquare, MonitorUp } from "lucide-react";
+import { BadgeCheck, BriefcaseBusiness, ClipboardCheck, FileText, Layers3, LockKeyhole, MessagesSquare, MonitorUp } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { TOOL_ICON_PATHS } from "@/lib/tools/icons";
 import { CV_TEMPLATES } from "@/lib/cvBuilder/templates";
-import { formatMoney } from "@/lib/formatMoney";
 import { TemplatePreview } from "@/components/cvBuilder/TemplatePreview";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
@@ -35,63 +34,30 @@ const CAREER_TOOLS = [
     description: "Pick a template, edit every section, save your draft and download a polished PDF.",
     href: "/tools/cv-builder",
     icon: FileText,
-    badge: "Free starter",
+    badge: "Free",
   },
   {
     title: "CV Checker",
     description: "Submit your CV for a manual review. The team gets notified and responds with practical fixes.",
     href: "/tools/cv-checker",
     icon: ClipboardCheck,
-    badge: "Basic",
+    badge: "Premium Membership",
   },
   {
     title: "Interview Prep",
     description: "Practice answers, role specific questions and confidence notes for your next interview.",
     href: "/tools/interview-prep",
     icon: MessagesSquare,
-    badge: "Premium",
+    badge: "Premium Membership",
   },
   {
     title: "Portfolio Builder",
     description: "Turn your projects, proof of work and case studies into a clean career portfolio.",
     href: "/tools/portfolio-builder",
     icon: MonitorUp,
-    badge: "Pro",
+    badge: "Premium Membership",
   },
 ];
-
-const CAREER_PLANS = [
-  {
-    slug: "basic",
-    name: "Basic",
-    access: "CV Builder and CV Checker",
-    bestFor: "Create a polished CV and get clear feedback before you send it out.",
-    tools: ["Paid CV templates", "Manual CV review", "Saved CV drafts"],
-  },
-  {
-    slug: "premium",
-    name: "Premium",
-    access: "CV Builder, CV Checker and Interview Prep",
-    bestFor: "Prepare your CV and interview answers with one connected career toolkit.",
-    tools: ["Everything in Basic", "Manual CV review", "Interview preparation"],
-  },
-  {
-    slug: "pro",
-    name: "Pro",
-    access: "All career tools",
-    bestFor: "Bring your CV, interview preparation and portfolio into one confident career profile.",
-    tools: ["Everything in Premium", "Portfolio Builder", "Full career toolkit access"],
-  },
-] as const;
-
-type CareerPlanSlug = (typeof CAREER_PLANS)[number]["slug"];
-type CareerPrices = Record<CareerPlanSlug, { USD: number | null; NGN: number | null }>;
-
-const EMPTY_CAREER_PRICES: CareerPrices = {
-  basic: { USD: null, NGN: null },
-  premium: { USD: null, NGN: null },
-  pro: { USD: null, NGN: null },
-};
 
 function ToolIcon({ iconKey }: { iconKey: string }) {
   return (
@@ -133,52 +99,7 @@ function ToolCard({ tool, premium }: { tool: ToolRow; premium?: boolean }) {
   );
 }
 
-function CareerCheckoutButton({ plan, currency, amount }: { plan: CareerPlanSlug; currency: "USD" | "NGN"; amount: number | null }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function checkout() {
-    setError("");
-    setLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        window.location.href = `/account/login?next=${encodeURIComponent("/tools")}`;
-        return;
-      }
-
-      const res = await fetch("/api/career-tools/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ plan, currency }),
-      }).then((r) => r.json()).catch(() => null);
-
-      if (!res?.ok || !res.authorizationUrl) {
-        setError(res?.error || "Could not start checkout.");
-        return;
-      }
-      window.location.href = res.authorizationUrl;
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={checkout}
-        disabled={loading || !amount}
-        className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
-      >
-        {amount ? `${loading ? "Starting " : ""}${formatMoney(amount, currency)}` : `${currency} price not set`}
-      </button>
-      {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
-    </div>
-  );
-}
-
-function CareerSection({ prices }: { prices: CareerPrices }) {
+function CareerSection() {
   return (
     <div className="space-y-14">
       <section className="grid gap-5 lg:grid-cols-4">
@@ -250,44 +171,16 @@ function CareerSection({ prices }: { prices: CareerPrices }) {
 
       <section>
         <Reveal>
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-6 rounded-lg border border-primary/20 bg-primary/5 p-8">
             <div>
-              <div className="text-xs font-bold uppercase text-primary">Career access</div>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">One payment, clear access.</h2>
+              <h2 className="text-lg font-bold text-foreground">Unlock Career Tools with Premium Membership</h2>
+              <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground">Get premium CV templates, CV Checker, Interview Prep and Portfolio Builder with one membership.</p>
             </div>
-            <p className="max-w-lg text-sm leading-6 text-muted-foreground">
-              Choose the level of support you need, from building a stronger CV to preparing for interviews and presenting your work professionally.
-            </p>
+            <Link href="/account/membership" className="inline-flex min-h-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              View membership plans
+            </Link>
           </div>
         </Reveal>
-        <div className="grid gap-5 lg:grid-cols-3">
-          {CAREER_PLANS.map((plan, i) => (
-            <Reveal key={plan.name} delay={i * 50}>
-              <div className={`flex h-full flex-col rounded-lg border bg-card p-6 ${plan.name === "Premium" ? "border-primary/35 bg-primary/5" : "border-border"}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
-                  {plan.name === "Premium" ? (
-                    <span className="rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase text-primary-foreground">Popular</span>
-                  ) : null}
-                </div>
-                <p className="mt-2 text-sm font-semibold text-primary">{plan.access}</p>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{plan.bestFor}</p>
-                <ul className="mt-5 flex-1 space-y-3">
-                  {plan.tools.map((item) => (
-                    <li key={item} className="flex gap-2 text-sm text-foreground">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                  <CareerCheckoutButton plan={plan.slug} currency="NGN" amount={prices[plan.slug].NGN} />
-                  <CareerCheckoutButton plan={plan.slug} currency="USD" amount={prices[plan.slug].USD} />
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
       </section>
     </div>
   );
@@ -297,28 +190,15 @@ export default function ToolsPage() {
   const [category, setCategory] = useState<"career" | "business">("career");
   const [tools, setTools] = useState<ToolRow[]>([]);
   const [loadingTools, setLoadingTools] = useState(true);
-  const [careerPrices, setCareerPrices] = useState<CareerPrices>(EMPTY_CAREER_PRICES);
 
   useEffect(() => {
     async function loadTools() {
-      const [{ data: toolData }, { data: settingsData }] = await Promise.all([
-        supabase
+      const { data: toolData } = await supabase
         .from("tools")
         .select("key, category, title, description, detail, icon_key, badge, gated, href")
         .eq("status", "published")
-        .order("position"),
-        supabase
-          .from("site_settings")
-          .select("career_basic_usd, career_basic_ngn, career_premium_usd, career_premium_ngn, career_pro_usd, career_pro_ngn")
-          .eq("id", 1)
-          .maybeSingle(),
-      ]);
+        .order("position");
       setTools(toolData || []);
-      setCareerPrices({
-        basic: { USD: settingsData?.career_basic_usd ?? null, NGN: settingsData?.career_basic_ngn ?? null },
-        premium: { USD: settingsData?.career_premium_usd ?? null, NGN: settingsData?.career_premium_ngn ?? null },
-        pro: { USD: settingsData?.career_pro_usd ?? null, NGN: settingsData?.career_pro_ngn ?? null },
-      });
       setLoadingTools(false);
     }
     loadTools();
@@ -348,7 +228,7 @@ export default function ToolsPage() {
       <section className="py-14">
         <Container>
           {category === "career" ? (
-            <CareerSection prices={careerPrices} />
+            <CareerSection />
           ) : loadingTools ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (

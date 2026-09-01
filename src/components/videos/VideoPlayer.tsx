@@ -143,12 +143,20 @@ export function VideoPlayer({ resourceId, priceUsd, priceNgn }: { resourceId: st
   }, [status, data, resumeSeconds, writeProgress]);
 
   if (status === "loading") {
-    return <p className="mt-10 text-center text-sm text-muted-foreground">Loading…</p>;
+    return (
+      <div className="mt-10 overflow-hidden rounded-lg border border-border bg-card" aria-busy="true">
+        <div className="aspect-video bg-muted" />
+        <div className="p-5">
+          <div className="h-4 w-32 rounded bg-muted" />
+          <div className="mt-3 h-3 w-3/4 rounded bg-muted" />
+        </div>
+      </div>
+    );
   }
 
   if (status === "locked") {
     return (
-      <div className="mt-10 rounded-2xl border-2 border-primary/20 bg-muted p-8 text-center">
+      <div className="mt-10 rounded-lg border border-primary/20 bg-primary/5 p-8 text-center">
         <h2 className="text-lg font-bold text-foreground">This is premium</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {signedIn ? "You don't have access to this yet." : "Sign in if you've already bought this, or buy access below."}
@@ -168,7 +176,7 @@ export function VideoPlayer({ resourceId, priceUsd, priceNgn }: { resourceId: st
   return (
     <div className="mt-10 space-y-6">
       {youtubeId && (
-        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black">
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-black">
           {shortsBackdrop && (
             // eslint-disable-next-line @next/next/no-img-element -- ambient blurred backdrop, not real content
             <img
@@ -196,15 +204,15 @@ export function VideoPlayer({ resourceId, priceUsd, priceNgn }: { resourceId: st
           href={data.external_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90"
+          className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          Watch video →
+          Watch video
         </a>
       )}
 
       {data?.external_url && youtubeId && (
-        <a href={data.external_url} target="_blank" rel="noopener noreferrer" className="inline-block text-sm font-semibold text-primary hover:underline">
-          Watch on YouTube →
+        <a href={data.external_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          Watch on YouTube
         </a>
       )}
 
@@ -213,9 +221,9 @@ export function VideoPlayer({ resourceId, priceUsd, priceNgn }: { resourceId: st
           href={downloadUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+          className="inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-6 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          Download →
+          Download
         </a>
       )}
 

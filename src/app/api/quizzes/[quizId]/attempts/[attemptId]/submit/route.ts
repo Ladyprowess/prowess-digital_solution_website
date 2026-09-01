@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { resolveQuizAccess } from "@/lib/quizzes/access";
 import { evaluateCourseCompletion, type EvaluationResult } from "@/lib/certificates/evaluate";
+import { awardPoints, type AwardResult } from "@/lib/achievements/evaluate";
 
 export const runtime = "nodejs";
 
@@ -150,6 +151,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ quizId:
       }
     }
 
+    // A Knowledge Check has no pass mark (passed stays null forever for
+    // that quiz_type), so it would otherwise earn no achievement points at
+    // all - falling through the gap between "assessment passed" and
+    // "non-quiz lesson completed". Award it lesson_completed points
+    // instead, same as any other lesson. An Assessment earns quiz_passed
+    // points only (never also lesson_completed for the same lesson - no
+    // double count).
+    let activityPoints: AwardResult = { pointsAwarded: 0, newBadges: [] };
+    try {
+      if (access.quiz.quiz_type === "assessment" && passed === true) {
+        activityPoints = await awardPoints(member.id, "quiz_passed", quizId);
+      } else if (access.quiz.quiz_type === "knowledge_check" && lessonCompleted && access.lessonId) {
+        activityPoints = await awardPoints(member.id, "lesson_completed", access.lessonId);
+      }
+    } catch (err) {
+      console.error("quiz activity points award failed:", err);
+    }
+
     return NextResponse.json({
       ok: true,
       scorePercent,
@@ -160,6 +179,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ quizId:
       newlyCompleted: completion?.newlyCompleted ?? false,
       certificateIssued: completion?.certificateIssued ?? false,
       certificateBlockedReason: completion?.certificateBlockedReason ?? null,
+      pointsAwarded: activityPoints.pointsAwarded + (completion?.pointsAwarded ?? 0),
+      newBadges: [...activityPoints.newBadges, ...(completion?.newBadges ?? [])],
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Something went wrong";

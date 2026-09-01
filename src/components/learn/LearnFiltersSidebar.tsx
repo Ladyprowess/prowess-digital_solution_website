@@ -6,7 +6,7 @@ import { LEVELS, ACCESS_OPTIONS } from "@/lib/learn/constants";
 
 type SkillLookup = { slug: string; name: string };
 
-const selectCls = "w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground";
+const selectCls = "min-h-11 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 const groupCls = "border-b border-border py-5 first:pt-0 last:border-b-0";
 const labelCls = "text-xs font-semibold uppercase tracking-widest text-muted-foreground";
 
@@ -31,10 +31,11 @@ export function LearnFiltersSidebar({
     : skills;
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6">
+    <div className="rounded-lg border border-border bg-card p-6">
       <div className={groupCls}>
-        <p className={labelCls}>Keyword</p>
+        <label htmlFor="learn-filter-keyword" className={labelCls}>Keyword</label>
         <input
+          id="learn-filter-keyword"
           value={filters.q}
           onChange={(e) => onChange({ q: e.target.value })}
           placeholder="Title, topic, keyword..."
@@ -43,22 +44,23 @@ export function LearnFiltersSidebar({
       </div>
 
       <div className={groupCls}>
-        <p className={labelCls}>Level</p>
-        <select value={filters.level} onChange={(e) => onChange({ level: e.target.value })} className={`${selectCls} mt-2`}>
+        <label htmlFor="learn-filter-level" className={labelCls}>Level</label>
+        <select id="learn-filter-level" value={filters.level} onChange={(e) => onChange({ level: e.target.value })} className={`${selectCls} mt-2`}>
           {LEVELS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
         </select>
       </div>
 
       <div className={groupCls}>
-        <p className={labelCls}>Access</p>
-        <select value={filters.access} onChange={(e) => onChange({ access: e.target.value })} className={`${selectCls} mt-2`}>
+        <label htmlFor="learn-filter-access" className={labelCls}>Access</label>
+        <select id="learn-filter-access" value={filters.access} onChange={(e) => onChange({ access: e.target.value })} className={`${selectCls} mt-2`}>
           {ACCESS_OPTIONS.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
         </select>
       </div>
 
       <div className={groupCls}>
-        <p className={labelCls}>Skills</p>
+        <label htmlFor="learn-filter-skills" className={labelCls}>Skills</label>
         <input
+          id="learn-filter-skills"
           value={skillSearch}
           onChange={(e) => setSkillSearch(e.target.value)}
           placeholder="Search skills..."
@@ -70,7 +72,7 @@ export function LearnFiltersSidebar({
               key={s.slug}
               type="button"
               onClick={() => toggleSkill(s.slug)}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+              className={`min-h-8 rounded-full border px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                 filters.skills.includes(s.slug) ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
               }`}
             >

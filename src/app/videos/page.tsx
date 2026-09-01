@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { PlayCircle, Search, Video } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -156,36 +157,61 @@ function VideosPageContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* HERO */}
-      <section className="border-b border-border bg-muted py-16 sm:py-20">
+      <section className="border-b border-border bg-brand-bg py-12 sm:py-16">
         <Container>
-          <Reveal>
-            <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Videos</div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Videos that help you learn, build and grow.</h1>
-            <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-              Practical tutorials, career advice, business insights, interviews, motivation and useful ideas from Prowess Digital Solutions and trusted creators.
-            </p>
-          </Reveal>
-          <Reveal delay={80}>
-            <div className="mt-6">
-              <input
-                value={filters.q}
-                onChange={(e) => updateFilters({ q: e.target.value })}
-                placeholder="Search videos..."
-                className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-sm text-foreground shadow-sm sm:max-w-xl"
-              />
-            </div>
-          </Reveal>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+            <Reveal>
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+                  <Video size={14} aria-hidden="true" />
+                  Videos
+                </div>
+                <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">Watch practical lessons, interviews and ideas.</h1>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+                  Learn through tutorials, career advice, business insights, interviews and useful ideas from Prowess Digital Solutions and trusted creators.
+                </p>
+                <div className="relative mt-7 max-w-2xl">
+                  <label htmlFor="video-search" className="sr-only">Search videos</label>
+                  <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  <input
+                    id="video-search"
+                    value={filters.q}
+                    onChange={(e) => updateFilters({ q: e.target.value })}
+                    placeholder="Search videos, topics or categories"
+                    className="min-h-12 w-full rounded-lg border border-border bg-card pl-11 pr-4 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={80}>
+              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+                <p className="text-sm font-bold text-foreground">Video library</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Browse by audience and category, continue videos you started, and open lessons connected to your career growth.</p>
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-muted p-3">
+                    <p className="text-lg font-bold text-foreground">{loading ? "…" : total}</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Videos</p>
+                  </div>
+                  <div className="rounded-lg bg-muted p-3">
+                    <p className="text-lg font-bold text-foreground">{categories.length}</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">Categories</p>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+
           {popularCategories.length > 0 && (
             <Reveal delay={120}>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Popular:</span>
+              <div className="mt-7 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Popular</span>
                 {popularCategories.map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => updateFilters({ category: c })}
-                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+                    className="min-h-10 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {c}
                   </button>
@@ -196,9 +222,14 @@ function VideosPageContent() {
         </Container>
       </section>
 
-      {/* AUDIENCE + CATEGORY */}
       <section className="border-b border-border py-8">
         <Container>
+          <Reveal>
+            <div className="mb-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Browse videos</p>
+              <h2 className="mt-2 text-xl font-bold text-foreground">Choose what you want to watch</h2>
+            </div>
+          </Reveal>
           <Reveal>
             <PillTabs tabs={AUDIENCE_TABS} active={filters.audience} onChange={(v) => updateFilters({ audience: v })} />
           </Reveal>
@@ -218,7 +249,7 @@ function VideosPageContent() {
           <Container>
             <Reveal>
               <div className="grid gap-6 sm:grid-cols-[3fr_2fr]">
-                <Link href={`/videos/${featured.slug}`} className="group relative block aspect-video overflow-hidden rounded-2xl border border-border bg-black">
+                <Link href={`/videos/${featured.slug}`} className="group relative block aspect-video overflow-hidden rounded-lg border border-border bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   {featuredThumb ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={featuredThumb} alt={featured.title} className="h-full w-full object-cover" />
@@ -227,7 +258,7 @@ function VideosPageContent() {
                   )}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/15 transition group-hover:bg-black/30">
                     <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-primary shadow">
-                      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                      <PlayCircle size={30} aria-hidden="true" />
                     </span>
                   </span>
                 </Link>
@@ -237,7 +268,7 @@ function VideosPageContent() {
                   {featured.category && <p className="mt-1 text-sm text-muted-foreground">{featured.category}</p>}
                   {featured.description && <p className="mt-3 text-sm text-muted-foreground line-clamp-3">{featured.description}</p>}
                   {featured.duration_minutes && <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{featured.duration_minutes} min</p>}
-                  <Link href={`/videos/${featured.slug}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Watch video →</Link>
+                  <Link href={`/videos/${featured.slug}`} className="mt-4 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Watch video</Link>
                 </div>
               </div>
             </Reveal>
@@ -253,7 +284,7 @@ function VideosPageContent() {
 
             <Reveal delay={40}>
               <div className="mt-10">
-                <h2 className="text-lg font-bold text-foreground">Ideas Worth Watching</h2>
+                <h2 className="text-xl font-bold text-foreground">Ideas worth watching</h2>
                 <div className="mt-4"><ScrollCarousel>{ideasRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
               </div>
             </Reveal>
@@ -271,26 +302,39 @@ function VideosPageContent() {
             <div>
               <p className="text-sm text-muted-foreground">
                 More videos also live on our{" "}
-                <a href="https://www.youtube.com/@ProwessDigitalSolutions" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">YouTube channel →</a>
+                <a href="https://www.youtube.com/@ProwessDigitalSolutions" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">YouTube channel</a>
               </p>
               <p className="mt-1 text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} video${total === 1 ? "" : "s"} found`}</p>
             </div>
             <select
               value={filters.sort}
               onChange={(e) => updateFilters({ sort: e.target.value as SortValue })}
-              className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground"
+              className="min-h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
 
           {loading ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="min-h-[300px] rounded-lg border border-border bg-card">
+                  <div className="aspect-video rounded-t-lg bg-muted" />
+                  <div className="p-5">
+                    <div className="h-4 w-24 rounded bg-muted" />
+                    <div className="mt-4 h-5 w-4/5 rounded bg-muted" />
+                    <div className="mt-3 h-3 w-full rounded bg-muted" />
+                    <div className="mt-2 h-3 w-2/3 rounded bg-muted" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : items.length === 0 ? (
-            <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
+            <div className="mx-auto mt-8 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-14 text-center">
+              <Video size={34} className="mx-auto text-primary" aria-hidden="true" />
               <h2 className="text-lg font-semibold text-foreground">No videos found</h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                {activeFiltersPresent ? "We couldn't find anything matching your current filters." : "We're adding videos here soon - check back shortly."}
+                {activeFiltersPresent ? "We could not find anything matching your current filters." : "We are adding videos here soon. Check back shortly."}
               </p>
             </div>
           ) : (

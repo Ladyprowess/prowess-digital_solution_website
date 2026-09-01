@@ -37,6 +37,7 @@ const NAV_GROUPS = [
       { label: "Career Paths", href: "/admin/career-paths", icon: "path" },
       { label: "Skills", href: "/admin/skills", icon: "tag" },
       { label: "Learn", href: "/admin/learn", icon: "book" },
+      { label: "Achievements", href: "/admin/achievements", icon: "star" },
       { label: "Resources", href: "/admin/resources", icon: "folder" },
       { label: "Interview Prep", href: "/admin/interview-prep", icon: "spark" },
       { label: "Events", href: "/admin/events", icon: "calendar" },

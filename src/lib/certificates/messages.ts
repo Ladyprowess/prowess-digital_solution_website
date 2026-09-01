@@ -22,3 +22,15 @@ export function completionBanner(result: CompletionSignal): CompletionBanner | n
   }
   return null;
 }
+
+// Points/badges are shown as their own small line alongside (not instead
+// of) the completion banner above - a plain lesson completion earns
+// points too, even when no course-level banner applies at all.
+export type ActivitySignal = { pointsAwarded: number; newBadges: { title: string }[] };
+
+export function activityBanner(result: ActivitySignal): string | null {
+  const parts: string[] = [];
+  if (result.pointsAwarded > 0) parts.push(`+${result.pointsAwarded} points`);
+  for (const badge of result.newBadges) parts.push(`🏅 New badge: ${badge.title}`);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}

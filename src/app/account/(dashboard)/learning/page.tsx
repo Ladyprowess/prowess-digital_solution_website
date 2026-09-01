@@ -96,7 +96,7 @@ export default function LearningPage() {
           </div>
           <h1 className="mt-3 text-2xl font-bold text-foreground">Learning</h1>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Pick up your courses, videos, books, guides, and saved resources from one place.
+            Continue your main courses here. Videos and resources from the library stay separate as supporting material.
           </p>
         </div>
         <Link href="/resources" className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
@@ -108,12 +108,12 @@ export default function LearningPage() {
         <div className="rounded-lg border border-border bg-card p-4">
           <BookOpen className="text-primary" size={18} aria-hidden="true" />
           <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : activeCourses.length}</p>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Courses open</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Courses in progress</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <PlayCircle className="text-primary" size={18} aria-hidden="true" />
           <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : activeVideos.length}</p>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Videos open</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supporting videos</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <Bookmark className="text-primary" size={18} aria-hidden="true" />
@@ -133,7 +133,7 @@ export default function LearningPage() {
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card title="Continue learning" action={<Link href="/learn" className="text-sm font-semibold text-primary hover:underline">Browse</Link>}>
+        <Card title="Main courses" action={<Link href="/learn" className="text-sm font-semibold text-primary hover:underline">Browse courses</Link>}>
           {loading ? (
             <LoadingRows />
           ) : activeCourses.length === 0 ? (
@@ -160,11 +160,11 @@ export default function LearningPage() {
           )}
         </Card>
 
-        <Card title="Continue watching" action={<Link href="/videos" className="text-sm font-semibold text-primary hover:underline">Videos</Link>}>
+        <Card title="Supporting videos" action={<Link href="/videos" className="text-sm font-semibold text-primary hover:underline">Watch videos</Link>}>
           {loading ? (
             <LoadingRows />
           ) : activeVideos.length === 0 ? (
-            <EmptyState text="No videos in progress yet." ctaLabel="Watch videos" ctaHref="/videos" />
+            <EmptyState text="No supporting videos in progress yet." ctaLabel="Watch videos" ctaHref="/videos" />
           ) : (
             <ul className="space-y-3">
               {activeVideos.map((v) => (
@@ -211,6 +211,13 @@ export default function LearningPage() {
             </div>
           )}
         </Card>
+      </div>
+
+      <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-5">
+        <p className="text-sm font-bold text-foreground">How this page is organised</p>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          Courses are the main structured learning. Videos, ebooks, guides and saved resources are supporting materials from the library, so they are tracked separately.
+        </p>
       </div>
     </div>
   );

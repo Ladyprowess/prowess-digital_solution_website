@@ -41,7 +41,7 @@ function CvTemplateGallery() {
       }
       const res = await fetch("/api/cv-builder/save", { headers }).then((r) => r.json()).catch(() => null);
       if (res?.ok) {
-        setPremiumActive(Boolean(res.premiumActive || res.careerAccessActive));
+        setPremiumActive(Boolean(res.premiumActive));
         setExistingCvs((res.cvs || []) as CvRow[]);
       }
       setLoading(false);

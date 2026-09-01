@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { hasEntitlement } from "@/lib/payments/entitlement";
 import { evaluateCourseCompletion } from "@/lib/certificates/evaluate";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { awardPoints, type AwardResult } from "@/lib/achievements/evaluate";
 
 export const runtime = "nodejs";
 
@@ -33,7 +35,52 @@ export async function POST(req: Request, { params }: { params: Promise<{ courseI
     }
 
     const result = await evaluateCourseCompletion(courseId, member.id);
-    return NextResponse.json({ ok: true, ...result });
+
+    // A client-supplied lessonId must never be trusted directly as the
+    // achievement ledger's source_id - without independently re-verifying
+    // it, any signed-in member could POST a fabricated UUID in a loop and
+    // mint unlimited lesson_completed point events (the ledger's unique
+    // constraint doesn't help here, since each fake UUID is a "new"
+    // source_id to it).
+    const body = await req.json().catch(() => ({}));
+    const lessonId = typeof body?.lessonId === "string" ? body.lessonId : null;
+
+    let lessonPoints: AwardResult = { pointsAwarded: 0, newBadges: [] };
+    if (lessonId) {
+      const supabase = supabaseAdmin();
+      // Same two-step fetch evaluate.ts already established for this
+      // exact "course_lessons has no course_id of its own" shape - never
+      // a single trusted-embed query, and never a trust of the client's
+      // claim alone.
+      const { data: modules } = await supabase.from("course_modules").select("id").eq("course_id", courseId);
+      const moduleIds = (modules || []).map((m) => m.id);
+      const { data: lesson } = moduleIds.length
+        ? await supabase.from("course_lessons").select("id, content_type").eq("id", lessonId).in("module_id", moduleIds).maybeSingle()
+        : { data: null };
+      const { data: completionRow } = lesson
+        ? await supabase.from("lesson_completions").select("lesson_id").eq("user_id", member.id).eq("lesson_id", lessonId).maybeSingle()
+        : { data: null };
+
+      // The lesson must (a) really belong to this course, (b) not be a
+      // quiz lesson (those earn points via the quiz submit route instead -
+      // awarding lesson_completed too would double count), and (c) have a
+      // real lesson_completions row for this caller - never award off the
+      // client's say-so alone.
+      if (lesson && lesson.content_type !== "quiz" && completionRow) {
+        try {
+          lessonPoints = await awardPoints(member.id, "lesson_completed", lessonId);
+        } catch (err) {
+          console.error("lesson-completed points award failed:", err);
+        }
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      ...result,
+      pointsAwarded: result.pointsAwarded + lessonPoints.pointsAwarded,
+      newBadges: [...result.newBadges, ...lessonPoints.newBadges],
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Something went wrong";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });

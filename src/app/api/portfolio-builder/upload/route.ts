@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
-import { hasCareerToolAccess } from "@/lib/payments/careerTools";
 import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
 
 export const runtime = "nodejs";
@@ -31,10 +30,9 @@ export async function POST(req: Request) {
     // Portfolio Builder has no free tier (see the save route) - gate image
     // uploads the same way, otherwise any signed-in member could fill the
     // storage bucket with images regardless of access.
-    const hasAccess = await hasCareerToolAccess({ userId: member.id, email: member.email }, "portfolio_builder")
-      || await hasPremiumAccess({ userId: member.id, email: member.email });
+    const hasAccess = await hasPremiumAccess({ userId: member.id, email: member.email });
     if (!hasAccess) {
-      return NextResponse.json({ ok: false, error: "Portfolio Builder needs Pro career access or Premium Membership." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Portfolio Builder needs Premium Membership." }, { status: 403 });
     }
 
     const formData = await req.formData();

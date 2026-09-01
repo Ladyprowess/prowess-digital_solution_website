@@ -6,7 +6,6 @@ import { verifyMember } from "@/lib/auth/verifyMember";
 import { validateCvData, type CVData } from "@/lib/cvBuilder/validate";
 import { isFreeCvTemplate, isKnownCvTemplate } from "@/lib/cvBuilder/templates";
 import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
-import { hasCareerToolAccess } from "@/lib/payments/careerTools";
 
 export const runtime = "nodejs";
 
@@ -285,8 +284,7 @@ export async function POST(req: Request) {
     // switch to a different, non-plain template at export time requires
     // active access right now.
     if (!isFreeCvTemplate(requestedTemplate) && requestedTemplate !== cv.template) {
-      const active = await hasPremiumAccess({ userId: member.id, email: member.email })
-        || await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_builder");
+      const active = await hasPremiumAccess({ userId: member.id, email: member.email });
       if (!active) {
         return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to use this template." }, { status: 403 });
       }

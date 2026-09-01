@@ -66,8 +66,8 @@ export default function CvCheckerPage() {
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 text-primary" aria-hidden="true" />
                 <div>
-                  <p className="text-sm font-bold text-foreground">Paid Basic access required</p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">CV Checker is included in the paid Basic plan. Premium and Pro include this review too.</p>
+                  <p className="text-sm font-bold text-foreground">Premium Membership required</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">CV Checker is included with Premium Membership. <Link href="/account/membership" className="font-semibold text-primary hover:underline">View membership plans →</Link></p>
                 </div>
               </div>
             </div>

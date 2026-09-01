@@ -4,7 +4,6 @@ import { verifyMember } from "@/lib/auth/verifyMember";
 import { validateCvData } from "@/lib/cvBuilder/validate";
 import { isFreeCvTemplate, isKnownCvTemplate } from "@/lib/cvBuilder/templates";
 import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
-import { getActiveCareerPlan, hasCareerToolAccess } from "@/lib/payments/careerTools";
 
 export const runtime = "nodejs";
 
@@ -21,21 +20,20 @@ export async function GET(req: Request) {
   }
 
   const supabase = supabaseAdmin();
-  const [{ data: cvs, error }, premiumActive, careerPlan] = await Promise.all([
+  const [{ data: cvs, error }, premiumActive] = await Promise.all([
     supabase
       .from("member_cvs")
       .select("id, title, template, data, created_at, updated_at")
       .eq("user_id", member.id)
       .order("updated_at", { ascending: false }),
     hasPremiumAccess({ userId: member.id, email: member.email }),
-    getActiveCareerPlan({ userId: member.id, email: member.email }),
   ]);
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, cvs: cvs || [], premiumActive, careerPlan, careerAccessActive: Boolean(careerPlan) });
+  return NextResponse.json({ ok: true, cvs: cvs || [], premiumActive });
 }
 
 export async function POST(req: Request) {
@@ -79,7 +77,7 @@ export async function POST(req: Request) {
     let active: boolean | undefined;
     async function isActive() {
       if (active === undefined) {
-        active = await hasPremiumAccess(caller) || await hasCareerToolAccess(caller, "cv_builder");
+        active = await hasPremiumAccess(caller);
       }
       return active;
     }
@@ -136,8 +134,7 @@ export async function POST(req: Request) {
   // always allowed, active or not - editing content never requires
   // Premium Membership.
   if (requestedTemplate !== existing.template && !isFreeCvTemplate(requestedTemplate)) {
-    const active = await hasPremiumAccess({ userId: member.id, email: member.email })
-      || await hasCareerToolAccess({ userId: member.id, email: member.email }, "cv_builder");
+    const active = await hasPremiumAccess({ userId: member.id, email: member.email });
     if (!active) {
       return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to switch to this template." }, { status: 403 });
     }

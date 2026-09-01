@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Calendar, Clock, Layers, PlayCircle, Sparkles, Users, Video } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { VideoPlayer } from "@/components/videos/VideoPlayer";
@@ -10,6 +11,7 @@ import { RichText } from "@/components/RichText";
 import { RelatedSection } from "@/components/RelatedSection";
 import { VideoCard, type VideoCardData } from "@/components/videos/VideoCard";
 import { getSkillGraph } from "@/lib/careerPathGraph";
+import { formatMoney } from "@/lib/formatMoney";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -114,59 +116,105 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
   const publishedLabel = video.published_at
     ? new Date(video.published_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : null;
+  const accessLabel =
+    video.access === "premium"
+      ? [
+          "Premium",
+          video.price_usd ? formatMoney(video.price_usd, "USD") : null,
+          video.price_ngn ? formatMoney(video.price_ngn, "NGN") : null,
+        ].filter(Boolean).join(" ")
+      : "Free";
 
   return (
-    <div className="min-h-screen bg-background py-16">
-      <div className="mx-auto max-w-3xl px-4">
-        <Reveal>
-          <Breadcrumb
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Videos", href: "/videos" },
-              ...(video.category ? [{ label: video.category, href: `/videos?category=${encodeURIComponent(video.category)}` }] : []),
-              { label: video.title },
-            ]}
-          />
-
-          <div className="mt-4 flex items-start justify-between gap-4">
-            <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{video.title}</h1>
-            <SaveButton itemType="resource" itemId={video.id} className="flex-shrink-0" />
-          </div>
-        </Reveal>
-
-        <Reveal delay={40}>
-          <VideoPlayer resourceId={video.id} priceUsd={video.price_usd} priceNgn={video.price_ngn} />
-        </Reveal>
-
-        <Reveal delay={80}>
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-2xl border border-border bg-card p-5 sm:grid-cols-4">
-            {video.category && (
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Category</p><p className="mt-1 text-sm font-semibold text-foreground">{video.category}</p></div>
-            )}
-            <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Audience</p><p className="mt-1 text-sm font-semibold text-foreground">{AUDIENCE_LABELS[video.audience]}</p></div>
-            {video.duration_minutes && (
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Duration</p><p className="mt-1 text-sm font-semibold text-foreground">{video.duration_minutes} min</p></div>
-            )}
-            <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Source</p><p className="mt-1 text-sm font-semibold text-foreground">{SOURCE_LABELS[video.source] || video.source}</p></div>
-            {publishedLabel && (
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Published</p><p className="mt-1 text-sm font-semibold text-foreground">{publishedLabel}</p></div>
-            )}
-          </div>
-        </Reveal>
-
-        {video.description && (
-          <Reveal delay={100}>
-            <p className="mt-6 leading-relaxed text-muted-foreground">{video.description}</p>
+    <div className="min-h-screen bg-background pb-16">
+      <section className="border-b border-border bg-brand-bg">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+          <Reveal>
+            <Breadcrumb
+              items={[
+                { label: "Home", href: "/" },
+                { label: "Videos", href: "/videos" },
+                ...(video.category ? [{ label: video.category, href: `/videos?category=${encodeURIComponent(video.category)}` }] : []),
+                { label: video.title },
+              ]}
+            />
           </Reveal>
-        )}
+
+          <div className="mt-7 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+            <Reveal>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${video.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                    {accessLabel}
+                  </span>
+                  {video.category && (
+                    <Link href={`/videos?category=${encodeURIComponent(video.category)}`} className="rounded-full bg-muted px-3 py-1 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                      {video.category}
+                    </Link>
+                  )}
+                </div>
+                <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">{video.title}</h1>
+                {video.description && <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">{video.description}</p>}
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <a href="#watch" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    <PlayCircle size={18} aria-hidden="true" />
+                    Watch video
+                  </a>
+                  <SaveButton itemType="resource" itemId={video.id} className="flex-shrink-0" />
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={80}>
+              <aside className="rounded-lg border border-border bg-card p-5 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Video size={22} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">Video snapshot</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">A practical watch page connected to learning, skills and next steps.</p>
+                  </div>
+                </div>
+                <div className="mt-5 space-y-3">
+                  {[
+                    video.duration_minutes ? { icon: Clock, label: "Duration", value: `${video.duration_minutes} min` } : null,
+                    { icon: Users, label: "Audience", value: AUDIENCE_LABELS[video.audience] },
+                    { icon: Layers, label: "Source", value: SOURCE_LABELS[video.source] || video.source },
+                    publishedLabel ? { icon: Calendar, label: "Published", value: publishedLabel } : null,
+                  ].filter(Boolean).map((item) => {
+                    const Icon = item!.icon;
+                    return (
+                      <div key={item!.label} className="flex items-center gap-3 rounded-lg bg-muted p-3">
+                        <Icon size={16} className="text-primary" aria-hidden="true" />
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item!.label}</p>
+                          <p className="text-sm font-semibold text-foreground">{item!.value}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </aside>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-5xl px-4 pt-10">
+        <Reveal>
+          <section id="watch" className="scroll-mt-28">
+            <VideoPlayer resourceId={video.id} priceUsd={video.price_usd} priceNgn={video.price_ngn} />
+          </section>
+        </Reveal>
 
         {skills.length > 0 && (
           <Reveal delay={120}>
-            <div className="mt-8">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Topics</h2>
+            <div className="mt-8 rounded-lg border border-border bg-card p-6">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-primary">Topics</h2>
               <div className="mt-3 flex flex-wrap gap-2">
                 {skills.map((s) => (
-                  <Link key={s.slug} href={`/skills/${s.slug}`} className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/10">
+                  <Link key={s.slug} href={`/skills/${s.slug}`} className="inline-flex min-h-9 items-center rounded-full border border-primary/20 bg-primary/5 px-3 text-xs font-semibold text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     {s.name}
                   </Link>
                 ))}
@@ -177,8 +225,8 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
 
         {video.why_recommended && (
           <Reveal delay={140}>
-            <div className="mt-8 rounded-2xl border border-border bg-card p-6">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Why we recommend this</h2>
+            <div className="mt-8 rounded-lg border border-border bg-card p-6">
+              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary"><Sparkles size={15} aria-hidden="true" />Why we recommend this</h2>
               <RichText html={video.why_recommended} className="mt-2" />
             </div>
           </Reveal>
@@ -188,13 +236,13 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
           <RelatedSection title="WANT TO GO DEEPER?" items={[...graph.courses, ...graph.resources]} render={() => (
             <>
               {graph.courses.map((c) => (
-                <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+                <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>Course</span>
                   <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
                 </Link>
               ))}
               {graph.resources.map((r) => (
-                <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+                <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <span className="text-[10px] font-bold uppercase text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
                   <p className="mt-1.5 text-sm font-semibold text-foreground">{r.title}</p>
                 </Link>
@@ -205,7 +253,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
 
         <Reveal delay={200}>
           <RelatedSection title="WHERE CAN THIS TAKE YOU?" items={graph.careerPaths} render={() => graph.careerPaths.map((c) => (
-            <Link key={c.slug} href={`/career-paths/${c.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+            <Link key={c.slug} href={`/career-paths/${c.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{c.access}</span>
               <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
             </Link>
@@ -214,7 +262,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
 
         <Reveal delay={220}>
           <RelatedSection title="RELEVANT JOBS" items={graph.jobs} render={() => graph.jobs.map((j) => (
-            <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+            <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <p className="text-sm font-semibold text-foreground">{j.title}</p>
               {j.companies?.name && <p className="mt-0.5 text-xs text-muted-foreground">{j.companies.name}</p>}
             </Link>
@@ -223,7 +271,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
 
         <Reveal delay={240}>
           <RelatedSection title="RELEVANT OPPORTUNITIES" items={graph.opportunities} render={() => graph.opportunities.map((o) => (
-            <Link key={o.slug} href={`/opportunities/${o.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+            <Link key={o.slug} href={`/opportunities/${o.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <p className="text-sm font-semibold text-foreground">{o.title}</p>
               {o.organisation_name && <p className="mt-0.5 text-xs text-muted-foreground">{o.organisation_name}</p>}
             </Link>
@@ -233,7 +281,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
         {moreVideos.length > 0 && (
           <Reveal delay={260}>
             <div className="mt-10">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">More videos</h2>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-primary">More videos</h2>
               <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {moreVideos.map((v) => <VideoCard key={v.id} video={v} />)}
               </div>
@@ -243,7 +291,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
 
         {video.source !== "prowess" && (
           <p className="mt-10 text-center text-xs text-muted-foreground">
-            This video is hosted on {SOURCE_LABELS[video.source] || "a third-party site"} and shared here for its educational value - all rights belong to the original creator.
+            This video is hosted on {SOURCE_LABELS[video.source] || "a third-party site"} and shared here for its educational value. All rights belong to the original creator.
           </p>
         )}
       </div>

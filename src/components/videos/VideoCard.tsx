@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Play } from "lucide-react";
 import { getYoutubeThumbnail } from "@/lib/youtube";
 
 export type VideoCardData = {
@@ -33,18 +34,20 @@ export function VideoCard({ video, progressPercent }: { video: VideoCardData; pr
   return (
     <Link
       href={`/videos/${video.slug}`}
-      className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+      className="group block overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <div className="relative aspect-video w-full bg-muted">
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element -- external video-host thumbnail, not a local/optimizable asset
           <img src={thumb} alt={video.title} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">No thumbnail</div>
+          <div className="flex h-full w-full items-center justify-center bg-brand-bg text-primary">
+            <Play size={28} aria-hidden="true" />
+          </div>
         )}
         <span className="absolute inset-0 flex items-center justify-center bg-black/15 transition group-hover:bg-black/30">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-primary shadow">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+            <Play size={20} fill="currentColor" aria-hidden="true" />
           </span>
         </span>
         {video.access === "premium" && (
@@ -58,11 +61,11 @@ export function VideoCard({ video, progressPercent }: { video: VideoCardData; pr
       </div>
       <div className="p-5">
         {video.category && <p className="text-xs font-semibold uppercase tracking-wide text-primary">{video.category}</p>}
-        <h3 className="mt-1 font-semibold text-foreground line-clamp-2">{video.title}</h3>
+        <h3 className="mt-1 line-clamp-2 font-semibold text-foreground">{video.title}</h3>
         {typeof progressPercent === "number" ? (
           <p className="mt-2 text-xs text-muted-foreground">{progressPercent}% watched</p>
         ) : (
-          video.description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{video.description}</p>
+          video.description && <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{video.description}</p>
         )}
       </div>
     </Link>

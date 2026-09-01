@@ -1,8 +1,7 @@
 -- Interview Prep: a static, admin-authored question library (no AI, no
 -- submissions) - same content-library shape as Resources/Career Paths.
--- Gated by career_tool_purchases (Premium/Pro tiers) or Premium Membership,
--- checked the same way CV Checker/CV Builder already do via
--- hasCareerToolAccess()/hasPremiumAccess() - see src/app/api/interview-prep/route.ts.
+-- Gated by Premium Membership, checked via hasPremiumAccess() - see
+-- src/app/api/interview-prep/route.ts.
 create table if not exists interview_questions (
   id uuid primary key default gen_random_uuid(),
   role_category text not null,

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
-import { hasCareerToolAccess } from "@/lib/payments/careerTools";
 import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
 import { slugify } from "@/lib/slugify";
 
@@ -117,8 +116,7 @@ export async function GET(req: Request) {
       .select("id, slug, full_name, headline, bio, photo_url, projects, is_public, created_at, updated_at")
       .eq("user_id", member.id)
       .order("updated_at", { ascending: false }),
-    hasCareerToolAccess({ userId: member.id, email: member.email }, "portfolio_builder")
-      .then((v) => v || hasPremiumAccess({ userId: member.id, email: member.email })),
+    hasPremiumAccess({ userId: member.id, email: member.email }),
   ]);
 
   if (error) {
@@ -149,13 +147,12 @@ export async function POST(req: Request) {
   const supabase = supabaseAdmin();
 
   if (!id) {
-    // Portfolio Builder has no free tier at all (Pro-only, or Premium
-    // Membership) - unlike CV Builder there's nothing to fall back to, so
-    // every new portfolio requires active access, full stop.
-    const hasAccess = await hasCareerToolAccess({ userId: member.id, email: member.email }, "portfolio_builder")
-      || await hasPremiumAccess({ userId: member.id, email: member.email });
+    // Portfolio Builder has no free tier at all - unlike CV Builder there's
+    // nothing to fall back to, so every new portfolio requires active
+    // Premium Membership, full stop.
+    const hasAccess = await hasPremiumAccess({ userId: member.id, email: member.email });
     if (!hasAccess) {
-      return NextResponse.json({ ok: false, error: "Portfolio Builder needs Pro career access or Premium Membership." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Portfolio Builder needs Premium Membership." }, { status: 403 });
     }
 
     const slug = await getUniqueSlug(requestedSlug || validated.data.fullName);

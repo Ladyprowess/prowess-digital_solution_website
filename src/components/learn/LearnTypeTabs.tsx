@@ -12,18 +12,21 @@ export function LearnTypeTabs({
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {KIND_TABS.map((t) => (
-        <button
-          key={t.value}
-          type="button"
-          onClick={() => onChange(t.value as LearnKind | "")}
-          className={`flex-shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${
-            active === t.value ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-muted"
-          }`}
-        >
-          {t.label}
-        </button>
-      ))}
+      {KIND_TABS.map((t) => {
+        const tabActive = active === t.value || (t.value === "" && active === "course");
+        return (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => onChange(t.value as LearnKind | "")}
+            className={`min-h-10 flex-shrink-0 rounded-full border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+              tabActive ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-muted"
+            }`}
+          >
+            {t.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

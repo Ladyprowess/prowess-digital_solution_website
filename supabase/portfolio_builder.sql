@@ -1,8 +1,8 @@
--- Portfolio Builder: Pro-tier only (no free version - see
--- CAREER_PLAN_TOOLS in src/lib/payments/careerTools.ts, only 'pro'
--- includes 'portfolio_builder'). Two outputs from one saved record: a
--- public shareable page (/portfolio/[slug]) and a downloadable PDF
--- (reusing the same @react-pdf/renderer pattern as CV Builder).
+-- Portfolio Builder: Premium Membership only (no free tier - see
+-- hasPremiumAccess() in src/app/api/portfolio-builder/save/route.ts). Two
+-- outputs from one saved record: a public shareable page
+-- (/portfolio/[slug]) and a downloadable PDF (reusing the same
+-- @react-pdf/renderer pattern as CV Builder).
 create table if not exists member_portfolios (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,

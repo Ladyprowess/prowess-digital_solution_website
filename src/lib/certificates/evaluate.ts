@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { awardPoints, type Badge } from "@/lib/achievements/evaluate";
 
 export type EvaluationResult = {
   completed: boolean;
@@ -7,6 +8,8 @@ export type EvaluationResult = {
   certificateIssued: boolean;
   certificateAlreadyIssued: boolean;
   certificateBlockedReason: "missing_profile_name" | null;
+  pointsAwarded: number;
+  newBadges: Badge[];
 };
 
 const NOT_COMPLETED: EvaluationResult = {
@@ -15,7 +18,20 @@ const NOT_COMPLETED: EvaluationResult = {
   certificateIssued: false,
   certificateAlreadyIssued: false,
   certificateBlockedReason: null,
+  pointsAwarded: 0,
+  newBadges: [],
 };
+
+// Points/badges must never break completion/certificate issuance itself -
+// non-fatal, logged, and simply contribute 0 if it fails.
+async function awardActivityPoints(userId: string, activityType: "course_completed" | "certificate_earned", sourceId: string) {
+  try {
+    return await awardPoints(userId, activityType, sourceId);
+  } catch (err) {
+    console.error(`${activityType} points award failed:`, err);
+    return { pointsAwarded: 0, newBadges: [] as Badge[] };
+  }
+}
 
 const MAX_CODE_ATTEMPTS = 5;
 
@@ -174,10 +190,21 @@ export async function evaluateCourseCompletion(courseId: string, userId: string)
     newlyCompleted = true;
   }
 
+  // course_completed points are awarded whenever completion is confirmed
+  // true - not only when newlyCompleted this call - so a completion that
+  // already existed before the Achievement system shipped self-heals the
+  // very next time this evaluator runs for that learner (e.g. via the
+  // existing catch-up call), with no separate backfill script needed.
+  // Idempotent regardless: the ledger's unique constraint means calling
+  // this on an already-awarded course is always a safe no-op.
+  const coursePoints = await awardActivityPoints(userId, "course_completed", courseId);
+  let pointsAwarded = coursePoints.pointsAwarded;
+  let newBadges: Badge[] = [...coursePoints.newBadges];
+
   // Certificate step - only reached once completed is true, whether just
   // now or previously.
   if (!rules.issue_certificate_automatically) {
-    return { completed: true, newlyCompleted, certificateIssued: false, certificateAlreadyIssued: false, certificateBlockedReason: null };
+    return { completed: true, newlyCompleted, certificateIssued: false, certificateAlreadyIssued: false, certificateBlockedReason: null, pointsAwarded, newBadges };
   }
 
   const { data: existingCertificate } = await supabase
@@ -188,7 +215,13 @@ export async function evaluateCourseCompletion(courseId: string, userId: string)
     .maybeSingle();
 
   if (existingCertificate) {
-    return { completed: true, newlyCompleted, certificateIssued: false, certificateAlreadyIssued: true, certificateBlockedReason: null };
+    // Same self-healing reasoning as course_completed above - a
+    // certificate issued before the Achievement system shipped still
+    // earns its points the next time this evaluator runs.
+    const certPoints = await awardActivityPoints(userId, "certificate_earned", existingCertificate.id);
+    pointsAwarded += certPoints.pointsAwarded;
+    newBadges = [...newBadges, ...certPoints.newBadges];
+    return { completed: true, newlyCompleted, certificateIssued: false, certificateAlreadyIssued: true, certificateBlockedReason: null, pointsAwarded, newBadges };
   }
 
   const { data: profile } = await supabase.from("member_profiles").select("full_name").eq("id", userId).maybeSingle();
@@ -196,25 +229,32 @@ export async function evaluateCourseCompletion(courseId: string, userId: string)
   // No email fallback - a certificate reading "someone@example.com has
   // successfully completed..." looks broken, not professional.
   if (!profile?.full_name) {
-    return { completed: true, newlyCompleted, certificateIssued: false, certificateAlreadyIssued: false, certificateBlockedReason: "missing_profile_name" };
+    return { completed: true, newlyCompleted, certificateIssued: false, certificateAlreadyIssued: false, certificateBlockedReason: "missing_profile_name", pointsAwarded, newBadges };
   }
 
   const { data: course } = await supabase.from("courses").select("title").eq("id", courseId).maybeSingle();
 
   for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
-    const { error: certErr } = await supabase.from("certificates").insert({
-      user_id: userId,
-      course_id: courseId,
-      verification_code: generateVerificationCode(),
-      learner_name: profile.full_name,
-      course_title: course?.title || "Untitled course",
-    });
+    const { data: newCert, error: certErr } = await supabase
+      .from("certificates")
+      .insert({
+        user_id: userId,
+        course_id: courseId,
+        verification_code: generateVerificationCode(),
+        learner_name: profile.full_name,
+        course_title: course?.title || "Untitled course",
+      })
+      .select("id")
+      .single();
 
-    if (!certErr) {
-      return { completed: true, newlyCompleted, certificateIssued: true, certificateAlreadyIssued: false, certificateBlockedReason: null };
+    if (!certErr && newCert) {
+      const certPoints = await awardActivityPoints(userId, "certificate_earned", newCert.id);
+      pointsAwarded += certPoints.pointsAwarded;
+      newBadges = [...newBadges, ...certPoints.newBadges];
+      return { completed: true, newlyCompleted, certificateIssued: true, certificateAlreadyIssued: false, certificateBlockedReason: null, pointsAwarded, newBadges };
     }
 
-    if (certErr.code === "23505") {
+    if (certErr?.code === "23505") {
       // Two unique constraints share this error code - disambiguate by
       // re-querying (user_id, course_id) rather than assuming which fired.
       const { data: raceWinner } = await supabase
@@ -224,14 +264,17 @@ export async function evaluateCourseCompletion(courseId: string, userId: string)
         .eq("course_id", courseId)
         .maybeSingle();
       if (raceWinner) {
-        return { completed: true, newlyCompleted, certificateIssued: false, certificateAlreadyIssued: true, certificateBlockedReason: null };
+        const certPoints = await awardActivityPoints(userId, "certificate_earned", raceWinner.id);
+        pointsAwarded += certPoints.pointsAwarded;
+        newBadges = [...newBadges, ...certPoints.newBadges];
+        return { completed: true, newlyCompleted, certificateIssued: false, certificateAlreadyIssued: true, certificateBlockedReason: null, pointsAwarded, newBadges };
       }
       // No (user_id, course_id) row exists - the collision was on
       // verification_code specifically. Loop and try a fresh code.
       continue;
     }
 
-    throw new Error(`Could not issue certificate: ${certErr.message}`);
+    throw new Error(`Could not issue certificate: ${certErr?.message}`);
   }
 
   throw new Error(`Could not generate a unique verification code after ${MAX_CODE_ATTEMPTS} attempts`);

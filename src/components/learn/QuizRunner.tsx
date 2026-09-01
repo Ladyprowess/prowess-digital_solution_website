@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { completionBanner } from "@/lib/certificates/messages";
+import { completionBanner, activityBanner } from "@/lib/certificates/messages";
 
 type QuestionType = "single_choice" | "multiple_select" | "true_false" | "short_answer";
 type QuizOption = { id: string; option_text: string; position: number };
@@ -40,6 +40,8 @@ type SubmitResult = {
   newlyCompleted: boolean;
   certificateIssued: boolean;
   certificateBlockedReason: "missing_profile_name" | null;
+  pointsAwarded: number;
+  newBadges: { title: string }[];
 };
 
 async function authHeader() {
@@ -246,6 +248,7 @@ export function QuizRunner({ quizId, onComplete }: { quizId: string; lessonId: s
 
   if (quiz.quizType === "knowledge_check") {
     const kcBanner = submitResult ? completionBanner(submitResult) : null;
+    const kcActivity = submitResult ? activityBanner(submitResult) : null;
     return (
       <div className="mt-3 space-y-4 rounded-xl border border-border/60 p-4">
         <div>
@@ -272,6 +275,7 @@ export function QuizRunner({ quizId, onComplete }: { quizId: string; lessonId: s
             )}
           </p>
         )}
+        {kcActivity && <p className="text-sm font-semibold text-primary">{kcActivity}</p>}
       </div>
     );
   }
@@ -279,6 +283,7 @@ export function QuizRunner({ quizId, onComplete }: { quizId: string; lessonId: s
   // assessment
   if (submitResult) {
     const assessmentBanner = completionBanner(submitResult);
+    const assessmentActivity = activityBanner(submitResult);
     return (
       <div className="mt-3 rounded-xl border border-border/60 p-4">
         <p className="text-lg font-bold text-foreground">You scored {submitResult.scorePercent}%</p>
@@ -295,6 +300,7 @@ export function QuizRunner({ quizId, onComplete }: { quizId: string; lessonId: s
             )}
           </p>
         )}
+        {assessmentActivity && <p className="mt-1 text-sm font-semibold text-primary">{assessmentActivity}</p>}
         <div className="mt-3 flex flex-wrap gap-3">
           <button type="button" onClick={() => setReviewOpen((v) => !v)} className="text-sm font-semibold text-primary hover:underline">
             {reviewOpen ? "Hide answers" : "Review answers"}
