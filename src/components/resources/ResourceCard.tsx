@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BookOpen, Clock3, FileText, LockKeyhole, MoveRight } from "lucide-react";
 
 export type ResourceItem = {
   id: string;
@@ -32,6 +33,10 @@ function formatMB(bytes: number) {
   return `${mb.toFixed(1)} MB`;
 }
 
+function formatType(value?: string | null) {
+  return (value || "Resource").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function ResourceCard({ item }: { item: ResourceItem }) {
   // Priority: a real uploaded cover, then an explicit thumbnail_url. Video
   // has its own dedicated /videos experience and VideoCard component --
@@ -52,21 +57,15 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
   // older uploaded resources); resource_type/level are what the current
   // admin form actually writes. Fall back across both so neither an old
   // nor a new resource ends up with a blank badge.
-  const typeLabel = item.type || item.resource_type?.replace(/_/g, " ") || "Resource";
+  const typeLabel = item.type || formatType(item.resource_type);
   const metaLine = [item.category, item.stage].filter(Boolean).join(" • ");
 
   return (
     <Link
       href={`/resources/${item.slug}`}
-      className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+      className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-[border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
-      {/* Cover -- aspect ratio, not a fixed pixel height, so the crop
-          window stays the same shape at every card width instead of
-          getting much more severe on a narrow mobile grid column than on
-          a wide desktop one (that mismatch was what chopped cover text
-          off on mobile before). object-cover fills the box completely,
-          no letterbox padding. */}
-      <div className="relative aspect-[3/2] w-full bg-slate-100">
+      <div className="relative aspect-[4/3] w-full border-b border-border bg-muted">
         {coverSrc && !coverFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -76,56 +75,69 @@ export default function ResourceCard({ item }: { item: ResourceItem }) {
             onError={() => setCoverFailed(true)}
           />
         ) : (
-          <div className="h-full w-full flex flex-col items-center justify-center text-slate-500">
-            <div className="mb-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-              {typeLabel}
+          <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center text-muted-foreground">
+            <div className="flex h-12 w-12 items-center justify-center rounded-md border border-border bg-background text-primary">
+              <BookOpen size={22} strokeWidth={1.7} aria-hidden="true" />
             </div>
-            <p className="text-sm font-semibold text-slate-700">Resource</p>
-            {metaLine && <p className="mt-1 text-xs text-slate-500">{metaLine}</p>}
+            <p className="mt-3 text-sm font-semibold text-foreground">{typeLabel}</p>
+            {metaLine && <p className="mt-1 text-xs">{metaLine}</p>}
           </div>
         )}
 
-        <div className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700">
+        <div className="absolute right-3 top-3 rounded-md bg-background/95 px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm backdrop-blur">
           {typeLabel}
         </div>
         {item.access === "premium" && (
-          <div className="absolute left-3 top-3 rounded-full bg-[var(--steel-teal)] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground shadow-sm">
+            <LockKeyhole size={12} aria-hidden="true" />
             Premium
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-6">
+      <div className="flex flex-1 flex-col p-5">
         {metaLine && (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             {item.category && (
-              <span className="rounded-md bg-teal-50 px-2 py-1 font-medium text-slate-700">
+              <span className="rounded-md bg-muted px-2 py-1 font-medium text-foreground">
                 {item.category}
               </span>
             )}
-            {item.category && item.stage && <span className="text-slate-500">•</span>}
-            {item.stage && <span className="text-slate-600">{item.stage}</span>}
+            {item.category && item.stage && <span className="text-muted-foreground">•</span>}
+            {item.stage && <span className="text-muted-foreground">{item.stage}</span>}
           </div>
         )}
 
-        <h3 className="mt-4 text-xl font-semibold tracking-tight text-slate-900">
+        <h3 className="mt-4 line-clamp-2 text-base font-semibold leading-snug text-foreground">
           {item.title}
         </h3>
 
-        {item.description && <p className="mt-3 text-slate-600 line-clamp-3">{item.description}</p>}
+        {item.description && <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.description}</p>}
+
+        <div className="flex-1" />
 
         {(item.file_size || item.reading_minutes) && (
-          <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-4 text-sm text-slate-500">
-            {item.file_size ? <span>{formatMB(item.file_size)}</span> : null}
-            {item.reading_minutes ? <span>{item.file_size ? "• " : ""}{item.reading_minutes} min read</span> : null}
+          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4 text-xs text-muted-foreground">
+            {item.file_size ? (
+              <span className="inline-flex items-center gap-1.5">
+                <FileText size={14} aria-hidden="true" />
+                {formatMB(item.file_size)}
+              </span>
+            ) : null}
+            {item.reading_minutes ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Clock3 size={14} aria-hidden="true" />
+                {item.reading_minutes} min read
+              </span>
+            ) : null}
           </div>
         )}
 
-        <div className="mt-5">
-          <span className="block w-full rounded-xl bg-[var(--steel-teal)] px-4 py-3 text-center text-sm font-semibold text-white transition group-hover:opacity-90">
-            {item.access === "premium" ? "View resource" : "Read Online"}
+        <div className="mt-5 flex min-h-10 items-center justify-between gap-3">
+          <span className="text-sm font-semibold text-primary">
+            {item.access === "premium" ? "Open resource" : "Read online"}
           </span>
+          <MoveRight size={17} className="text-primary transition-transform duration-150 ease-out group-hover:translate-x-0.5" aria-hidden="true" />
         </div>
       </div>
     </Link>

@@ -55,38 +55,38 @@ export function ListingCard({
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${color.ring}`}
+      className={`group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card p-5 transition-[border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${color.ring}`}
     >
-      <span className={`absolute inset-x-0 top-0 h-1 ${color.bar} opacity-70 transition group-hover:opacity-100`} />
+      <span className={`absolute inset-x-0 top-0 h-0.5 ${color.bar} opacity-70 transition-opacity duration-150 ease-out group-hover:opacity-100`} />
 
       <div className="flex items-start justify-between gap-2">
-        <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color.chip}`}>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-md ${color.chip}`}>
           <MetaIcon name={icon} />
         </div>
         {badge && (
-          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
+          <span className="rounded-md bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
             {badge}
           </span>
         )}
       </div>
 
-      <span className={`mt-4 w-fit rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${color.chip}`}>
+      <span className={`mt-4 w-fit rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${color.chip}`}>
         {eyebrow}
       </span>
 
-      <h3 className="mt-3 text-lg font-bold leading-snug text-foreground">{title}</h3>
+      <h3 className="mt-3 text-base font-bold leading-snug text-foreground">{title}</h3>
       {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
       {description && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{description}</p>}
 
       {shownTags.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {shownTags.map((t) => (
-            <span key={t} className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${color.tag}`}>
+            <span key={t} className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${color.tag}`}>
               {t}
             </span>
           ))}
           {extraTags > 0 && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
               +{extraTags} more
             </span>
           )}

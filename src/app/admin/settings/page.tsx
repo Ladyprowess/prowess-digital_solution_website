@@ -13,6 +13,10 @@ type SettingsRow = {
   social_twitter: string | null;
   seo_title: string | null;
   seo_description: string | null;
+  premium_membership_monthly_usd: number | null;
+  premium_membership_monthly_ngn: number | null;
+  premium_membership_annual_usd: number | null;
+  premium_membership_annual_ngn: number | null;
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -40,12 +44,16 @@ function SettingsAdmin() {
   const [socialTwitter, setSocialTwitter] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
+  const [premiumMonthlyUsd, setPremiumMonthlyUsd] = useState("");
+  const [premiumMonthlyNgn, setPremiumMonthlyNgn] = useState("");
+  const [premiumAnnualUsd, setPremiumAnnualUsd] = useState("");
+  const [premiumAnnualNgn, setPremiumAnnualNgn] = useState("");
 
   useEffect(() => {
     async function load() {
       const { data, error } = await supabase
         .from("site_settings")
-        .select("contact_email, contact_phone, contact_location, social_linkedin, social_instagram, social_twitter, seo_title, seo_description")
+        .select("contact_email, contact_phone, contact_location, social_linkedin, social_instagram, social_twitter, seo_title, seo_description, premium_membership_monthly_usd, premium_membership_monthly_ngn, premium_membership_annual_usd, premium_membership_annual_ngn")
         .eq("id", 1)
         .maybeSingle();
       if (error) { setErr(error.message); setLoading(false); return; }
@@ -60,6 +68,10 @@ function SettingsAdmin() {
         setSocialTwitter(row.social_twitter || "");
         setSeoTitle(row.seo_title || "");
         setSeoDescription(row.seo_description || "");
+        setPremiumMonthlyUsd(row.premium_membership_monthly_usd?.toString() || "");
+        setPremiumMonthlyNgn(row.premium_membership_monthly_ngn?.toString() || "");
+        setPremiumAnnualUsd(row.premium_membership_annual_usd?.toString() || "");
+        setPremiumAnnualNgn(row.premium_membership_annual_ngn?.toString() || "");
       }
       setLoading(false);
     }
@@ -79,6 +91,10 @@ function SettingsAdmin() {
         social_twitter: socialTwitter.trim() || null,
         seo_title: seoTitle.trim() || null,
         seo_description: seoDescription.trim() || null,
+        premium_membership_monthly_usd: premiumMonthlyUsd ? Number(premiumMonthlyUsd) : null,
+        premium_membership_monthly_ngn: premiumMonthlyNgn ? Number(premiumMonthlyNgn) : null,
+        premium_membership_annual_usd: premiumAnnualUsd ? Number(premiumAnnualUsd) : null,
+        premium_membership_annual_ngn: premiumAnnualNgn ? Number(premiumAnnualNgn) : null,
         updated_at: new Date().toISOString(),
       });
       if (error) throw new Error(error.message);
@@ -140,6 +156,27 @@ function SettingsAdmin() {
           </Field>
           <Field label="Site description">
             <textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={3} className={inputCls} />
+          </Field>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-8">
+        <h2 className="text-lg font-semibold text-foreground">Premium Membership Pricing</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          One recurring price that unlocks every Premium feature site-wide (extra CV Builder templates, saving unlimited CVs, and any future premium tools) - not a per-template price.
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <Field label="Monthly (USD)">
+            <input type="number" min="0" value={premiumMonthlyUsd} onChange={(e) => setPremiumMonthlyUsd(e.target.value)} className={inputCls} placeholder="e.g. 5" />
+          </Field>
+          <Field label="Monthly (NGN)">
+            <input type="number" min="0" value={premiumMonthlyNgn} onChange={(e) => setPremiumMonthlyNgn(e.target.value)} className={inputCls} placeholder="e.g. 6900" />
+          </Field>
+          <Field label="Annual (USD)">
+            <input type="number" min="0" value={premiumAnnualUsd} onChange={(e) => setPremiumAnnualUsd(e.target.value)} className={inputCls} placeholder="e.g. 50" />
+          </Field>
+          <Field label="Annual (NGN)">
+            <input type="number" min="0" value={premiumAnnualNgn} onChange={(e) => setPremiumAnnualNgn(e.target.value)} className={inputCls} placeholder="e.g. 69000" />
           </Field>
         </div>
       </div>

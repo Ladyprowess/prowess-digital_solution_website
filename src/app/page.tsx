@@ -220,10 +220,10 @@ export default function ModernHomePage() {
               What are you here to do?
             </h2>
           </Reveal>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {goalCards.map((g, idx) => (
               <Reveal key={g.title} delay={idx * 60}>
-                <Link href={g.href} className="group block h-full rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+                <Link href={g.href} className="group block h-full rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <h3 className="mb-2 text-base font-bold text-foreground">{g.title}</h3>
                   <p className="text-sm leading-relaxed text-muted-foreground">{g.desc}</p>
                 </Link>
@@ -240,6 +240,7 @@ export default function ModernHomePage() {
             <div className="mb-10 text-center">
               <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Fresh On Prowess Digital Solutions</div>
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Opportunities worth knowing about</h2>
+              <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground">Jobs, grants, internships, fellowships, and openings that can move a person or a business forward.</p>
             </div>
           </Reveal>
           {loading ? (
@@ -308,6 +309,7 @@ export default function ModernHomePage() {
             <div className="mb-10 text-center">
               <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Learn</div>
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Learn something useful</h2>
+              <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground">Courses and practical lessons for careers, business, digital skills, and everyday growth.</p>
             </div>
           </Reveal>
           {loading ? (
@@ -387,12 +389,13 @@ export default function ModernHomePage() {
               <Reveal>
                 <div className="mb-10 text-center">
                   <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">The Library</div>
-                  <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">From the Prowess library</h2>
+                  <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Books, guides, and tools for later</h2>
+                  <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground">Build a personal shelf of ebooks, templates, articles, and business guides you can save and return to.</p>
                 </div>
               </Reveal>
               <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
                 <Reveal>
-                  <Link href={`/resources/${curatedHero.slug}`} className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                  <Link href={`/resources/${curatedHero.slug}`} className="group block overflow-hidden rounded-lg border border-border bg-card transition-[border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     {heroCoverSrc && !heroCoverFailed ? (
                       // Fixed aspect ratio, not a pixel height -- this
                       // column is full-width below lg and a 3fr column
@@ -432,19 +435,15 @@ export default function ModernHomePage() {
       })()}
 
       {/* TOOLS */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/70 py-20 sm:py-24">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-        </div>
-        <div className="relative mx-auto max-w-6xl px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 ring-1 ring-white/15">Tools</div>
+      <section className="bg-primary py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center rounded-md bg-primary-foreground/10 px-4 py-2 text-xs font-semibold text-primary-foreground ring-1 ring-primary-foreground/15">Tools</div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">Tools to help you move forward</h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/85">
-            Business tools - calculators, trackers, guides and templates - are free to use today. Career tools like CV and interview prep are next.
+            Use calculators, trackers, guides, templates, and business helpers today. Career tools like CV and interview prep are next.
           </p>
-          <Link href="/tools" className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-primary shadow-2xl transition hover:scale-[1.02] hover:bg-white/95">
-            Explore All Tools
+          <Link href="/tools" className="mt-8 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary-foreground px-7 text-sm font-semibold text-primary transition-[background-color,transform] duration-150 ease-out hover:scale-[1.01] hover:bg-primary-foreground/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            Explore all tools
           </Link>
         </div>
       </section>
@@ -465,7 +464,7 @@ export default function ModernHomePage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-3">
               {events.map((e) => (
-                <Link key={e.id} href={`/events/${e.slug}`} className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                <Link key={e.id} href={`/events/${e.slug}`} className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{e.type || "Event"}</span>
                   <h3 className="mt-1 text-base font-bold text-foreground">{e.title}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{new Date(e.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
@@ -485,28 +484,28 @@ export default function ModernHomePage() {
           <Reveal>
             <div className="mb-10 text-center">
               <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">For Businesses</div>
-              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Prowess Digital Solutions also helps businesses grow</h2>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">For businesses that need better systems</h2>
               <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-                Practical digital tools, resources and professional services designed to help businesses operate and grow.
+                Prowess helps founders and teams document work, understand their numbers, package their offers, and build repeatable operations.
               </p>
             </div>
           </Reveal>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="/tools" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <Link href="/tools" className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <h3 className="text-base font-bold text-foreground">Business Tools</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Tools for everyday business operations.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Calculators, trackers, and helpers for everyday operations.</p>
             </Link>
-            <Link href="/resources" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <Link href="/resources" className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <h3 className="text-base font-bold text-foreground">Business Resources</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Guides, templates and practical resources.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Guides, SOP templates, checklists, and practical reading.</p>
             </Link>
-            <Link href="/videos?audience=business" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <Link href="/videos?audience=business" className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <h3 className="text-base font-bold text-foreground">Business Videos</h3>
               <p className="mt-1 text-sm text-muted-foreground">Strategy, marketing and growth, on video.</p>
             </Link>
-            <Link href="/services" className="block rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-              <h3 className="text-base font-bold text-foreground">Digital Solutions</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Professional services for businesses that need extra support.</p>
+            <Link href="/services" className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <h3 className="text-base font-bold text-foreground">Business Services</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Diagnostics, SOPs, playbooks, and dashboards built with you.</p>
             </Link>
           </div>
           <div className="mt-8 text-center">
@@ -521,7 +520,7 @@ export default function ModernHomePage() {
           <Reveal>
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">One place to keep moving forward.</h2>
             <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-              Instead of searching across dozens of websites for jobs, learning resources, career advice and opportunities, Prowess Digital Solutions brings useful things together in one place.
+              Instead of searching across dozens of websites for jobs, learning resources, career advice, business guidance, and opportunities, Prowess Digital Solutions brings useful things together in one place.
             </p>
           </Reveal>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

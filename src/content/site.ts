@@ -1,6 +1,6 @@
 export const brand = {
   name: "Prowess Digital Solutions",
-  tagline: "Discover opportunities. Build your career.",
+  tagline: "Learn, work, build, and run better.",
   colour: "#507c80",
   tone: "Calm, clear, professional, honest, supportive",
 };
@@ -31,7 +31,7 @@ export const navPrimary = [
 export const navMore = [
   { href: "/blog", label: "Blog" },
   { href: "/videos", label: "Videos" },
-  { href: "/resources", label: "Resources" },
+  { href: "/resources", label: "Library" },
   { href: "/career-paths", label: "Career Paths" },
   { href: "/skills", label: "Skills" },
   { href: "/about", label: "About Us" },
@@ -60,7 +60,7 @@ export const goalCards = [
   },
   {
     title: "Learn a skill",
-    desc: "Courses, videos, e-books, guides and practical resources.",
+    desc: "Courses, videos, ebooks, guides and books you can save.",
     href: "/learn",
   },
   {
@@ -70,7 +70,7 @@ export const goalCards = [
   },
   {
     title: "Find useful tools",
-    desc: "Free and premium tools to help you work smarter.",
+    desc: "Business and career tools to help you work smarter.",
     href: "/tools",
   },
   {
@@ -81,10 +81,10 @@ export const goalCards = [
 ] as const;
 
 export const whyProwess = [
-  { title: "Curated", desc: "Useful content is selected and organised, not dumped in a directory." },
-  { title: "Practical", desc: "Resources are focused on things you can actually use." },
-  { title: "Accessible", desc: "A large portion of the platform remains free." },
-  { title: "Built for growth", desc: "Follow skills and career paths instead of consuming random content." },
+  { title: "Curated", desc: "Useful jobs, books, tools, and opportunities are selected and organised." },
+  { title: "Practical", desc: "Every resource points toward something you can learn, apply, or build." },
+  { title: "Personal", desc: "Your account keeps your saves, learning progress, videos, and purchases together." },
+  { title: "Built for business too", desc: "Founders get tools, guides, diagnostics, SOPs, and operating support." },
 ] as const;
 
 export const newsletterPreferences = [

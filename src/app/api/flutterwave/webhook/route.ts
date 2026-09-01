@@ -4,6 +4,7 @@ import { markMembershipPaid, markMembershipRenewalFailed, markMembershipCancelle
 import { markConsultationPaid } from "@/lib/payments/consultation";
 import { markSkillToBusinessPaid } from "@/lib/payments/skillToBusiness";
 import { markContentPurchasePaid } from "@/lib/payments/content";
+import { markPremiumMembershipPaid, markPremiumMembershipRenewalFailed, markPremiumMembershipCancelled } from "@/lib/payments/premiumMembership";
 import { sendEventRegistrationEmails } from "@/lib/events/emails";
 
 export const runtime = "nodejs";
@@ -39,16 +40,22 @@ export async function POST(req: Request) {
       if (data?.status === "successful") {
         return await handleSuccessfulCharge(data, metadata);
       }
-      if (data?.status === "failed" && metadata?.type === "membership" && metadata?.subscription_id) {
-        await markMembershipRenewalFailed(String(metadata.subscription_id));
+      if (data?.status === "failed" && metadata?.subscription_id) {
+        if (metadata?.type === "membership") {
+          await markMembershipRenewalFailed(String(metadata.subscription_id));
+        } else if (metadata?.type === "premium_membership") {
+          await markPremiumMembershipRenewalFailed(String(metadata.subscription_id));
+        }
       }
       return NextResponse.json({ ok: true });
     }
 
     if (event === "subscription.cancelled") {
-      const subscriptionId = await resolveSubscriptionId(data, metadata);
-      if (subscriptionId) {
-        await markMembershipCancelled(subscriptionId);
+      const resolved = await resolveSubscriptionId(data, metadata);
+      if (resolved?.table === "membership") {
+        await markMembershipCancelled(resolved.id);
+      } else if (resolved?.table === "premium_membership") {
+        await markPremiumMembershipCancelled(resolved.id);
       }
       return NextResponse.json({ ok: true });
     }
@@ -69,6 +76,13 @@ async function handleSuccessfulCharge(data: Record<string, unknown>, metadata: R
     const subscriptionId = metadata?.subscription_id as string | undefined;
     if (!subscriptionId) return NextResponse.json({ ok: true });
     await markMembershipPaid(subscriptionId, reference);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (metadata?.type === "premium_membership") {
+    const subscriptionId = metadata?.subscription_id as string | undefined;
+    if (!subscriptionId) return NextResponse.json({ ok: true });
+    await markPremiumMembershipPaid(subscriptionId, reference);
     return NextResponse.json({ ok: true });
   }
 
@@ -150,27 +164,74 @@ async function handleEventPayment(reference: string, metadata: Record<string, un
 }
 
 // subscription.cancelled payloads vary by how the plan/subscription was
-// created; try the metadata carried over from the original charge first,
-// then fall back to matching an active subscription by the Flutterwave plan
-// id Flutterwave reports for this event.
+// created; try the metadata carried over from the original charge first
+// (checked against both tables, whichever it belongs to), then fall back to
+// matching an active subscription by the Flutterwave plan id Flutterwave
+// reports for this event. Returns which table matched so the caller invokes
+// the right markXCancelled.
+//
+// A metadata-carried subscription_id doesn't say which table it belongs
+// to, so it's checked against both. The plan-id+email fallback is checked
+// against premium_membership_subscriptions first if this event's data
+// happens to carry a distinct subscription id (data?.id, for a
+// subscription-resource payload) matching flutterwave_subscription_id -
+// that's more specific than plan+email, which becomes ambiguous once
+// reactivation can create a second local row against the same shared plan.
 async function resolveSubscriptionId(
   data: Record<string, unknown>,
   metadata: Record<string, unknown>
-): Promise<string | null> {
-  if (metadata?.subscription_id) return String(metadata.subscription_id);
+): Promise<{ id: string; table: "membership" | "premium_membership" } | null> {
+  const supabase = supabaseAdmin();
+
+  if (metadata?.subscription_id) {
+    const id = String(metadata.subscription_id);
+    const { data: membershipMatch } = await supabase
+      .from("membership_subscriptions")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
+    if (membershipMatch) return { id, table: "membership" };
+
+    const { data: premiumMatch } = await supabase
+      .from("premium_membership_subscriptions")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
+    if (premiumMatch) return { id, table: "premium_membership" };
+  }
+
+  const subscriptionResourceId = data?.id as string | number | undefined;
+  if (subscriptionResourceId) {
+    const { data: byFlwSubId } = await supabase
+      .from("premium_membership_subscriptions")
+      .select("id")
+      .eq("flutterwave_subscription_id", String(subscriptionResourceId))
+      .eq("subscription_status", "active")
+      .maybeSingle();
+    if (byFlwSubId) return { id: byFlwSubId.id, table: "premium_membership" };
+  }
 
   const planId = (data?.plan ?? data?.payment_plan) as string | number | undefined;
   const email = (data?.customer as { email?: string } | undefined)?.email;
   if (!planId || !email) return null;
 
-  const supabase = supabaseAdmin();
-  const { data: sub } = await supabase
+  const { data: membershipSub } = await supabase
     .from("membership_subscriptions")
     .select("id")
     .eq("flutterwave_plan_id", String(planId))
     .eq("email", email)
     .eq("subscription_status", "active")
     .maybeSingle();
+  if (membershipSub) return { id: membershipSub.id, table: "membership" };
 
-  return sub?.id ?? null;
+  const { data: premiumSub } = await supabase
+    .from("premium_membership_subscriptions")
+    .select("id")
+    .eq("flutterwave_plan_id", String(planId))
+    .eq("email", email)
+    .eq("subscription_status", "active")
+    .maybeSingle();
+  if (premiumSub) return { id: premiumSub.id, table: "premium_membership" };
+
+  return null;
 }
