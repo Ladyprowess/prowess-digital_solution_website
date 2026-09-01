@@ -72,19 +72,22 @@ export default function CareerPathsPage() {
       }
       const allSkillIds = Array.from(skillToPaths.keys());
 
-      const [{ data: jobRows }, { data: courseMapRows }, { data: resourceMapRows }] =
+      const [{ data: jobRows }, { data: courseMapRows }, { data: resourceMapRows }, { data: careerContentRows }] =
         await Promise.all([
           allSkillIds.length === 0
             ? Promise.resolve({ data: [] })
             : supabase.from("job_skill_map").select("job_id, skill_id").in("skill_id", allSkillIds),
-          // Learning is explicit curation now (career_path_course_map /
-          // career_path_resource_map), not skill-tag matching - a resource
-          // sharing a skill with this career path (e.g. every "Web3"-tagged
-          // video showing up on the Web3 career path just because both are
-          // tagged "Web3") no longer counts unless an admin actually
-          // attached it via the "Learning for this career" picker.
+          // Learning counts from two sources: explicit curation
+          // (career_path_course_map/career_path_resource_map, an admin
+          // attaching a specific course/resource to a specific path via the
+          // "Learning for this career" picker) and, additively, any
+          // published resource an admin flagged "Career content" that
+          // shares a skill tag with this path (queried just below) - so
+          // checking that box is enough on its own, without also requiring
+          // the admin to separately attach it per-path.
           supabase.from("career_path_course_map").select("career_path_id, course_id"),
           supabase.from("career_path_resource_map").select("career_path_id, resource_id"),
+          supabase.from("resources").select("id, resource_skill_map(skill_id)").eq("status", "published").eq("show_in_learn", true).eq("show_in_career", true),
         ]);
 
       const jobsByPath = new Map<string, Set<string>>();
@@ -103,6 +106,19 @@ export default function CareerPathsPage() {
       for (const row of resourceMapRows || []) {
         if (!learningByPath.has(row.career_path_id)) learningByPath.set(row.career_path_id, new Set());
         learningByPath.get(row.career_path_id)!.add(`resource:${row.resource_id}`);
+      }
+      // Same key format ("resource:<id>") as the explicit resource curation
+      // above, so a resource that's both explicitly attached AND flagged
+      // "Career content" still only counts once per path (Set, not a list).
+      for (const row of careerContentRows || []) {
+        const matchedPaths = new Set<string>();
+        for (const m of row.resource_skill_map || []) {
+          for (const pathId of skillToPaths.get(m.skill_id) || []) matchedPaths.add(pathId);
+        }
+        for (const pathId of matchedPaths) {
+          if (!learningByPath.has(pathId)) learningByPath.set(pathId, new Set());
+          learningByPath.get(pathId)!.add(`resource:${row.id}`);
+        }
       }
 
       const withCounts: PathWithCounts[] = ((pathRows as PathRow[]) || []).map((p) => ({

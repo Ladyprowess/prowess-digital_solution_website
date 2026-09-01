@@ -277,7 +277,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   const skillSlugs = skills.map((s) => s.slug);
   const nowIso = new Date().toISOString();
 
-  const [responsibilities, roadmapStages, careerRoles, careerTools, projects, jobIds, oppIds, courseMap, resourceMap, jobCounts] = await Promise.all([
+  const [responsibilities, roadmapStages, careerRoles, careerTools, projects, jobIds, oppIds, courseMap, resourceMap, jobCounts, careerContentResourceIds] = await Promise.all([
     getResponsibilities(path.id),
     getRoadmapStages(path.id),
     getCareerRoles(path.id),
@@ -288,6 +288,10 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
     learningMapForPath("career_path_course_map", "course_id", path.id),
     learningMapForPath("career_path_resource_map", "resource_id", path.id),
     jobsCountBySkill(skillIds),
+    // Resources an admin flagged "Career content" that also share a skill
+    // tag with this path - additive to the explicit curation above, not a
+    // replacement (see career-paths/page.tsx's identical merge).
+    idsForSkills("resource_skill_map", "resource_id", skillIds),
   ]);
 
   // Sorted by position and capped here, before the queries below - those
@@ -298,8 +302,12 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   // curated with more than LEARNING_LIMIT courses or resources.
   const courseIds = Array.from(courseMap.keys()).sort((a, b) => courseMap.get(a)! - courseMap.get(b)!).slice(0, LEARNING_LIMIT);
   const resourceIds = Array.from(resourceMap.keys()).sort((a, b) => resourceMap.get(a)! - resourceMap.get(b)!).slice(0, LEARNING_LIMIT);
+  // Resources auto-matched via "Career content" + shared skill tag, minus
+  // whatever's already explicitly curated above (no double-fetching/no
+  // duplicate entries once merged into learningItems below).
+  const autoCareerContentIds = careerContentResourceIds.filter((id) => !resourceIds.includes(id));
 
-  const [jobRows, oppRows, courseRows, resourceRows] = await Promise.all([
+  const [jobRows, oppRows, courseRows, resourceRows, careerContentResourceRows] = await Promise.all([
     jobIds.length
       ? supabase.from("jobs")
           .select("id, slug, title, location_type, country, city, salary_min, salary_max, salary_currency, salary_period, experience_level, deadline_at, published_at, featured, companies!inner(name, logo_url, verified), job_categories(name), job_types(name), job_skill_map(skills(slug, name))")
@@ -318,6 +326,10 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
       : Promise.resolve({ data: [] }),
     resourceIds.length
       ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true).in("resource_type", LEARN_RESOURCE_KINDS).in("id", resourceIds)
+          .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
+      : Promise.resolve({ data: [] }),
+    autoCareerContentIds.length
+      ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true).eq("show_in_career", true).in("resource_type", LEARN_RESOURCE_KINDS).in("id", autoCareerContentIds)
           .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
       : Promise.resolve({ data: [] }),
   ]);
@@ -372,12 +384,20 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   // both when the admin saves, so sorting the combined list by position
   // here reconstructs that exact admin-chosen order regardless of which
   // table each item actually came from.
-  const learningItems: LearnItem[] = [
+  const curatedLearningItems: LearnItem[] = [
     ...((courseRows.data as unknown as CourseRow[]) || []).map(courseToLearnItem).map((item) => ({ item, position: courseMap.get(item.id) ?? 0 })),
     ...((resourceRows.data as unknown as ResourceRow[]) || []).map(resourceToLearnItem).map((item) => ({ item, position: resourceMap.get(item.id) ?? 0 })),
   ]
     .sort((a, b) => a.position - b.position)
     .map(({ item }) => item);
+
+  // "Career content" resources fill in after the admin's explicit curation
+  // above, not instead of it - curated items always come first, these are
+  // a supplement, so the LEARNING_LIMIT cap here is safe (unlike the
+  // courses/resources concatenation above, nothing here has a competing
+  // claim to come first).
+  const autoCareerLearningItems: LearnItem[] = ((careerContentResourceRows.data as unknown as ResourceRow[]) || []).map(resourceToLearnItem);
+  const learningItems: LearnItem[] = [...curatedLearningItems, ...autoCareerLearningItems].slice(0, LEARNING_LIMIT);
 
   const skillMatrixRows: SkillMatrixRow[] = skills.map((s) => ({
     slug: s.slug, name: s.name, level: s.level, jobsCount: jobCounts.get(s.id) || 0,
