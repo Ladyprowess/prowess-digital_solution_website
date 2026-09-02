@@ -111,6 +111,9 @@ export default function EventRegistrationPage() {
 
   const [feedbackName, setFeedbackName] = useState("");
   const [feedbackEmail, setFeedbackEmail] = useState("");
+  const [feedbackCheckEmail, setFeedbackCheckEmail] = useState("");
+  const [feedbackVerified, setFeedbackVerified] = useState(false);
+  const [feedbackChecking, setFeedbackChecking] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [feedbackBody, setFeedbackBody] = useState("");
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
@@ -248,11 +251,51 @@ export default function EventRegistrationPage() {
       return;
     }
 
-    setFeedbackName("");
-    setFeedbackEmail("");
-    setFeedbackRating(5);
-    setFeedbackBody("");
-    setFeedbackMsg("Thank you. Your feedback has been submitted for review.");
+      setFeedbackName("");
+      setFeedbackEmail("");
+      setFeedbackCheckEmail("");
+      setFeedbackVerified(false);
+      setFeedbackMsg("");
+      setFeedbackRating(5);
+      setFeedbackBody("");
+      setFeedbackMsg("Thank you. Your feedback has been submitted for review.");
+  }
+
+  async function handleFeedbackVerification(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setFeedbackMsg("");
+
+    if (!event?.id) {
+      setFeedbackMsg("Event not found. Please refresh.");
+      return;
+    }
+    if (!feedbackCheckEmail.trim()) {
+      setFeedbackMsg("Enter the email you used to register.");
+      return;
+    }
+
+    setFeedbackChecking(true);
+    const res = await fetch("/api/events/feedback/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event_id: event.id,
+        email: feedbackCheckEmail.trim(),
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    setFeedbackChecking(false);
+
+    if (!res.ok) {
+      setFeedbackVerified(false);
+      setFeedbackMsg(data?.error || "We could not verify this registration.");
+      return;
+    }
+
+    setFeedbackName(data?.attendee?.name || "");
+    setFeedbackEmail(data?.attendee?.email || feedbackCheckEmail.trim());
+    setFeedbackVerified(true);
+    setFeedbackMsg("");
   }
 
   if (loading) {
@@ -526,83 +569,132 @@ export default function EventRegistrationPage() {
                 )}
               </div>
 
-              <form onSubmit={handleFeedback} className="rounded-lg border border-border bg-card p-6">
-                <h2 className="text-xl font-semibold text-foreground">Leave feedback</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Use the same email you registered with. Feedback is reviewed before it appears publicly.
-                </p>
+              <div className="rounded-lg border border-border bg-card p-6">
+                {feedbackVerified ? (
+                  <form onSubmit={handleFeedback}>
+                    <h2 className="text-xl font-semibold text-foreground">Leave feedback</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Verified as {feedbackName || feedbackEmail}. Your feedback is reviewed before it appears publicly.
+                    </p>
 
-                <div className="mt-5 space-y-4">
-                  <div>
-                    <label htmlFor="feedback-name" className="text-sm font-semibold text-foreground">Name</label>
-                    <input
-                      id="feedback-name"
-                      type="text"
-                      autoComplete="name"
-                      value={feedbackName}
-                      onChange={(e) => setFeedbackName(e.target.value)}
-                      className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    />
-                  </div>
+                    <div className="mt-5 space-y-4">
+                      <div>
+                        <label htmlFor="feedback-name" className="text-sm font-semibold text-foreground">Name</label>
+                        <input
+                          id="feedback-name"
+                          type="text"
+                          autoComplete="name"
+                          value={feedbackName}
+                          onChange={(e) => setFeedbackName(e.target.value)}
+                          className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        />
+                      </div>
 
-                  <div>
-                    <label htmlFor="feedback-email" className="text-sm font-semibold text-foreground">Email</label>
-                    <input
-                      id="feedback-email"
-                      type="email"
-                      autoComplete="email"
-                      value={feedbackEmail}
-                      onChange={(e) => setFeedbackEmail(e.target.value)}
-                      className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    />
-                    <p className="mt-1 text-xs text-muted-foreground">Your email is for verification. It will not be shown publicly.</p>
-                  </div>
+                      <div>
+                        <label htmlFor="feedback-email" className="text-sm font-semibold text-foreground">Registered email</label>
+                        <input
+                          id="feedback-email"
+                          type="email"
+                          autoComplete="email"
+                          value={feedbackEmail}
+                          readOnly
+                          className="mt-2 min-h-10 w-full rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        />
+                        <p className="mt-1 text-xs text-muted-foreground">This must match the event registration list.</p>
+                      </div>
 
-                  <fieldset>
-                    <legend className="text-sm font-semibold text-foreground">Rating</legend>
-                    <div className="mt-2 flex gap-2">
-                      {[1, 2, 3, 4, 5].map((value) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => setFeedbackRating(value)}
-                          aria-label={`Rate ${value} out of 5`}
-                          className={`inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                            feedbackRating >= value
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border bg-background text-muted-foreground hover:bg-muted"
-                          }`}
-                        >
-                          <Star className={`h-4 w-4 ${feedbackRating >= value ? "fill-current" : ""}`} aria-hidden />
-                        </button>
-                      ))}
+                      <fieldset>
+                        <legend className="text-sm font-semibold text-foreground">Rating</legend>
+                        <div className="mt-2 flex gap-2">
+                          {[1, 2, 3, 4, 5].map((value) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setFeedbackRating(value)}
+                              aria-label={`Rate ${value} out of 5`}
+                              className={`inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                feedbackRating >= value
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border bg-background text-muted-foreground hover:bg-muted"
+                              }`}
+                            >
+                              <Star className={`h-4 w-4 ${feedbackRating >= value ? "fill-current" : ""}`} aria-hidden />
+                            </button>
+                          ))}
+                        </div>
+                      </fieldset>
+
+                      <div>
+                        <label htmlFor="feedback-body" className="text-sm font-semibold text-foreground">Feedback</label>
+                        <textarea
+                          id="feedback-body"
+                          rows={5}
+                          value={feedbackBody}
+                          onChange={(e) => setFeedbackBody(e.target.value)}
+                          placeholder="The session helped me understand..."
+                          className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm leading-6 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        />
+                      </div>
                     </div>
-                  </fieldset>
 
-                  <div>
-                    <label htmlFor="feedback-body" className="text-sm font-semibold text-foreground">Feedback</label>
-                    <textarea
-                      id="feedback-body"
-                      rows={5}
-                      value={feedbackBody}
-                      onChange={(e) => setFeedbackBody(e.target.value)}
-                      placeholder="The session helped me understand..."
-                      className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm leading-6 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    />
-                  </div>
-                </div>
+                    <button
+                      type="submit"
+                      disabled={feedbackSubmitting}
+                      className="mt-6 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
+                    >
+                      {feedbackSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquare className="h-4 w-4" aria-hidden />}
+                      {feedbackSubmitting ? "Submitting..." : "Submit feedback"}
+                    </button>
 
-                <button
-                  type="submit"
-                  disabled={feedbackSubmitting}
-                  className="mt-6 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
-                >
-                  {feedbackSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquare className="h-4 w-4" aria-hidden />}
-                  {feedbackSubmitting ? "Submitting..." : "Submit feedback"}
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeedbackVerified(false);
+                        setFeedbackName("");
+                        setFeedbackEmail("");
+                        setFeedbackBody("");
+                        setFeedbackMsg("");
+                      }}
+                      className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      Use a different email
+                    </button>
 
-                {feedbackMsg ? <p className="mt-4 text-sm text-muted-foreground">{feedbackMsg}</p> : null}
-              </form>
+                    {feedbackMsg ? <p className="mt-4 text-sm text-muted-foreground">{feedbackMsg}</p> : null}
+                  </form>
+                ) : (
+                  <form onSubmit={handleFeedbackVerification}>
+                    <h2 className="text-xl font-semibold text-foreground">Registered attendees only</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Enter the email used for this event registration. The feedback form will open after the email is confirmed.
+                    </p>
+
+                    <div className="mt-5">
+                      <label htmlFor="feedback-check-email" className="text-sm font-semibold text-foreground">Registered email</label>
+                      <input
+                        id="feedback-check-email"
+                        type="email"
+                        autoComplete="email"
+                        value={feedbackCheckEmail}
+                        onChange={(e) => setFeedbackCheckEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={feedbackChecking}
+                      className="mt-5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
+                    >
+                      {feedbackChecking ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <CheckCircle2 className="h-4 w-4" aria-hidden />}
+                      {feedbackChecking ? "Checking..." : "Open feedback form"}
+                    </button>
+
+                    {feedbackMsg ? <p className="mt-4 text-sm text-muted-foreground">{feedbackMsg}</p> : null}
+                  </form>
+                )}
+              </div>
             </div>
           </Container>
         </section>

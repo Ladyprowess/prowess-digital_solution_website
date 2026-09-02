@@ -30,6 +30,12 @@ export default function AdminEventFeedbackPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualRating, setManualRating] = useState(5);
+  const [manualBody, setManualBody] = useState("");
+  const [manualStatus, setManualStatus] = useState<FeedbackRow["status"]>("approved");
+  const [manualSubmitting, setManualSubmitting] = useState(false);
 
   const filteredItems = useMemo(() => {
     if (filter === "all") return items;
@@ -85,6 +91,40 @@ export default function AdminEventFeedbackPage() {
     setItems((prev) => prev.map((item) => item.id === id ? { ...item, status } : item));
   }
 
+  async function addManualFeedback(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setMessage("");
+
+    if (!manualName.trim() || !manualEmail.trim() || !manualBody.trim()) {
+      setMessage("Name, email and feedback are required.");
+      return;
+    }
+
+    setManualSubmitting(true);
+    const { error } = await supabase.from("event_feedback").insert({
+      event_id: eventId,
+      attendee_name: manualName.trim(),
+      attendee_email: manualEmail.trim().toLowerCase(),
+      rating: manualRating,
+      body: manualBody.trim(),
+      status: manualStatus,
+    });
+    setManualSubmitting(false);
+
+    if (error) {
+      setMessage(error.code === "23505" ? "Feedback already exists for this email and event." : error.message);
+      return;
+    }
+
+    setManualName("");
+    setManualEmail("");
+    setManualRating(5);
+    setManualBody("");
+    setManualStatus("approved");
+    setMessage("Feedback added.");
+    await load();
+  }
+
   return (
     <div>
       <div className="mx-auto w-full max-w-5xl">
@@ -116,6 +156,102 @@ export default function AdminEventFeedbackPage() {
             </div>
           ))}
         </div>
+
+        <form onSubmit={addManualFeedback} className="mt-6 rounded-lg border border-border bg-card p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <MessageSquare className="h-5 w-5" aria-hidden />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Add feedback manually</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Use this when feedback is collected outside the website. Approved feedback appears publicly.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="manual-feedback-name" className="text-sm font-semibold text-foreground">Name</label>
+              <input
+                id="manual-feedback-name"
+                type="text"
+                autoComplete="name"
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="manual-feedback-email" className="text-sm font-semibold text-foreground">Email</label>
+              <input
+                id="manual-feedback-email"
+                type="email"
+                autoComplete="email"
+                value={manualEmail}
+                onChange={(e) => setManualEmail(e.target.value)}
+                className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="manual-feedback-status" className="text-sm font-semibold text-foreground">Status</label>
+              <select
+                id="manual-feedback-status"
+                value={manualStatus}
+                onChange={(e) => setManualStatus(e.target.value as FeedbackRow["status"])}
+                className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </div>
+
+            <fieldset>
+              <legend className="text-sm font-semibold text-foreground">Rating</legend>
+              <div className="mt-2 flex gap-2">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setManualRating(value)}
+                    aria-label={`Rate ${value} out of 5`}
+                    className={cn(
+                      "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      manualRating >= value
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Star className={cn("h-4 w-4", manualRating >= value && "fill-current")} aria-hidden />
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <div className="sm:col-span-2">
+              <label htmlFor="manual-feedback-body" className="text-sm font-semibold text-foreground">Feedback</label>
+              <textarea
+                id="manual-feedback-body"
+                rows={4}
+                value={manualBody}
+                onChange={(e) => setManualBody(e.target.value)}
+                className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm leading-6 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={manualSubmitting}
+            className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
+          >
+            {manualSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquare className="h-4 w-4" aria-hidden />}
+            {manualSubmitting ? "Adding..." : "Add feedback"}
+          </button>
+        </form>
 
         <div className="mt-6 flex flex-wrap items-center gap-2">
           {(["pending", "approved", "hidden", "all"] as const).map((value) => (

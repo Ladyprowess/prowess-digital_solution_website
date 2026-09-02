@@ -73,6 +73,7 @@ type EventsResponse = {
   items?: RawEventItem[];
   data?: RawEventItem[];
   events?: RawEventItem[];
+  has_next?: boolean;
 };
 
 const EVENT_TYPES = ["All", "Webinar", "Workshop", "Business Clinic"];
@@ -218,6 +219,8 @@ export default function EventsPage() {
 
   const [upcomingPage, setUpcomingPage] = useState(1);
   const [pastPage, setPastPage] = useState(1);
+  const [hasUpcomingNext, setHasUpcomingNext] = useState(false);
+  const [hasPastNext, setHasPastNext] = useState(false);
 
   // modal state
   const [open, setOpen] = useState(false);
@@ -285,6 +288,7 @@ export default function EventsPage() {
 
       if (!res.ok) {
         setUpcoming([]);
+        setHasUpcomingNext(false);
         setUpcomingError(`Failed to load upcoming events (status ${res.status})`);
         return;
       }
@@ -293,8 +297,10 @@ export default function EventsPage() {
       const normalised = raw.map(normaliseEvent);
 
       setUpcoming(normalised.filter((e) => !isPastEvent(e.date)));
+      setHasUpcomingNext(Boolean(json?.has_next));
     } catch (err: unknown) {
       setUpcoming([]);
+      setHasUpcomingNext(false);
       setUpcomingError(err instanceof Error ? err.message : "Network error loading upcoming events.");
     } finally {
       setLoadingUpcoming(false);
@@ -312,6 +318,7 @@ export default function EventsPage() {
 
       if (!res.ok) {
         setPast([]);
+        setHasPastNext(false);
         setPastError(`Failed to load past events (status ${res.status})`);
         return;
       }
@@ -320,8 +327,10 @@ export default function EventsPage() {
       const normalised = raw.map(normaliseEvent);
 
       setPast(normalised.filter((e) => isPastEvent(e.date)));
+      setHasPastNext(Boolean(json?.has_next));
     } catch (err: unknown) {
       setPast([]);
+      setHasPastNext(false);
       setPastError(err instanceof Error ? err.message : "Network error loading past events.");
     } finally {
       setLoadingPast(false);
@@ -408,9 +417,6 @@ export default function EventsPage() {
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
-
-  const isUpcomingLastPage = upcoming.length < PAGE_SIZE;
-  const isPastLastPage = past.length < PAGE_SIZE;
 
   function goToInternalEventPage(item: EventItem) {
     // If we have slug, use internal page
@@ -612,7 +618,7 @@ export default function EventsPage() {
             )}
           </div>
 
-          {!upcomingError && !loadingUpcoming && (upcoming.length > 0 || upcomingPage > 1) ? (
+          {!upcomingError && !loadingUpcoming && (hasUpcomingNext || upcomingPage > 1) ? (
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <button
                 type="button"
@@ -628,7 +634,7 @@ export default function EventsPage() {
               <button
                 type="button"
                 onClick={() => setUpcomingPage((p) => p + 1)}
-                disabled={loadingUpcoming || isUpcomingLastPage}
+                disabled={loadingUpcoming || !hasUpcomingNext}
                 className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Next
@@ -711,7 +717,7 @@ export default function EventsPage() {
               )}
             </div>
 
-            {!pastError && !loadingPast && (past.length > 0 || pastPage > 1) ? (
+            {!pastError && !loadingPast && (hasPastNext || pastPage > 1) ? (
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <button
                   type="button"
@@ -727,7 +733,7 @@ export default function EventsPage() {
                 <button
                   type="button"
                   onClick={() => setPastPage((p) => p + 1)}
-                  disabled={loadingPast || isPastLastPage}
+                  disabled={loadingPast || !hasPastNext}
                   className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Next

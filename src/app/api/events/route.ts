@@ -8,6 +8,28 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+type EventDbRow = {
+  id: string;
+  title: string;
+  type: string | null;
+  description: string | null;
+  date: string | null;
+  time: string | null;
+  duration: string | null;
+  location: string | null;
+  price: number | null;
+  spots_left: number | null;
+  cover_url: string | null;
+  registration_url: string | null;
+  slug: string | null;
+  start_datetime: string | null;
+  registration_type: "free" | "paid" | null;
+  price_usd: number | null;
+  price_ngn: number | null;
+  status: string;
+  created_at: string;
+};
+
 function toISODateOnly(input: string) {
   return input ? input.slice(0, 10) : "";
 }
@@ -23,8 +45,9 @@ export async function GET(req: Request) {
     const month = searchParams.get("month"); // "1".."12" or "All"
     const q = searchParams.get("q");
 
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
+    const pageSize = Math.max(1, limit);
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize;
 
     const todayISO = new Date().toISOString().slice(0, 10);
 
@@ -34,8 +57,7 @@ export async function GET(req: Request) {
       .select(
         "id,title,type,description,date,time,duration,location,price,spots_left,cover_url,registration_url,slug,start_datetime,registration_type,price_usd,price_ngn,status,created_at"
       )
-      .eq("status", "published")
-      .range(from, to);
+      .eq("status", "published");
 
     // Sorting
     if (scope === "upcoming") {
@@ -72,7 +94,7 @@ export async function GET(req: Request) {
 
     // Normalise + Month filter (done in code so you don't need a "month" DB column)
     let items =
-      (data || []).map((e: any) => {
+      ((data || []) as EventDbRow[]).map((e) => {
         const start = e.start_datetime || null;
 
         const date = e.date
@@ -110,15 +132,25 @@ export async function GET(req: Request) {
     // ✅ Month filter here (if user selected a month)
     if (month && month !== "All") {
       const monthNum = Number(month);
-      items = items.filter((ev: any) => {
+      items = items.filter((ev) => {
         if (!ev.date) return false;
         const d = new Date(ev.date);
         return d.getMonth() + 1 === monthNum;
       });
     }
 
-    return NextResponse.json({ ok: true, items });
-  } catch (err: any) {
+    const total = items.length;
+    const pagedItems = items.slice(from, to);
+
+    return NextResponse.json({
+      ok: true,
+      items: pagedItems,
+      total,
+      page,
+      limit: pageSize,
+      has_next: to < total,
+    });
+  } catch (err: unknown) {
     console.error("EVENTS API CRASH:", err);
     return NextResponse.json({ ok: false, error: "Internal server error" }, { status: 500 });
   }
