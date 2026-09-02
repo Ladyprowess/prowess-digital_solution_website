@@ -4,16 +4,16 @@ import ServicesPageClient from "./ServicesPageClient";
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
-  title: "Our Services - Business & Career Support",
+  title: "Business Services",
   description:
-    "See everything Prowess Digital Solutions offers, from a free business toolkit to paid consulting and career resources, all in one place.",
+    "Explore business support from Prowess Digital Solutions, including diagnostics, SOP documentation, offer playbooks, financial tracking, tools and ongoing support.",
   alternates: {
     canonical: `${SITE_URL}/services`,
   },
   openGraph: {
-    title: "Our Services - Business & Career Support",
+    title: "Business Services",
     description:
-      "See everything Prowess Digital Solutions offers, from a free business toolkit to paid consulting and career resources, all in one place.",
+      "Explore business support from Prowess Digital Solutions, including diagnostics, SOP documentation, offer playbooks, financial tracking, tools and ongoing support.",
     url: `${SITE_URL}/services`,
     type: "website",
   },

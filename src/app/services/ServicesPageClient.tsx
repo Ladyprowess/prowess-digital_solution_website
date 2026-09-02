@@ -110,7 +110,7 @@ export default function ServicesPageClient() {
             We teach businesses how to run with <span className="text-primary">structure.</span>
           </>
         }
-        description="Whether you are about to start a business, already running one, or trying to grow what you have built, Prowess Digital Solutions has something for you. Free tools, fixed scope diagnostics, practical systems, and ongoing support, wherever you are building."
+        description="Whether you are about to start a business, already running one, or trying to grow what you have built, Prowess Digital Solutions helps you put structure behind the work. Start with free tools, then move into diagnostics, systems and ongoing support when you are ready."
         primaryAction={{ label: "Start a Conversation", href: "/contact" }}
         secondaryAction={{ label: "See Everything We Offer", href: "#our-services" }}
         proof={[
@@ -260,6 +260,65 @@ export default function ServicesPageClient() {
               </div>
             </div>
           </div>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* ── PROOF PATH ───────────────────────────────────────────────────── */}
+      <section className="section bg-card">
+        <Container>
+          <Reveal>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
+              <div>
+                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
+                  Before You Choose
+                </p>
+                <h2 className="text-3xl font-bold leading-snug text-foreground sm:text-4xl">
+                  See how the work looks in real businesses.
+                </h2>
+                <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">
+                  The case studies show the kinds of problems we help business owners untangle,
+                  from unclear operations to weak tracking, messy handovers and growth that feels
+                  harder than it should.
+                </p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="/case-studies"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    View case studies
+                  </Link>
+                  <Link
+                    href="/services/business-structure-diagnostic"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-background px-6 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    Start with a diagnostic
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+                {[
+                  {
+                    title: "Understand the problem",
+                    body: "We look at what is actually happening before suggesting a fix.",
+                  },
+                  {
+                    title: "Build the right system",
+                    body: "The work turns messy processes into clearer routines, tools and documents.",
+                  },
+                  {
+                    title: "Make growth easier to manage",
+                    body: "The goal is a business owner who can see the next decision more clearly.",
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="rounded-lg border border-border bg-background p-5">
+                    <h3 className="text-base font-bold text-foreground">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </Reveal>
         </Container>
       </section>
