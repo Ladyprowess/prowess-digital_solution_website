@@ -8,7 +8,6 @@ import {
   BookOpen,
   BriefcaseBusiness,
   ChevronDown,
-  Contact,
   FileText,
   Library,
   Map,
@@ -47,7 +46,6 @@ const menuGroups = [
     items: [
       { href: "/services", label: "For Businesses", description: "Diagnostics, SOPs and support", icon: BriefcaseBusiness },
       { href: "/case-studies", label: "Case Studies", description: "Client problems and results", icon: Search },
-      { href: "/contact", label: "Contact Us", description: "Ask what fits your situation", icon: Contact },
     ],
   },
 ] as const;

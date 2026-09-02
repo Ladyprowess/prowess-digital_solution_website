@@ -26,6 +26,7 @@ export const navPrimary = [
   { href: "/learn", label: "Learn" },
   { href: "/tools", label: "Build" },
   { href: "/events", label: "Connect" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 export const navMore = [
@@ -38,7 +39,6 @@ export const navMore = [
   { href: "/services", label: "For Businesses" },
   { href: "/case-studies", label: "Case Studies" },
   { href: "/work-with-us", label: "Work With Us" },
-  { href: "/contact", label: "Contact Us" },
 ] as const;
 
 // Cross-pillar on purpose - not all jobs.

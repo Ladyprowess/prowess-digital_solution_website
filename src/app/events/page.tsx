@@ -557,15 +557,7 @@ export default function EventsPage() {
               <StateCard
                 icon={<CalendarDays className="h-5 w-5" aria-hidden />}
                 title="No upcoming events right now"
-                description="New sessions will appear here once dates are confirmed. Join the updates list so you know when registration opens."
-                action={
-                  <a
-                    href="#subscribe"
-                    className="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    Get event updates
-                  </a>
-                }
+                description="New sessions will appear here once dates are confirmed. The updates form below is the best place to hear when registration opens."
               />
             ) : (
               upcoming.map((e, i) => (
@@ -745,7 +737,7 @@ export default function EventsPage() {
       )}
 
       {/* NEVER MISS AN EVENT */}
-      <section className="py-14 sm:py-20">
+      <section id="subscribe" className="scroll-mt-24 py-14 sm:py-20">
         <Container>
           <Reveal>
           <div className="rounded-lg border border-border bg-card p-8 sm:p-10">

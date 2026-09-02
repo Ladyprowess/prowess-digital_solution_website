@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { ArrowRight, BookOpen, BriefcaseBusiness, GraduationCap, Layers, Search } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, GraduationCap, Layers } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -169,17 +169,6 @@ function LearnPageContent() {
                 <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
                   Find focused courses for career growth, business skills, digital work and personal development.
                 </p>
-                <div className="relative mt-7 max-w-2xl">
-                  <label htmlFor="learn-search" className="sr-only">Search courses</label>
-                  <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                  <input
-                    id="learn-search"
-                    value={filters.q}
-                    onChange={(e) => updateFilters({ q: e.target.value })}
-                    placeholder="Search courses or skills"
-                    className="min-h-12 w-full rounded-lg border border-border bg-card pl-11 pr-4 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  />
-                </div>
               </div>
             </Reveal>
 
@@ -205,23 +194,91 @@ function LearnPageContent() {
             </Reveal>
           </div>
 
-          {popularSkills.length > 0 && (
-            <Reveal delay={160}>
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Popular</span>
-                {popularSkills.map((s) => (
-                  <button
-                    key={s.slug}
-                    type="button"
-                    onClick={() => updateFilters({ skills: [s.slug] })}
-                    className="min-h-10 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    {s.name}
-                  </button>
-                ))}
+        </Container>
+      </section>
+
+      {/* RESULTS */}
+      <section className="py-8 sm:py-10">
+        <Container>
+          <div className="lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen((v) => !v)}
+              className="mb-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Layers size={16} aria-hidden="true" />
+              {mobileFiltersOpen ? "Hide Filters" : "Filter Courses"}
+            </button>
+            {mobileFiltersOpen && (
+              <div className="mb-6">
+                <LearnFiltersSidebar filters={filters} onChange={updateFilters} skills={skills} />
               </div>
-            </Reveal>
-          )}
+            )}
+          </div>
+
+          <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <div className="hidden lg:block">
+              <LearnFiltersSidebar filters={filters} onChange={updateFilters} skills={skills} />
+            </div>
+
+            <div>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-primary">Courses</p>
+                  <h2 className="mt-2 text-xl font-bold text-foreground">Course library</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{loading ? "Loading courses..." : `${total} course${total === 1 ? "" : "s"} found`}</p>
+                </div>
+                <label className="sr-only" htmlFor="learn-sort">Sort courses</label>
+                <select
+                  id="learn-sort"
+                  value={filters.sort}
+                  onChange={(e) => updateFilters({ sort: e.target.value as LearnFilters["sort"] })}
+                  className="min-h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+
+              {loading ? (
+                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="min-h-[360px] rounded-lg border border-border bg-card">
+                      <div className="h-40 rounded-t-lg bg-muted" />
+                      <div className="p-6">
+                        <div className="h-4 w-24 rounded bg-muted" />
+                        <div className="mt-5 h-5 w-4/5 rounded bg-muted" />
+                        <div className="mt-3 h-3 w-full rounded bg-muted" />
+                        <div className="mt-2 h-3 w-2/3 rounded bg-muted" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : items.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border bg-card px-6 py-14 text-center">
+                  <BookOpen size={34} className="mx-auto text-primary" aria-hidden="true" />
+                  <p className="text-lg font-semibold text-foreground">No courses found</p>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                    {activeFiltersPresent ? "No course matches your current search or filters." : "No courses are published yet. When a course goes live, it will appear here."}
+                  </p>
+                  {activeFiltersPresent && (
+                    <button
+                      type="button"
+                      onClick={clearAllFilters}
+                      className="mt-6 min-h-10 rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                  {items.map((item) => <LearnCard key={`${item.kind}-${item.id}`} item={item} />)}
+                </div>
+              )}
+
+              <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
+            </div>
+          </div>
         </Container>
       </section>
 
@@ -309,90 +366,6 @@ function LearnPageContent() {
         </section>
       )}
 
-      {/* RESULTS */}
-      <section className="py-12 sm:py-16">
-        <Container>
-          <div className="lg:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileFiltersOpen((v) => !v)}
-              className="mb-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <Layers size={16} aria-hidden="true" />
-              {mobileFiltersOpen ? "Hide Filters" : "Filter Learning"}
-            </button>
-            {mobileFiltersOpen && (
-              <div className="mb-6">
-                <LearnFiltersSidebar filters={filters} onChange={updateFilters} skills={skills} />
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
-            <div className="hidden lg:block">
-              <LearnFiltersSidebar filters={filters} onChange={updateFilters} skills={skills} />
-            </div>
-
-            <div>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary">Explore</p>
-                  <h2 className="mt-2 text-xl font-bold text-foreground">Course library</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{loading ? "Searching…" : `${total} item${total === 1 ? "" : "s"} found`}</p>
-                </div>
-                <label className="sr-only" htmlFor="learn-sort">Sort learning items</label>
-                <select
-                  id="learn-sort"
-                  value={filters.sort}
-                  onChange={(e) => updateFilters({ sort: e.target.value as LearnFilters["sort"] })}
-                  className="min-h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-
-              {loading ? (
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="min-h-[360px] rounded-lg border border-border bg-card">
-                      <div className="h-40 rounded-t-lg bg-muted" />
-                      <div className="p-6">
-                        <div className="h-4 w-24 rounded bg-muted" />
-                        <div className="mt-5 h-5 w-4/5 rounded bg-muted" />
-                        <div className="mt-3 h-3 w-full rounded bg-muted" />
-                        <div className="mt-2 h-3 w-2/3 rounded bg-muted" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : items.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-border bg-card px-6 py-14 text-center">
-                  <BookOpen size={34} className="mx-auto text-primary" aria-hidden="true" />
-                  <p className="text-lg font-semibold text-foreground">No courses found</p>
-                  <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                    {activeFiltersPresent ? "No course matches your current search or filters." : "No courses are published yet. When a course goes live, it will appear here."}
-                  </p>
-                  {activeFiltersPresent && (
-                    <button
-                      type="button"
-                      onClick={clearAllFilters}
-                      className="mt-6 min-h-10 rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      Clear filters
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {items.map((item) => <LearnCard key={`${item.kind}-${item.id}`} item={item} />)}
-                </div>
-              )}
-
-              <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
-            </div>
-          </div>
-        </Container>
-      </section>
     </div>
   );
 }

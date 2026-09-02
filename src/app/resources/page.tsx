@@ -8,7 +8,6 @@ import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
 import { PillTabs, type PillTab } from "@/components/PillTabs";
-import { ScrollCarousel } from "@/components/ScrollCarousel";
 import ResourceCard, { type ResourceItem } from "@/components/resources/ResourceCard";
 import { PUBLIC_RESOURCE_TYPES, USE_CASES, USE_CASE_LABELS, USE_CASE_DESCRIPTIONS, type UseCase } from "@/lib/resources/constants";
 import {
@@ -80,47 +79,6 @@ function ResourcesPageContent() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const [featuredPicks, setFeaturedPicks] = useState<ResourceItem[]>([]);
-  const [templatesAndChecklists, setTemplatesAndChecklists] = useState<ResourceItem[]>([]);
-
-  // Curated sections (Featured, Popular Picks, Templates & Checklists
-  // table) sit above the main discovery feed and don't participate in
-  // pagination -- only shown on the unfiltered, first-page view, same
-  // convention as /videos' curated rails. No separate Business/Career
-  // rails here -- the Audience pill tabs above already filter by that
-  // exact dimension, so a dedicated rail for it was a redundant second way
-  // to do the same thing.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (activeFiltersPresent || filters.page > 1) {
-        if (!cancelled) { setFeaturedPicks([]); setTemplatesAndChecklists([]); }
-        return;
-      }
-      const base = () => new URLSearchParams({ exclude_resource_type: "video" });
-      const featuredParams = base(); featuredParams.set("featured", "true"); featuredParams.set("pageSize", "7");
-      const templatesParams = new URLSearchParams({ resource_type: "template,checklist", pageSize: "8" });
-
-      const [f, t] = await Promise.all([
-        fetchResources(featuredParams),
-        fetchResources(templatesParams),
-      ]);
-      if (cancelled) return;
-      setFeaturedPicks(f.items);
-      setTemplatesAndChecklists(t.items);
-    })();
-    return () => { cancelled = true; };
-  }, [activeFiltersPresent, filters.page]);
-
-  // Every resource already shown in a curated rail above -- excluded from
-  // the main grid below so the same handful of resources don't appear
-  // twice on one page load (obvious with only a couple of resources
-  // published so far, but the exclusion holds regardless of count).
-  const curatedIds = useMemo(
-    () => Array.from(new Set([...featuredPicks, ...templatesAndChecklists].map((r) => r.id))),
-    [featuredPicks, templatesAndChecklists]
-  );
-
   useEffect(() => {
     let cancelled = false;
     // Debounced, matching /videos and /learn's 150ms search-input pattern.
@@ -132,7 +90,6 @@ function ResourcesPageContent() {
       if (filters.type) params.set("resource_type", filters.type);
       if (filters.useCase) params.set("use_case", filters.useCase);
       if (filters.q.trim()) params.set("q", filters.q.trim());
-      if (curatedIds.length > 0) params.set("exclude_id", curatedIds.join(","));
       params.set("page", String(filters.page));
       params.set("pageSize", String(PAGE_SIZE));
 
@@ -143,7 +100,7 @@ function ResourcesPageContent() {
       setLoading(false);
     }, 150);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [filters.audience, filters.type, filters.useCase, filters.q, filters.page, curatedIds]);
+  }, [filters.audience, filters.type, filters.useCase, filters.q, filters.page]);
 
   function updateFilters(patch: Partial<ResourceFilters>) {
     const next: ResourceFilters = { ...filters, ...patch };
@@ -163,86 +120,63 @@ function ResourcesPageContent() {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const hero = featuredPicks[0] || null;
-  const popularPicks = featuredPicks.slice(1);
-  const showCurated = hero || popularPicks.length > 0 || templatesAndChecklists.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
       {/* HERO */}
-      <section className="border-b border-border bg-muted py-14 sm:py-16">
+      <section className="border-b border-border bg-brand-bg py-12 sm:py-16">
         <Container>
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
             <Reveal>
-              <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
-                <Library size={14} aria-hidden="true" />
-                Library
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+                  <Library size={14} aria-hidden="true" />
+                  Library
+                </div>
+                <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
+                  A useful library for work, business and personal growth.
+                </h1>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+                  Explore ebooks, guides, templates, checklists and articles you can read now or save for later.
+                </p>
+                <div className="relative mt-7 max-w-2xl">
+                  <label htmlFor="resource-search" className="sr-only">Search the library</label>
+                  <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  <input
+                    id="resource-search"
+                    value={filters.q}
+                    onChange={(e) => updateFilters({ q: e.target.value })}
+                    placeholder="Search books, guides, templates, tech, marriage, business..."
+                    className="min-h-12 w-full rounded-lg border border-border bg-card pl-11 pr-4 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
               </div>
-                <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                A useful library for work, business and personal growth.
-              </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-                Explore ebooks, guides, templates, checklists and articles you can read now or save for later.
-              </p>
             </Reveal>
             <Reveal delay={80}>
-              <div className="rounded-lg border border-border bg-card p-4">
+              <div className="hidden rounded-lg border border-border bg-card p-5 shadow-sm lg:block">
                 <p className="text-sm font-semibold text-foreground">Keep your best resources in one place.</p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   Save books, guides and videos from across Prowess, then return to them from your account.
                 </p>
-                <Link href="/account/learning" className="mt-4 inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <Link href="/account/learning" className="mt-5 inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   Open my library
                 </Link>
               </div>
             </Reveal>
           </div>
-          <Reveal delay={120}>
-            <div className="relative mt-7 max-w-2xl">
-              <label htmlFor="resource-search" className="sr-only">Search the library</label>
-              <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <input
-                id="resource-search"
-                value={filters.q}
-                onChange={(e) => updateFilters({ q: e.target.value })}
-                placeholder="Search books, guides, templates, tech, marriage, business..."
-                className="w-full rounded-lg border border-border bg-card py-3.5 pl-11 pr-4 text-sm text-foreground shadow-sm outline-none transition-[border-color,box-shadow] duration-150 ease-out placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/25"
-              />
-            </div>
-          </Reveal>
         </Container>
       </section>
 
-      {/* AUDIENCE + TYPE */}
-      <section className="border-b border-border py-8">
+      {/* EXPLORE RESOURCES */}
+      <section id="explore" className="scroll-mt-20 py-8 sm:py-10">
         <Container>
           <Reveal>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <h2 className="text-base font-semibold text-foreground">Choose your side of the library</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Browse as an individual, a business owner, or both.</p>
-              </div>
-            </div>
-          </Reveal>
-          <Reveal>
-            <PillTabs tabs={AUDIENCE_TABS} active={filters.audience} onChange={(v) => updateFilters({ audience: v })} />
-          </Reveal>
-          <Reveal delay={40}>
-            <div className="mt-4">
-              <PillTabs tabs={TYPE_TABS} active={filters.type} onChange={(v) => updateFilters({ type: v })} />
-            </div>
-          </Reveal>
-        </Container>
-      </section>
-
-      {/* LIBRARY SHELVES */}
-      <section className="border-b border-border py-12">
-        <Container>
-          <Reveal>
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Browse the shelves</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Quick paths into common reading areas.</p>
+                <h2 className="text-xl font-bold text-foreground">Ebooks and resources</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {loading ? "Loading books and guides..." : `${total} resource${total === 1 ? "" : "s"} found`}
+                </p>
               </div>
               {activeFiltersPresent && (
                 <button
@@ -255,144 +189,13 @@ function ResourcesPageContent() {
               )}
             </div>
           </Reveal>
+
           <Reveal delay={40}>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {LIBRARY_SHELVES.map((shelf) => {
-                const Icon = shelf.icon;
-                return (
-                  <button
-                    key={shelf.label}
-                    type="button"
-                    onClick={() => browseShelf(shelf.query)}
-                    className="group flex min-h-20 items-center gap-3 rounded-lg border border-border bg-card p-4 text-left transition-[border-color,background-color] duration-150 ease-out hover:border-primary/35 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-border bg-background text-primary">
-                      <Icon size={18} strokeWidth={1.7} aria-hidden="true" />
-                    </span>
-                    <span>
-                      <span className="block text-sm font-semibold text-foreground">{shelf.label}</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">Open shelf</span>
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="mb-8 space-y-3 rounded-lg border border-border bg-card p-3 sm:p-4">
+              <PillTabs tabs={AUDIENCE_TABS} active={filters.audience} onChange={(v) => updateFilters({ audience: v })} />
+              <PillTabs tabs={TYPE_TABS} active={filters.type} onChange={(v) => updateFilters({ type: v })} />
             </div>
           </Reveal>
-        </Container>
-      </section>
-
-      {/* FEATURED RESOURCE */}
-      {hero && (
-        <section className="border-b border-border py-14">
-          <Container>
-            <Reveal>
-              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                <Link href={`/resources/${hero.slug}`} className="group relative block aspect-[16/9] overflow-hidden rounded-lg border border-border bg-muted transition-[border-color,box-shadow] duration-150 ease-out hover:border-primary/35 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                  {hero.cover_url ? (
-                    // Fixed aspect ratio (not a pixel height) keeps the
-                    // crop window the same shape at every width, so
-                    // object-cover doesn't crop far more aggressively on
-                    // mobile than on desktop the way a fixed height did.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={hero.cover_url} alt={hero.title} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">No cover image</div>
-                  )}
-                </Link>
-                <div className="flex flex-col justify-center">
-                  <span className="text-xs font-bold uppercase tracking-widest text-primary">Featured book</span>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground">{hero.title}</h2>
-                  {hero.resource_type && <p className="mt-1 text-sm capitalize text-muted-foreground">{typeLabel(hero.resource_type)}</p>}
-                  {hero.description && <p className="mt-3 text-sm text-muted-foreground line-clamp-3">{hero.description}</p>}
-                  <Link href={`/resources/${hero.slug}`} className="mt-4 inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Start reading</Link>
-                </div>
-              </div>
-            </Reveal>
-          </Container>
-        </section>
-      )}
-
-      {/* BROWSE BY NEED */}
-      <section className="border-b border-border py-14">
-        <Container>
-          <Reveal>
-            <h2 className="text-xl font-bold text-foreground">Browse by goal</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Find the material that matches what you want to do next.</p>
-          </Reveal>
-          <Reveal delay={40}>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {USE_CASES.map((uc) => (
-                <button
-                  key={uc}
-                  type="button"
-                  onClick={() => browseByNeed(uc)}
-                  className={`min-h-32 rounded-lg border p-5 text-left transition-[border-color,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${filters.useCase === uc ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30 hover:bg-muted/50"}`}
-                >
-                  <p className="text-sm font-bold text-foreground">{USE_CASE_LABELS[uc]}</p>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{USE_CASE_DESCRIPTIONS[uc]}</p>
-                </button>
-              ))}
-            </div>
-          </Reveal>
-        </Container>
-      </section>
-
-      {/* CURATED RAILS */}
-      {showCurated && (
-        <section className="border-b border-border bg-muted/40 py-14">
-          <Container>
-            {popularPicks.length > 0 && (
-              <Reveal>
-                <div>
-                  <h2 className="text-lg font-bold text-foreground">Popular in the library</h2>
-                  <div className="mt-4"><ScrollCarousel>{popularPicks.map((r) => <div key={r.id} className="w-72 flex-shrink-0 snap-start"><ResourceCard item={r} /></div>)}</ScrollCarousel></div>
-                </div>
-              </Reveal>
-            )}
-
-            {templatesAndChecklists.length > 0 && (
-              <Reveal delay={120}>
-                <div className="mt-10">
-                  <h2 className="text-lg font-bold text-foreground">Templates and checklists</h2>
-                  <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
-                    <table className="w-full min-w-[520px] text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          <th className="px-4 py-3">Title</th>
-                          <th className="px-4 py-3">Type</th>
-                          <th className="px-4 py-3">Use case</th>
-                          <th className="px-4 py-3">Access</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {templatesAndChecklists.map((r) => (
-                          <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                            <td className="px-4 py-3">
-                              <Link href={`/resources/${r.slug}`} className="font-semibold text-foreground hover:text-primary">{r.title}</Link>
-                            </td>
-                            <td className="px-4 py-3 capitalize text-muted-foreground">{r.resource_type ? typeLabel(r.resource_type) : "-"}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{r.use_case ? USE_CASE_LABELS[r.use_case as UseCase] : "-"}</td>
-                            <td className="px-4 py-3">
-                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${r.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{r.access}</span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </Reveal>
-            )}
-          </Container>
-        </section>
-      )}
-
-      {/* EXPLORE RESOURCES */}
-      <section id="explore" className="scroll-mt-20 py-12 sm:py-16">
-        <Container>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} resource${total === 1 ? "" : "s"} found`}</p>
-          </div>
 
           {loading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -432,6 +235,68 @@ function ResourcesPageContent() {
           )}
 
           <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
+        </Container>
+      </section>
+
+      {/* LIBRARY SHELVES */}
+      <section className="border-t border-border bg-muted/35 py-12">
+        <Container>
+          <Reveal>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Browse by shelf</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Use these when you want a more specific corner of the library.</p>
+              </div>
+            </div>
+          </Reveal>
+          <Reveal delay={40}>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {LIBRARY_SHELVES.map((shelf) => {
+                const Icon = shelf.icon;
+                return (
+                  <button
+                    key={shelf.label}
+                    type="button"
+                    onClick={() => browseShelf(shelf.query)}
+                    className="group flex min-h-20 items-center gap-3 rounded-lg border border-border bg-card p-4 text-left transition-[border-color,background-color] duration-150 ease-out hover:border-primary/35 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-border bg-background text-primary">
+                      <Icon size={18} strokeWidth={1.7} aria-hidden="true" />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-foreground">{shelf.label}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">Open shelf</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* BROWSE BY NEED */}
+      <section className="border-t border-border py-14">
+        <Container>
+          <Reveal>
+            <h2 className="text-xl font-bold text-foreground">Browse by goal</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Find the material that matches what you want to do next.</p>
+          </Reveal>
+          <Reveal delay={40}>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {USE_CASES.map((uc) => (
+                <button
+                  key={uc}
+                  type="button"
+                  onClick={() => browseByNeed(uc)}
+                  className={`min-h-32 rounded-lg border p-5 text-left transition-[border-color,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${filters.useCase === uc ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30 hover:bg-muted/50"}`}
+                >
+                  <p className="text-sm font-bold text-foreground">{USE_CASE_LABELS[uc]}</p>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{USE_CASE_DESCRIPTIONS[uc]}</p>
+                </button>
+              ))}
+            </div>
+          </Reveal>
         </Container>
       </section>
 
