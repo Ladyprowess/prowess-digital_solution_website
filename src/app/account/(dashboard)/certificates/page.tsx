@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Award } from "lucide-react";
+import { Award, Download, ExternalLink, ShieldCheck } from "lucide-react";
 import { Card, EmptyState } from "@/components/account/AccountUI";
 import { supabase } from "@/lib/supabase";
 
@@ -72,35 +72,52 @@ export default function CertificatesPage() {
           ) : certificates.length === 0 ? (
             <EmptyState text="Complete a course with certification enabled to earn your first certificate." ctaLabel="Browse courses" ctaHref="/learn" />
           ) : (
-            <ul className="space-y-3">
+            <div className="grid gap-4">
               {certificates.map((c) => (
-                <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-4 py-3 text-sm">
-                  <div>
-                    <p className="font-semibold text-foreground">{c.course_title}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Issued {new Date(c.issued_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} · {c.verification_code}
+                <div key={c.id} className="overflow-hidden rounded-lg border border-border bg-background">
+                  <div className="border-b border-border bg-primary/5 p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <ShieldCheck size={22} aria-hidden="true" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{c.course_title}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Issued {new Date(c.issued_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-card px-3 py-1 text-xs font-bold text-primary">Verified credential</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-4 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Verification code <span className="ml-2 text-foreground">{c.verification_code}</span>
                     </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => downloadCertificate(c.id, c.course_title)}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <Download size={15} aria-hidden="true" />
+                        Download PDF
+                      </button>
+                      <Link
+                        href={`/certificates/verify/${c.verification_code}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        Verify
+                        <ExternalLink size={15} aria-hidden="true" />
+                      </Link>
+                    </div>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => downloadCertificate(c.id, c.course_title)}
-                      className="text-sm font-semibold text-primary hover:underline"
-                    >
-                      Download PDF
-                    </button>
-                    <Link
-                      href={`/certificates/verify/${c.verification_code}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-semibold text-muted-foreground hover:text-primary hover:underline"
-                    >
-                      Verify
-                    </Link>
-                  </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </Card>
       </div>

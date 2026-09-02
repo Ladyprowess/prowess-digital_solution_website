@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { slugify } from "@/lib/slugify";
 
 export const runtime = "nodejs";
 
@@ -7,6 +8,27 @@ const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+type EventInsertRow = {
+  title: string;
+  type: string;
+  description: string | null;
+  date: string;
+  time: string | null;
+  duration: string | null;
+  location: string | null;
+  registration_url: string | null;
+  join_link: string | null;
+  status: "published" | "draft";
+  registration_type: "free" | "paid";
+  price_usd: number | null;
+  price_ngn: number | null;
+  price: number;
+  spots_left: number | null;
+  cover_url: string | null;
+  is_published: boolean;
+  slug: string;
+};
 
 function makeFileName(originalName: string) {
   const safe = originalName.replace(/\s+/g, "-").toLowerCase();
@@ -19,7 +41,7 @@ export async function POST(req: Request) {
 
     const title = String(form.get("title") || "").trim();
     const type = String(form.get("type") || "Webinar").trim();
-    const slug = String(form.get("slug") || "").trim();
+    const slug = slugify(String(form.get("slug") || "").trim() || title);
     const description = String(form.get("description") || "").trim();
 
     const date = String(form.get("date") || "").trim(); // YYYY-MM-DD
@@ -92,8 +114,9 @@ export async function POST(req: Request) {
     }
 
     // ✅ INSERT: save BOTH new + old fields (so your UI works either way)
-    const insertRow: any = {
+    const insertRow: EventInsertRow = {
       title,
+      slug,
       type,
       description: description || null,
       date,
@@ -119,9 +142,6 @@ export async function POST(req: Request) {
       is_published: true,
     };
 
-    // optional slug
-    if (slug) insertRow.slug = slug;
-
     const { data, error } = await supabase
       .from("events")
       .insert([insertRow])
@@ -131,9 +151,9 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     return NextResponse.json({ ok: true, item: data });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { ok: false, error: err?.message || "Failed to create event" },
+      { ok: false, error: err instanceof Error ? err.message : "Failed to create event" },
       { status: 500 }
     );
   }

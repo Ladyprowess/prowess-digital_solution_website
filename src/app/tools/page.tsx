@@ -41,21 +41,21 @@ const CAREER_TOOLS = [
     description: "Submit your CV for a manual review. The team gets notified and responds with practical fixes.",
     href: "/tools/cv-checker",
     icon: ClipboardCheck,
-    badge: "Premium Membership",
+    badge: "Premium",
   },
   {
     title: "Interview Prep",
     description: "Practice answers, role specific questions and confidence notes for your next interview.",
     href: "/tools/interview-prep",
     icon: MessagesSquare,
-    badge: "Premium Membership",
+    badge: "Premium",
   },
   {
     title: "Portfolio Builder",
     description: "Turn your projects, proof of work and case studies into a clean career portfolio.",
     href: "/tools/portfolio-builder",
     icon: MonitorUp,
-    badge: "Premium Membership",
+    badge: "Premium",
   },
 ];
 
@@ -173,7 +173,7 @@ function CareerSection() {
         <Reveal>
           <div className="flex flex-wrap items-center justify-between gap-6 rounded-lg border border-primary/20 bg-primary/5 p-8">
             <div>
-              <h2 className="text-lg font-bold text-foreground">Unlock Career Tools with Premium Membership</h2>
+              <h2 className="text-lg font-bold text-foreground">Unlock Career Tools with Premium</h2>
               <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground">Get premium CV templates, CV Checker, Interview Prep and Portfolio Builder with one membership.</p>
             </div>
             <Link href="/account/membership" className="inline-flex min-h-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">

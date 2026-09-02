@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Flame, Medal, Trophy } from "lucide-react";
 import { Card, EmptyState } from "@/components/account/AccountUI";
 import { BadgeIcon } from "@/lib/achievements/badgeIcons";
 import { supabase } from "@/lib/supabase";
@@ -66,22 +67,29 @@ export default function AchievementsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground">Achievements</h1>
+      <div className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+        <Trophy size={14} aria-hidden="true" />
+        Progress
+      </div>
+      <h1 className="mt-3 text-2xl font-bold text-foreground">Achievements</h1>
       <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-        Points, streaks, and badges you&rsquo;ve earned from your Learn activity.
+        Track your points, streaks and badges from completed lessons, quizzes and courses.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-2xl font-bold text-foreground">{loading ? 0 : stats?.total_points ?? 0}</p>
+          <Medal size={20} className="mb-3 text-primary" aria-hidden="true" />
+          <p className="text-2xl font-bold text-foreground">{loading ? "..." : stats?.total_points ?? 0}</p>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total points</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-2xl font-bold text-foreground">{loading ? 0 : displayStreak}</p>
+          <Flame size={20} className="mb-3 text-primary" aria-hidden="true" />
+          <p className="text-2xl font-bold text-foreground">{loading ? "..." : displayStreak}</p>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Day streak</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-2xl font-bold text-foreground">{loading ? 0 : earnedIds.size}</p>
+          <Trophy size={20} className="mb-3 text-primary" aria-hidden="true" />
+          <p className="text-2xl font-bold text-foreground">{loading ? "..." : earnedIds.size}</p>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Badges earned</p>
         </div>
       </div>
@@ -97,13 +105,18 @@ export default function AchievementsPage() {
               {allBadges.map((b) => {
                 const owned = earnedIds.has(b.id);
                 return (
-                  <div key={b.id} className={`rounded-lg border p-4 ${owned ? "border-primary/30 bg-primary/5" : "border-border opacity-60"}`}>
+                  <div key={b.id} className={`rounded-lg border p-4 ${owned ? "border-primary/30 bg-primary/5" : "border-border bg-background"}`}>
                     <div className="flex items-center gap-3">
                       <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${owned ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                         <BadgeIcon iconKey={b.icon_key} />
                       </span>
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{b.title}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{b.title}</p>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${owned ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                            {owned ? "Earned" : "Locked"}
+                          </span>
+                        </div>
                         {b.description && <p className="mt-0.5 text-xs text-muted-foreground">{b.description}</p>}
                       </div>
                     </div>
