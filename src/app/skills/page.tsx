@@ -1,7 +1,33 @@
 import type { Metadata } from "next";
-import SkillsPageClient from "./SkillsPageClient";
+import SkillsPageClient, { type SkillWithCounts } from "./SkillsPageClient";
+import { supabase } from "@/lib/supabase";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
+
+async function getInitialSkills(): Promise<SkillWithCounts[]> {
+  const [{ data: skillRows }, { data: jobRows }, { data: oppRows }, { data: courseRows }] = await Promise.all([
+    supabase.from("skills").select("id, slug, name, description, featured").eq("status", "published").order("name"),
+    supabase.from("job_skill_map").select("skill_id"),
+    supabase.from("opportunity_skill_map").select("skill_id"),
+    supabase.from("course_skill_map").select("skill_id"),
+  ]);
+
+  const jobCounts = new Map<string, number>();
+  for (const r of jobRows || []) jobCounts.set(r.skill_id, (jobCounts.get(r.skill_id) || 0) + 1);
+
+  const oppCounts = new Map<string, number>();
+  for (const r of oppRows || []) oppCounts.set(r.skill_id, (oppCounts.get(r.skill_id) || 0) + 1);
+
+  const learningCounts = new Map<string, number>();
+  for (const r of courseRows || []) learningCounts.set(r.skill_id, (learningCounts.get(r.skill_id) || 0) + 1);
+
+  return (skillRows || []).map((s) => ({
+    ...s,
+    learningCount: learningCounts.get(s.id) || 0,
+    jobsCount: jobCounts.get(s.id) || 0,
+    opportunitiesCount: oppCounts.get(s.id) || 0,
+  }));
+}
 
 export const metadata: Metadata = {
   title: "Skills Directory - Explore In-Demand Skills",
@@ -19,6 +45,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
-  return <SkillsPageClient />;
+export default async function Page() {
+  const initialSkills = await getInitialSkills();
+  return <SkillsPageClient initialSkills={initialSkills} />;
 }

@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase";
 const PAGE_SIZE = 24;
 
 type SkillRow = { id: string; slug: string; name: string; description: string | null; featured: boolean };
-type SkillWithCounts = SkillRow & { learningCount: number; jobsCount: number; opportunitiesCount: number };
+export type SkillWithCounts = SkillRow & { learningCount: number; jobsCount: number; opportunitiesCount: number };
 
 function ChevronRight() {
   return (
@@ -21,9 +21,9 @@ function ChevronRight() {
   );
 }
 
-export default function SkillsPageClient() {
-  const [skills, setSkills] = useState<SkillWithCounts[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function SkillsPageClient({ initialSkills = [] }: { initialSkills?: SkillWithCounts[] }) {
+  const [skills, setSkills] = useState<SkillWithCounts[]>(initialSkills);
+  const [loading, setLoading] = useState(initialSkills.length === 0);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [hasContentOnly, setHasContentOnly] = useState(false);
@@ -31,6 +31,10 @@ export default function SkillsPageClient() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // The server already sent a full list on first load (see page.tsx) - this
+    // only needs to run as a fallback if that server fetch came back empty.
+    if (initialSkills.length > 0) return;
+
     (async () => {
       setLoading(true);
       setError(null);
@@ -66,7 +70,7 @@ export default function SkillsPageClient() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [initialSkills.length]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
