@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { slugify } from "@/lib/slugify";
 import { notifyEventSubscribersOfNewEvent } from "@/lib/events/notifySubscribers";
@@ -56,6 +56,13 @@ export async function POST(req: Request) {
     // ✅ NEW: status + registration_type + price_usd (from your form)
     const statusRaw = String(form.get("status") || "published").trim().toLowerCase();
     const status = (statusRaw === "draft" ? "draft" : "published") as "published" | "draft";
+
+    // Defaults to true (opt-out, not opt-in) so the common case - publish
+    // an event, everyone who asked for updates gets one - needs no extra
+    // click. The admin form's checkbox is ticked by default; this only
+    // ever comes out false if they deliberately untick it for a specific
+    // event (e.g. an internal/private one).
+    const notifySubscribers = String(form.get("notify_subscribers") ?? "true").trim().toLowerCase() !== "false";
 
     const regRaw = String(form.get("registration_type") || "free").trim().toLowerCase();
     const registration_type = (regRaw === "paid" ? "paid" : "free") as "free" | "paid";
@@ -152,14 +159,21 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     // Anyone who ever checked "Get Event Updates" gets emailed about this
-    // one - a failure here must never undo the event that was just
-    // successfully created.
-    if (status === "published") {
-      try {
-        await notifyEventSubscribersOfNewEvent(data.id);
-      } catch (err) {
-        console.error("notifyEventSubscribersOfNewEvent failed:", err);
-      }
+    // one. Scheduled via after() rather than awaited: the admin doesn't
+    // need to wait for a potentially large subscriber list to finish
+    // sending before their "event created" response comes back, and
+    // awaiting it here would risk the whole request timing out (and the
+    // admin seeing a failure for an event that actually saved fine) once
+    // the list is big enough. A failure here must never surface as this
+    // request failing - it already didn't (the response is already sent).
+    if (status === "published" && notifySubscribers) {
+      after(async () => {
+        try {
+          await notifyEventSubscribersOfNewEvent(data.id);
+        } catch (err) {
+          console.error("notifyEventSubscribersOfNewEvent failed:", err);
+        }
+      });
     }
 
     return NextResponse.json({ ok: true, item: data });

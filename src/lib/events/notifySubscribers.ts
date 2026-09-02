@@ -83,27 +83,45 @@ export async function notifyEventSubscribersOfNewEvent(eventId: string): Promise
     timeStyle: "short",
   });
 
-  const results = await Promise.allSettled(
-    subscribers.map((s) =>
-      resend.emails.send({
-        from: fromEmail,
-        to: s.email,
-        subject: `New event: ${event.title}`,
-        html: newEventEmailHtml({
-          eventTitle: event.title,
-          eventUrl,
-          dateLabel,
-          location: event.location || null,
-          description: event.description || null,
-          unsubscribeUrl: `${SITE_URL}/api/subscribe/unsubscribe?email=${encodeURIComponent(s.email)}&preference=events`,
-        }),
-      })
-    )
-  );
+  // Batched, not all fired at once - there's no rate-limiting precedent
+  // anywhere in this codebase (every other email send here is a single
+  // one-off), but this is the first genuinely bulk send, and firing
+  // hundreds of concurrent Resend calls risks tripping its rate limit long
+  // before it risks anything else. A small batch size with a short pause
+  // between batches keeps this safe without needing real queue infra.
+  const BATCH_SIZE = 10;
+  const BATCH_DELAY_MS = 1100;
+  let sent = 0;
+  let failed = 0;
 
-  const sent = results.filter((r) => r.status === "fulfilled").length;
-  const failed = results.length - sent;
-  if (failed > 0) console.error(`notifyEventSubscribersOfNewEvent: ${failed} of ${results.length} event-update emails failed to send`);
+  for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
+    const batch = subscribers.slice(i, i + BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map((s) =>
+        resend.emails.send({
+          from: fromEmail,
+          to: s.email,
+          subject: `New event: ${event.title}`,
+          html: newEventEmailHtml({
+            eventTitle: event.title,
+            eventUrl,
+            dateLabel,
+            location: event.location || null,
+            description: event.description || null,
+            unsubscribeUrl: `${SITE_URL}/api/subscribe/unsubscribe?email=${encodeURIComponent(s.email)}&preference=events`,
+          }),
+        })
+      )
+    );
+    sent += results.filter((r) => r.status === "fulfilled").length;
+    failed += results.length - results.filter((r) => r.status === "fulfilled").length;
+
+    if (i + BATCH_SIZE < subscribers.length) {
+      await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+    }
+  }
+
+  if (failed > 0) console.error(`notifyEventSubscribersOfNewEvent: ${failed} of ${subscribers.length} event-update emails failed to send`);
 
   return { sent, failed };
 }

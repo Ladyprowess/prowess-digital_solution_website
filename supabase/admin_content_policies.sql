@@ -63,6 +63,7 @@ begin
     'discussion_replies',
     'course_reviews',
     'content_reports',
+    'event_feedback',
     'assignments',
     'assignment_submissions',
     'assignment_peer_reviews'

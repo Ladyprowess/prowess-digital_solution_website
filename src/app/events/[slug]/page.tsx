@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Archive, CalendarDays, CheckCircle2, Clock, ImageIcon, Loader2, Mail, MapPin, Phone, User, Video } from "lucide-react";
+import { Archive, CalendarDays, CheckCircle2, Clock, ImageIcon, Loader2, Mail, MapPin, MessageSquare, Phone, Star, User, Video } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { formatMoney } from "@/lib/formatMoney";
@@ -31,6 +31,14 @@ type MediaRow = {
   media_type: "image" | "video";
   url: string;
   caption: string | null;
+};
+
+type FeedbackRow = {
+  id: string;
+  attendee_name: string;
+  rating: number;
+  body: string;
+  created_at: string;
 };
 
 function youtubeEmbedUrl(url: string) {
@@ -89,6 +97,7 @@ export default function EventRegistrationPage() {
   const [event, setEvent] = useState<EventRow | null>(null);
   const [isPast, setIsPast] = useState(false);
   const [archive, setArchive] = useState<MediaRow[]>([]);
+  const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
@@ -99,6 +108,13 @@ export default function EventRegistrationPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState("");
+
+  const [feedbackName, setFeedbackName] = useState("");
+  const [feedbackEmail, setFeedbackEmail] = useState("");
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackBody, setFeedbackBody] = useState("");
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState("");
 
   useEffect(() => {
     async function loadEvent() {
@@ -126,13 +142,19 @@ export default function EventRegistrationPage() {
       setIsPast(past);
 
       if (past) {
-        const archiveRes = await fetch(`/api/events/archive?event_id=${encodeURIComponent(loadedEvent.id)}`, {
-          cache: "no-store",
-        });
-        const archiveData = await archiveRes.json().catch(() => null);
+        const [archiveRes, feedbackRes] = await Promise.all([
+          fetch(`/api/events/archive?event_id=${encodeURIComponent(loadedEvent.id)}`, { cache: "no-store" }),
+          fetch(`/api/events/feedback?event_id=${encodeURIComponent(loadedEvent.id)}`, { cache: "no-store" }),
+        ]);
+        const [archiveData, feedbackData] = await Promise.all([
+          archiveRes.json().catch(() => null),
+          feedbackRes.json().catch(() => null),
+        ]);
         setArchive(archiveRes.ok ? archiveData?.items || [] : []);
+        setFeedback(feedbackRes.ok ? feedbackData?.items || [] : []);
       } else {
         setArchive([]);
+        setFeedback([]);
       }
 
       setLoading(false);
@@ -193,6 +215,46 @@ export default function EventRegistrationPage() {
     setMsg("Something went wrong. Please try again.");
   }
 
+  async function handleFeedback(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setFeedbackMsg("");
+
+    if (!event?.id) {
+      setFeedbackMsg("Event not found. Please refresh.");
+      return;
+    }
+    if (!feedbackName.trim() || !feedbackEmail.trim() || !feedbackBody.trim()) {
+      setFeedbackMsg("Please enter your name, email and feedback.");
+      return;
+    }
+
+    setFeedbackSubmitting(true);
+    const res = await fetch("/api/events/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event_id: event.id,
+        attendee_name: feedbackName.trim(),
+        attendee_email: feedbackEmail.trim(),
+        rating: feedbackRating,
+        body: feedbackBody.trim(),
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    setFeedbackSubmitting(false);
+
+    if (!res.ok) {
+      setFeedbackMsg(data?.error || "Feedback could not be submitted.");
+      return;
+    }
+
+    setFeedbackName("");
+    setFeedbackEmail("");
+    setFeedbackRating(5);
+    setFeedbackBody("");
+    setFeedbackMsg("Thank you. Your feedback has been submitted for review.");
+  }
+
   if (loading) {
     return <PageState loading title="Loading event" description="Getting the event details and registration options ready." />;
   }
@@ -214,17 +276,17 @@ export default function EventRegistrationPage() {
     <div className="pb-16">
       <section className="py-12 sm:py-16">
         <Container>
-          <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
+          <Link
+            href="/events"
+            className="inline-flex min-h-10 items-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            Back to events
+          </Link>
+
+          <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
             <Reveal>
               <div>
-                <Link
-                  href="/events"
-                  className="inline-flex min-h-10 items-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  Back to events
-                </Link>
-
-                <div className="mt-6 overflow-hidden rounded-lg border border-border bg-card">
+                <div className="overflow-hidden rounded-lg border border-border bg-card">
                   <div className="relative aspect-[16/8] bg-muted">
                     {event.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -418,6 +480,130 @@ export default function EventRegistrationPage() {
                 </p>
               </div>
             )}
+          </Container>
+        </section>
+      ) : null}
+
+      {isPast ? (
+        <section className="py-8">
+          <Container>
+            <div className="grid gap-6 lg:grid-cols-[1fr_420px] lg:items-start">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Feedback</p>
+                <h2 className="mt-2 text-2xl font-semibold text-foreground">What attendees said</h2>
+
+                {feedback.length > 0 ? (
+                  <div className="mt-6 grid gap-4">
+                    {feedback.map((item) => (
+                      <article key={item.id} className="rounded-lg border border-border bg-card p-5">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-base font-semibold text-foreground">{item.attendee_name}</h3>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {new Date(item.created_at).toLocaleDateString("en-GB")}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 text-primary" aria-label={`${item.rating} out of 5 stars`}>
+                            {Array.from({ length: 5 }).map((_, index) => (
+                              <Star key={index} className={`h-4 w-4 ${index < item.rating ? "fill-current" : ""}`} aria-hidden />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="mt-4 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-6 rounded-lg border border-dashed border-border bg-card p-8 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-primary">
+                      <MessageSquare className="h-5 w-5" aria-hidden />
+                    </div>
+                    <h3 className="mt-4 text-lg font-semibold text-foreground">No approved feedback yet</h3>
+                    <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                      Feedback will appear here after attendees submit it and the team approves it.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleFeedback} className="rounded-lg border border-border bg-card p-6">
+                <h2 className="text-xl font-semibold text-foreground">Leave feedback</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Use the same email you registered with. Feedback is reviewed before it appears publicly.
+                </p>
+
+                <div className="mt-5 space-y-4">
+                  <div>
+                    <label htmlFor="feedback-name" className="text-sm font-semibold text-foreground">Name</label>
+                    <input
+                      id="feedback-name"
+                      type="text"
+                      autoComplete="name"
+                      value={feedbackName}
+                      onChange={(e) => setFeedbackName(e.target.value)}
+                      className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="feedback-email" className="text-sm font-semibold text-foreground">Email</label>
+                    <input
+                      id="feedback-email"
+                      type="email"
+                      autoComplete="email"
+                      value={feedbackEmail}
+                      onChange={(e) => setFeedbackEmail(e.target.value)}
+                      className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">Your email is for verification. It will not be shown publicly.</p>
+                  </div>
+
+                  <fieldset>
+                    <legend className="text-sm font-semibold text-foreground">Rating</legend>
+                    <div className="mt-2 flex gap-2">
+                      {[1, 2, 3, 4, 5].map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setFeedbackRating(value)}
+                          aria-label={`Rate ${value} out of 5`}
+                          className={`inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                            feedbackRating >= value
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-background text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <Star className={`h-4 w-4 ${feedbackRating >= value ? "fill-current" : ""}`} aria-hidden />
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <div>
+                    <label htmlFor="feedback-body" className="text-sm font-semibold text-foreground">Feedback</label>
+                    <textarea
+                      id="feedback-body"
+                      rows={5}
+                      value={feedbackBody}
+                      onChange={(e) => setFeedbackBody(e.target.value)}
+                      placeholder="The session helped me understand..."
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm leading-6 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={feedbackSubmitting}
+                  className="mt-6 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
+                >
+                  {feedbackSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MessageSquare className="h-4 w-4" aria-hidden />}
+                  {feedbackSubmitting ? "Submitting..." : "Submit feedback"}
+                </button>
+
+                {feedbackMsg ? <p className="mt-4 text-sm text-muted-foreground">{feedbackMsg}</p> : null}
+              </form>
+            </div>
           </Container>
         </section>
       ) : null}

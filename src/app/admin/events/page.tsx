@@ -56,6 +56,7 @@ export default function AdminEventsPage() {
   const [joinLink, setJoinLink] = useState("");
 
   const [status, setStatus] = useState<"published" | "draft">("published");
+  const [notifySubscribers, setNotifySubscribers] = useState(true);
 
   // cover image
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -166,6 +167,7 @@ export default function AdminEventsPage() {
       form.append("location", location.trim());
 
       form.append("status", status);
+      form.append("notify_subscribers", String(notifySubscribers));
       form.append("registration_type", registrationType);
       form.append("price_usd", registrationType === "paid" ? String(Number(priceUsd)) : "");
       form.append("price_ngn", registrationType === "paid" ? priceNgn.trim() : "");
@@ -207,6 +209,7 @@ export default function AdminEventsPage() {
       setPriceNgn("");
       setJoinLink("");
       setStatus("published");
+      setNotifySubscribers(true);
       setCoverFile(null);
 
       setEventsPage(1);
@@ -319,6 +322,18 @@ export default function AdminEventsPage() {
                 <option value="published">Published</option>
                 <option value="draft">Draft</option>
               </select>
+            </div>
+
+            <div className="flex items-end pb-3">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <input
+                  type="checkbox"
+                  checked={notifySubscribers}
+                  onChange={(e) => setNotifySubscribers(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                Notify subscribers by email
+              </label>
             </div>
 
             <div>
@@ -564,6 +579,12 @@ export default function AdminEventsPage() {
                         className="text-sm font-semibold text-[var(--steel-teal)] hover:underline"
                       >
                         Manage archive →
+                      </a>
+                      <a
+                        href={`/admin/events/${ev.id}/feedback`}
+                        className="text-sm font-semibold text-[var(--steel-teal)] hover:underline"
+                      >
+                        Manage feedback →
                       </a>
                     </div>
 

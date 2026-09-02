@@ -612,28 +612,29 @@ export default function EventsPage() {
             )}
           </div>
 
-          {/* UPCOMING PAGINATION */}
-          <div className="mt-8 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setUpcomingPage((p) => Math.max(1, p - 1))}
-              disabled={upcomingPage === 1 || loadingUpcoming}
-              className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Prev
-            </button>
+          {!upcomingError && !loadingUpcoming && (upcoming.length > 0 || upcomingPage > 1) ? (
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => setUpcomingPage((p) => Math.max(1, p - 1))}
+                disabled={upcomingPage === 1 || loadingUpcoming}
+                className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Prev
+              </button>
 
-            <div className="text-sm font-medium text-muted-foreground">Page {upcomingPage}</div>
+              <div className="min-w-24 text-center text-sm font-medium text-muted-foreground">Page {upcomingPage}</div>
 
-            <button
-              type="button"
-              onClick={() => setUpcomingPage((p) => p + 1)}
-              disabled={loadingUpcoming || isUpcomingLastPage}
-              className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Next
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setUpcomingPage((p) => p + 1)}
+                disabled={loadingUpcoming || isUpcomingLastPage}
+                className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
         </Container>
       </section>
 
@@ -710,28 +711,29 @@ export default function EventsPage() {
               )}
             </div>
 
-            {/* PAST PAGINATION */}
-            <div className="mt-8 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setPastPage((p) => Math.max(1, p - 1))}
-                disabled={pastPage === 1 || loadingPast}
-                className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Prev
-              </button>
+            {!pastError && !loadingPast && (past.length > 0 || pastPage > 1) ? (
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setPastPage((p) => Math.max(1, p - 1))}
+                  disabled={pastPage === 1 || loadingPast}
+                  className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Prev
+                </button>
 
-              <div className="text-sm font-medium text-muted-foreground">Page {pastPage}</div>
+                <div className="min-w-24 text-center text-sm font-medium text-muted-foreground">Page {pastPage}</div>
 
-              <button
-                type="button"
-                onClick={() => setPastPage((p) => p + 1)}
-                disabled={loadingPast || isPastLastPage}
-                className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Next
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setPastPage((p) => p + 1)}
+                  disabled={loadingPast || isPastLastPage}
+                  className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Next
+                </button>
+              </div>
+            ) : null}
           </Container>
         </section>
       )}
