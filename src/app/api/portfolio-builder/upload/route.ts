@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     // storage bucket with images regardless of access.
     const hasAccess = await hasPremiumAccess({ userId: member.id, email: member.email });
     if (!hasAccess) {
-      return NextResponse.json({ ok: false, error: "Portfolio Builder needs Premium Membership." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Portfolio Builder needs Premium." }, { status: 403 });
     }
 
     const formData = await req.formData();

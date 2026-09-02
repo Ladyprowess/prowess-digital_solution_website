@@ -278,7 +278,7 @@ export async function POST(req: Request) {
 
     // Template entitlement: "plain" is always free. Re-exporting the exact
     // template already saved on this CV is always allowed too, even if the
-    // member's Premium Membership has since lapsed or been cancelled -
+    // member's Premium access has since lapsed or been cancelled -
     // access to something already made is never revoked, only the ability
     // to create/switch to something new premium is gated. Only a genuine
     // switch to a different, non-plain template at export time requires
@@ -286,7 +286,7 @@ export async function POST(req: Request) {
     if (!isFreeCvTemplate(requestedTemplate) && requestedTemplate !== cv.template) {
       const active = await hasPremiumAccess({ userId: member.id, email: member.email });
       if (!active) {
-        return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to use this template." }, { status: 403 });
+        return NextResponse.json({ ok: false, error: "Upgrade to Premium to use this template." }, { status: 403 });
       }
     }
 

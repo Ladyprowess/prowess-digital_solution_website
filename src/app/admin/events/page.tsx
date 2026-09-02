@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase"; // ✅ use your existing client
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { formatMoney } from "@/lib/formatMoney";
+import { slugify } from "@/lib/slugify";
 
 type EventRow = {
   id: string;
@@ -41,6 +42,7 @@ export default function AdminEventsPage() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState("Webinar");
   const [slug, setSlug] = useState("");
+  const [slugEdited, setSlugEdited] = useState(false);
   const [description, setDescription] = useState("");
 
   const [date, setDate] = useState(""); // YYYY-MM-DD
@@ -78,6 +80,8 @@ export default function AdminEventsPage() {
     const drafts = events.filter((e) => e.status === "draft").length;
     return { total, published, drafts };
   }, [events]);
+
+  const slugPreview = slug || slugify(title) || "your-event-slug";
 
   const filteredEvents = useMemo(() => {
     return events.filter((e) => {
@@ -193,6 +197,7 @@ export default function AdminEventsPage() {
       setTitle("");
       setType("Webinar");
       setSlug("");
+      setSlugEdited(false);
       setDescription("");
       setDate("");
       setTime("");
@@ -208,8 +213,8 @@ export default function AdminEventsPage() {
       setEventsPage(1);
 
       await loadEventsAndCounts();
-    } catch (err: any) {
-      setMessage(err?.message || "Network error");
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "Network error");
     } finally {
       setLoading(false);
     }
@@ -265,7 +270,11 @@ export default function AdminEventsPage() {
               <label className="text-sm font-semibold text-slate-900">Title</label>
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  const nextTitle = e.target.value;
+                  setTitle(nextTitle);
+                  if (!slugEdited) setSlug(slugify(nextTitle));
+                }}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
                 placeholder="Event title"
               />
@@ -291,18 +300,21 @@ export default function AdminEventsPage() {
               </label>
               <input
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) => {
+                  setSlugEdited(true);
+                  setSlug(slugify(e.target.value));
+                }}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
                 placeholder="Leave empty for auto"
               />
-              <p className="mt-2 text-xs text-slate-500">Used for /events/{`{slug}`}</p>
+              <p className="mt-2 text-xs text-slate-500">Public page: /events/{slugPreview}</p>
             </div>
 
             <div>
               <label className="text-sm font-semibold text-slate-900">Status</label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
+                onChange={(e) => setStatus(e.target.value as "published" | "draft")}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
               >
                 <option value="published">Published</option>
@@ -354,7 +366,7 @@ export default function AdminEventsPage() {
               <label className="text-sm font-semibold text-slate-900">Registration type</label>
               <select
                 value={registrationType}
-                onChange={(e) => setRegistrationType(e.target.value as any)}
+                onChange={(e) => setRegistrationType(e.target.value as "free" | "paid")}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
               >
                 <option value="free">Free</option>
@@ -482,7 +494,7 @@ export default function AdminEventsPage() {
                     <div>
                       <h3 className="text-base font-semibold text-slate-900">{ev.title}</h3>
                       <p className="mt-1 text-xs text-slate-500">
-                        Slug: <b>{ev.slug || "(auto not set yet)"}</b>
+                        Slug: <b>{ev.slug || slugify(ev.title)}</b>
                       </p>
                     </div>
 
@@ -558,7 +570,7 @@ export default function AdminEventsPage() {
 
                     {ev.slug ? (
                       <a
-                        href={`/events/${ev.slug}`}
+                        href={`/events/${ev.slug || slugify(ev.title)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm font-semibold text-slate-700 hover:underline"
@@ -566,7 +578,7 @@ export default function AdminEventsPage() {
                         Open event page
                       </a>
                     ) : (
-                      <span className="text-sm font-semibold text-slate-400">No slug yet</span>
+                      <span className="text-sm font-semibold text-slate-500">Slug will use the event title</span>
                     )}
                   </div>
                 </div>

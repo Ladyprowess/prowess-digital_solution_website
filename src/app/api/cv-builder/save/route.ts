@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     }
 
     if (!isFreeCvTemplate(requestedTemplate) && !(await isActive())) {
-      return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to use this template." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Upgrade to Premium to use this template." }, { status: 403 });
     }
 
     const { count } = await supabase
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
       .eq("user_id", member.id);
 
     if ((count || 0) >= 1 && !(await isActive())) {
-      return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to save more than one CV." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Upgrade to Premium to save more than one CV." }, { status: 403 });
     }
 
     const { data: created, error: insertErr } = await supabase
@@ -132,11 +132,11 @@ export async function POST(req: Request) {
   // template requires active access right now. Keeping the template
   // unchanged (even if it's already premium) or moving to "plain" is
   // always allowed, active or not - editing content never requires
-  // Premium Membership.
+    // Premium.
   if (requestedTemplate !== existing.template && !isFreeCvTemplate(requestedTemplate)) {
     const active = await hasPremiumAccess({ userId: member.id, email: member.email });
     if (!active) {
-      return NextResponse.json({ ok: false, error: "Upgrade to Premium Membership to switch to this template." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Upgrade to Premium to switch to this template." }, { status: 403 });
     }
   }
 

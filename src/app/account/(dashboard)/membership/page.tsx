@@ -81,7 +81,7 @@ function Membership() {
           body: JSON.stringify({ reference }),
         }).then((r) => r.json()).catch(() => null);
         setVerifying(false);
-        setMessage(res?.ok ? "Payment confirmed - your Premium Membership is active." : "");
+        setMessage(res?.ok ? "Payment confirmed. Your Premium access is active." : "");
         if (!res?.ok) setError(res?.error || "Could not confirm your payment.");
       }
 
@@ -125,7 +125,7 @@ function Membership() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground">Membership</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Premium Membership unlocks every CV template and unlimited saved CVs - and any future premium tools.</p>
+      <p className="mt-1 text-sm text-muted-foreground">Premium unlocks every CV template, unlimited saved CVs and future premium tools.</p>
 
       <div className="mt-6 max-w-xl space-y-6">
         {verifying && <p className="text-sm text-muted-foreground">Confirming your payment…</p>}
@@ -143,7 +143,7 @@ function Membership() {
               </p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">You&rsquo;re not on Premium Membership yet.</p>
+            <p className="text-sm text-muted-foreground">You&rsquo;re not on Premium yet.</p>
           )}
         </Card>
 

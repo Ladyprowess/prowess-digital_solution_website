@@ -132,7 +132,7 @@ function InterviewPrepAdmin() {
     <div>
       <h1 className="text-2xl font-bold text-foreground">Interview Prep</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        The question library shown on /tools/interview-prep. Gated to Premium/Pro career access and Premium Membership - only published questions are shown there.
+        The question library shown on /tools/interview-prep. Gated to Premium and Pro career access. Only published questions are shown there.
       </p>
 
       <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-border bg-card p-8">

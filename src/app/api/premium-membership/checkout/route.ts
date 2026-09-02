@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       : (requestedCurrency === "USD" ? pricing.annualUsd : pricing.annualNgn);
 
     if (!amount) {
-      return NextResponse.json({ ok: false, error: "Premium Membership isn't priced in that currency yet." }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Premium isn't priced in that currency yet." }, { status: 400 });
     }
 
     const supabase = supabaseAdmin();
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     let subscriptionId: string;
 
     if (openSub?.subscription_status === "active") {
-      return NextResponse.json({ ok: false, error: "You already have an active Premium Membership." }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "You already have active Premium access." }, { status: 400 });
     }
 
     if (openSub && openSub.billing_interval === interval && openSub.currency === requestedCurrency) {
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
         // is the real guarantee here - surface the same friendly message
         // rather than a raw 500.
         if (insertErr.code === "23505") {
-          return NextResponse.json({ ok: false, error: "You already have a Premium Membership checkout in progress." }, { status: 400 });
+          return NextResponse.json({ ok: false, error: "You already have a Premium checkout in progress." }, { status: 400 });
         }
         return NextResponse.json({ ok: false, error: "Could not create subscription record" }, { status: 500 });
       }
@@ -142,7 +142,7 @@ export async function POST(req: Request) {
 
     const planId = await getOrCreatePaymentPlan({
       slug: "premium",
-      title: "Premium Membership",
+      title: "Premium",
       interval,
       amount,
       currency: requestedCurrency,

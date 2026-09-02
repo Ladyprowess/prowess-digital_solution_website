@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     const hasAccess = await hasPremiumAccess({ userId: member.id, email: member.email });
     if (!hasAccess) {
-      return NextResponse.json({ ok: false, error: "Please activate Premium Membership before submitting your CV." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Please activate Premium before submitting your CV." }, { status: 403 });
     }
 
     const formData = await req.formData();

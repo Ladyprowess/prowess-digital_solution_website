@@ -366,7 +366,7 @@ export default function InterviewPrepPageClient() {
             </div>
             <div className="rounded-lg border border-border bg-card p-5">
               <BookOpenCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-              <p className="mt-3 text-sm font-bold text-foreground">Included with Premium Membership</p>
+              <p className="mt-3 text-sm font-bold text-foreground">Included with Premium</p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">A focused space to plan your answers, sharpen your examples and feel ready for the conversation.</p>
             </div>
           </div>
@@ -378,7 +378,7 @@ export default function InterviewPrepPageClient() {
           {locked ? (
             <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center">
               <LockKeyhole className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden="true" />
-                  <p className="mt-3 text-sm font-semibold text-foreground">Interview Prep is included with Premium Membership.</p>
+                  <p className="mt-3 text-sm font-semibold text-foreground">Interview Prep is included with Premium.</p>
               <p className="mt-1 text-sm text-muted-foreground">Upgrade to unlock the full guide and question library.</p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
                 <Link href="/account/membership" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">

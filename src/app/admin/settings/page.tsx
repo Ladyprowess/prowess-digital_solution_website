@@ -161,7 +161,7 @@ function SettingsAdmin() {
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-8">
-        <h2 className="text-lg font-semibold text-foreground">Premium Membership Pricing</h2>
+        <h2 className="text-lg font-semibold text-foreground">Premium Pricing</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           One recurring price that unlocks every Premium feature site-wide (extra CV Builder templates, saving unlimited CVs, and any future premium tools) - not a per-template price.
         </p>

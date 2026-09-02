@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Archive, Bell, CalendarDays, Inbox, Search, X } from "lucide-react";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
@@ -28,14 +29,6 @@ function LaptopIcon() {
     </svg>
   );
 }
-function BellIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-    </svg>
-  );
-}
-
 type EventItem = {
   id: string;
 
@@ -159,6 +152,49 @@ function priceLabel(item: EventItem): string {
     item.price ? formatMoney(item.price, "USD") : null,
     item.price_ngn ? formatMoney(item.price_ngn, "NGN") : null,
   ].filter(Boolean).join(" / ");
+}
+
+function EventSkeletons() {
+  return (
+    <>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="overflow-hidden rounded-lg border border-border bg-card" aria-hidden>
+          <div className="h-44 animate-pulse bg-muted" />
+          <div className="space-y-4 p-6">
+            <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
+            <div className="space-y-2">
+              <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+            </div>
+            <div className="h-10 animate-pulse rounded-lg bg-muted" />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function StateCard({
+  title,
+  description,
+  icon,
+  action,
+}: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="col-span-full rounded-lg border border-dashed border-border bg-card p-8 text-center">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-primary">
+        {icon}
+      </div>
+      <h3 className="mt-4 text-lg font-semibold text-foreground">{title}</h3>
+      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>
+      {action ? <div className="mt-5">{action}</div> : null}
+    </div>
+  );
 }
 
 export default function EventsPage() {
@@ -417,14 +453,15 @@ export default function EventsPage() {
       <section className="py-6">
         <Container>
           <Reveal>
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-lg border border-border bg-card p-5">
             <div className="grid gap-4 lg:grid-cols-3">
               <div>
-                <label className="text-sm font-semibold text-foreground">Event Type</label>
+                <label htmlFor="event-type" className="text-sm font-semibold text-foreground">Event Type</label>
                 <select
+                  id="event-type"
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm"
+                  className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   {EVENT_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -435,11 +472,12 @@ export default function EventsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-foreground">Month</label>
+                <label htmlFor="event-month" className="text-sm font-semibold text-foreground">Month</label>
                 <select
+                  id="event-month"
                   value={month}
                   onChange={(e) => setMonth(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm"
+                  className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   {months.map((m) => (
                     <option key={m.value} value={m.value}>
@@ -450,13 +488,18 @@ export default function EventsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-foreground">Search</label>
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search by title..."
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm"
-                />
+                <label htmlFor="event-search" className="text-sm font-semibold text-foreground">Search</label>
+                <div className="relative mt-2">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                  <input
+                    id="event-search"
+                    type="search"
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search by title"
+                    className="min-h-10 w-full rounded-lg border border-border bg-background py-3 pl-10 pr-4 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -467,39 +510,74 @@ export default function EventsPage() {
       {/* UPCOMING */}
       <section className="py-10">
         <Container>
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-3xl font-semibold text-foreground">Upcoming Events</h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Upcoming</p>
+              <h2 className="mt-2 text-3xl font-semibold text-foreground">Events you can join next</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Register for live sessions, practical workshops and business clinics as dates are confirmed.
+              </p>
+            </div>
 
             <button
               type="button"
               onClick={() => setShowPast((v) => !v)}
-              className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              {showPast ? "Hide past events" : "View past events"}
+              <Archive className="h-4 w-4" aria-hidden />
+              {showPast ? "Hide archive" : "View archive"}
             </button>
           </div>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-3">
             {upcomingError ? (
-              <div className="text-sm text-red-600">{upcomingError}</div>
+              <StateCard
+                icon={<Inbox className="h-5 w-5" aria-hidden />}
+                title="Events could not load"
+                description={upcomingError}
+                action={
+                  <button
+                    type="button"
+                    onClick={() => loadUpcoming(upcomingPage, q)}
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    Try again
+                  </button>
+                }
+              />
             ) : loadingUpcoming ? (
-              <div className="text-sm text-muted-foreground">Loading events…</div>
+              <EventSkeletons />
             ) : upcoming.length === 0 ? (
-              <div className="text-sm text-muted-foreground">No upcoming events right now.</div>
+              <StateCard
+                icon={<CalendarDays className="h-5 w-5" aria-hidden />}
+                title="No upcoming events right now"
+                description="New sessions will appear here once dates are confirmed. Join the updates list so you know when registration opens."
+                action={
+                  <a
+                    href="#subscribe"
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    Get event updates
+                  </a>
+                }
+              />
             ) : (
               upcoming.map((e, i) => (
                 <Reveal key={e.id} delay={i * 70}>
                 <button
                   type="button"
                   onClick={() => openModal(e)}
-                  className="group w-full overflow-hidden rounded-2xl border border-border bg-card text-left transition hover:-translate-y-1 hover:shadow-md"
+                  className="group w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:-translate-y-1 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <div className="relative h-44 bg-muted">
                     {e.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={e.cover_url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
+                      <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                        <CalendarDays className="h-8 w-8" aria-hidden />
+                        <span className="text-sm">Event cover coming soon</span>
+                      </div>
                     )}
 
                     <div className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
@@ -525,7 +603,7 @@ export default function EventsPage() {
                       <div className="text-lg font-semibold text-foreground">
                         {priceLabel(e)}
                       </div>
-                      <span className="text-sm font-medium text-primary">View details →</span>
+                      <span className="text-sm font-medium text-primary">View details</span>
                     </div>
                   </div>
                 </button>
@@ -540,7 +618,7 @@ export default function EventsPage() {
               type="button"
               onClick={() => setUpcomingPage((p) => Math.max(1, p - 1))}
               disabled={upcomingPage === 1 || loadingUpcoming}
-              className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Prev
             </button>
@@ -551,7 +629,7 @@ export default function EventsPage() {
               type="button"
               onClick={() => setUpcomingPage((p) => p + 1)}
               disabled={loadingUpcoming || isUpcomingLastPage}
-              className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Next
             </button>
@@ -563,29 +641,55 @@ export default function EventsPage() {
       {showPast && (
         <section id="past-events" className="py-10">
           <Container>
-            <h2 className="text-2xl font-semibold text-foreground">Past Events</h2>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Archive</p>
+              <h2 className="mt-2 text-2xl font-semibold text-foreground">Event archive</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Past sessions live here with recordings and photos when the team adds them.
+              </p>
+            </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-3">
               {pastError ? (
-                <div className="text-sm text-red-600">{pastError}</div>
+                <StateCard
+                  icon={<Inbox className="h-5 w-5" aria-hidden />}
+                  title="Archive could not load"
+                  description={pastError}
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => loadPast(pastPage, q)}
+                      className="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      Try again
+                    </button>
+                  }
+                />
               ) : loadingPast ? (
-                <div className="text-sm text-muted-foreground">Loading past events…</div>
+                <EventSkeletons />
               ) : past.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No past events found.</div>
+                <StateCard
+                  icon={<Archive className="h-5 w-5" aria-hidden />}
+                  title="No archived events yet"
+                  description="Once an event has ended, the archive can show photos, recordings and useful follow up materials."
+                />
               ) : (
                 past.map((e, i) => (
                   <Reveal key={e.id} delay={i * 70}>
                   <button
                     type="button"
                     onClick={() => openModal(e)}
-                    className="w-full overflow-hidden rounded-2xl border border-border bg-card text-left transition hover:-translate-y-1 hover:shadow-md"
+                    className="w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:-translate-y-1 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     <div className="relative h-44 bg-muted">
                       {e.cover_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={e.cover_url} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
+                        <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                          <Archive className="h-8 w-8" aria-hidden />
+                          <span className="text-sm">Archive cover</span>
+                        </div>
                       )}
 
                       <div className="absolute left-4 top-4 rounded-full bg-foreground/80 px-3 py-1 text-xs font-semibold text-white">
@@ -597,7 +701,7 @@ export default function EventsPage() {
                       <h3 className="text-xl font-semibold text-foreground">{e.title}</h3>
                       <div className="mt-3 flex items-center text-sm text-muted-foreground"><CalendarIcon />{formatDate(e.date)}</div>
                       <div className="mt-6 border-t border-border pt-5 text-sm font-medium text-primary">
-                        View details →
+                        View archive
                       </div>
                     </div>
                   </button>
@@ -612,7 +716,7 @@ export default function EventsPage() {
                 type="button"
                 onClick={() => setPastPage((p) => Math.max(1, p - 1))}
                 disabled={pastPage === 1 || loadingPast}
-                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Prev
               </button>
@@ -623,7 +727,7 @@ export default function EventsPage() {
                 type="button"
                 onClick={() => setPastPage((p) => p + 1)}
                 disabled={loadingPast || isPastLastPage}
-                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Next
               </button>
@@ -636,30 +740,37 @@ export default function EventsPage() {
       <section className="py-14 sm:py-20">
         <Container>
           <Reveal>
-          <div className="rounded-3xl border border-border bg-card p-8 sm:p-10">
+          <div className="rounded-lg border border-border bg-card p-8 sm:p-10">
             <div className="flex items-start gap-4">
-              <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-primary/10 text-primary">
-                <BellIcon />
+              <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Bell className="h-5 w-5" aria-hidden />
               </div>
 
               <div className="flex-1">
-                <h2 className="text-3xl font-semibold text-foreground sm:text-5xl">Never Miss an Event</h2>
+                <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">Get Event Updates</h2>
                 <p className="mt-3 max-w-3xl text-base text-muted-foreground sm:text-lg">
-                  Subscribe to get updates about upcoming events, early-bird pricing, and useful community resources.
+                  Subscribe to hear about upcoming sessions, new dates and useful community resources.
                 </p>
 
                 <form onSubmit={handleSubscribe} className="mt-8 grid gap-3 sm:grid-cols-[1fr_auto]">
-                  <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="w-full rounded-2xl border border-border bg-background px-5 py-4 text-sm text-foreground"
-                  />
+                  <div>
+                    <label htmlFor="event-updates-email" className="sr-only">Email address</label>
+                    <input
+                      id="event-updates-email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="min-h-10 w-full rounded-lg border border-border bg-background px-5 py-4 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
+                  </div>
                   <button
+                    type="submit"
                     disabled={submitting}
-                    className="rounded-2xl bg-primary px-8 py-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+                    className="min-h-10 rounded-lg bg-primary px-8 py-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
                   >
-                    {submitting ? "Subscribing…" : "Subscribe Now"}
+                    {submitting ? "Subscribing..." : "Subscribe"}
                   </button>
                 </form>
 
@@ -687,21 +798,25 @@ export default function EventsPage() {
         >
           <div className="absolute inset-0 bg-black/40" />
 
-          <div className="relative z-[61] w-full max-w-2xl overflow-hidden rounded-3xl bg-card shadow-xl">
+          <div className="relative z-[61] w-full max-w-2xl overflow-hidden rounded-lg bg-card shadow-xl">
             <div className="relative h-52 bg-muted">
               {selected.cover_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selected.cover_url} alt="" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <CalendarDays className="h-8 w-8" aria-hidden />
+                  <span className="text-sm">Event cover coming soon</span>
+                </div>
               )}
 
               <button
                 type="button"
                 onClick={closeModal}
-                className="absolute right-4 top-4 rounded-xl bg-card/90 px-3 py-2 text-sm font-semibold text-foreground hover:bg-card"
+                aria-label="Close event details"
+                className="absolute right-4 top-4 inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-card/90 text-foreground hover:bg-card focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                Close
+                <X className="h-4 w-4" aria-hidden />
               </button>
 
               <div className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
@@ -736,7 +851,7 @@ export default function EventsPage() {
                   <button
                     type="button"
                     onClick={() => goToInternalEventPage(selected)}
-                    className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                    className="min-h-10 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {isPastEvent(selected.date) ? "View event" : "Register for event"}
                   </button>
@@ -744,7 +859,7 @@ export default function EventsPage() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="rounded-2xl border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                    className="min-h-10 rounded-lg border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     Done
                   </button>

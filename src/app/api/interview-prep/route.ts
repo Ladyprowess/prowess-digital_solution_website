@@ -6,7 +6,7 @@ import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
 export const runtime = "nodejs";
 
 // Interview Prep is a static, admin-authored question library - no AI, no
-// submissions. Gated by Premium Membership. Content only ever reaches the
+// submissions. Gated by Premium. Content only ever reaches the
 // client through this route (service-role read, entitlement checked
 // first) - interview_questions has no public RLS policy at all.
 export async function GET(req: Request) {
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 
   const hasAccess = await hasPremiumAccess({ userId: member.id, email: member.email });
   if (!hasAccess) {
-    return NextResponse.json({ ok: false, error: "Activate Premium Membership to open Interview Prep.", locked: true }, { status: 403 });
+    return NextResponse.json({ ok: false, error: "Activate Premium to open Interview Prep.", locked: true }, { status: 403 });
   }
 
   const supabase = supabaseAdmin();

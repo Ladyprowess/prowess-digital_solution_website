@@ -149,10 +149,10 @@ export async function POST(req: Request) {
   if (!id) {
     // Portfolio Builder has no free tier at all - unlike CV Builder there's
     // nothing to fall back to, so every new portfolio requires active
-    // Premium Membership, full stop.
+    // Premium, full stop.
     const hasAccess = await hasPremiumAccess({ userId: member.id, email: member.email });
     if (!hasAccess) {
-      return NextResponse.json({ ok: false, error: "Portfolio Builder needs Premium Membership." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Portfolio Builder needs Premium." }, { status: 403 });
     }
 
     const slug = await getUniqueSlug(requestedSlug || validated.data.fullName);

@@ -319,7 +319,7 @@ function PortfolioBuilder() {
     return (
       <div className="mx-auto max-w-xl px-4 py-20 text-center">
         <LockKeyhole className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden="true" />
-        <h1 className="mt-4 text-2xl font-bold text-foreground">Portfolio Builder is included with Premium Membership.</h1>
+        <h1 className="mt-4 text-2xl font-bold text-foreground">Portfolio Builder is included with Premium.</h1>
         <p className="mt-2 text-sm text-muted-foreground">Upgrade to build a shareable portfolio page and downloadable PDF.</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link href="/account/membership" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground hover:bg-primary/90">

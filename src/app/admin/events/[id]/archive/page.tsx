@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Archive, ImagePlus, Loader2, Trash2, Video } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type MediaRow = {
@@ -26,6 +27,7 @@ export default function AdminEventArchivePage() {
   const [items, setItems] = useState<MediaRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -53,7 +55,8 @@ export default function AdminEventArchivePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
-  async function handleAdd() {
+  async function handleAdd(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setMessage("");
 
     if (mediaType === "video" && !youtubeUrl.trim()) {
@@ -80,40 +83,61 @@ export default function AdminEventArchivePage() {
     setSubmitting(false);
 
     if (!res.ok) {
-      setMessage(json?.error || "Failed to add item");
+      setMessage(json?.error || "Failed to add item.");
       return;
     }
 
     setYoutubeUrl("");
     setCaption("");
     setFile(null);
+    setMessage("Archive item added.");
     await load();
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Remove this item from the archive?")) return;
     await fetch(`/api/events/archive/${id}`, { method: "DELETE" });
+    setConfirmDeleteId(null);
     await load();
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
-      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-semibold text-slate-900">Event archive</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {eventTitle || eventId} &middot; photos and recordings shown on the public event page once it has passed.
-        </p>
+    <div>
+      <div className="mx-auto w-full max-w-5xl">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Events</p>
+            <h1 className="mt-2 text-2xl font-semibold text-foreground">Event archive</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Add photos and recordings for {eventTitle || "this event"}. These appear on the public event page after the event has ended.
+            </p>
+          </div>
+          <a
+            href="/admin/events"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            Back to events
+          </a>
+        </div>
 
-        <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
-          <h2 className="text-base font-semibold text-slate-900">Add to archive</h2>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form onSubmit={handleAdd} className="mt-6 rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ImagePlus className="h-5 w-5" aria-hidden />
+            </div>
             <div>
-              <label className="text-sm font-semibold text-slate-900">Type</label>
+              <h2 className="text-base font-semibold text-foreground">Add archive item</h2>
+              <p className="text-sm text-muted-foreground">Upload a photo or add a YouTube recording.</p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="archive-type" className="text-sm font-semibold text-foreground">Type</label>
               <select
+                id="archive-type"
                 value={mediaType}
                 onChange={(e) => setMediaType(e.target.value as "image" | "video")}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="image">Photo</option>
                 <option value="video">YouTube video</option>
@@ -122,81 +146,133 @@ export default function AdminEventArchivePage() {
 
             {mediaType === "video" ? (
               <div>
-                <label className="text-sm font-semibold text-slate-900">YouTube link</label>
+                <label htmlFor="youtube-url" className="text-sm font-semibold text-foreground">YouTube link</label>
                 <input
+                  id="youtube-url"
+                  type="url"
+                  inputMode="url"
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..."
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                  className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
               </div>
             ) : (
               <div>
-                <label className="text-sm font-semibold text-slate-900">Image</label>
+                <label htmlFor="archive-image" className="text-sm font-semibold text-foreground">Image</label>
                 <input
+                  id="archive-image"
                   type="file"
                   accept="image/*"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                  className="mt-2 min-h-10 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
               </div>
             )}
 
             <div className="sm:col-span-2">
-              <label className="text-sm font-semibold text-slate-900">Caption (optional)</label>
+              <label htmlFor="archive-caption" className="text-sm font-semibold text-foreground">Caption optional</label>
               <textarea
+                id="archive-caption"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="e.g. Group session, day 2 - hands-on portfolio building with the mentees."
+                placeholder="Group session, day 2, portfolio building with the mentees."
                 rows={3}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={submitting}
-            className="mt-5 rounded-2xl bg-[var(--steel-teal)] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
-          >
-            {submitting ? "Adding…" : "Add to archive"}
-          </button>
-
-          {message ? <p className="mt-3 text-sm text-rose-600">{message}</p> : null}
-        </div>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">{message || "Archive items stay attached to this event."}</p>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ImagePlus className="h-4 w-4" aria-hidden />}
+              {submitting ? "Adding..." : "Add to archive"}
+            </button>
+          </div>
+        </form>
 
         {loading ? (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading archive…</div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <div key={index} className="rounded-lg border border-border bg-card p-3" aria-hidden>
+                <div className="h-40 animate-pulse rounded-lg bg-muted" />
+                <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-muted" />
+              </div>
+            ))}
+          </div>
         ) : items.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Nothing in the archive yet.</div>
+          <div className="mt-6 rounded-lg border border-dashed border-border bg-card p-8 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-primary">
+              <Archive className="h-5 w-5" aria-hidden />
+            </div>
+            <h2 className="mt-4 text-lg font-semibold text-foreground">Nothing in the archive yet</h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+              Add a photo or recording when the session is complete. It will show on the event page for visitors.
+            </p>
+          </div>
         ) : (
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {items.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+              <div key={item.id} className="rounded-lg border border-border bg-card p-3">
                 {item.media_type === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.url} alt={item.caption || ""} className="max-h-64 w-full rounded-xl bg-slate-100 object-contain" />
+                  <img src={item.url} alt={item.caption || "Event archive image"} className="max-h-64 w-full rounded-lg bg-muted object-contain" />
                 ) : youtubeEmbedUrl(item.url) ? (
                   <iframe
+                    title={item.caption || "Event recording"}
                     src={youtubeEmbedUrl(item.url)!}
-                    className="h-40 w-full rounded-xl"
+                    className="h-40 w-full rounded-lg"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
                 ) : (
-                  <a href={item.url} target="_blank" rel="noreferrer" className="flex h-40 w-full items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex h-40 w-full flex-col items-center justify-center gap-2 rounded-lg bg-muted text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <Video className="h-6 w-6 text-primary" aria-hidden />
                     Open video link
                   </a>
                 )}
-                {item.caption ? <p className="mt-2 text-xs text-slate-600">{item.caption}</p> : null}
-                <button
-                  type="button"
-                  onClick={() => handleDelete(item.id)}
-                  className="mt-2 text-xs font-semibold text-rose-600 hover:underline"
-                >
-                  Remove
-                </button>
+                {item.caption ? <p className="mt-3 text-sm text-muted-foreground">{item.caption}</p> : null}
+
+                {confirmDeleteId === item.id ? (
+                  <div className="mt-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+                    <p className="text-sm font-semibold text-foreground">Remove this archive item?</p>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item.id)}
+                        className="inline-flex min-h-10 items-center justify-center rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        Remove
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        Keep it
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteId(item.id)}
+                    className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                    Remove
+                  </button>
+                )}
               </div>
             ))}
           </div>
