@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Resources",
   description:
-    "Guides, templates, checklists and ebooks to help you learn a skill, plan your business, or grow your career -- built for African entrepreneurs and job seekers.",
+    "Guides, templates, checklists and ebooks to help you learn a skill, plan your business, or grow your career -- built for entrepreneurs and job seekers worldwide.",
   alternates: { canonical: "https://prowessdigitalsolutions.com/resources" },
 };
 

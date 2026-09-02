@@ -29,7 +29,7 @@ const FALLBACK: SiteSettings = {
   socialTwitter: "https://twitter.com/prowessDS",
   seoTitle: "Prowess Digital Solutions | Discover Opportunities, Learn Skills, Build Your Career",
   seoDescription:
-    "Prowess Digital Solutions helps Africans discover jobs and opportunities, learn useful skills, build their careers with free tools, and connect through events and community.",
+    "Prowess Digital Solutions helps people worldwide discover jobs and opportunities, learn useful skills, build their careers with free tools, and connect through events and community.",
 };
 
 // Deduped per request (React's cache()) so generateMetadata() and the

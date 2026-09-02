@@ -119,7 +119,7 @@ export function HeroSection() {
               className="flex-wrap justify-center lg:justify-start"
               style={{ display: "flex", gap: "10px 22px", marginTop: 28, animation: "fadeUp 0.65s ease 0.4s both" }}
             >
-              {["Free to browse", "Africa + Remote focus", "New opportunities weekly"].map((item) => (
+              {["Free to browse", "Worldwide + Remote focus", "New opportunities weekly"].map((item) => (
                 <div key={item} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: T, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="var(--primary-foreground)" strokeWidth={3.5}>
