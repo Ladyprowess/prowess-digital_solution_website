@@ -6,14 +6,14 @@ const SITE_URL = "https://prowessdigitalsolutions.com";
 export const metadata: Metadata = {
   title: "Learn - Courses & Learning Resources",
   description:
-    "Your learning workspace. Browse courses, track your progress, and build skills that move your career forward.",
+    "Your learning workspace. Browse courses, books and practical resources that help you build useful skills and keep growing.",
   alternates: {
     canonical: `${SITE_URL}/learn`,
   },
   openGraph: {
     title: "Learn - Courses & Learning Resources",
     description:
-      "Your learning workspace. Browse courses, track your progress, and build skills that move your career forward.",
+      "Your learning workspace. Browse courses, books and practical resources that help you build useful skills and keep growing.",
     url: `${SITE_URL}/learn`,
     type: "website",
   },

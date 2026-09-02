@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     // Android/Chrome - "PDS" per explicit request, while `name` stays the
     // full name for the install dialog and app-info screens.
     short_name: "PDS",
-    description: "Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction.",
+    description: "Practical resources, tools, opportunities and business support to help you learn, build and grow.",
     start_url: "/",
     scope: "/",
     display: "standalone",

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   // pages in this codebase double up the suffix this way; not fixing
   // those here, just not repeating it in this new file).
   title: "Videos",
-  description: "Practical and motivational videos to help you grow - your career, your skills, and your mindset.",
+  description: "Practical videos to help you learn, build useful skills, make clearer decisions and keep growing.",
   alternates: { canonical: "https://prowessdigitalsolutions.com/videos" },
 };
 

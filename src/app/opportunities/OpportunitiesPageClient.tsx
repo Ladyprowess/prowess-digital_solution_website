@@ -206,7 +206,7 @@ function OpportunitiesPageContent() {
           <Reveal>
             <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Discover opportunities that can move you forward.</h1>
             <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-              Find internships, scholarships, grants, fellowships, competitions, accelerators and other opportunities designed to help you learn, grow and build your career.
+              Find internships, scholarships, grants, fellowships, competitions, accelerators and other opportunities designed to help you learn, grow and move forward.
             </p>
           </Reveal>
           <Reveal delay={80}>

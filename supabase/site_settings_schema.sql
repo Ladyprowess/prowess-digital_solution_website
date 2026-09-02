@@ -51,7 +51,7 @@ insert into site_settings (
   'https://www.linkedin.com/company/prowess-digital-solutions',
   'https://www.instagram.com/prowessdigitalsolutions',
   'https://twitter.com/prowessDS',
-  'Prowess Digital Solutions | Discover Opportunities, Learn Skills, Build Your Career',
+  'Prowess Digital Solutions | Learn, Build and Grow',
   'Prowess Digital Solutions helps people learn, build and grow through practical resources, tools, opportunities and business support.'
 )
 on conflict (id) do nothing;

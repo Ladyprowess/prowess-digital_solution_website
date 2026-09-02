@@ -40,17 +40,17 @@ export default function PrivacyPolicyPage() {
             {/* WHO WE ARE */}
             <PolicySection title="Who We Are">
               <p>
-                Prowess Digital Solutions is a business consulting company that
-                helps entrepreneurs and business owners build structured,
-                sustainable businesses. Our website address is{" "}
+                Prowess Digital Solutions provides practical learning,
+                resources, tools, opportunities and business support for people
+                and businesses who want to learn, build and grow. Our website
+                address is{" "}
                 <a
                   href="https://prowessdigitalsolutions.com"
                   className="text-primary underline"
                 >
                   https://prowessdigitalsolutions.com
                 </a>
-                . We are based in Lagos, Nigeria, and operate remotely across
-                Africa.
+                . We are based in Lagos, Nigeria, and operate remotely.
               </p>
             </PolicySection>
 

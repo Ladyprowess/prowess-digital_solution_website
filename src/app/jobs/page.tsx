@@ -11,9 +11,9 @@ export const metadata: Metadata = {
     canonical: `${SITE_URL}/jobs`,
   },
   openGraph: {
-    title: "Find Jobs in Africa - Remote & On-site Opportunities",
+    title: "Find Jobs Worldwide - Remote & On-site Opportunities",
     description:
-      "Browse remote, hybrid and on-site jobs across Africa. Filter by role, skill, location, experience level and salary to find opportunities that match where you want to go.",
+      "Browse remote, hybrid and on-site jobs worldwide. Filter by role, skill, location, experience level and salary to find opportunities that match where you want to go.",
     url: `${SITE_URL}/jobs`,
     type: "website",
   },

@@ -33,7 +33,7 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
               {brand.name}
             </p>
             <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-              Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction.
+              Practical resources, tools, opportunities and business support to help you learn, build and grow.
             </p>
             <div className="mt-5 flex items-center gap-3">
               {socials.map((s) => (

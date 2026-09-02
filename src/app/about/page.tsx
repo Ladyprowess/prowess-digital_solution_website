@@ -21,7 +21,7 @@ import {
 export const metadata: Metadata = {
   title: "About | Prowess Digital Solutions",
   description:
-    "Prowess Digital Solutions helps individuals build careers and helps businesses create clearer systems, using practical learning, resources, tools and services.",
+    "Prowess Digital Solutions helps people learn, build and grow through practical resources, tools, opportunities and business support.",
 };
 
 const platformAreas = [
@@ -159,11 +159,11 @@ export default function AboutPage() {
                   About Prowess Digital Solutions
                 </p>
                 <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                  Practical growth support for careers and businesses.
+                  Practical growth support for people and businesses.
                 </h1>
                 <p className="mt-6 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-                  Prowess brings career direction, learning, opportunities, resources and business
-                  support into one organised place. It is built for people who want useful guidance,
+                  Prowess brings learning, opportunities, resources, tools and business support
+                  into one organised place. It is built for people who want useful guidance,
                   not noise.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">

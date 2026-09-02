@@ -27,7 +27,7 @@ const FALLBACK: SiteSettings = {
   socialLinkedin: "https://www.linkedin.com/company/prowess-digital-solutions",
   socialInstagram: "https://www.instagram.com/prowessdigitalsolutions",
   socialTwitter: "https://twitter.com/prowessDS",
-  seoTitle: "Prowess Digital Solutions | Discover Opportunities, Learn Skills, Build Your Career",
+  seoTitle: "Prowess Digital Solutions | Learn, Build and Grow",
   seoDescription:
     "Prowess Digital Solutions helps people learn, build and grow through practical resources, tools, opportunities and business support.",
 };

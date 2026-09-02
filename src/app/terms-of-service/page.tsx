@@ -41,12 +41,13 @@ export default function TermsOfServicePage() {
             {/* OVERVIEW */}
             <TermsSection title="Overview">
               <p>
-                Prowess Digital Solutions provides business consulting services
-                including clarity sessions, business audits, strategy planning,
-                business structure setup, workflow mapping, SOP documentation,
-                training, mentorship, and structured support packages. These
-                Terms of Service apply to all services we provide and to your use
-                of our website at{" "}
+                Prowess Digital Solutions provides practical learning,
+                resources, tools, opportunities and business support, including
+                clarity sessions, business audits, strategy planning, business
+                structure setup, workflow mapping, SOP documentation, training,
+                mentorship, and structured support packages. These Terms of
+                Service apply to all services we provide and to your use of our
+                website at{" "}
                 <a
                   href="https://prowessdigitalsolutions.com"
                   className="text-primary underline"
@@ -333,4 +334,3 @@ function TermsListItem({ text }: { text: string }) {
     </div>
   );
 }
-

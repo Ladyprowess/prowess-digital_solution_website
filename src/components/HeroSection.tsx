@@ -69,7 +69,7 @@ export function HeroSection() {
             </h1>
 
             <p style={{ fontSize: "1.05rem", lineHeight: 1.8, color: muted, marginBottom: 30, animation: "fadeUp 0.65s ease 0.2s both" }}>
-              Discover opportunities, learn useful skills, build your career, and connect with people moving in the same direction, all on Prowess Digital Solutions.
+              Explore practical resources, tools, opportunities and business support to help you learn, build and grow on Prowess Digital Solutions.
             </p>
 
             {/* Search bar */}
