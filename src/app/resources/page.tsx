@@ -178,18 +178,18 @@ function ResourcesPageContent() {
                 <Library size={14} aria-hidden="true" />
                 Library
               </div>
-              <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Read, learn, save, and come back to what matters.
+                <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                A useful library for work, business and personal growth.
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-                Practical ebooks, guides, templates and articles for your career, business, and personal life.
+                Explore ebooks, guides, templates, checklists and articles you can read now or save for later.
               </p>
             </Reveal>
             <Reveal delay={80}>
               <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-sm font-semibold text-foreground">Your saved resources live in your account.</p>
+                <p className="text-sm font-semibold text-foreground">Keep your best resources in one place.</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  Bookmark books, keep track of videos, and continue learning from your personal dashboard.
+                  Save books, guides and videos from across Prowess, then return to them from your account.
                 </p>
                 <Link href="/account/learning" className="mt-4 inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   Open my library
@@ -413,8 +413,17 @@ function ResourcesPageContent() {
               <Library className="mx-auto text-primary" size={28} strokeWidth={1.6} aria-hidden="true" />
               <h2 className="mt-4 text-lg font-semibold text-foreground">No resources found</h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                {activeFiltersPresent ? "We could not find anything matching your current filters." : "We are adding new reading material soon. Check back shortly."}
+                {activeFiltersPresent ? "No resource matches your current search or filters." : "New ebooks, guides, templates and checklists will appear here when they are published."}
               </p>
+              {activeFiltersPresent && (
+                <button
+                  type="button"
+                  onClick={() => router.replace(pathname, { scroll: false })}
+                  className="mt-6 min-h-10 rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

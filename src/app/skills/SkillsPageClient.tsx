@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, Compass, Search, Sparkles } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -12,14 +12,6 @@ const PAGE_SIZE = 24;
 
 type SkillRow = { id: string; slug: string; name: string; description: string | null; featured: boolean };
 export type SkillWithCounts = SkillRow & { learningCount: number; jobsCount: number; opportunitiesCount: number };
-
-function ChevronRight() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="flex-shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
-  );
-}
 
 export default function SkillsPageClient({ initialSkills = [] }: { initialSkills?: SkillWithCounts[] }) {
   const [skills, setSkills] = useState<SkillWithCounts[]>(initialSkills);
@@ -126,31 +118,69 @@ export default function SkillsPageClient({ initialSkills = [] }: { initialSkills
       .slice(0, 4);
   }, [skills]);
 
+  const totals = useMemo(() => {
+    return skills.reduce(
+      (acc, skill) => ({
+        courses: acc.courses + skill.learningCount,
+        jobs: acc.jobs + skill.jobsCount,
+        opportunities: acc.opportunities + skill.opportunitiesCount,
+      }),
+      { courses: 0, jobs: 0, opportunities: 0 }
+    );
+  }, [skills]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* HERO */}
       <section className="border-b border-border bg-brand-bg py-12 sm:py-16">
         <Container>
-          <Reveal>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-primary">Skill Library</p>
-              <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">Choose a skill and see where it can take you.</h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                Search practical skills and see the courses, roles and opportunities connected to each one.
-              </p>
-              <div className="relative mt-7 max-w-2xl">
-                <label htmlFor="skill-search" className="sr-only">Search skills</label>
-                <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <input
-                  id="skill-search"
-                  value={search}
-                  onChange={(e) => updateSearch(e.target.value)}
-                  placeholder="Search by skill name"
-                  className="min-h-12 w-full rounded-lg border border-border bg-card pl-11 pr-4 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+            <Reveal>
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+                  <Sparkles size={14} aria-hidden="true" />
+                  Skill Library
+                </div>
+                <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">Choose a skill and see where it can take you.</h1>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+                  Search practical skills, then open a skill profile to find connected courses, career paths, jobs and opportunities.
+                </p>
+                <div className="relative mt-7 max-w-2xl">
+                  <label htmlFor="skill-search" className="sr-only">Search skills</label>
+                  <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  <input
+                    id="skill-search"
+                    value={search}
+                    onChange={(e) => updateSearch(e.target.value)}
+                    placeholder="Search by skill name"
+                    className="min-h-12 w-full rounded-lg border border-border bg-card pl-11 pr-4 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
               </div>
-            </div>
-          </Reveal>
+            </Reveal>
+
+            <Reveal delay={80}>
+              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+                <p className="text-sm font-bold text-foreground">Skills connect the platform</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Each skill can point users toward structured courses, matching roles and useful opportunities.
+                </p>
+                <div className="mt-5 grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Courses", value: totals.courses },
+                    { label: "Jobs", value: totals.jobs },
+                    { label: "Opportunities", value: totals.opportunities },
+                  ].map((stat) => (
+                    <div key={stat.label} className="rounded-lg bg-muted p-3 text-center">
+                      <p className="text-lg font-bold text-foreground">{loading ? "..." : stat.value}</p>
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          </div>
+
           {!loading && exampleChips.length > 0 && (
             <Reveal delay={120}>
               <div className="mt-7 flex flex-wrap items-center gap-2">
@@ -248,46 +278,57 @@ export default function SkillsPageClient({ initialSkills = [] }: { initialSkills
 
             {sortedSkills.length === 0 ? (
               <div className="mt-6 rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
-                <p className="text-sm text-muted-foreground">No skills match these filters.</p>
+                <Compass size={28} className="mx-auto text-primary" aria-hidden="true" />
+                <p className="mt-3 text-sm font-semibold text-foreground">No skills match these filters.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Clear the filter or try another skill name.</p>
               </div>
             ) : (
-              <div className="mt-6 overflow-hidden rounded-lg border border-border bg-card">
-                <div className="hidden border-b border-border px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid sm:grid-cols-[1fr_110px_90px_130px_16px] sm:gap-4">
-                  <span>Skill</span>
-                  <span className="text-center">Courses</span>
-                  <span className="text-center">Jobs</span>
-                  <span className="text-center">Opportunities</span>
-                  <span />
-                </div>
-                <div className="divide-y divide-border">
-                  {pagedSkills.map((s) => (
+              <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {pagedSkills.map((s) => {
+                  const connectionTotal = s.learningCount + s.jobsCount + s.opportunitiesCount;
+                  return (
                     <Link
                       key={s.id}
                       href={`/skills/${s.slug}`}
-                      className="group grid grid-cols-1 gap-2 px-5 py-4 transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:grid-cols-[1fr_110px_90px_130px_16px] sm:items-center sm:gap-4"
+                      className="group flex min-h-[250px] flex-col rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                      <div className="min-w-0">
-                        <span className="font-semibold text-foreground">{s.name}</span>
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Sparkles size={19} aria-hidden="true" />
+                        </span>
                         {s.featured && (
-                          <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">Featured</span>
+                          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">Featured</span>
                         )}
-                        {s.description && <p className="mt-0.5 truncate text-sm text-muted-foreground sm:max-w-md">{s.description}</p>}
                       </div>
-                      <span className={`text-sm sm:text-center ${s.learningCount > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
-                        <span className="text-muted-foreground sm:hidden">Courses </span>{s.learningCount}
-                      </span>
-                      <span className={`text-sm sm:text-center ${s.jobsCount > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
-                        <span className="text-muted-foreground sm:hidden">Jobs </span>{s.jobsCount}
-                      </span>
-                      <span className={`text-sm sm:text-center ${s.opportunitiesCount > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
-                        <span className="text-muted-foreground sm:hidden">Opportunities </span>{s.opportunitiesCount}
-                      </span>
-                      <span className="hidden sm:block">
-                        <ChevronRight />
+                      <h3 className="mt-5 text-lg font-bold text-foreground">{s.name}</h3>
+                      <p className="mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-muted-foreground">
+                        {s.description || "Open this skill to see what learning, roles and opportunities connect to it."}
+                      </p>
+
+                      <div className="mt-5 grid grid-cols-3 gap-2">
+                        {[
+                          { label: "Courses", value: s.learningCount, icon: BookOpen },
+                          { label: "Jobs", value: s.jobsCount, icon: BriefcaseBusiness },
+                          { label: "Opps", value: s.opportunitiesCount, icon: Compass },
+                        ].map((stat) => {
+                          const Icon = stat.icon;
+                          return (
+                            <div key={stat.label} className={`rounded-lg border border-border bg-background p-3 ${stat.value === 0 ? "opacity-70" : ""}`}>
+                              <Icon size={15} className="text-primary" aria-hidden="true" />
+                              <p className="mt-2 text-base font-bold text-foreground">{stat.value}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <span className="mt-auto inline-flex min-h-10 items-center gap-2 pt-5 text-sm font-semibold text-primary">
+                        {connectionTotal > 0 ? "Open skill profile" : "View skill"}
+                        <ArrowRight size={15} aria-hidden="true" className="transition group-hover:translate-x-0.5" />
                       </span>
                     </Link>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             )}
 

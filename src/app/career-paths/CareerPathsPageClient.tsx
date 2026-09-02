@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { ArrowRight, BriefcaseBusiness, Compass, GraduationCap, Search } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -176,21 +177,25 @@ export default function CareerPathsPageClient() {
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
             <Reveal>
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-primary">Career Path Explorer</p>
+                <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+                  <Compass size={14} aria-hidden="true" />
+                  Career Path Explorer
+                </div>
                 <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  Choose a path, then build the skills to enter it.
+                  Choose a direction, then build toward it.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                  Explore structured career paths with the skills, courses, jobs, opportunities and tools connected to each direction.
+                  Explore career paths for different experience levels, see the skills connected to each one, and move from learning into real jobs and opportunities.
                 </p>
-                <div className="mt-7 max-w-2xl">
+                <div className="relative mt-7 max-w-2xl">
                   <label htmlFor="career-path-search" className="sr-only">Search career paths</label>
+                  <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                   <input
                     id="career-path-search"
                     value={search}
                     onChange={(e) => updateSearch(e.target.value)}
-                    placeholder="Search by career name"
-                    className="min-h-12 w-full rounded-lg border border-border bg-card px-5 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="Search Web3, customer support, data, marketing..."
+                    className="min-h-12 w-full rounded-lg border border-border bg-card pl-11 pr-4 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   />
                 </div>
               </div>
@@ -198,22 +203,27 @@ export default function CareerPathsPageClient() {
 
             <Reveal delay={80}>
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <p className="text-sm font-bold text-foreground">What you get in each path</p>
+                <p className="text-sm font-bold text-foreground">What each path brings together</p>
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   {[
-                    { label: "Skills", value: totals.skills },
-                    { label: "Courses", value: totals.learning },
-                    { label: "Jobs", value: totals.jobs },
+                    { label: "Skills", value: totals.skills, icon: GraduationCap },
+                    { label: "Courses", value: totals.learning, icon: Compass },
+                    { label: "Jobs", value: totals.jobs, icon: BriefcaseBusiness },
                   ].map((stat) => (
                     <div key={stat.label} className="rounded-lg bg-muted p-3 text-center">
+                      <stat.icon size={15} className="mx-auto mb-2 text-primary" aria-hidden="true" />
                       <p className="text-lg font-bold text-foreground">{stat.value}</p>
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">{stat.label}</p>
                     </div>
                   ))}
                 </div>
                 <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                  Start with the path that matches your interest. Each guide separates the skills, structured courses and application opportunities.
+                  Use a path to understand what to learn, what to practise, and where the skill can lead.
                 </p>
+                <Link href="/skills" className="mt-4 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  Explore by skill
+                  <ArrowRight size={15} aria-hidden="true" />
+                </Link>
               </div>
             </Reveal>
           </div>
@@ -238,11 +248,6 @@ export default function CareerPathsPageClient() {
             </div>
           </Reveal>
 
-          <Reveal delay={160}>
-            <Link href="/skills" className="mt-5 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              Not sure what to choose? Explore by skill
-            </Link>
-          </Reveal>
         </Container>
       </section>
 
@@ -272,13 +277,16 @@ export default function CareerPathsPageClient() {
               ))}
             </div>
           ) : paths.length === 0 ? (
-            <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
-              <p className="font-semibold text-foreground">No career paths published yet.</p>
-              <p className="mt-1 text-sm text-muted-foreground">Check back soon.</p>
+            <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center">
+              <Compass size={30} className="mx-auto text-primary" aria-hidden="true" />
+              <p className="mt-4 font-semibold text-foreground">No career paths are published yet.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">When the admin publishes a career path, it will appear here with its skills, courses, jobs and opportunities.</p>
             </div>
           ) : sorted.length === 0 ? (
-            <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
-              <p className="font-semibold text-foreground">No career paths match these filters.</p>
+            <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center">
+              <Search size={30} className="mx-auto text-primary" aria-hidden="true" />
+              <p className="mt-4 font-semibold text-foreground">No career paths match these filters.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Try another career name or clear the selected category.</p>
               <button
                 type="button"
                 onClick={() => {

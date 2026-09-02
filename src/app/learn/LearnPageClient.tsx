@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { BookOpen, BriefcaseBusiness, GraduationCap, Layers, Search, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, GraduationCap, Layers, Search, Sparkles } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -164,10 +164,10 @@ function LearnPageContent() {
                   Learn
                 </div>
                 <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  Build practical skills with focused learning.
+                  Build practical skills through structured courses.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                  Browse structured courses created for focused learning and career growth.
+                  Find focused courses for career growth, business skills, digital work and personal development.
                 </p>
                 <div className="relative mt-7 max-w-2xl">
                   <label htmlFor="learn-search" className="sr-only">Search courses</label>
@@ -192,13 +192,14 @@ function LearnPageContent() {
                 <div className="mt-5 grid grid-cols-3 gap-2">
                   {learningTotals.map((stat) => (
                     <div key={stat.label} className="rounded-lg bg-muted p-3 text-center">
-                      <p className="text-lg font-bold text-foreground">{loading ? "…" : stat.value}</p>
+                      <p className="text-lg font-bold text-foreground">{loading ? "..." : stat.value}</p>
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">{stat.label}</p>
                     </div>
                   ))}
                 </div>
-                <Link href="/account/learning" className="mt-5 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <Link href="/account/learning" className="mt-5 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   Open saved learning
+                  <ArrowRight size={15} aria-hidden="true" />
                 </Link>
               </div>
             </Reveal>
@@ -336,7 +337,7 @@ function LearnPageContent() {
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-primary">Explore</p>
-                  <h2 className="mt-2 text-xl font-bold text-foreground">Courses</h2>
+                  <h2 className="mt-2 text-xl font-bold text-foreground">Course library</h2>
                   <p className="mt-1 text-sm text-muted-foreground">{loading ? "Searching…" : `${total} item${total === 1 ? "" : "s"} found`}</p>
                 </div>
                 <label className="sr-only" htmlFor="learn-sort">Sort learning items</label>
@@ -369,7 +370,7 @@ function LearnPageContent() {
                   <BookOpen size={34} className="mx-auto text-primary" aria-hidden="true" />
                   <p className="text-lg font-semibold text-foreground">No courses found</p>
                   <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                    {activeFiltersPresent ? "We could not find anything matching your current filters." : "No courses are published yet. Check back soon."}
+                    {activeFiltersPresent ? "No course matches your current search or filters." : "No courses are published yet. When a course goes live, it will appear here."}
                   </p>
                   {activeFiltersPresent && (
                     <button

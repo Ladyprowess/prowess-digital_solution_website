@@ -165,9 +165,9 @@ function VideosPageContent() {
                   <Video size={14} aria-hidden="true" />
                   Videos
                 </div>
-                <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">Watch practical lessons, interviews and ideas.</h1>
+                <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">Watch practical lessons and useful ideas.</h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                  Learn through tutorials, career advice, business insights, interviews and useful ideas from Prowess Digital Solutions and trusted creators.
+                  Browse videos for career growth, business, digital skills and extra context around what you are learning.
                 </p>
                 <div className="relative mt-7 max-w-2xl">
                   <label htmlFor="video-search" className="sr-only">Search videos</label>
@@ -186,7 +186,7 @@ function VideosPageContent() {
             <Reveal delay={80}>
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
                 <p className="text-sm font-bold text-foreground">Video library</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">Browse by audience and category, then open lessons connected to your career growth.</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Browse by audience and category, then open a video to watch and find related resources.</p>
                 <div className="mt-5 grid grid-cols-2 gap-2">
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-lg font-bold text-foreground">{loading ? "…" : total}</p>
@@ -300,7 +300,9 @@ function VideosPageContent() {
               </p>
               <p className="mt-1 text-sm font-semibold text-foreground">{loading ? "Searching…" : `${total} video${total === 1 ? "" : "s"} found`}</p>
             </div>
+            <label htmlFor="video-sort" className="sr-only">Sort videos</label>
             <select
+              id="video-sort"
               value={filters.sort}
               onChange={(e) => updateFilters({ sort: e.target.value as SortValue })}
               className="min-h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -328,8 +330,17 @@ function VideosPageContent() {
               <Video size={34} className="mx-auto text-primary" aria-hidden="true" />
               <h2 className="text-lg font-semibold text-foreground">No videos found</h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                {activeFiltersPresent ? "We could not find anything matching your current filters." : "We are adding videos here soon. Check back shortly."}
+                {activeFiltersPresent ? "No video matches your current search or filters." : "Videos will appear here when they are published."}
               </p>
+              {activeFiltersPresent && (
+                <button
+                  type="button"
+                  onClick={() => router.replace(pathname, { scroll: false })}
+                  className="mt-6 min-h-10 rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

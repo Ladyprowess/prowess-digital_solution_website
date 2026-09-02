@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
-import { resolveAssignmentAccess } from "@/lib/assignments/access";
+import { getActiveSubmission, resolveAssignmentAccess } from "@/lib/assignments/access";
 import { evaluateCourseCompletion } from "@/lib/certificates/evaluate";
 import { isUuid, normalizeBody } from "@/lib/community/validate";
 
@@ -21,6 +21,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ assignm
     }
     if (!access.assignment.peer_review_enabled) {
       return NextResponse.json({ ok: false, error: "Peer review is not enabled for this assignment." }, { status: 400 });
+    }
+
+    const ownSubmission = await getActiveSubmission(assignmentId, member.id);
+    if (!ownSubmission) {
+      return NextResponse.json({ ok: false, error: "Submit your own work before reviewing another learner's submission." }, { status: 403 });
     }
 
     const payload = await req.json().catch(() => ({}));

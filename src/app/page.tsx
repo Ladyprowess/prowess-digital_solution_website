@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Inbox } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, CheckCircle2, Clapperboard, ClipboardCheck, Inbox } from "lucide-react";
 import { ManualGoogleReviews } from "@/components/ManualGoogleReviews";
 import { HeroSection } from "@/components/HeroSection";
 import { Reveal } from "@/components/Reveal";
@@ -497,55 +497,75 @@ export default function ModernHomePage() {
       <section className="bg-muted py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <Reveal>
-            <div className="mb-10 text-center">
-              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">For Businesses</div>
-              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">For businesses that need better systems</h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-                Prowess helps founders and teams document work, understand their numbers, package their offers, and build repeatable operations.
-              </p>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)] lg:items-end">
+              <div>
+                <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">For Businesses</div>
+                <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Build the systems your business keeps needing.</h2>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+                  Practical tools, resources and services for founders who want clearer operations, stronger offers and better day to day control.
+                </p>
+                <Link href="/services" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  Explore business support
+                  <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {["Clarify your offer", "Track the numbers", "Document the work"].map((item) => (
+                  <div key={item} className="rounded-lg border border-border bg-card p-4">
+                    <CheckCircle2 size={18} className="text-primary" aria-hidden="true" />
+                    <p className="mt-3 text-sm font-bold text-foreground">{item}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </Reveal>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="/tools" className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <h3 className="text-base font-bold text-foreground">Business Tools</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Calculators, trackers, and helpers for everyday operations.</p>
-            </Link>
-            <Link href="/resources" className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <h3 className="text-base font-bold text-foreground">Business Resources</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Guides, SOP templates, checklists, and practical reading.</p>
-            </Link>
-            <Link href="/videos?audience=business" className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <h3 className="text-base font-bold text-foreground">Business Videos</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Strategy, marketing and growth, on video.</p>
-            </Link>
-            <Link href="/services" className="block rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <h3 className="text-base font-bold text-foreground">Business Services</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Diagnostics, SOPs, playbooks, and dashboards built with you.</p>
-            </Link>
-          </div>
-          <div className="mt-8 text-center">
-            <Link href="/services" className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore solutions for businesses</Link>
+
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { href: "/tools", icon: ClipboardCheck, title: "Business Tools", desc: "Calculators, trackers and simple helpers for everyday decisions." },
+              { href: "/resources", icon: BookOpen, title: "Business Resources", desc: "Guides, SOP templates, checklists and practical reading." },
+              { href: "/videos?audience=business", icon: Clapperboard, title: "Business Videos", desc: "Strategy, marketing and growth lessons you can watch." },
+              { href: "/services", icon: BriefcaseBusiness, title: "Business Services", desc: "Diagnostics, SOPs, playbooks and dashboards built with you." },
+            ].map((item) => (
+              <Link key={item.title} href={item.href} className="group flex min-h-44 flex-col rounded-lg border border-border bg-card p-5 transition-[border-color,background-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                  <item.icon size={20} aria-hidden="true" />
+                </span>
+                <h3 className="mt-5 text-base font-bold text-foreground">{item.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                  Open
+                  <ArrowRight size={15} aria-hidden="true" className="transition group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
       {/* WHY */}
       <section className="bg-background py-20 sm:py-24">
-        <div className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <Reveal>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">One place to keep moving forward.</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-              Instead of searching across dozens of websites for jobs, learning resources, career advice, business guidance, and opportunities, Prowess Digital Solutions brings useful things together in one place.
-            </p>
-          </Reveal>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {whyProwess.map((w) => (
-              <div key={w.title}>
-                <h3 className="text-base font-bold text-foreground">{w.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{w.desc}</p>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start">
+              <div>
+                <div className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Why Prowess Digital Solutions</div>
+                <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">One place to keep moving forward.</h2>
+                <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground">
+                  Find jobs, learning, resources, career direction, business guidance and practical tools without jumping between too many places.
+                </p>
               </div>
-            ))}
-          </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {whyProwess.map((w, index) => (
+                  <div key={w.title} className="rounded-lg border border-border bg-card p-5">
+                    <span className="text-xs font-bold uppercase tracking-widest text-primary">{String(index + 1).padStart(2, "0")}</span>
+                    <h3 className="mt-4 text-base font-bold text-foreground">{w.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{w.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
