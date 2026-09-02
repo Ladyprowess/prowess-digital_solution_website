@@ -8,13 +8,13 @@ import {
   CheckCircle2,
   ChevronDown,
   CircleHelp,
+  Lightbulb,
   ListChecks,
   LockKeyhole,
   Mic,
   MessagesSquare,
   Search,
   Send,
-  Sparkles,
   Target,
   type LucideIcon,
 } from "lucide-react";
@@ -193,7 +193,7 @@ function GuideView() {
 
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-6">
         <div className="flex items-center gap-2.5">
-          <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
+          <Lightbulb className="h-5 w-5 text-primary" aria-hidden="true" />
           <h2 className="text-lg font-bold text-foreground">{GUIDE_MINDSET.title}</h2>
         </div>
         <ul className="mt-4 space-y-3">

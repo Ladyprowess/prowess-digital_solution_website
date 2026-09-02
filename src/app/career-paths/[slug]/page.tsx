@@ -399,9 +399,6 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
                 {path.featured && (
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">Featured</span>
                 )}
-                {path.level && (
-                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold uppercase tracking-wide capitalize text-muted-foreground">{path.level}</span>
-                )}
                 {path.category && (
                   <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold uppercase tracking-wide capitalize text-muted-foreground">{path.category}</span>
                 )}

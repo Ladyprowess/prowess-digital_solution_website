@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Target } from "lucide-react";
 import { OpportunityCard, type OpportunityCardData } from "@/components/opportunities/OpportunityCard";
 import { OpportunityTypeTabs } from "@/components/opportunities/OpportunityTypeTabs";
 
@@ -35,7 +35,7 @@ export function OpportunitiesSection({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-4">
             <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Sparkles size={20} aria-hidden="true" />
+              <Target size={20} aria-hidden="true" />
             </span>
             <div>
               <p className="text-sm font-bold text-foreground">No matching opportunities yet</p>

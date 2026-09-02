@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, BriefcaseBusiness, Compass, Search, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, Compass, Search, Target } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -138,7 +138,7 @@ export default function SkillsPageClient({ initialSkills = [] }: { initialSkills
             <Reveal>
               <div>
                 <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
-                  <Sparkles size={14} aria-hidden="true" />
+                  <Compass size={14} aria-hidden="true" />
                   Skill Library
                 </div>
                 <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">Choose a skill and see where it can take you.</h1>
@@ -163,7 +163,7 @@ export default function SkillsPageClient({ initialSkills = [] }: { initialSkills
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
                 <p className="text-sm font-bold text-foreground">Skills connect the platform</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Each skill can point users toward structured courses, matching roles and useful opportunities.
+                  See the courses, jobs and opportunities tied to each skill.
                 </p>
                 <div className="mt-5 grid grid-cols-3 gap-2">
                   {[
@@ -294,7 +294,7 @@ export default function SkillsPageClient({ initialSkills = [] }: { initialSkills
                     >
                       <div className="flex items-start justify-between gap-3">
                         <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Sparkles size={19} aria-hidden="true" />
+                          <Target size={19} aria-hidden="true" />
                         </span>
                         {s.featured && (
                           <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">Featured</span>

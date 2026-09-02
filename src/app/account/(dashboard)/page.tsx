@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark, BriefcaseBusiness, FileText, Library, ReceiptText, Route, Settings, Sparkles, type LucideIcon } from "lucide-react";
+import { BadgeCheck, Bookmark, BriefcaseBusiness, FileText, Library, ReceiptText, Route, Settings, type LucideIcon } from "lucide-react";
 import { useAccountSession } from "@/components/account/MemberSessionProvider";
 import { supabase } from "@/lib/supabase";
 
@@ -145,7 +145,7 @@ export default function AccountOverviewPage() {
 
       <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-5">
         <div className="flex items-start gap-3">
-          <Sparkles size={20} className="mt-0.5 flex-shrink-0 text-primary" aria-hidden="true" />
+          <BadgeCheck size={20} className="mt-0.5 flex-shrink-0 text-primary" aria-hidden="true" />
           <div>
             <h2 className="text-base font-bold text-foreground">Keep your profile useful</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">Save resources, track learning, keep CV drafts, and return to the career paths you are exploring.</p>

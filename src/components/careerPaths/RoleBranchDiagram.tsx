@@ -15,52 +15,64 @@ export type RoleNode = {
   children: RoleNode[];
 };
 
-// "What can you become?" -- a real 2-level branching tree (career path ->
-// tier-1 roles -> tier-2 roles), each node clickable into the existing
-// Modal, populated with that specific role's own getSkillGraph-derived
-// skills/jobs/learning (pre-fetched server-side, not the parent path's).
 export function RoleBranchDiagram({ pathTitle, roles }: { pathTitle: string; roles: RoleNode[] }) {
   const [active, setActive] = useState<RoleNode | null>(null);
 
   return (
-    <div>
-      <div className="flex justify-center">
-        <div className="rounded-2xl border-2 border-primary bg-primary/5 px-6 py-3 text-center">
-          <p className="text-sm font-bold text-foreground">{pathTitle}</p>
-        </div>
-      </div>
-      <div className="flex justify-center">
-        <div className="h-8 w-px bg-border" />
-      </div>
-      <div className="flex flex-wrap justify-center gap-10 overflow-x-auto pb-2">
-        {roles.map((role) => (
-          <div key={role.id} className="flex flex-col items-center">
-            <button
-              type="button"
-              onClick={() => setActive(role)}
-              className="flex-shrink-0 rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground transition hover:border-primary/40 hover:bg-primary/5"
-            >
-              {role.title}
-            </button>
-            {role.children.length > 0 && (
-              <>
-                <div className="mt-2 h-6 w-px bg-border" />
-                <div className="flex flex-wrap justify-center gap-3">
-                  {role.children.map((child) => (
-                    <button
-                      key={child.id}
-                      type="button"
-                      onClick={() => setActive(child)}
-                      className="flex-shrink-0 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground transition hover:border-primary/40 hover:bg-primary/5"
-                    >
-                      {child.title}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+    <div className="overflow-hidden rounded-lg border border-border bg-card p-4 sm:p-6">
+      <div className="relative mx-auto max-w-4xl">
+        <div className="pointer-events-none absolute left-1/2 top-12 h-[calc(100%-3rem)] w-px -translate-x-1/2 bg-border" />
+
+        <div className="relative z-10 flex justify-center">
+          <div className="max-w-full rounded-lg border-2 border-primary bg-primary/10 px-6 py-3 text-center text-sm font-bold text-foreground shadow-sm">
+            {pathTitle}
           </div>
-        ))}
+        </div>
+
+        <div className="relative z-10 mt-8 space-y-8">
+          {roles.map((role, index) => (
+            <div key={role.id} className="relative">
+              <div
+                className={`absolute top-1/2 hidden h-px -translate-y-1/2 bg-border sm:block ${
+                  index % 2 === 0 ? "left-[46%] right-1/2" : "left-1/2 right-[46%]"
+                }`}
+              />
+              <div
+                className={`relative flex ${
+                  index % 2 === 0 ? "justify-center sm:justify-start" : "justify-center sm:justify-end"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActive(role)}
+                  className="min-h-12 w-full max-w-[360px] rounded-lg border border-primary/30 bg-background px-5 py-3 text-center text-sm font-semibold text-foreground shadow-sm transition hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-[46%]"
+                >
+                  {role.title}
+                </button>
+              </div>
+
+              {role.children.length > 0 && (
+                <div className="relative mt-4 pl-6 sm:mx-auto sm:max-w-[46%] sm:pl-0">
+                  <div className="absolute bottom-5 left-2 top-0 w-px bg-border sm:left-1/2" />
+                  <div className="space-y-3">
+                    {role.children.map((child) => (
+                      <div key={child.id} className="relative">
+                        <span className="absolute left-2 top-1/2 h-px w-4 -translate-y-1/2 bg-border sm:left-1/2 sm:w-6" />
+                        <button
+                          type="button"
+                          onClick={() => setActive(child)}
+                          className="ml-6 min-h-11 w-[calc(100%-1.5rem)] rounded-lg border border-border bg-card px-4 py-2.5 text-left text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:ml-[calc(50%+1.5rem)] sm:w-[calc(50%-1.5rem)]"
+                        >
+                          {child.title}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <Modal open={!!active} title={active?.title || ""} onClose={() => setActive(null)}>
@@ -97,7 +109,7 @@ export function RoleBranchDiagram({ pathTitle, roles }: { pathTitle: string; rol
                   {active.jobs.map((j) => (
                     <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-lg border border-border px-3 py-2 text-sm hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                       <span className="font-semibold text-foreground">{j.title}</span>
-                      {j.companies?.name && <span className="text-muted-foreground"> - {j.companies.name}</span>}
+                      {j.companies?.name && <span className="text-muted-foreground"> by {j.companies.name}</span>}
                     </Link>
                   ))}
                 </div>

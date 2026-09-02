@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
   Award,
+  BadgeCheck,
   BookOpen,
   Bookmark,
   CreditCard,
@@ -15,7 +16,6 @@ import {
   Map,
   Menu,
   Settings,
-  Sparkles,
   Star,
   X,
   type LucideIcon,
@@ -32,7 +32,7 @@ const NAV_GROUPS: {
   },
   {
     label: "Membership",
-    items: [{ label: "Membership", href: "/account/membership", icon: Sparkles }],
+    items: [{ label: "Membership", href: "/account/membership", icon: BadgeCheck }],
   },
   {
     label: "Workspace",

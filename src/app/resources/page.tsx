@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { BookOpen, BriefcaseBusiness, Building2, GraduationCap, HeartHandshake, Library, Search, Sparkles } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, Building2, GraduationCap, HeartHandshake, Library, Search } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -34,10 +34,10 @@ const TYPE_TABS: PillTab<string>[] = [
 ];
 
 const LIBRARY_SHELVES = [
-  { label: "Self help", query: "self help", icon: Sparkles },
+  { label: "Self help", query: "self help", icon: BookOpen },
   { label: "Marriage", query: "marriage", icon: HeartHandshake },
   { label: "Sexual wellness", query: "sexual wellness", icon: HeartHandshake },
-  { label: "Web3", query: "web3", icon: GraduationCap },
+  { label: "Tech", query: "technology tech digital web3", icon: GraduationCap },
   { label: "Business", query: "business", icon: Building2 },
   { label: "Career", query: "career", icon: BriefcaseBusiness },
   { label: "Education", query: "education", icon: BookOpen },
@@ -205,7 +205,7 @@ function ResourcesPageContent() {
                 id="resource-search"
                 value={filters.q}
                 onChange={(e) => updateFilters({ q: e.target.value })}
-                placeholder="Search books, guides, templates, Web3, marriage, business..."
+                placeholder="Search books, guides, templates, tech, marriage, business..."
                 className="w-full rounded-lg border border-border bg-card py-3.5 pl-11 pr-4 text-sm text-foreground shadow-sm outline-none transition-[border-color,box-shadow] duration-150 ease-out placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/25"
               />
             </div>

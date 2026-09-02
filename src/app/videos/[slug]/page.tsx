@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Calendar, Clock, Layers, PlayCircle, Sparkles, Users, Video } from "lucide-react";
+import { Calendar, Clock, Layers, Lightbulb, PlayCircle, Users, Video } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { VideoPlayer } from "@/components/videos/VideoPlayer";
@@ -230,7 +230,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
         {video.why_recommended && (
           <Reveal delay={140}>
             <div className="mt-8 rounded-lg border border-border bg-card p-6">
-              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary"><Sparkles size={15} aria-hidden="true" />Why we recommend this</h2>
+              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary"><Lightbulb size={15} aria-hidden="true" />Why we recommend this</h2>
               <RichText html={video.why_recommended} className="mt-2" />
             </div>
           </Reveal>

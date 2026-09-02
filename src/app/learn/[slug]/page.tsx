@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BookOpen, BriefcaseBusiness, Clock, GraduationCap, Layers, Sparkles } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, Clock, GraduationCap, Layers, Target } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { CourseContent } from "@/components/CourseContent";
@@ -211,7 +211,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                 )}
                 {graph.opportunities.length > 0 && (
                   <div>
-                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground"><Sparkles size={14} aria-hidden="true" />Opportunities</p>
+                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground"><Target size={14} aria-hidden="true" />Opportunities</p>
                     <div className="mt-2 flex flex-col gap-2">
                       {graph.opportunities.map((o) => (
                         <Link key={o.slug} href={`/opportunities/${o.slug}`} className="rounded-lg border border-border bg-card p-3 text-sm font-semibold text-foreground transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">

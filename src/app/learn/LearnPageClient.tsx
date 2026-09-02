@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { ArrowRight, BookOpen, BriefcaseBusiness, GraduationCap, Layers, Search, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, GraduationCap, Layers, Search } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -187,7 +187,7 @@ function LearnPageContent() {
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
                 <p className="text-sm font-bold text-foreground">Your learning workspace</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Courses stay here as the main learning product. Extra videos and documents are shown only where they support a specific video.
+                  Everything you&apos;re learning, in one place.
                 </p>
                 <div className="mt-5 grid grid-cols-3 gap-2">
                   {learningTotals.map((stat) => (
@@ -299,7 +299,7 @@ function LearnPageContent() {
         <section className="border-b border-border py-14">
           <Container>
             <div className="flex items-center gap-2">
-              <Sparkles size={18} className="text-primary" aria-hidden="true" />
+              <BookOpen size={18} className="text-primary" aria-hidden="true" />
               <h2 className="text-xl font-bold text-foreground">Featured learning</h2>
             </div>
             <div className="mt-5 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
