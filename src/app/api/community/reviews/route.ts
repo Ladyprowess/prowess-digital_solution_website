@@ -71,19 +71,37 @@ export async function POST(req: Request) {
       // Covers both an already-visible review (plain edit) and one the
       // author themselves had self-deleted (deleted_by_author) - that's
       // the author's own prior choice, not moderation, so it's fine to
-      // bring it back to visible with the new content.
-      const { error: updateErr } = await supabase
+      // bring it back to visible with the new content. The .neq guard
+      // (re-checked atomically by this single UPDATE, not by the earlier
+      // `existing` read) closes a race where a moderator removes the
+      // review in between that read and this write - without it, this
+      // write would silently resurrect a just-removed review, which is
+      // exactly what the removed_by_moderator check above exists to stop.
+      const { data: updated, error: updateErr } = await supabase
         .from("course_reviews")
         .update({ rating, body, status: "visible" })
-        .eq("id", existing.id);
+        .eq("id", existing.id)
+        .neq("status", "removed_by_moderator")
+        .select("id")
+        .maybeSingle();
       if (updateErr) {
         return NextResponse.json({ ok: false, error: updateErr.message }, { status: 500 });
+      }
+      if (!updated) {
+        return NextResponse.json({ ok: false, error: "Your previous review on this course was removed and can't be resubmitted." }, { status: 403 });
       }
     } else {
       const { error: insertErr } = await supabase
         .from("course_reviews")
         .insert({ course_id: courseId, user_id: member.id, author_name, rating, body, status: "visible" });
       if (insertErr) {
+        // A near-simultaneous double submit can both see no existing row
+        // and both try to insert - the unique(user_id, course_id)
+        // constraint lets only one through. Treat the loser as "already
+        // saved" rather than surfacing a raw DB error.
+        if (insertErr.code === "23505") {
+          return NextResponse.json({ ok: true });
+        }
         return NextResponse.json({ ok: false, error: insertErr.message }, { status: 500 });
       }
     }

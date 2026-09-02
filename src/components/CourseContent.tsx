@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeThumbnail } from "@/lib/youtube";
@@ -78,7 +79,11 @@ export function CourseContent({
     }
   }, [courseId, evaluateCompletion]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    queueMicrotask(() => {
+      void load();
+    });
+  }, [load]);
 
   async function toggleComplete(lessonId: string) {
     const { data: { session } } = await supabase.auth.getSession();
@@ -132,7 +137,15 @@ export function CourseContent({
   }
 
   if (modules.length === 0) {
-    return <p className="mt-10 text-center text-sm text-muted-foreground">No modules have been added to this course yet.</p>;
+    return (
+      <div className="mt-10 rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <BookOpen size={22} aria-hidden="true" />
+        </span>
+        <p className="mt-4 text-sm font-bold text-foreground">Course content is not available yet</p>
+        <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground">Modules and lessons will appear here once they are published.</p>
+      </div>
+    );
   }
 
   return (

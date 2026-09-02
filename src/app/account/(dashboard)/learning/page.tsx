@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bookmark, BookOpen, Clock3, Library, ListChecks } from "lucide-react";
 import { Card, EmptyState } from "@/components/account/AccountUI";
+import { ContinueWatching } from "@/components/videos/ContinueWatching";
 import { attachTitles, hrefFor, ITEM_LABEL } from "@/lib/account/itemLinks";
 import { supabase } from "@/lib/supabase";
 
@@ -110,6 +111,12 @@ export default function LearningPage() {
           <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : completedCourses.length}</p>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Completed</p>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <Card title="Continue watching" action={<Link href="/videos" className="text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Browse videos</Link>}>
+          <ContinueWatching />
+        </Card>
       </div>
 
       <div className="mt-6">

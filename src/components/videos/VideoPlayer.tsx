@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Video } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeVideoId, getYoutubeThumbnail, isYoutubeShorts } from "@/lib/youtube";
@@ -228,7 +229,13 @@ export function VideoPlayer({ resourceId, priceUsd, priceNgn }: { resourceId: st
       )}
 
       {!data?.content && !data?.external_url && !downloadUrl && (
-        <p className="text-sm text-muted-foreground">No content has been added to this video yet.</p>
+        <div className="rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Video size={22} aria-hidden="true" />
+          </span>
+          <p className="mt-4 text-sm font-bold text-foreground">Video content is not available yet</p>
+          <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground">The video or external link will appear here once it has been added.</p>
+        </div>
       )}
     </div>
   );

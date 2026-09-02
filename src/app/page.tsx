@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Inbox } from "lucide-react";
 import { ManualGoogleReviews } from "@/components/ManualGoogleReviews";
 import { HeroSection } from "@/components/HeroSection";
 import { Reveal } from "@/components/Reveal";
 import { ListingCard, type ListingCardMeta } from "@/components/ListingCard";
 import ResourceCard, { type ResourceItem } from "@/components/resources/ResourceCard";
 import { VideoCard, type VideoCardData } from "@/components/videos/VideoCard";
-import { ContinueWatching } from "@/components/videos/ContinueWatching";
 import { supabase } from "@/lib/supabase";
 import { goalCards, popularSearches, whyProwess, newsletterPreferences } from "@/content/site";
 import { formatMoney } from "@/lib/formatMoney";
@@ -29,7 +29,29 @@ type LearnCard = { id: string; slug: string; title: string; description: string 
 type EventCard = { id: string; slug: string; title: string; date: string; type: string | null };
 
 function EmptyState({ children }: { children: React.ReactNode }) {
-  return <p className="rounded-2xl border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">{children}</p>;
+  return (
+    <div className="rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
+      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Inbox size={22} aria-hidden="true" />
+      </span>
+      <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-muted-foreground">{children}</p>
+    </div>
+  );
+}
+
+function SectionSkeleton({ count = 3, columns = "lg:grid-cols-3" }: { count?: number; columns?: string }) {
+  return (
+    <div className={`grid gap-5 sm:grid-cols-2 ${columns}`}>
+      {Array.from({ length: count }).map((_, index) => (
+        <div key={index} className="rounded-lg border border-border bg-card p-5">
+          <div className="h-4 w-24 rounded bg-muted" />
+          <div className="mt-5 h-5 w-3/4 rounded bg-muted" />
+          <div className="mt-3 h-3 w-full rounded bg-muted" />
+          <div className="mt-2 h-3 w-2/3 rounded bg-muted" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function NewsletterForm() {
@@ -75,25 +97,28 @@ function NewsletterForm() {
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-lg">
       <div className="flex flex-col gap-3 sm:flex-row">
+        <label htmlFor="homepage-newsletter-email" className="sr-only">Email address</label>
         <input
+          id="homepage-newsletter-email"
           type="email"
+          autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
-          className="w-full min-w-0 rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+          className="min-h-12 w-full min-w-0 rounded-lg border border-border bg-card px-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
         <button
           type="submit"
           disabled={status === "loading"}
-          className="inline-flex flex-shrink-0 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:opacity-90 disabled:opacity-60"
+          className="inline-flex min-h-12 flex-shrink-0 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {status === "loading" ? "Joining…" : "Get Updates"}
+          {status === "loading" ? "Joining..." : "Get updates"}
         </button>
       </div>
       <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2">
         {newsletterPreferences.map((p) => (
-          <label key={p.key} className="flex items-center gap-2 text-sm text-muted-foreground">
+          <label key={p.key} className="flex min-h-10 items-center gap-2 text-sm text-muted-foreground">
             <input type="checkbox" checked={checked.includes(p.key)} onChange={() => toggle(p.key)} />
             {p.label}
           </label>
@@ -205,7 +230,7 @@ export default function ModernHomePage() {
           <p className="mb-5 text-xs font-bold uppercase tracking-widest text-muted-foreground">Popular Searches</p>
           <div className="flex flex-wrap justify-center gap-3">
             {popularSearches.map((s) => (
-              <Link key={s.label} href={s.href} className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary">
+              <Link key={s.label} href={s.href} className="inline-flex min-h-10 items-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 {s.label}
               </Link>
             ))}
@@ -245,9 +270,9 @@ export default function ModernHomePage() {
             </div>
           </Reveal>
           {loading ? (
-            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+            <SectionSkeleton />
           ) : opportunities.length === 0 ? (
-            <EmptyState>No opportunities published yet. Check back soon, or <Link href="/#launch" className="font-semibold text-primary hover:underline">get notified</Link> when the first ones go live.</EmptyState>
+            <EmptyState>New jobs and opportunities will appear here as soon as they are published. <Link href="/#launch" className="font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Get notified</Link> when new listings go live.</EmptyState>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {opportunities.map((o) => (
@@ -277,7 +302,7 @@ export default function ModernHomePage() {
             </div>
           </Reveal>
           {loading ? (
-            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+            <SectionSkeleton />
           ) : careerPathCards.length === 0 ? (
             <EmptyState>Career paths are being built out. This is where guided roadmaps like Cybersecurity or Digital Marketing will live.</EmptyState>
           ) : (
@@ -297,7 +322,7 @@ export default function ModernHomePage() {
           )}
           {careerPathCards.length > 0 && (
             <div className="mt-8 text-center">
-              <Link href="/career-paths" className="text-sm font-semibold text-primary hover:underline">Explore all career paths →</Link>
+              <Link href="/career-paths" className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore all career paths</Link>
             </div>
           )}
         </div>
@@ -314,7 +339,7 @@ export default function ModernHomePage() {
             </div>
           </Reveal>
           {loading ? (
-            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+            <SectionSkeleton count={4} columns="lg:grid-cols-4" />
           ) : courses.length === 0 ? (
             <EmptyState>Courses are coming soon.</EmptyState>
           ) : (
@@ -341,21 +366,10 @@ export default function ModernHomePage() {
             </div>
           )}
           <div className="mt-8 text-center">
-            <Link href="/learn" className="text-sm font-semibold text-primary hover:underline">Explore the learning library →</Link>
+            <Link href="/learn" className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore the learning library</Link>
           </div>
         </div>
       </section>
-
-      {/* CONTINUE WATCHING -- independent of whether any video is flagged
-          show_on_homepage, which defaults false: a signed-in user with real
-          progress should see this regardless of homepage curation state.
-          No vertical section padding here -- ContinueWatching renders
-          nothing at all when empty (the common case: signed out, or no
-          progress), so a padded wrapper would leave a blank gap. Its own
-          root carries vertical margin instead, only present when it does. */}
-      <div className="mx-auto max-w-7xl bg-background px-6 lg:px-8">
-        <ContinueWatching />
-      </div>
 
       {/* WATCH SOMETHING USEFUL */}
       {!loading && homepageVideos.length > 0 && (
@@ -371,7 +385,7 @@ export default function ModernHomePage() {
               {homepageVideos.map((v) => <VideoCard key={v.id} video={v} />)}
             </div>
             <div className="mt-8 text-center">
-              <Link href="/videos" className="text-sm font-semibold text-primary hover:underline">Explore all videos →</Link>
+              <Link href="/videos" className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore all videos</Link>
             </div>
           </div>
         </section>
@@ -428,7 +442,7 @@ export default function ModernHomePage() {
                 )}
               </div>
               <div className="mt-8 text-center">
-                <Link href="/resources" className="text-sm font-semibold text-primary hover:underline">Explore all resources →</Link>
+                <Link href="/resources" className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore all resources</Link>
               </div>
             </div>
           </section>
@@ -459,9 +473,9 @@ export default function ModernHomePage() {
             </div>
           </Reveal>
           {loading ? (
-            <p className="text-center text-sm text-muted-foreground">Loading…</p>
+            <SectionSkeleton count={3} />
           ) : events.length === 0 ? (
-            <EmptyState>No upcoming events right now. Check back soon.</EmptyState>
+            <EmptyState>There are no upcoming events right now. New workshops, meetups and sessions will appear here when dates are confirmed.</EmptyState>
           ) : (
             <div className="grid gap-5 sm:grid-cols-3">
               {events.map((e) => (
@@ -474,7 +488,7 @@ export default function ModernHomePage() {
             </div>
           )}
           <div className="mt-8 text-center">
-            <Link href="/events" className="text-sm font-semibold text-primary hover:underline">Explore events →</Link>
+            <Link href="/events" className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore events</Link>
           </div>
         </div>
       </section>
@@ -510,7 +524,7 @@ export default function ModernHomePage() {
             </Link>
           </div>
           <div className="mt-8 text-center">
-            <Link href="/services" className="text-sm font-semibold text-primary hover:underline">Explore solutions for businesses →</Link>
+            <Link href="/services" className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore solutions for businesses</Link>
           </div>
         </div>
       </section>

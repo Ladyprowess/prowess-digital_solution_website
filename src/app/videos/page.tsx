@@ -10,7 +10,6 @@ import { Pagination } from "@/components/Pagination";
 import { PillTabs, type PillTab } from "@/components/PillTabs";
 import { ScrollCarousel } from "@/components/ScrollCarousel";
 import { VideoCard, thumbnailFor, type VideoCardData } from "@/components/videos/VideoCard";
-import { ContinueWatching } from "@/components/videos/ContinueWatching";
 import { supabase } from "@/lib/supabase";
 import {
   filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters,
@@ -187,7 +186,7 @@ function VideosPageContent() {
             <Reveal delay={80}>
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
                 <p className="text-sm font-bold text-foreground">Video library</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">Browse by audience and category, continue videos you started, and open lessons connected to your career growth.</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Browse by audience and category, then open lessons connected to your career growth.</p>
                 <div className="mt-5 grid grid-cols-2 gap-2">
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-lg font-bold text-foreground">{loading ? "…" : total}</p>
@@ -276,23 +275,18 @@ function VideosPageContent() {
         </section>
       )}
 
-      {/* CONTINUE WATCHING + CURATED RAILS */}
+      {/* CURATED RAILS */}
       {ideasRail.length > 0 && (
         <section className="border-b border-border bg-muted/40 py-14">
           <Container>
-            <Reveal><ContinueWatching /></Reveal>
-
-            <Reveal delay={40}>
-              <div className="mt-10">
+            <Reveal>
+              <div>
                 <h2 className="text-xl font-bold text-foreground">Ideas worth watching</h2>
                 <div className="mt-4"><ScrollCarousel>{ideasRail.map((v) => <div key={v.id} className="w-72 flex-shrink-0 snap-start"><VideoCard video={v} /></div>)}</ScrollCarousel></div>
               </div>
             </Reveal>
           </Container>
         </section>
-      )}
-      {ideasRail.length === 0 && !activeFiltersPresent && filters.page === 1 && (
-        <section className="border-b border-border py-8"><Container><ContinueWatching /></Container></section>
       )}
 
       {/* EXPLORE VIDEOS */}

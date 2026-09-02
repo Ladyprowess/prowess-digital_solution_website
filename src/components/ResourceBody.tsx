@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { EbookPurchasePicker, FORMAT_LABELS, type EbookFormatPrices, type EbookFormat } from "@/components/resources/EbookPurchasePicker";
@@ -236,7 +237,13 @@ export function ResourceBody({
       )}
 
       {!(data?.content && ownsRead) && !data?.external_url && !downloadUrl && !ownsHardcopy && (
-        <p className="text-sm text-muted-foreground">No content has been added to this resource yet.</p>
+        <div className="rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <FileText size={22} aria-hidden="true" />
+          </span>
+          <p className="mt-4 text-sm font-bold text-foreground">Resource content is not available yet</p>
+          <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground">The full resource will appear here once the content or file has been added.</p>
+        </div>
       )}
 
       {/* Owning one or two formats doesn't hide the rest - EbookPurchasePicker
