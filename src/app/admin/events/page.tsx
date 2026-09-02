@@ -137,7 +137,6 @@ export default function AdminEventsPage() {
 
   useEffect(() => {
     loadEventsAndCounts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleCreateEvent() {

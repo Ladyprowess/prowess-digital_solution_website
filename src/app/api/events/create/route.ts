@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { slugify } from "@/lib/slugify";
+import { notifyEventSubscribersOfNewEvent } from "@/lib/events/notifySubscribers";
 
 export const runtime = "nodejs";
 
@@ -149,6 +150,17 @@ export async function POST(req: Request) {
       .single();
 
     if (error) throw error;
+
+    // Anyone who ever checked "Get Event Updates" gets emailed about this
+    // one - a failure here must never undo the event that was just
+    // successfully created.
+    if (status === "published") {
+      try {
+        await notifyEventSubscribersOfNewEvent(data.id);
+      } catch (err) {
+        console.error("notifyEventSubscribersOfNewEvent failed:", err);
+      }
+    }
 
     return NextResponse.json({ ok: true, item: data });
   } catch (err: unknown) {

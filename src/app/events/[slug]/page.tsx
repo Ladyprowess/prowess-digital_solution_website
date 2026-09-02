@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Archive, CalendarDays, CheckCircle2, Clock, ImageIcon, Loader2, Mail, MapPin, Phone, User, Video } from "lucide-react";
 import Container from "@/components/Container";
@@ -68,12 +69,12 @@ function PageState({
           <h1 className="mt-4 text-xl font-semibold text-foreground">{title}</h1>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>
           {!loading ? (
-            <a
+            <Link
               href="/events"
               className="mt-5 inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               Back to events
-            </a>
+            </Link>
           ) : null}
         </div>
       </div>
@@ -216,12 +217,12 @@ export default function EventRegistrationPage() {
           <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
             <Reveal>
               <div>
-                <a
+                <Link
                   href="/events"
                   className="inline-flex min-h-10 items-center rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   Back to events
-                </a>
+                </Link>
 
                 <div className="mt-6 overflow-hidden rounded-lg border border-border bg-card">
                   <div className="relative aspect-[16/8] bg-muted">
