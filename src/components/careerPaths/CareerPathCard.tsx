@@ -62,7 +62,7 @@ export function CareerPathCard({ path }: { path: CareerPathCardData }) {
       <div className="mt-5 grid grid-cols-3 gap-2 border-t border-border pt-4 text-center">
         {[
           { label: "Skills", value: path.skillsCount },
-          { label: "Learning", value: path.learningCount },
+          { label: "Courses", value: path.learningCount },
           { label: "Jobs", value: path.jobsCount },
         ].map((stat) => (
           <div key={stat.label} className="rounded-lg bg-muted/60 px-2 py-3">

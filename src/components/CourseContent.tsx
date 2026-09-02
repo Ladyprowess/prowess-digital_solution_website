@@ -6,6 +6,7 @@ import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeThumbnail } from "@/lib/youtube";
 import { RichText } from "@/components/RichText";
 import { QuizRunner } from "@/components/learn/QuizRunner";
+import { LessonDiscussion } from "@/components/learn/LessonDiscussion";
 import { completionBanner, activityBanner, type CompletionBanner } from "@/lib/certificates/messages";
 
 type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; quiz_id: string | null; position: number };
@@ -200,6 +201,7 @@ export function CourseContent({
                     onComplete={() => setCompleted((prev) => new Set(prev).add(l.id))}
                   />
                 )}
+                <LessonDiscussion courseId={courseId} lessonId={l.id} />
               </li>
             ))}
           </ul>

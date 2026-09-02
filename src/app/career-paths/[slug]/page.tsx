@@ -26,13 +26,9 @@ import { stripHtmlForMeta } from "@/lib/stripHtml";
 import { formatMoney } from "@/lib/formatMoney";
 import {
   courseToLearnItem,
-  resourceToLearnItem,
   COURSE_SELECT,
-  RESOURCE_SELECT,
-  LEARN_RESOURCE_KINDS,
   type LearnItem,
   type CourseRow,
-  type ResourceRow,
 } from "@/lib/learn/types";
 
 const supabase = createClient(
@@ -51,7 +47,7 @@ const NAV_ITEMS: SectionNavItem[] = [
   { id: "overview", label: "Overview" },
   { id: "roadmap", label: "Roadmap" },
   { id: "skills", label: "Skills" },
-  { id: "learning", label: "Learning" },
+  { id: "learning", label: "Courses" },
   { id: "jobs", label: "Jobs" },
   { id: "opportunities", label: "Opportunities" },
   { id: "career-options", label: "Career Options" },
@@ -133,7 +129,6 @@ async function getRoadmapStages(pathId: string): Promise<RoadmapStageData[]> {
         items: stage.items,
         skills,
         recommendedCourses: graph?.courses.map((c) => ({ slug: c.slug, title: c.title })) || [],
-        recommendedResources: graph?.resources.map((r) => ({ slug: r.slug, title: r.title })) || [],
       };
     })
   );
@@ -172,7 +167,6 @@ async function getCareerRoles(pathId: string): Promise<RoleNode[]> {
         skillSlugs: skills.map((s) => s.slug),
         jobs: graph?.jobs.map((j) => ({ slug: j.slug, title: j.title, companies: j.companies })) || [],
         recommendedCourses: graph?.courses.map((c) => ({ slug: c.slug, title: c.title })) || [],
-        recommendedResources: graph?.resources.map((res) => ({ slug: res.slug, title: res.title })) || [],
         children: [],
         parentId: r.parent_role_id,
       };
@@ -261,7 +255,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!path) return { title: "Career path not found" };
   return {
     title: `${path.title} Career Path`,
-    description: (path.description ? stripHtmlForMeta(path.description) : "") || `Skills, courses, resources, jobs and opportunities for a career in ${path.title}.`,
+    description: (path.description ? stripHtmlForMeta(path.description) : "") || `Skills, courses, jobs and opportunities for a career in ${path.title}.`,
   };
 }
 
@@ -277,7 +271,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   const skillSlugs = skills.map((s) => s.slug);
   const nowIso = new Date().toISOString();
 
-  const [responsibilities, roadmapStages, careerRoles, careerTools, projects, jobIds, oppIds, courseMap, resourceMap, jobCounts, careerContentResourceIds] = await Promise.all([
+  const [responsibilities, roadmapStages, careerRoles, careerTools, projects, jobIds, oppIds, courseMap, jobCounts] = await Promise.all([
     getResponsibilities(path.id),
     getRoadmapStages(path.id),
     getCareerRoles(path.id),
@@ -286,12 +280,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
     idsForSkills("job_skill_map", "job_id", skillIds),
     idsForSkills("opportunity_skill_map", "opportunity_id", skillIds),
     learningMapForPath("career_path_course_map", "course_id", path.id),
-    learningMapForPath("career_path_resource_map", "resource_id", path.id),
     jobsCountBySkill(skillIds),
-    // Resources an admin flagged "Career content" that also share a skill
-    // tag with this path - additive to the explicit curation above, not a
-    // replacement (see career-paths/page.tsx's identical merge).
-    idsForSkills("resource_skill_map", "resource_id", skillIds),
   ]);
 
   // Sorted by position and capped here, before the queries below - those
@@ -299,15 +288,10 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   // explicit admin choice) and only exist to fetch full rows for whichever
   // ids survive this cut. Capping *after* that unrelated ordering instead
   // would silently keep the wrong LEARNING_LIMIT items whenever a path is
-  // curated with more than LEARNING_LIMIT courses or resources.
+  // curated with more than LEARNING_LIMIT courses.
   const courseIds = Array.from(courseMap.keys()).sort((a, b) => courseMap.get(a)! - courseMap.get(b)!).slice(0, LEARNING_LIMIT);
-  const resourceIds = Array.from(resourceMap.keys()).sort((a, b) => resourceMap.get(a)! - resourceMap.get(b)!).slice(0, LEARNING_LIMIT);
-  // Resources auto-matched via "Career content" + shared skill tag, minus
-  // whatever's already explicitly curated above (no double-fetching/no
-  // duplicate entries once merged into learningItems below).
-  const autoCareerContentIds = careerContentResourceIds.filter((id) => !resourceIds.includes(id));
 
-  const [jobRows, oppRows, courseRows, resourceRows, careerContentResourceRows] = await Promise.all([
+  const [jobRows, oppRows, courseRows] = await Promise.all([
     jobIds.length
       ? supabase.from("jobs")
           .select("id, slug, title, location_type, country, city, salary_min, salary_max, salary_currency, salary_period, experience_level, deadline_at, published_at, featured, companies!inner(name, logo_url, verified), job_categories(name), job_types(name), job_skill_map(skills(slug, name))")
@@ -322,14 +306,6 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
       : Promise.resolve({ data: [] }),
     courseIds.length
       ? supabase.from("courses").select(COURSE_SELECT).eq("status", "published").in("id", courseIds)
-          .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
-      : Promise.resolve({ data: [] }),
-    resourceIds.length
-      ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true).in("resource_type", LEARN_RESOURCE_KINDS).in("id", resourceIds)
-          .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
-      : Promise.resolve({ data: [] }),
-    autoCareerContentIds.length
-      ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true).eq("show_in_career", true).in("resource_type", LEARN_RESOURCE_KINDS).in("id", autoCareerContentIds)
           .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
       : Promise.resolve({ data: [] }),
   ]);
@@ -372,32 +348,11 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
     new Map(oppRawRows.filter((o) => o.opportunity_types).map((o) => [o.opportunity_types!.slug, o.opportunity_types!])).values()
   );
 
-  // Each query above is already capped at LEARNING_LIMIT independently --
-  // no further slice here. An outer .slice(0, LEARNING_LIMIT) on the
-  // concatenated list would silently drop every resource (videos/articles/
-  // guides/ebooks) whenever a path has LEARNING_LIMIT+ matching courses,
-  // since courses are concatenated first.
-  //
-  // Sorted by `position` after concatenating (not before) - position lives
-  // in two separate tables (career_path_course_map/career_path_resource_map),
-  // but LearningItemPicker assigns it from one shared index sequence across
-  // both when the admin saves, so sorting the combined list by position
-  // here reconstructs that exact admin-chosen order regardless of which
-  // table each item actually came from.
-  const curatedLearningItems: LearnItem[] = [
-    ...((courseRows.data as unknown as CourseRow[]) || []).map(courseToLearnItem).map((item) => ({ item, position: courseMap.get(item.id) ?? 0 })),
-    ...((resourceRows.data as unknown as ResourceRow[]) || []).map(resourceToLearnItem).map((item) => ({ item, position: resourceMap.get(item.id) ?? 0 })),
-  ]
+  const learningItems: LearnItem[] = ((courseRows.data as unknown as CourseRow[]) || [])
+    .map(courseToLearnItem)
+    .map((item) => ({ item, position: courseMap.get(item.id) ?? 0 }))
     .sort((a, b) => a.position - b.position)
     .map(({ item }) => item);
-
-  // "Career content" resources fill in after the admin's explicit curation
-  // above, not instead of it - curated items always come first, these are
-  // a supplement, so the LEARNING_LIMIT cap here is safe (unlike the
-  // courses/resources concatenation above, nothing here has a competing
-  // claim to come first).
-  const autoCareerLearningItems: LearnItem[] = ((careerContentResourceRows.data as unknown as ResourceRow[]) || []).map(resourceToLearnItem);
-  const learningItems: LearnItem[] = [...curatedLearningItems, ...autoCareerLearningItems].slice(0, LEARNING_LIMIT);
 
   const skillMatrixRows: SkillMatrixRow[] = skills.map((s) => ({
     slug: s.slug, name: s.name, level: s.level, jobsCount: jobCounts.get(s.id) || 0,
@@ -413,7 +368,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
   };
 
   const iconPath = CAREER_PATH_ICON_PATHS[path.icon_key] || CAREER_PATH_ICON_PATHS.path;
-  const learningCount = learningItems.length;
+  const courseCount = learningItems.length;
   const jobsCount = jobs.length;
   const opportunitiesCount = opportunities.length;
   const accessLabel =
@@ -457,7 +412,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Link href="#learning" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                  Start Learning
+                  Start with courses
                 </Link>
                 <SaveButton itemType="career_path" itemId={path.id} />
                 <CareerInterestButton careerPathId={path.id} className="text-xs" />
@@ -489,15 +444,15 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-foreground">Path snapshot</p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">A guided view of what to learn, practise and use while building toward {path.title}.</p>
+                  <p className="text-sm font-bold text-foreground">At a glance</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">See the skills to build, courses to take and opportunities connected to {path.title}.</p>
                 </div>
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-2">
                 {[
                   { label: "Skills", value: skills.length },
-                  { label: "Learning", value: learningCount },
+                  { label: "Courses", value: courseCount },
                   { label: "Jobs", value: jobsCount },
                   { label: "Opportunities", value: opportunitiesCount },
                 ].map((stat) => (
@@ -509,9 +464,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
               </div>
 
               <div className="mt-5 border-t border-border pt-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Best next step</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Suggested start</p>
                 <p className="mt-2 text-sm font-semibold text-foreground">
-                  {learningCount > 0 ? "Start with the curated learning list." : "Review the skills and choose one to learn first."}
+                  {courseCount > 0 ? "Begin with the first course, then use the roadmap to build momentum." : "Start by reviewing the skills and choosing one to practise first."}
                 </p>
               </div>
             </aside>
@@ -611,8 +566,11 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         {/* LEARNING */}
         <Reveal delay={80}>
           <section id="learning" className="mt-10 scroll-mt-32">
-            <p className="text-xs font-bold uppercase tracking-widest text-primary">Learning</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-primary">Courses</p>
             <h2 className="mt-2 text-xl font-bold text-foreground">Learn for this career</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Start with the structured courses connected to this career path.
+            </p>
             <div className="mt-5">
               <LearningSection items={learningItems} skillSlugs={skillSlugs} />
             </div>
@@ -647,7 +605,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
             <section id="career-options" className="mt-10 scroll-mt-32">
               <p className="text-xs font-bold uppercase tracking-widest text-primary">Career options</p>
               <h2 className="mt-2 text-xl font-bold text-foreground">Roles this path can lead to</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Select a role to see its skills, learning and jobs.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Select a role to see the skills, courses and jobs connected to it.</p>
               <div className="mt-6">
                 <RoleBranchDiagram pathTitle={path.title} roles={careerRoles} />
               </div>
@@ -685,7 +643,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
         <Reveal>
           <section className="mt-10">
             <h2 className="text-xl font-bold text-foreground">What happens next?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Your journey doesn&apos;t end when you get the first job.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Keep building after the first opportunity. Strong careers grow through learning, practice and visible proof of work.</p>
             <div className="mt-6 flex flex-wrap items-start gap-x-2 gap-y-4">
               {["Learn", "Practice", "Prove", "Apply", "Grow"].map((step, i, arr) => (
                 <div key={step} className="flex items-center gap-2">
@@ -699,7 +657,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
 
         {skillIds.length === 0 && (
           <p className="mt-10 rounded-lg border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">
-            This career path has not been tagged with skills yet. Once skills are added, related learning, jobs and opportunities will show here automatically.
+            This career path has not been tagged with skills yet. Once skills are added, related courses, jobs and opportunities will show here automatically.
           </p>
         )}
 
@@ -709,9 +667,9 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
             <h2 className="text-2xl font-bold text-background sm:text-3xl">Ready to start your career in {path.title}?</h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-background/75">Start with one skill, practise with real projects, then use the connected jobs and opportunities to take the next step.</p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Link href="#learning" className="inline-flex min-h-12 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Start Learning</Link>
-              <Link href={`/jobs?skills=${skillSlugs.join(",")}`} className="inline-flex min-h-12 items-center rounded-lg border border-background/30 px-6 text-sm font-semibold text-background hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore Jobs</Link>
-              <Link href={`/opportunities?skills=${skillSlugs.join(",")}`} className="inline-flex min-h-12 items-center rounded-lg border border-background/30 px-6 text-sm font-semibold text-background hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Find Opportunities</Link>
+              <Link href="#learning" className="inline-flex min-h-12 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Start with courses</Link>
+              <Link href={`/jobs?skills=${skillSlugs.join(",")}`} className="inline-flex min-h-12 items-center rounded-lg border border-background/30 px-6 text-sm font-semibold text-background hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">View matching jobs</Link>
+              <Link href={`/opportunities?skills=${skillSlugs.join(",")}`} className="inline-flex min-h-12 items-center rounded-lg border border-background/30 px-6 text-sm font-semibold text-background hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">View opportunities</Link>
             </div>
           </section>
         </Reveal>

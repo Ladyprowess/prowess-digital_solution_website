@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BookOpen, Calendar, FileText, Layers, Users } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { ResourceBody } from "@/components/ResourceBody";
@@ -132,8 +133,9 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
   const showBusinessCta = resource.resource_type === "business_guide" || resource.audience !== "consumer";
 
   return (
-    <div className="min-h-screen bg-background py-16">
-      <div className="mx-auto max-w-3xl px-4">
+    <div className="min-h-screen bg-background pb-16">
+      <section className="border-b border-border bg-brand-bg">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
         <Reveal>
           <Breadcrumb
             items={[
@@ -144,10 +146,10 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
             ]}
           />
 
-          <div className="mt-4 flex items-start justify-between gap-4">
+          <div className="mt-7 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wide text-primary capitalize">{typeLabel}</span>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary capitalize">{typeLabel}</span>
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${resource.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                   {resource.access === "premium"
                     ? `Premium${
@@ -161,17 +163,55 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
                     : "Free"}
                 </span>
               </div>
-              <h1 className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">{resource.title}</h1>
+              <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">{resource.title}</h1>
+              {resource.description && (
+                <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">{resource.description}</p>
+              )}
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <a href="#resource-content" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  Open resource
+                </a>
+                <SaveButton itemType="resource" itemId={resource.id} className="flex-shrink-0" />
+              </div>
             </div>
-            <SaveButton itemType="resource" itemId={resource.id} className="flex-shrink-0" />
-          </div>
 
-          {resource.cover_url && (
-            <div className="mt-6 overflow-hidden rounded-2xl border border-border">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={resource.cover_url} alt={resource.title} className="w-full object-cover" />
-            </div>
-          )}
+            <aside className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+              <div className="aspect-[4/3] bg-muted">
+                {resource.cover_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={resource.cover_url} alt={resource.title} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-background text-primary">
+                    <FileText size={42} aria-hidden="true" />
+                  </div>
+                )}
+              </div>
+              <div className="p-5">
+                <p className="text-sm font-bold text-foreground">Resource overview</p>
+                <div className="mt-4 space-y-3">
+                  {[
+                    resource.category ? { icon: Layers, label: "Category", value: resource.category } : null,
+                    { icon: Users, label: "Audience", value: AUDIENCE_LABELS[resource.audience] },
+                    resource.level ? { icon: BookOpen, label: "Level", value: resource.level } : null,
+                    resource.resource_type === "article" && resource.reading_minutes ? { icon: BookOpen, label: "Reading time", value: `${resource.reading_minutes} min` } : null,
+                    resource.resource_type === "ebook" && resource.page_count ? { icon: FileText, label: "Pages", value: String(resource.page_count) } : null,
+                    publishedLabel ? { icon: Calendar, label: "Published", value: publishedLabel } : null,
+                  ].filter(Boolean).map((item) => {
+                    const Icon = item!.icon;
+                    return (
+                      <div key={item!.label} className="flex items-center gap-3 rounded-lg bg-muted p-3">
+                        <Icon size={16} className="text-primary" aria-hidden="true" />
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item!.label}</p>
+                          <p className="text-sm font-semibold capitalize text-foreground">{item!.value}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </aside>
+          </div>
 
           {isFormatPriceableType(resource.resource_type) && resource.resource_mockups.length > 0 && (
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
@@ -179,45 +219,21 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
                 .sort((a, b) => a.position - b.position)
                 .map((m, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={m.url} alt={`${resource.title} preview ${i + 1}`} className="h-40 w-28 flex-shrink-0 rounded-xl border border-border object-cover" />
+                  <img key={i} src={m.url} alt={`${resource.title} preview ${i + 1}`} className="h-40 w-28 flex-shrink-0 rounded-lg border border-border object-cover" />
                 ))}
             </div>
           )}
         </Reveal>
+        </div>
+      </section>
 
-        <Reveal delay={40}>
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-2xl border border-border bg-card p-5 sm:grid-cols-4">
-            {resource.category && (
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Category</p><p className="mt-1 text-sm font-semibold text-foreground">{resource.category}</p></div>
-            )}
-            <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Audience</p><p className="mt-1 text-sm font-semibold text-foreground">{AUDIENCE_LABELS[resource.audience]}</p></div>
-            {resource.level && (
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Level</p><p className="mt-1 text-sm font-semibold capitalize text-foreground">{resource.level}</p></div>
-            )}
-            {resource.resource_type === "article" && resource.reading_minutes && (
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Reading time</p><p className="mt-1 text-sm font-semibold text-foreground">{resource.reading_minutes} min</p></div>
-            )}
-            {resource.resource_type === "ebook" && resource.page_count && (
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Pages</p><p className="mt-1 text-sm font-semibold text-foreground">{resource.page_count}</p></div>
-            )}
-            <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Source</p><p className="mt-1 text-sm font-semibold text-foreground">{SOURCE_LABELS[resource.source] || resource.source}</p></div>
-            {publishedLabel && (
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Published</p><p className="mt-1 text-sm font-semibold text-foreground">{publishedLabel}</p></div>
-            )}
-          </div>
-        </Reveal>
-
-        {resource.description && (
-          <Reveal delay={80}>
-            <p className="mt-6 leading-relaxed text-muted-foreground">{resource.description}</p>
-          </Reveal>
-        )}
+      <div className="mx-auto max-w-5xl px-4 pt-10">
 
         {skills.length > 0 && (
           <Reveal delay={100}>
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {skills.map((s) => (
-                <Link key={s.slug} href={`/skills/${s.slug}`} className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/10">
+                <Link key={s.slug} href={`/skills/${s.slug}`} className="inline-flex min-h-9 items-center rounded-full border border-primary/20 bg-primary/5 px-3 text-xs font-semibold text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   {s.name}
                 </Link>
               ))}
@@ -226,6 +242,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
         )}
 
         <Reveal delay={120}>
+          <section id="resource-content" className="scroll-mt-28">
           {resource.resource_type === "checklist" ? (
             <ChecklistBody
               resourceId={resource.id}
@@ -245,40 +262,31 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
               formatPrices={formatPrices}
             />
           )}
+          </section>
         </Reveal>
 
         {showBusinessCta && (
           <Reveal delay={140}>
-            <div className="mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
+            <div className="mt-10 rounded-lg border border-primary/20 bg-primary/5 p-6 text-center">
               <p className="text-base font-bold text-foreground">Need help implementing this?</p>
-              <p className="mt-1 text-sm text-muted-foreground">Prowess Digital Solutions works directly with founders and business owners on exactly this kind of work.</p>
-              <Link href="/services" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Explore our business services →</Link>
+              <p className="mt-1 text-sm text-muted-foreground">Prowess Digital Solutions helps founders and business owners turn ideas like this into practical systems.</p>
+              <Link href="/services" className="mt-4 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Explore business services</Link>
             </div>
           </Reveal>
         )}
 
         <Reveal delay={160}>
-          <RelatedSection title="RELATED LEARNING" items={[...graph.courses, ...graph.resources]} render={() => (
-            <>
-              {graph.courses.map((c) => (
-                <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>Course</span>
-                  <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
-                </Link>
-              ))}
-              {graph.resources.map((r) => (
-                <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
-                  <p className="mt-1.5 text-sm font-semibold text-foreground">{r.title}</p>
-                </Link>
-              ))}
-            </>
-          )} />
+          <RelatedSection title="Courses that build on this" items={graph.courses} render={() => graph.courses.map((c) => (
+            <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>Course</span>
+              <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
+            </Link>
+          ))} />
         </Reveal>
 
         <Reveal delay={200}>
-          <RelatedSection title="WHERE CAN THIS TAKE YOU?" items={graph.careerPaths} render={() => graph.careerPaths.map((c) => (
-            <Link key={c.slug} href={`/career-paths/${c.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+          <RelatedSection title="Related career paths" items={graph.careerPaths} render={() => graph.careerPaths.map((c) => (
+            <Link key={c.slug} href={`/career-paths/${c.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{c.access}</span>
               <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
             </Link>
@@ -286,8 +294,8 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
         </Reveal>
 
         <Reveal delay={220}>
-          <RelatedSection title="RELEVANT JOBS" items={graph.jobs} render={() => graph.jobs.map((j) => (
-            <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+          <RelatedSection title="Jobs connected to this topic" items={graph.jobs} render={() => graph.jobs.map((j) => (
+            <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <p className="text-sm font-semibold text-foreground">{j.title}</p>
               {j.companies?.name && <p className="mt-0.5 text-xs text-muted-foreground">{j.companies.name}</p>}
             </Link>
@@ -295,8 +303,8 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
         </Reveal>
 
         <Reveal delay={240}>
-          <RelatedSection title="RELEVANT OPPORTUNITIES" items={graph.opportunities} render={() => graph.opportunities.map((o) => (
-            <Link key={o.slug} href={`/opportunities/${o.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+          <RelatedSection title="Opportunities connected to this topic" items={graph.opportunities} render={() => graph.opportunities.map((o) => (
+            <Link key={o.slug} href={`/opportunities/${o.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <p className="text-sm font-semibold text-foreground">{o.title}</p>
               {o.organisation_name && <p className="mt-0.5 text-xs text-muted-foreground">{o.organisation_name}</p>}
             </Link>
@@ -305,7 +313,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
 
         {resource.source !== "prowess" && (
           <p className="mt-10 text-center text-xs text-muted-foreground">
-            This resource is hosted on {SOURCE_LABELS[resource.source] || "a third-party site"} and shared here for its educational value - all rights belong to the original creator.
+            This resource is hosted on {SOURCE_LABELS[resource.source] || "a third-party site"}. Rights belong to the original creator.
           </p>
         )}
       </div>

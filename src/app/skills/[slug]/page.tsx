@@ -2,17 +2,17 @@ import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BookOpen, Compass, GraduationCap, Target } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { RichText } from "@/components/RichText";
-import { RelatedSection } from "@/components/RelatedSection";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { JobCard, type JobCardData } from "@/components/jobs/JobCard";
 import { OpportunityCard, type OpportunityCardData } from "@/components/opportunities/OpportunityCard";
 import { LearnCard } from "@/components/learn/LearnCard";
 import { SkillCard, type SkillCardData } from "@/components/skills/SkillCard";
 import { getSkillGraph, getRelatedSkills } from "@/lib/careerPathGraph";
-import { courseToLearnItem, resourceToLearnItem, COURSE_SELECT, RESOURCE_SELECT, LEARN_RESOURCE_KINDS, type LearnItem, type CourseRow, type ResourceRow } from "@/lib/learn/types";
+import { courseToLearnItem, COURSE_SELECT, type LearnItem, type CourseRow } from "@/lib/learn/types";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -44,7 +44,7 @@ async function idsForSkill(table: string, idColumn: string, skillId: string): Pr
   return Array.from(new Set(rows.map((r) => String(r[idColumn]))));
 }
 
-// Real 3-stat counts (Learning/Jobs/Opportunities) for a batch of skills at
+// Real 3-stat counts (Courses/Jobs/Opportunities) for a batch of skills at
 // once, same accounting as the /skills listing page - used here for the
 // Related Skills cards so they show real numbers, not just a name.
 async function statsForSkills(skillIds: string[]): Promise<Map<string, { learningCount: number; jobsCount: number; opportunitiesCount: number }>> {
@@ -52,20 +52,14 @@ async function statsForSkills(skillIds: string[]): Promise<Map<string, { learnin
   if (skillIds.length === 0) return stats;
   for (const id of skillIds) stats.set(id, { learningCount: 0, jobsCount: 0, opportunitiesCount: 0 });
 
-  const [jobRows, oppRows, courseRows, resourceRows] = await Promise.all([
+  const [jobRows, oppRows, courseRows] = await Promise.all([
     supabase.from("job_skill_map").select("skill_id").in("skill_id", skillIds),
     supabase.from("opportunity_skill_map").select("skill_id").in("skill_id", skillIds),
     supabase.from("course_skill_map").select("skill_id").in("skill_id", skillIds),
-    supabase.from("resource_skill_map").select("skill_id, resources(resource_type, show_in_learn)").in("skill_id", skillIds),
   ]);
   for (const r of jobRows.data || []) stats.get(r.skill_id)!.jobsCount += 1;
   for (const r of oppRows.data || []) stats.get(r.skill_id)!.opportunitiesCount += 1;
   for (const r of courseRows.data || []) stats.get(r.skill_id)!.learningCount += 1;
-  for (const r of (resourceRows.data as unknown as { skill_id: string; resources: { resource_type: string | null; show_in_learn: boolean | null } | null }[]) || []) {
-    if (r.resources?.show_in_learn && r.resources.resource_type && LEARN_RESOURCE_KINDS.includes(r.resources.resource_type)) {
-      stats.get(r.skill_id)!.learningCount += 1;
-    }
-  }
   return stats;
 }
 
@@ -76,17 +70,16 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
 
   const nowIso = new Date().toISOString();
 
-  const [jobIds, oppIds, courseIds, resourceIds, graph, relatedSkills, ownStats] = await Promise.all([
+  const [jobIds, oppIds, courseIds, graph, relatedSkills, ownStats] = await Promise.all([
     idsForSkill("job_skill_map", "job_id", skill.id),
     idsForSkill("opportunity_skill_map", "opportunity_id", skill.id),
     idsForSkill("course_skill_map", "course_id", skill.id),
-    idsForSkill("resource_skill_map", "resource_id", skill.id),
     getSkillGraph([skill.id], { limit: CARD_LIMIT }),
     getRelatedSkills(skill.id, { limit: 8 }),
     statsForSkills([skill.id]),
   ]);
 
-  const [jobRows, oppRows, courseRows, resourceRows] = await Promise.all([
+  const [jobRows, oppRows, courseRows] = await Promise.all([
     jobIds.length
       ? supabase.from("jobs")
           .select("id, slug, title, location_type, country, city, salary_min, salary_max, salary_currency, salary_period, experience_level, deadline_at, published_at, featured, companies!inner(name, logo_url, verified), job_categories(name), job_types(name), job_skill_map(skills(slug, name))")
@@ -101,9 +94,6 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
       : Promise.resolve({ data: [] }),
     courseIds.length
       ? supabase.from("courses").select(COURSE_SELECT).eq("status", "published").in("id", courseIds).limit(CARD_LIMIT)
-      : Promise.resolve({ data: [] }),
-    resourceIds.length
-      ? supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true).in("resource_type", LEARN_RESOURCE_KINDS).in("id", resourceIds).limit(CARD_LIMIT)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -141,7 +131,6 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
 
   const learningItems: LearnItem[] = [
     ...((courseRows.data as unknown as CourseRow[]) || []).map(courseToLearnItem),
-    ...((resourceRows.data as unknown as ResourceRow[]) || []).map(resourceToLearnItem),
   ].slice(0, CARD_LIMIT);
 
   const relatedSkillStats = await statsForSkills(relatedSkills.map((s) => s.id));
@@ -151,138 +140,227 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
   }));
 
   const stats = ownStats.get(skill.id) || { learningCount: 0, jobsCount: 0, opportunitiesCount: 0 };
+  const hasConnections = stats.learningCount + stats.jobsCount + stats.opportunitiesCount + graph.careerPaths.length + graph.events.length > 0;
+  const nextMove = learningItems.length > 0
+    ? "Build the foundation first, then compare the linked roles and opportunities to see how this skill is used in real applications."
+    : jobCards.length > 0
+      ? "Use the linked roles to understand the titles, responsibilities and expectations connected to this skill."
+      : opportunityCards.length > 0
+        ? "Look through the opportunities to see where this skill can help you build experience and credibility."
+        : "Courses, roles and opportunities connected to this skill will appear here as they are added.";
 
   return (
-    <div className="min-h-screen bg-background py-16">
-      <div className="mx-auto max-w-4xl px-4">
-        <Reveal>
-          <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Skills", href: "/skills" }, { label: skill.name }]} />
+    <div className="min-h-screen bg-background pb-16">
+      <section className="border-b border-border bg-brand-bg py-10 sm:py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <Reveal>
+            <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Skills", href: "/skills" }, { label: skill.name }]} />
 
-          <div className="mt-4 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{skill.name}</h1>
-              {skill.description && <p className="mt-2 text-muted-foreground">{skill.description}</p>}
-            </div>
-            <SaveButton itemType="skill" itemId={skill.id} className="flex-shrink-0" />
-          </div>
+            <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">Skill Profile</p>
+                <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">{skill.name}</h1>
+                {skill.description && <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">{skill.description}</p>}
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  {learningItems.length > 0 && (
+                    <Link href={`/learn?skills=${skill.slug}`} className="inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                      Start with courses
+                    </Link>
+                  )}
+                  {jobCards.length > 0 && (
+                    <Link href={`/jobs?skills=${skill.slug}`} className="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                      View jobs
+                    </Link>
+                  )}
+                  <SaveButton itemType="skill" itemId={skill.id} className="flex-shrink-0" />
+                </div>
+              </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-4 rounded-2xl border border-border bg-card p-5 text-center">
-            <div>
-              <p className="text-xl font-bold text-foreground">{stats.learningCount}</p>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Learning</p>
+              <aside className="rounded-lg border border-border bg-card p-5 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Target size={18} className="text-primary" aria-hidden="true" />
+                  <p className="text-sm font-bold text-foreground">At a glance</p>
+                </div>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Courses", value: stats.learningCount },
+                    { label: "Jobs", value: stats.jobsCount },
+                    { label: "Opportunities", value: stats.opportunitiesCount },
+                    { label: "Paths", value: graph.careerPaths.length },
+                  ].map((stat) => (
+                    <div key={stat.label} className="rounded-lg border border-border bg-background p-3">
+                      <p className="text-xl font-bold text-foreground">{stat.value}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 rounded-lg bg-primary/5 p-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-primary">Suggested direction</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{nextMove}</p>
+                </div>
+              </aside>
             </div>
-            <div>
-              <p className="text-xl font-bold text-foreground">{stats.jobsCount}</p>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Jobs</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold text-foreground">{stats.opportunitiesCount}</p>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Opportunities</p>
-            </div>
-          </div>
-        </Reveal>
-
-        {skill.about && (
-          <Reveal delay={80}>
-            <section className="mt-10">
-              <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">ABOUT THIS SKILL</h2>
-              <RichText html={skill.about} className="mt-3" />
-            </section>
           </Reveal>
-        )}
+        </div>
+      </section>
 
-        {learningItems.length > 0 && (
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
+          {skill.about && (
+            <Reveal delay={80}>
+              <section className="rounded-lg border border-border bg-card p-6">
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">About this skill</p>
+                <RichText html={skill.about} className="mt-4" />
+              </section>
+            </Reveal>
+          )}
+
           <Reveal delay={120}>
-            <section className="mt-10">
-              <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">LEARN {skill.name.toUpperCase()}</h2>
-              <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {learningItems.map((item) => <LearnCard key={`${item.kind}-${item.id}`} item={item} />)}
+            <section className={skill.about ? "mt-8 rounded-lg border border-border bg-card p-6" : "rounded-lg border border-border bg-card p-6"}>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <GraduationCap size={18} className="text-primary" aria-hidden="true" />
+                    <p className="text-xs font-bold uppercase tracking-widest text-primary">Courses</p>
+                  </div>
+                  <h2 className="mt-2 text-xl font-bold text-foreground">Learn {skill.name}</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                    Structured courses selected for this skill.
+                  </p>
+                </div>
+                {learningItems.length > 0 && (
+                  <Link href={`/learn?skills=${skill.slug}`} className="inline-flex min-h-10 items-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    Browse courses
+                  </Link>
+                )}
               </div>
-              <Link href={`/learn?skills=${skill.slug}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
-                Explore all learning resources →
-              </Link>
+
+              {learningItems.length > 0 ? (
+                <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                  {learningItems.map((item) => <LearnCard key={`${item.kind}-${item.id}`} item={item} />)}
+                </div>
+              ) : (
+                <div className="mt-6 rounded-lg border border-dashed border-border bg-background px-5 py-8 text-center">
+                  <BookOpen size={22} className="mx-auto text-primary" aria-hidden="true" />
+                  <p className="mt-3 text-sm font-semibold text-foreground">No course is connected yet.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">When a course is connected to {skill.name}, it will appear here.</p>
+                </div>
+              )}
             </section>
           </Reveal>
-        )}
 
-        <Reveal delay={160}>
-          <RelatedSection title="WHERE CAN THIS SKILL TAKE YOU?" items={graph.careerPaths} render={() => graph.careerPaths.map((c) => (
-            <Link key={c.slug} href={`/career-paths/${c.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{c.access}</span>
-              <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
-            </Link>
-          ))} />
-        </Reveal>
+          {jobCards.length > 0 && (
+            <Reveal delay={160}>
+              <section className="mt-8">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-primary">Jobs</p>
+                    <h2 className="mt-2 text-xl font-bold text-foreground">Roles that use {skill.name}</h2>
+                  </div>
+                  <Link href={`/jobs?skills=${skill.slug}`} className="text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    View all jobs
+                  </Link>
+                </div>
+                <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                  {jobCards.map((j) => <JobCard key={j.id} job={j} />)}
+                </div>
+              </section>
+            </Reveal>
+          )}
 
-        {jobCards.length > 0 && (
-          <Reveal delay={200}>
-            <section className="mt-10">
-              <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">JOBS THAT USE {skill.name.toUpperCase()}</h2>
-              <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {jobCards.map((j) => <JobCard key={j.id} job={j} />)}
+          {opportunityCards.length > 0 && (
+            <Reveal delay={200}>
+              <section className="mt-8">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-primary">Opportunities</p>
+                    <h2 className="mt-2 text-xl font-bold text-foreground">Opportunities linked to {skill.name}</h2>
+                  </div>
+                  <Link href={`/opportunities?skills=${skill.slug}`} className="text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    View all opportunities
+                  </Link>
+                </div>
+                <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                  {opportunityCards.map((o) => <OpportunityCard key={o.id} opportunity={o} />)}
+                </div>
+              </section>
+            </Reveal>
+          )}
+
+          {!hasConnections && (
+            <p className="mt-8 rounded-lg border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">
+              Nothing is tagged with {skill.name} yet. Once a job, course, career path, event or opportunity is tagged with it, it will show up here automatically.
+            </p>
+          )}
+        </div>
+
+        <aside className="space-y-6">
+          <Reveal delay={140}>
+            <section className="rounded-lg border border-border bg-card p-5">
+              <div className="flex items-center gap-2">
+                <Compass size={18} className="text-primary" aria-hidden="true" />
+                <h2 className="text-sm font-bold text-foreground">Career paths</h2>
               </div>
-              <Link href={`/jobs?skills=${skill.slug}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
-                View all {skill.name} jobs →
-              </Link>
+              {graph.careerPaths.length > 0 ? (
+                <div className="mt-4 space-y-3">
+                  {graph.careerPaths.map((c) => (
+                    <Link key={c.slug} href={`/career-paths/${c.slug}`} className="block rounded-lg border border-border bg-background p-4 transition hover:border-primary/30 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{c.access}</span>
+                      <p className="mt-2 text-sm font-semibold text-foreground">{c.title}</p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">No career path is connected to this skill yet.</p>
+              )}
             </section>
           </Reveal>
-        )}
 
-        {opportunityCards.length > 0 && (
-          <Reveal delay={240}>
-            <section className="mt-10">
-              <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">OPPORTUNITIES RELATED TO {skill.name.toUpperCase()}</h2>
-              <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {opportunityCards.map((o) => <OpportunityCard key={o.id} opportunity={o} />)}
-              </div>
-              <Link href={`/opportunities?skills=${skill.slug}`} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
-                View all {skill.name} opportunities →
-              </Link>
-            </section>
-          </Reveal>
-        )}
+          {relatedSkillCards.length > 0 && (
+            <Reveal delay={180}>
+              <section className="rounded-lg border border-border bg-card p-5">
+                <h2 className="text-sm font-bold text-foreground">Related skills</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">Skills often tagged beside {skill.name}.</p>
+                <div className="mt-4 space-y-3">
+                  {relatedSkillCards.map((s) => <SkillCard key={s.id} skill={s} compact />)}
+                </div>
+              </section>
+            </Reveal>
+          )}
 
-        <Reveal delay={280}>
-          <RelatedSection title="EVENTS" items={graph.events} render={() => graph.events.map((e) => (
-            <Link key={e.slug} href={`/events/${e.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
-              <p className="text-sm font-semibold text-foreground">{e.title}</p>
-              {e.date && <p className="mt-0.5 text-xs text-muted-foreground">{new Date(e.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>}
-            </Link>
-          ))} />
-        </Reveal>
+          {graph.events.length > 0 && (
+            <Reveal delay={220}>
+              <section className="rounded-lg border border-border bg-card p-5">
+                <h2 className="text-sm font-bold text-foreground">Events</h2>
+                <div className="mt-4 space-y-3">
+                  {graph.events.map((e) => (
+                    <Link key={e.slug} href={`/events/${e.slug}`} className="block rounded-lg border border-border bg-background p-4 transition hover:border-primary/30 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                      <p className="text-sm font-semibold text-foreground">{e.title}</p>
+                      {e.date && <p className="mt-1 text-xs text-muted-foreground">{new Date(e.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            </Reveal>
+          )}
+        </aside>
+      </div>
 
-        {relatedSkillCards.length > 0 && (
-          <Reveal delay={320}>
-            <section className="mt-10">
-              <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">SKILLS OFTEN EXPLORED WITH {skill.name.toUpperCase()}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Based on what&rsquo;s actually tagged together on the platform - not a curated list.</p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {relatedSkillCards.map((s) => <SkillCard key={s.id} skill={s} compact />)}
-              </div>
-            </section>
-          </Reveal>
-        )}
-
-        {stats.learningCount + stats.jobsCount + stats.opportunitiesCount + graph.careerPaths.length + graph.events.length === 0 && (
-          <p className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-8 text-center text-sm text-muted-foreground">
-            Nothing is tagged with {skill.name} yet - once a job, course, resource, career path, event or opportunity is tagged with it, it&rsquo;ll show up here automatically.
-          </p>
-        )}
-
-        <Reveal delay={360}>
-          <section className="mt-14 rounded-2xl border border-primary/20 bg-primary/5 p-8 text-center">
+      <div className="mx-auto max-w-6xl px-4">
+        <Reveal>
+          <section className="mt-14 rounded-lg border border-primary/20 bg-primary/5 p-8 text-center">
             <h2 className="text-xl font-bold text-foreground">Ready to build this skill?</h2>
             <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-              Explore learning resources, find relevant jobs, and discover opportunities connected to {skill.name}.
+              Build the skill, then explore the roles and opportunities where {skill.name} can be useful.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Link href={`/learn?skills=${skill.slug}`} className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                Start Learning
+              <Link href={`/learn?skills=${skill.slug}`} className="inline-flex min-h-10 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                Start with courses
               </Link>
-              <Link href={`/jobs?skills=${skill.slug}`} className="rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
+              <Link href={`/jobs?skills=${skill.slug}`} className="inline-flex min-h-10 items-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 Find Jobs
               </Link>
-              <Link href={`/opportunities?skills=${skill.slug}`} className="rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
+              <Link href={`/opportunities?skills=${skill.slug}`} className="inline-flex min-h-10 items-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 Explore Opportunities
               </Link>
             </div>

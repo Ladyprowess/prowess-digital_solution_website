@@ -18,7 +18,7 @@ export const DEFAULT_FILTERS: LearnFilters = {
 export function filtersFromSearchParams(sp: URLSearchParams): LearnFilters {
   return {
     q: sp.get("q") || "",
-    kind: (sp.get("kind") as LearnKind) || "",
+    kind: sp.get("kind") === "course" ? "course" : "",
     level: sp.get("level") || "",
     access: sp.get("access") || "",
     skills: sp.get("skills") ? sp.get("skills")!.split(",").filter(Boolean) : [],
@@ -39,7 +39,7 @@ export function searchParamsFromFilters(f: LearnFilters): URLSearchParams {
   return sp;
 }
 
-const FACET_KEYS = ["q", "kind", "level", "access"] as const;
+const FACET_KEYS = ["q", "level", "access"] as const;
 
 export function hasActiveFilters(f: LearnFilters): boolean {
   return FACET_KEYS.some((k) => Boolean(f[k])) || f.skills.length > 0;

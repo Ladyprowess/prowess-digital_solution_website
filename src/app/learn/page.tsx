@@ -8,19 +8,17 @@ import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
 import { LearnCard } from "@/components/learn/LearnCard";
-import { LearnTypeTabs } from "@/components/learn/LearnTypeTabs";
 import { LearnFiltersSidebar } from "@/components/learn/LearnFiltersSidebar";
 import { supabase } from "@/lib/supabase";
 import { SORT_OPTIONS } from "@/lib/learn/constants";
 import { filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type LearnFilters } from "@/lib/learn/filters";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
 import {
-  courseToLearnItem, resourceToLearnItem, COURSE_SELECT, RESOURCE_SELECT, LEARN_RESOURCE_KINDS,
-  type LearnItem, type CourseRow, type ResourceRow,
+  courseToLearnItem, COURSE_SELECT,
+  type LearnItem, type CourseRow,
 } from "@/lib/learn/types";
 
 const PAGE_SIZE = 12;
-const RESOURCE_KINDS = LEARN_RESOURCE_KINDS;
 
 type SkillLookup = { id: string; slug: string; name: string; description: string | null };
 type CareerPathLookup = { slug: string; title: string; description: string | null };
@@ -51,23 +49,16 @@ function LearnPageContent() {
 
   useEffect(() => {
     (async () => {
-      const [skillRows, pathRows, courseMapRows, learnResourceIds] = await Promise.all([
+      const [skillRows, pathRows, courseMapRows] = await Promise.all([
         supabase.from("skills").select("id, slug, name, description").order("name"),
         supabase.from("career_paths").select("slug, title, description").eq("status", "published").order("title"),
         supabase.from("course_skill_map").select("skill_id"),
-        supabase.from("resources").select("id").eq("status", "published").eq("show_in_learn", true).in("resource_type", RESOURCE_KINDS),
       ]);
       setSkills(skillRows.data || []);
       setCareerPaths(pathRows.data || []);
 
-      const resourceIds = (learnResourceIds.data || []).map((r) => r.id);
-      const { data: resourceMapRows } = resourceIds.length
-        ? await supabase.from("resource_skill_map").select("skill_id").in("resource_id", resourceIds)
-        : { data: [] as { skill_id: string }[] };
-
       const usage: Record<string, number> = {};
       for (const row of courseMapRows.data || []) usage[row.skill_id] = (usage[row.skill_id] || 0) + 1;
-      for (const row of resourceMapRows || []) usage[row.skill_id] = (usage[row.skill_id] || 0) + 1;
       setSkillUsage(usage);
     })();
   }, []);
@@ -108,50 +99,22 @@ function LearnPageContent() {
       return;
     }
 
-    const wantsCourses = !filters.kind || filters.kind === "course";
-    const wantsResources = Boolean(filters.kind && RESOURCE_KINDS.includes(filters.kind));
-
-    const queries: Promise<LearnItem[]>[] = [];
-
-    if (wantsCourses) {
-      queries.push((async () => {
-        let ids: string[] | null = null;
-        if (skillIds) {
-          const { data } = await supabase.from("course_skill_map").select("course_id").in("skill_id", skillIds);
-          ids = Array.from(new Set((data || []).map((r) => r.course_id)));
-          if (ids.length === 0) return [];
-        }
-        let q = supabase.from("courses").select(COURSE_SELECT).eq("status", "published");
-        if (ids) q = q.in("id", ids);
-        if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);
-        if (filters.level) q = q.eq("level", filters.level);
-        if (filters.access) q = q.eq("access", filters.access);
-        const { data } = await q;
-        return ((data as unknown as CourseRow[]) || []).map(courseToLearnItem);
-      })());
+    let ids: string[] | null = null;
+    if (skillIds) {
+      const { data } = await supabase.from("course_skill_map").select("course_id").in("skill_id", skillIds);
+      ids = Array.from(new Set((data || []).map((r) => r.course_id)));
+      if (ids.length === 0) {
+        setItems([]); setTotal(0); setLoading(false);
+        return;
+      }
     }
-
-    if (wantsResources) {
-      queries.push((async () => {
-        let ids: string[] | null = null;
-        if (skillIds) {
-          const { data } = await supabase.from("resource_skill_map").select("resource_id").in("skill_id", skillIds);
-          ids = Array.from(new Set((data || []).map((r) => r.resource_id)));
-          if (ids.length === 0) return [];
-        }
-        let q = supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true);
-        q = q.in("resource_type", filters.kind && RESOURCE_KINDS.includes(filters.kind) ? [filters.kind] : RESOURCE_KINDS);
-        if (ids) q = q.in("id", ids);
-        if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);
-        if (filters.level) q = q.eq("level", filters.level);
-        if (filters.access) q = q.eq("access", filters.access);
-        const { data } = await q;
-        return ((data as unknown as ResourceRow[]) || []).map(resourceToLearnItem);
-      })());
-    }
-
-    const results = await Promise.all(queries);
-    let merged = results.flat();
+    let q = supabase.from("courses").select(COURSE_SELECT).eq("status", "published");
+    if (ids) q = q.in("id", ids);
+    if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);
+    if (filters.level) q = q.eq("level", filters.level);
+    if (filters.access) q = q.eq("access", filters.access);
+    const { data } = await q;
+    let merged = ((data as unknown as CourseRow[]) || []).map(courseToLearnItem);
 
     if (filters.sort === "newest") {
       merged = merged.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
@@ -182,16 +145,12 @@ function LearnPageContent() {
   }, [skills, skillUsage]);
 
   const learningTotals = useMemo(() => {
-    const kindTotals = items.reduce<Record<string, number>>((acc, item) => {
-      acc[item.kind] = (acc[item.kind] || 0) + 1;
-      return acc;
-    }, {});
     return [
       { label: "Results", value: total },
-      { label: "Courses", value: filters.kind ? kindTotals.course || 0 : total },
-      { label: "Support", value: filters.kind ? total - (kindTotals.course || 0) : 0 },
+      { label: "Courses", value: total },
+      { label: "Skills", value: popularSkills.length },
     ];
-  }, [filters.kind, items, total]);
+  }, [popularSkills.length, total]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -208,16 +167,16 @@ function LearnPageContent() {
                   Build practical skills with focused learning.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                  Start with structured courses. Use videos, guides, ebooks and articles as supporting material when you want extra context.
+                  Browse structured courses created for focused learning and career growth.
                 </p>
                 <div className="relative mt-7 max-w-2xl">
-                  <label htmlFor="learn-search" className="sr-only">Search learning resources</label>
+                  <label htmlFor="learn-search" className="sr-only">Search courses</label>
                   <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                   <input
                     id="learn-search"
                     value={filters.q}
                     onChange={(e) => updateFilters({ q: e.target.value })}
-                    placeholder="Search courses, skills, guides or topics"
+                    placeholder="Search courses or skills"
                     className="min-h-12 w-full rounded-lg border border-border bg-card pl-11 pr-4 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   />
                 </div>
@@ -228,7 +187,7 @@ function LearnPageContent() {
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
                 <p className="text-sm font-bold text-foreground">Your learning workspace</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Browse the course catalogue, then filter into videos, guides, ebooks and articles when you need supporting resources.
+                  Courses stay here as the main learning product. Extra videos and documents are shown only where they support a specific video.
                 </p>
                 <div className="mt-5 grid grid-cols-3 gap-2">
                   {learningTotals.map((stat) => (
@@ -244,12 +203,6 @@ function LearnPageContent() {
               </div>
             </Reveal>
           </div>
-
-          <Reveal delay={120}>
-            <div className="mt-7">
-              <LearnTypeTabs active={filters.kind} onChange={(kind) => updateFilters({ kind })} />
-            </div>
-          </Reveal>
 
           {popularSkills.length > 0 && (
             <Reveal delay={160}>
@@ -312,7 +265,7 @@ function LearnPageContent() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-primary">Career paths</p>
                 <h2 className="mt-2 text-xl font-bold text-foreground">Learn for a career direction</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">Explore a path and see the skills, learning resources, jobs and opportunities connected to it.</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Explore a path and see the skills, courses, jobs and opportunities connected to it.</p>
               </div>
               <Link href="/career-paths" className="inline-flex min-h-10 flex-shrink-0 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 View all
@@ -383,7 +336,7 @@ function LearnPageContent() {
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-primary">Explore</p>
-                  <h2 className="mt-2 text-xl font-bold text-foreground">{filters.kind ? "Learning resources" : "Courses"}</h2>
+                  <h2 className="mt-2 text-xl font-bold text-foreground">Courses</h2>
                   <p className="mt-1 text-sm text-muted-foreground">{loading ? "Searching…" : `${total} item${total === 1 ? "" : "s"} found`}</p>
                 </div>
                 <label className="sr-only" htmlFor="learn-sort">Sort learning items</label>
@@ -414,7 +367,7 @@ function LearnPageContent() {
               ) : items.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-border bg-card px-6 py-14 text-center">
                   <BookOpen size={34} className="mx-auto text-primary" aria-hidden="true" />
-                  <p className="text-lg font-semibold text-foreground">{filters.kind ? "No learning material found" : "No courses found"}</p>
+                  <p className="text-lg font-semibold text-foreground">No courses found</p>
                   <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
                     {activeFiltersPresent ? "We could not find anything matching your current filters." : "No courses are published yet. Check back soon."}
                   </p>

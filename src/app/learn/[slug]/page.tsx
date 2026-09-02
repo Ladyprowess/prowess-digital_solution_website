@@ -7,8 +7,9 @@ import { Reveal } from "@/components/Reveal";
 import { SaveButton } from "@/components/SaveButton";
 import { CourseContent } from "@/components/CourseContent";
 import { RichText } from "@/components/RichText";
-import { RelatedSection } from "@/components/RelatedSection";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { CourseReviews } from "@/components/learn/CourseReviews";
+import { CourseDiscussion } from "@/components/learn/CourseDiscussion";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
 import { getSkillGraph } from "@/lib/careerPathGraph";
 import { formatMoney } from "@/lib/formatMoney";
@@ -118,11 +119,10 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                   )}
                 </div>
                 <div className="p-5">
-                  <p className="text-sm font-bold text-foreground">Course snapshot</p>
+                  <p className="text-sm font-bold text-foreground">Course overview</p>
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     {[
                       { label: "Skills", value: skills.length },
-                      { label: "Resources", value: graph.resources.length },
                       { label: "Jobs", value: graph.jobs.length },
                       { label: "Paths", value: graph.careerPaths.length },
                     ].map((stat) => (
@@ -171,6 +171,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
           <CourseContent courseId={course.id} priceUsd={course.price_usd} priceNgn={course.price_ngn} />
         </section>
 
+        <CourseReviews courseId={course.id} />
+        <CourseDiscussion courseId={course.id} />
+
         {graph.careerPaths.length > 0 && (
           <Reveal delay={280}>
             <section className="mt-10 rounded-lg border border-primary/20 bg-primary/5 p-6">
@@ -178,7 +181,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
               {graph.careerPaths.slice(0, 1).map((c) => (
                 <div key={c.slug} className="mt-2">
                   <p className="text-lg font-bold text-foreground">Explore {c.title}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Learn what skills you need, what to study, and where this career can take you.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">See the wider career path this course can support.</p>
                   <Link href={`/career-paths/${c.slug}`} className="mt-4 inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     Explore career path
                   </Link>
@@ -188,19 +191,10 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
           </Reveal>
         )}
 
-        <Reveal delay={300}>
-          <RelatedSection title="RECOMMENDED RESOURCES" items={graph.resources} render={() => graph.resources.map((r) => (
-            <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <span className="text-[10px] font-bold uppercase text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
-              <p className="mt-1.5 text-sm font-semibold text-foreground">{r.title}</p>
-            </Link>
-          ))} />
-        </Reveal>
-
         {(graph.jobs.length > 0 || graph.opportunities.length > 0) && (
           <Reveal delay={320}>
             <section className="mt-10">
-              <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">WHERE CAN THIS SKILL TAKE YOU?</h2>
+              <h2 className="text-sm font-semibold tracking-widest text-muted-foreground">NEXT STEPS AFTER THIS COURSE</h2>
               <div className="mt-4 grid gap-6 sm:grid-cols-2">
                 {graph.jobs.length > 0 && (
                   <div>

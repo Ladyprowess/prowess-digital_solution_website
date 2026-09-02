@@ -72,22 +72,12 @@ export default function CareerPathsPage() {
       }
       const allSkillIds = Array.from(skillToPaths.keys());
 
-      const [{ data: jobRows }, { data: courseMapRows }, { data: resourceMapRows }, { data: careerContentRows }] =
+      const [{ data: jobRows }, { data: courseMapRows }] =
         await Promise.all([
           allSkillIds.length === 0
             ? Promise.resolve({ data: [] })
             : supabase.from("job_skill_map").select("job_id, skill_id").in("skill_id", allSkillIds),
-          // Learning counts from two sources: explicit curation
-          // (career_path_course_map/career_path_resource_map, an admin
-          // attaching a specific course/resource to a specific path via the
-          // "Learning for this career" picker) and, additively, any
-          // published resource an admin flagged "Career content" that
-          // shares a skill tag with this path (queried just below) - so
-          // checking that box is enough on its own, without also requiring
-          // the admin to separately attach it per-path.
           supabase.from("career_path_course_map").select("career_path_id, course_id"),
-          supabase.from("career_path_resource_map").select("career_path_id, resource_id"),
-          supabase.from("resources").select("id, resource_skill_map(skill_id)").eq("status", "published").eq("show_in_learn", true).eq("show_in_career", true),
         ]);
 
       const jobsByPath = new Map<string, Set<string>>();
@@ -102,23 +92,6 @@ export default function CareerPathsPage() {
       for (const row of courseMapRows || []) {
         if (!learningByPath.has(row.career_path_id)) learningByPath.set(row.career_path_id, new Set());
         learningByPath.get(row.career_path_id)!.add(`course:${row.course_id}`);
-      }
-      for (const row of resourceMapRows || []) {
-        if (!learningByPath.has(row.career_path_id)) learningByPath.set(row.career_path_id, new Set());
-        learningByPath.get(row.career_path_id)!.add(`resource:${row.resource_id}`);
-      }
-      // Same key format ("resource:<id>") as the explicit resource curation
-      // above, so a resource that's both explicitly attached AND flagged
-      // "Career content" still only counts once per path (Set, not a list).
-      for (const row of careerContentRows || []) {
-        const matchedPaths = new Set<string>();
-        for (const m of row.resource_skill_map || []) {
-          for (const pathId of skillToPaths.get(m.skill_id) || []) matchedPaths.add(pathId);
-        }
-        for (const pathId of matchedPaths) {
-          if (!learningByPath.has(pathId)) learningByPath.set(pathId, new Set());
-          learningByPath.get(pathId)!.add(`resource:${row.id}`);
-        }
       }
 
       const withCounts: PathWithCounts[] = ((pathRows as PathRow[]) || []).map((p) => ({
@@ -208,7 +181,7 @@ export default function CareerPathsPage() {
                   Choose a path, then build the skills to enter it.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                  Explore structured career paths with the skills, learning, jobs, opportunities and tools connected to each direction.
+                  Explore structured career paths with the skills, courses, jobs, opportunities and tools connected to each direction.
                 </p>
                 <div className="mt-7 max-w-2xl">
                   <label htmlFor="career-path-search" className="sr-only">Search career paths</label>
@@ -229,7 +202,7 @@ export default function CareerPathsPage() {
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   {[
                     { label: "Skills", value: totals.skills },
-                    { label: "Learning", value: totals.learning },
+                    { label: "Courses", value: totals.learning },
                     { label: "Jobs", value: totals.jobs },
                   ].map((stat) => (
                     <div key={stat.label} className="rounded-lg bg-muted p-3 text-center">
@@ -239,7 +212,7 @@ export default function CareerPathsPage() {
                   ))}
                 </div>
                 <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                  Start with the path that matches your interest. The guide shows what to learn, what to practise and where to apply.
+                  Start with the path that matches your interest. Each guide separates the skills, structured courses and application opportunities.
                 </p>
               </div>
             </Reveal>

@@ -2,18 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark, BookOpen, Clock3, Library, ListChecks, PlayCircle } from "lucide-react";
+import { Bookmark, BookOpen, Clock3, Library, ListChecks } from "lucide-react";
 import { Card, EmptyState } from "@/components/account/AccountUI";
 import { attachTitles, hrefFor, ITEM_LABEL } from "@/lib/account/itemLinks";
 import { supabase } from "@/lib/supabase";
 
 type LearningRow = { id: string; course_id: string; status: string; progress_percent: number; title?: string; slug?: string };
-type VideoProgressRow = {
-  id: string;
-  status: string;
-  progress_percent: number;
-  resources: { title: string; slug: string } | null;
-};
 type SavedLibraryItem = { id: string; item_type: string; item_id: string; title?: string; slug?: string };
 
 function ProgressBar({ value }: { value: number }) {
@@ -40,7 +34,6 @@ function LoadingRows() {
 
 export default function LearningPage() {
   const [learning, setLearning] = useState<LearningRow[]>([]);
-  const [videos, setVideos] = useState<VideoProgressRow[]>([]);
   const [savedLibrary, setSavedLibrary] = useState<SavedLibraryItem[]>([]);
   const [quizzesCompleted, setQuizzesCompleted] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -48,17 +41,12 @@ export default function LearningPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data }, { data: videoRows }, { data: savedRows }, { data: quizAttemptRows }] = await Promise.all([
+      const [{ data }, { data: savedRows }, { data: quizAttemptRows }] = await Promise.all([
         supabase.from("learning_progress").select("id, course_id, status, progress_percent").order("updated_at", { ascending: false }),
-        supabase
-          .from("video_progress")
-          .select("id, status, progress_percent, resources(title, slug)")
-          .order("updated_at", { ascending: false })
-          .limit(8),
         supabase
           .from("saved_items")
           .select("id, item_type, item_id")
-          .in("item_type", ["resource", "course"])
+          .eq("item_type", "course")
           .order("created_at", { ascending: false })
           .limit(12),
         // "Completed" (submitted, any quiz type), not "passed" - a
@@ -74,7 +62,6 @@ export default function LearningPage() {
         })
       );
       setLearning(withTitles);
-      setVideos(((videoRows as unknown as VideoProgressRow[]) || []).filter((row) => row.resources));
       setSavedLibrary(await attachTitles((savedRows || []) as SavedLibraryItem[]));
       setQuizzesCompleted(new Set((quizAttemptRows || []).map((r) => r.quiz_id)).size);
       setLoading(false);
@@ -83,8 +70,6 @@ export default function LearningPage() {
 
   const activeCourses = learning.filter((item) => item.status !== "completed");
   const completedCourses = learning.filter((item) => item.status === "completed");
-  const activeVideos = videos.filter((item) => item.status !== "completed");
-  const completedVideos = videos.filter((item) => item.status === "completed");
 
   return (
     <div>
@@ -96,29 +81,24 @@ export default function LearningPage() {
           </div>
           <h1 className="mt-3 text-2xl font-bold text-foreground">Learning</h1>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Continue your main courses here. Videos and resources from the library stay separate as supporting material.
+            Continue your structured courses here.
           </p>
         </div>
-        <Link href="/resources" className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-          Browse library
+        <Link href="/learn" className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          Browse courses
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-4">
           <BookOpen className="text-primary" size={18} aria-hidden="true" />
           <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : activeCourses.length}</p>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Courses in progress</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <PlayCircle className="text-primary" size={18} aria-hidden="true" />
-          <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : activeVideos.length}</p>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supporting videos</p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
           <Bookmark className="text-primary" size={18} aria-hidden="true" />
           <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : savedLibrary.length}</p>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Saved items</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Saved courses</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <ListChecks className="text-primary" size={18} aria-hidden="true" />
@@ -127,12 +107,12 @@ export default function LearningPage() {
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <Clock3 className="text-primary" size={18} aria-hidden="true" />
-          <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : completedCourses.length + completedVideos.length}</p>
+          <p className="mt-3 text-2xl font-bold text-foreground">{loading ? 0 : completedCourses.length}</p>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Completed</p>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="mt-6">
         <Card title="Main courses" action={<Link href="/learn" className="text-sm font-semibold text-primary hover:underline">Browse courses</Link>}>
           {loading ? (
             <LoadingRows />
@@ -159,28 +139,6 @@ export default function LearningPage() {
             </ul>
           )}
         </Card>
-
-        <Card title="Supporting videos" action={<Link href="/videos" className="text-sm font-semibold text-primary hover:underline">Watch videos</Link>}>
-          {loading ? (
-            <LoadingRows />
-          ) : activeVideos.length === 0 ? (
-            <EmptyState text="No supporting videos in progress yet." ctaLabel="Watch videos" ctaHref="/videos" />
-          ) : (
-            <ul className="space-y-3">
-              {activeVideos.map((v) => (
-                <li key={v.id} className="rounded-lg border border-border px-4 py-3 text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <Link href={`/videos/${v.resources?.slug}`} className="font-medium text-foreground hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                      {v.resources?.title || "Untitled video"}
-                    </Link>
-                    <span className="flex-shrink-0 text-xs text-muted-foreground">{v.progress_percent}% watched</span>
-                  </div>
-                  <ProgressBar value={v.progress_percent} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
       </div>
 
       <div className="mt-6">
@@ -188,7 +146,7 @@ export default function LearningPage() {
           {loading ? (
             <LoadingRows />
           ) : savedLibrary.length === 0 ? (
-            <EmptyState text="Save books, guides, videos, and courses so they appear here." ctaLabel="Browse resources" ctaHref="/resources" />
+            <EmptyState text="Save courses so they appear here." ctaLabel="Browse courses" ctaHref="/learn" />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {savedLibrary.map((item) => {
@@ -216,7 +174,7 @@ export default function LearningPage() {
       <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-5">
         <p className="text-sm font-bold text-foreground">How this page is organised</p>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Courses are the main structured learning. Videos, ebooks, guides and saved resources are supporting materials from the library, so they are tracked separately.
+          This page is for structured courses. Supporting videos and documents appear on the relevant video page.
         </p>
       </div>
     </div>

@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
 import { supabase } from "@/lib/supabase";
-import { LEARN_RESOURCE_KINDS } from "@/lib/learn/types";
 
 const PAGE_SIZE = 24;
 
@@ -28,41 +28,43 @@ export default function SkillsPage() {
   const [page, setPage] = useState(1);
   const [hasContentOnly, setHasContentOnly] = useState(false);
   const [sort, setSort] = useState<"connected" | "name">("connected");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: skillRows }, { data: jobRows }, { data: oppRows }, { data: courseRows }, { data: resourceRows }] = await Promise.all([
-        supabase.from("skills").select("id, slug, name, description, featured").eq("status", "published").order("name"),
-        supabase.from("job_skill_map").select("skill_id"),
-        supabase.from("opportunity_skill_map").select("skill_id"),
-        supabase.from("course_skill_map").select("skill_id"),
-        supabase.from("resource_skill_map").select("skill_id, resources(resource_type)"),
-      ]);
+      setError(null);
 
-      const jobCounts = new Map<string, number>();
-      for (const r of jobRows || []) jobCounts.set(r.skill_id, (jobCounts.get(r.skill_id) || 0) + 1);
+      try {
+        const [{ data: skillRows }, { data: jobRows }, { data: oppRows }, { data: courseRows }] = await Promise.all([
+          supabase.from("skills").select("id, slug, name, description, featured").eq("status", "published").order("name"),
+          supabase.from("job_skill_map").select("skill_id"),
+          supabase.from("opportunity_skill_map").select("skill_id"),
+          supabase.from("course_skill_map").select("skill_id"),
+        ]);
 
-      const oppCounts = new Map<string, number>();
-      for (const r of oppRows || []) oppCounts.set(r.skill_id, (oppCounts.get(r.skill_id) || 0) + 1);
+        const jobCounts = new Map<string, number>();
+        for (const r of jobRows || []) jobCounts.set(r.skill_id, (jobCounts.get(r.skill_id) || 0) + 1);
 
-      const learningCounts = new Map<string, number>();
-      for (const r of courseRows || []) learningCounts.set(r.skill_id, (learningCounts.get(r.skill_id) || 0) + 1);
-      for (const r of (resourceRows as unknown as { skill_id: string; resources: { resource_type: string | null } | null }[]) || []) {
-        if (r.resources?.resource_type && LEARN_RESOURCE_KINDS.includes(r.resources.resource_type)) {
-          learningCounts.set(r.skill_id, (learningCounts.get(r.skill_id) || 0) + 1);
-        }
+        const oppCounts = new Map<string, number>();
+        for (const r of oppRows || []) oppCounts.set(r.skill_id, (oppCounts.get(r.skill_id) || 0) + 1);
+
+        const learningCounts = new Map<string, number>();
+        for (const r of courseRows || []) learningCounts.set(r.skill_id, (learningCounts.get(r.skill_id) || 0) + 1);
+
+        const withCounts: SkillWithCounts[] = ((skillRows as SkillRow[]) || []).map((s) => ({
+          ...s,
+          learningCount: learningCounts.get(s.id) || 0,
+          jobsCount: jobCounts.get(s.id) || 0,
+          opportunitiesCount: oppCounts.get(s.id) || 0,
+        }));
+
+        setSkills(withCounts);
+      } catch {
+        setError("Skills could not be loaded right now.");
+      } finally {
+        setLoading(false);
       }
-
-      const withCounts: SkillWithCounts[] = ((skillRows as SkillRow[]) || []).map((s) => ({
-        ...s,
-        learningCount: learningCounts.get(s.id) || 0,
-        jobsCount: jobCounts.get(s.id) || 0,
-        opportunitiesCount: oppCounts.get(s.id) || 0,
-      }));
-
-      setSkills(withCounts);
-      setLoading(false);
     })();
   }, []);
 
@@ -123,33 +125,38 @@ export default function SkillsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* HERO */}
-      <section className="border-b border-border bg-muted py-16 sm:py-20">
+      <section className="border-b border-border bg-brand-bg py-12 sm:py-16">
         <Container>
           <Reveal>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Build skills that move your career forward.</h1>
-            <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-              Explore the skills employers are looking for, discover what you can learn, and see the jobs, opportunities, career paths and resources connected to each skill.
-            </p>
-          </Reveal>
-          <Reveal delay={80}>
-            <div className="mt-6">
-              <input
-                value={search}
-                onChange={(e) => updateSearch(e.target.value)}
-                placeholder="Search skills..."
-                className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-sm text-foreground shadow-sm sm:max-w-xl"
-              />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">Skill Library</p>
+              <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">Choose a skill and see where it can take you.</h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+                Search practical skills and see the courses, roles and opportunities connected to each one.
+              </p>
+              <div className="relative mt-7 max-w-2xl">
+                <label htmlFor="skill-search" className="sr-only">Search skills</label>
+                <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <input
+                  id="skill-search"
+                  value={search}
+                  onChange={(e) => updateSearch(e.target.value)}
+                  placeholder="Search by skill name"
+                  className="min-h-12 w-full rounded-lg border border-border bg-card pl-11 pr-4 text-sm text-foreground shadow-sm transition placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
             </div>
           </Reveal>
           {!loading && exampleChips.length > 0 && (
             <Reveal delay={120}>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="mt-7 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Popular</span>
                 {exampleChips.map((s) => (
                   <button
                     key={s.slug}
                     type="button"
                     onClick={() => updateSearch(s.name)}
-                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+                    className="min-h-10 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {s.name}
                   </button>
@@ -162,19 +169,48 @@ export default function SkillsPage() {
 
       {loading ? (
         <Container>
-          <p className="py-16 text-center text-sm text-muted-foreground">Loading…</p>
+          <div className="grid gap-4 py-16 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-36 rounded-lg border border-border bg-card p-5">
+                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="mt-4 h-3 w-full rounded bg-muted" />
+                <div className="mt-2 h-3 w-2/3 rounded bg-muted" />
+              </div>
+            ))}
+          </div>
+        </Container>
+      ) : error ? (
+        <Container>
+          <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
+            <p className="font-semibold text-foreground">{error}</p>
+            <p className="mt-1 text-sm text-muted-foreground">Please reload the page and try again.</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 min-h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Reload page
+            </button>
+          </div>
         </Container>
       ) : skills.length === 0 ? (
         <Container>
-          <div className="mx-auto my-16 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+          <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
             <p className="font-semibold text-foreground">No skills yet.</p>
-            <p className="mt-1 text-sm text-muted-foreground">Check back soon.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Skills added by the admin will appear here.</p>
           </div>
         </Container>
       ) : filtered.length === 0 ? (
         <Container>
-          <div className="mx-auto my-16 max-w-lg rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+          <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
             <p className="font-semibold text-foreground">No skills match &quot;{search}&quot;.</p>
+            <button
+              type="button"
+              onClick={() => updateSearch("")}
+              className="mt-4 min-h-10 rounded-lg border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Clear search
+            </button>
           </div>
         </Container>
       ) : (
@@ -182,36 +218,39 @@ export default function SkillsPage() {
           <Container>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-foreground">All Skills</h2>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">Browse skills</p>
+                <h2 className="mt-2 text-xl font-bold text-foreground">Skills directory</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {sortedSkills.length} skill{sortedSkills.length === 1 ? "" : "s"} connected to learning resources, jobs and opportunities on Prowess Digital Solutions.
+                  {sortedSkills.length} skill{sortedSkills.length === 1 ? "" : "s"} connected to courses, jobs and opportunities.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-4">
-                <label className="flex items-center gap-2 text-sm text-foreground">
+                <label className="flex min-h-10 items-center gap-2 text-sm text-foreground">
                   <input type="checkbox" checked={hasContentOnly} onChange={(e) => updateHasContentOnly(e.target.checked)} />
-                  Only show skills with content
+                  Only skills with content
                 </label>
+                <label className="sr-only" htmlFor="skill-sort">Sort skills</label>
                 <select
+                  id="skill-sort"
                   value={sort}
                   onChange={(e) => updateSort(e.target.value as typeof sort)}
-                  className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground"
+                  className="min-h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <option value="connected">Most connected</option>
-                  <option value="name">Name (A–Z)</option>
+                  <option value="name">Name A to Z</option>
                 </select>
               </div>
             </div>
 
             {sortedSkills.length === 0 ? (
-              <div className="mt-6 rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center">
+              <div className="mt-6 rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
                 <p className="text-sm text-muted-foreground">No skills match these filters.</p>
               </div>
             ) : (
-              <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+              <div className="mt-6 overflow-hidden rounded-lg border border-border bg-card">
                 <div className="hidden border-b border-border px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid sm:grid-cols-[1fr_110px_90px_130px_16px] sm:gap-4">
                   <span>Skill</span>
-                  <span className="text-center">Learning</span>
+                  <span className="text-center">Courses</span>
                   <span className="text-center">Jobs</span>
                   <span className="text-center">Opportunities</span>
                   <span />
@@ -221,7 +260,7 @@ export default function SkillsPage() {
                     <Link
                       key={s.id}
                       href={`/skills/${s.slug}`}
-                      className="group grid grid-cols-1 gap-2 px-5 py-4 transition hover:bg-muted sm:grid-cols-[1fr_110px_90px_130px_16px] sm:items-center sm:gap-4"
+                      className="group grid grid-cols-1 gap-2 px-5 py-4 transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:grid-cols-[1fr_110px_90px_130px_16px] sm:items-center sm:gap-4"
                     >
                       <div className="min-w-0">
                         <span className="font-semibold text-foreground">{s.name}</span>
@@ -231,7 +270,7 @@ export default function SkillsPage() {
                         {s.description && <p className="mt-0.5 truncate text-sm text-muted-foreground sm:max-w-md">{s.description}</p>}
                       </div>
                       <span className={`text-sm sm:text-center ${s.learningCount > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
-                        <span className="text-muted-foreground sm:hidden">Learning </span>{s.learningCount}
+                        <span className="text-muted-foreground sm:hidden">Courses </span>{s.learningCount}
                       </span>
                       <span className={`text-sm sm:text-center ${s.jobsCount > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
                         <span className="text-muted-foreground sm:hidden">Jobs </span>{s.jobsCount}

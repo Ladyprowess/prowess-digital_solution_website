@@ -12,7 +12,6 @@ export type RoleNode = {
   skillSlugs: string[];
   jobs: { slug: string; title: string; companies: { name: string } | null }[];
   recommendedCourses: { slug: string; title: string }[];
-  recommendedResources: { slug: string; title: string }[];
   children: RoleNode[];
 };
 
@@ -80,15 +79,12 @@ export function RoleBranchDiagram({ pathTitle, roles }: { pathTitle: string; rol
               </div>
             )}
 
-            {(active.recommendedCourses.length > 0 || active.recommendedResources.length > 0) && (
+            {active.recommendedCourses.length > 0 && (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Learning</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Courses</p>
                 <div className="mt-2 grid gap-2">
                   {active.recommendedCourses.map((c) => (
-                    <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/30">{c.title}</Link>
-                  ))}
-                  {active.recommendedResources.map((r) => (
-                    <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/30">{r.title}</Link>
+                    <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-lg border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">{c.title}</Link>
                   ))}
                 </div>
               </div>
@@ -99,7 +95,7 @@ export function RoleBranchDiagram({ pathTitle, roles }: { pathTitle: string; rol
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Jobs</p>
                 <div className="mt-2 grid gap-2">
                   {active.jobs.map((j) => (
-                    <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-xl border border-border px-3 py-2 text-sm hover:border-primary/30">
+                    <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-lg border border-border px-3 py-2 text-sm hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                       <span className="font-semibold text-foreground">{j.title}</span>
                       {j.companies?.name && <span className="text-muted-foreground"> - {j.companies.name}</span>}
                     </Link>
@@ -109,8 +105,8 @@ export function RoleBranchDiagram({ pathTitle, roles }: { pathTitle: string; rol
             )}
 
             {active.skillSlugs.length > 0 && (
-              <Link href={`/jobs?skills=${active.skillSlugs.join(",")}`} className="inline-block text-sm font-semibold text-primary hover:underline">
-                View {active.title} jobs →
+              <Link href={`/jobs?skills=${active.skillSlugs.join(",")}`} className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                View {active.title} jobs
               </Link>
             )}
           </div>

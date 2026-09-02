@@ -11,7 +11,6 @@ export type RoadmapStageData = {
   items: string[] | null;
   skills: { slug: string; name: string }[];
   recommendedCourses: { slug: string; title: string }[];
-  recommendedResources: { slug: string; title: string }[];
 };
 
 // The visual centerpiece of the detail page: a horizontal progression of
@@ -64,18 +63,13 @@ export function RoadmapStrip({ stages }: { stages: RoadmapStageData[] }) {
             </div>
           )}
 
-          {(openStage.recommendedCourses.length > 0 || openStage.recommendedResources.length > 0) && (
+          {openStage.recommendedCourses.length > 0 && (
             <div className="mt-5 border-t border-border pt-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Recommended learning</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Recommended courses</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {openStage.recommendedCourses.map((c) => (
                   <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-lg border border-border px-4 py-3 text-sm font-semibold text-foreground hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     {c.title}
-                  </Link>
-                ))}
-                {openStage.recommendedResources.map((r) => (
-                  <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-lg border border-border px-4 py-3 text-sm font-semibold text-foreground hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                    {r.title}
                   </Link>
                 ))}
               </div>
