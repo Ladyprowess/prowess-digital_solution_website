@@ -4,12 +4,53 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  BookOpen,
+  BriefcaseBusiness,
+  ChevronDown,
+  Contact,
+  FileText,
+  Library,
+  Map,
+  Menu,
+  Search,
+  UsersRound,
+  Video,
+  X,
+} from "lucide-react";
 
 import Container from "@/components/Container";
-import { navPrimary, navMore } from "@/content/site";
+import { navPrimary } from "@/content/site";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { JobAlertsModal } from "@/components/JobAlertsModal";
 import { supabase } from "@/lib/supabase";
+
+const menuGroups = [
+  {
+    title: "Explore",
+    items: [
+      { href: "/blog", label: "Blog", description: "Articles and practical notes", icon: FileText },
+      { href: "/videos", label: "Videos", description: "Lessons and useful talks", icon: Video },
+      { href: "/resources", label: "Library", description: "Books, guides and templates", icon: Library },
+    ],
+  },
+  {
+    title: "Grow",
+    items: [
+      { href: "/career-paths", label: "Career Paths", description: "Structured roadmaps", icon: Map },
+      { href: "/skills", label: "Skills", description: "Find learning by skill", icon: BookOpen },
+      { href: "/work-with-us", label: "Work With Us", description: "Open roles and collaboration", icon: UsersRound },
+    ],
+  },
+  {
+    title: "Business",
+    items: [
+      { href: "/services", label: "For Businesses", description: "Diagnostics, SOPs and support", icon: BriefcaseBusiness },
+      { href: "/case-studies", label: "Case Studies", description: "Client problems and results", icon: Search },
+      { href: "/contact", label: "Contact Us", description: "Ask what fits your situation", icon: Contact },
+    ],
+  },
+] as const;
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -33,7 +74,6 @@ export default function Navbar() {
   const mobileWrapRef = useRef<HTMLDivElement | null>(null);
 
   const primaryLinks = useMemo(() => navPrimary, []);
-  const moreLinks = useMemo(() => navMore, []);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -63,17 +103,12 @@ export default function Navbar() {
     };
   }, []);
 
-  useEffect(() => {
-    setMoreOpen(false);
-    setMobileOpen(false);
-  }, [pathname]);
-
   return (
     <>
     <header className="sticky top-0 z-50">
       <div className="border-b border-border bg-background/95 backdrop-blur">
         <Container>
-          <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(160px,200px)_1fr_240px] lg:gap-10">
+          <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 xl:grid-cols-[minmax(160px,200px)_1fr_260px] xl:gap-8">
             {/* Logo */}
             <Link href="/" aria-label="Go to homepage" className="flex items-center">
               <Image
@@ -87,15 +122,15 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex min-w-0 items-center justify-center gap-7 xl:gap-9">
+            <nav className="hidden min-w-0 items-center justify-center gap-3 xl:flex xl:gap-4">
 
               {primaryLinks.map((item) => {
                 const active = !("external" in item) && isActive(item.href);
                 const base =
-                  "relative text-base font-medium text-foreground hover:text-foreground transition whitespace-nowrap";
+                  "relative rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted whitespace-nowrap";
                 const underline = active
-                  ? "after:absolute after:left-0 after:-bottom-2 after:h-[2px] after:w-full after:bg-primary"
-                  : "after:absolute after:left-0 after:-bottom-2 after:h-[2px] after:w-full after:bg-transparent";
+                  ? "bg-primary/10 text-primary"
+                  : "";
 
                 if ("external" in item && item.external) {
                   return (
@@ -126,32 +161,57 @@ export default function Navbar() {
                   aria-haspopup="menu"
                   aria-expanded={moreOpen}
                   className={[
-                    "flex items-center gap-2 rounded-xl px-5 py-2.5",
-                    "text-base font-semibold text-foreground whitespace-nowrap",
+                    "flex min-h-10 items-center gap-2 rounded-lg px-3 py-2",
+                    "text-sm font-semibold text-foreground whitespace-nowrap",
                     "border border-transparent hover:border-border hover:bg-muted transition",
                     moreOpen ? "border-border bg-muted" : "",
                   ].join(" ")}
                 >
                   More
-                  <span className={`transition-transform ${moreOpen ? "rotate-180" : ""}`}>⌄</span>
+                  <ChevronDown size={16} aria-hidden="true" className={`transition-transform ${moreOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 {moreOpen ? (
                   <div
                     role="menu"
-                    className="absolute right-0 mt-3 w-80 rounded-2xl border border-border bg-card shadow-xl p-2"
+                    className="absolute left-1/2 mt-3 w-[640px] -translate-x-1/2 rounded-lg border border-border bg-card p-4 shadow-lg"
                   >
-                    {moreLinks.map((m) => (
-                      <Link
-                        key={m.href}
-                        href={m.href}
-                        role="menuitem"
-                        onClick={() => setMoreOpen(false)}
-                        className="block rounded-xl px-4 py-4 text-lg font-medium text-foreground hover:bg-muted hover:text-foreground"
-                      >
-                        {m.label}
-                      </Link>
-                    ))}
+                    <div className="grid gap-4 md:grid-cols-3">
+                      {menuGroups.map((group) => (
+                        <div key={group.title}>
+                          <p className="px-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                            {group.title}
+                          </p>
+                          <div className="mt-2 space-y-1">
+                            {group.items.map((m) => {
+                              const Icon = m.icon;
+                              const active = isActive(m.href);
+                              return (
+                                <Link
+                                  key={m.href}
+                                  href={m.href}
+                                  role="menuitem"
+                                  onClick={() => setMoreOpen(false)}
+                                  className={`flex gap-3 rounded-lg px-2 py-2.5 transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                    active ? "bg-primary/10 text-primary" : "text-foreground"
+                                  }`}
+                                >
+                                  <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <Icon size={16} aria-hidden="true" />
+                                  </span>
+                                  <span>
+                                    <span className="block text-sm font-bold">{m.label}</span>
+                                    <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                                      {m.description}
+                                    </span>
+                                  </span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -160,48 +220,43 @@ export default function Navbar() {
             </nav>
 
             {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center justify-end gap-5">
+            <div className="hidden items-center justify-end gap-3 xl:flex">
               <Link
                 href={signedIn ? "/account" : "/account/login"}
-                className="text-sm font-semibold text-foreground hover:text-primary transition whitespace-nowrap"
+                className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-foreground transition hover:bg-muted hover:text-primary whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 {signedIn ? "My Account" : "Sign In"}
               </Link>
               <button
                 type="button"
                 onClick={() => setAlertsOpen(true)}
-                className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition whitespace-nowrap"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Get Job Alerts
               </button>
             </div>
 
             {/* Mobile toggle */}
-            <div className="flex items-center justify-end gap-2 lg:hidden" ref={mobileWrapRef}>
+            <div className="flex items-center justify-end gap-2 xl:hidden" ref={mobileWrapRef}>
               <ThemeToggle />
               <button
                 type="button"
                 aria-label={mobileOpen ? "Close menu" : "Open menu"}
                 onClick={() => setMobileOpen((v) => !v)}
-                className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-4 py-3 text-foreground hover:bg-muted"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-card text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  {mobileOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
-                  )}
-                </svg>
+                {mobileOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
               </button>
 
               {/* MOBILE DROPDOWN */}
               {mobileOpen ? (
                 <>
                   {/* Dimming backdrop over page content behind the menu */}
-                  <div
-                    aria-hidden="true"
+                  <button
+                    type="button"
+                    aria-label="Close menu"
                     onClick={() => setMobileOpen(false)}
-                    className="fixed inset-x-0 bottom-0 top-20 z-40 bg-black/40 lg:hidden"
+                    className="fixed inset-x-0 bottom-0 top-20 z-40 bg-foreground/35 xl:hidden"
                   />
 
                   {/* Solid, fully opaque menu panel - no see-through content behind text.
@@ -209,17 +264,22 @@ export default function Navbar() {
                       links + buttons to be taller than a real phone screen, and
                       without a scroll, whatever's last (the Sign In button) gets
                       pushed off the bottom of the screen with no way to reach it. */}
-                  <div className="fixed inset-x-0 top-20 z-50 max-h-[calc(100vh-5rem)] overflow-y-auto border-t border-border bg-background shadow-xl lg:hidden">
-                    <div className="mx-auto w-full max-w-6xl px-4 py-5">
-                      <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
-                      {/* Primary links in a 2-column grid */}
-                      <div className="grid grid-cols-2 gap-3">
+                  <div className="fixed inset-x-0 top-20 z-50 max-h-[calc(100vh-5rem)] overflow-y-auto border-t border-border bg-background shadow-xl xl:hidden">
+                    <div className="mx-auto w-full max-w-3xl px-4 py-4">
+                      <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                          Menu
+                        </p>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
                         {primaryLinks.map((item) => {
                           const active = !("external" in item) && isActive(item.href);
 
                           const cls = active
-                            ? "rounded-2xl bg-primary/10 border border-primary/20 px-4 py-4 text-base font-semibold text-foreground"
-                            : "rounded-2xl bg-card px-4 py-4 text-base font-semibold text-foreground border border-border hover:bg-muted";
+                            ? "rounded-lg bg-primary/10 border border-primary/20 px-3 py-3 text-sm font-bold text-primary"
+                            : "rounded-lg bg-background px-3 py-3 text-sm font-bold text-foreground border border-border hover:bg-muted";
 
                           if ("external" in item && item.external) {
                             return (
@@ -249,38 +309,53 @@ export default function Navbar() {
                         })}
                       </div>
 
-                      <div className="my-5 h-px bg-border/70" />
+                      <div className="my-4 h-px bg-border" />
 
-                      {/* More section */}
-                      <p className="text-xs font-semibold tracking-widest text-muted-foreground px-1">
-                        MORE
-                      </p>
-
-                      <div className="mt-3 grid grid-cols-2 gap-3">
-                        {moreLinks.map((m) => (
-                          <Link
-                            key={m.href}
-                            href={m.href}
-                            onClick={() => setMobileOpen(false)}
-                            className="rounded-2xl bg-card px-4 py-4 text-base font-semibold text-foreground border border-border hover:bg-muted"
-                          >
-                            {m.label}
-                          </Link>
+                      <div className="space-y-4">
+                        {menuGroups.map((group) => (
+                          <div key={group.title}>
+                            <p className="px-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                              {group.title}
+                            </p>
+                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                              {group.items.map((m) => {
+                                const Icon = m.icon;
+                                const active = isActive(m.href);
+                                return (
+                                  <Link
+                                    key={m.href}
+                                    href={m.href}
+                                    onClick={() => setMobileOpen(false)}
+                                    className={`flex min-h-14 items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                      active ? "border-primary/25 bg-primary/10" : "border-border bg-background"
+                                    }`}
+                                  >
+                                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                      <Icon size={17} aria-hidden="true" />
+                                    </span>
+                                    <span>
+                                      <span className="block text-sm font-bold text-foreground">{m.label}</span>
+                                      <span className="block text-xs leading-5 text-muted-foreground">{m.description}</span>
+                                    </span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </div>
                         ))}
                       </div>
 
-                      {/* Mobile CTA button */}
                       <button
                         type="button"
                         onClick={() => { setMobileOpen(false); setAlertsOpen(true); }}
-                        className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-primary px-6 py-5 text-lg font-semibold text-primary-foreground shadow-md shadow-border hover:opacity-90 transition"
+                        className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         Get Job Alerts
                       </button>
                       <Link
                         href={signedIn ? "/account" : "/account/login"}
                         onClick={() => setMobileOpen(false)}
-                        className="mt-3 inline-flex w-full items-center justify-center rounded-3xl border border-border bg-card px-6 py-4 text-base font-semibold text-foreground hover:bg-muted transition"
+                        className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-background px-6 text-sm font-semibold text-foreground hover:bg-muted transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         {signedIn ? "My Account" : "Sign In"}
                       </Link>

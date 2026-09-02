@@ -1,431 +1,379 @@
 "use client";
 
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  CheckCircle2,
+  ClipboardCheck,
+  Gauge,
+  LineChart,
+  NotebookText,
+  SearchCheck,
+  Target,
+  UsersRound,
+  Wrench,
+} from "lucide-react";
 import Container from "@/components/Container";
-import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
 import { services } from "@/content/site";
 
-// ── Four things Prowess does ────────────────────────────────────────────────
-const pillars = [
+const serviceIcons: Record<string, LucideIcon> = {
+  audit: SearchCheck,
+  sop: NotebookText,
+  strategy: Target,
+  tools: LineChart,
+  clarity: SearchCheck,
+  setup: Wrench,
+  workflow: ClipboardCheck,
+  training: UsersRound,
+  mentorship: UsersRound,
+  package: BriefcaseBusiness,
+};
+
+const stageCards = [
   {
-    number: "01",
-    label: "Free Business Toolkit",
-    title: "Start here, no cost and no commitment",
-    body: "Whether you are about to start a business or already running one, our free toolkit gives you practical resources you can use right now. No payment, no sign up pressure, just useful tools that help you think clearly, check your foundations, and take the right next step.",
-    items: [
-      "Available free to everyone",
-      "No access code or payment needed",
-      "More tools being added regularly",
-    ],
-    cta: { label: "Explore Free Toolkit", href: "/tools" },
-    free: true,
+    label: "Starting",
+    title: "Get clear before you build.",
+    text: "Clarify the offer, check the numbers and understand what has to be in place before you spend more.",
   },
   {
-    number: "02",
-    label: "Productized Offers",
-    title: "Fixed scope, fixed timeline, built around your business",
-    body: "We work directly with founders and business owners to diagnose what is holding the business back, document the systems it needs, and build a clear plan for growth. Each offer has a defined deliverable and turnaround, not an open ended engagement.",
-    items: services.map((s) => s.title),
-    cta: { label: "Start the Diagnostic", href: "/services/business-structure-diagnostic" },
-    free: false,
+    label: "Running",
+    title: "Turn repeated work into systems.",
+    text: "Document the work, clean up handovers and stop depending on memory for daily operations.",
   },
   {
-    number: "03",
-    label: "Practical Tools",
-    title: "We give you the tools to run your business properly",
-    body: "We built a suite of practical digital tools ourselves. We give clients access to tools that already work, each one solving a real operational problem: knowing your numbers, tracking cash, managing invoices, monitoring stock, and planning growth.",
-    items: [
-      "Startup Cost and Break Even Calculator",
-      "Profit and Cashflow Tracker",
-      "Invoice Manager",
-      "Inventory Manager",
-      "Reach and Growth Planner",
-    ],
-    cta: { label: "See the Tools", href: "/tools" },
-    free: false,
-  },
-  {
-    number: "04",
-    label: "Ongoing Support",
-    title: "We stay with you as the business grows",
-    body: "Tools and structure only go so far if there is no one to talk decisions through with. Our Full Support package includes team training and ongoing mentorship for founders who want consistent, strategic guidance as they grow.",
-    items: [
-      "Team training sessions",
-      "Ongoing mentorship and accountability check ins",
-      "Business reviews",
-    ],
-    cta: { label: "See Pricing", href: "/pricing" },
-    free: false,
+    label: "Growing",
+    title: "Keep control as demand increases.",
+    text: "Track performance, train the team and make better decisions with a clearer operating rhythm.",
   },
 ];
 
-// ── Who we work with ───────────────────────────────────────────────────────
-const whoWeWork = [
+const toolCards = [
+  { title: "Startup Cost Calculator", text: "Know launch costs and break even point.", icon: Gauge },
+  { title: "Cashflow Tracker", text: "See income, expenses and monthly movement.", icon: LineChart },
+  { title: "Invoice Manager", text: "Create invoices and track payment follow ups.", icon: ClipboardCheck },
+  { title: "Inventory Manager", text: "Monitor stock before shortages become expensive.", icon: Wrench },
+];
+
+const processSteps = [
   {
-    label: "Solopreneurs and local service businesses",
-    desc: "Coaches, technicians, and boutique owners in the US and UK who built the business on skill and now need the structure to match.",
+    title: "Diagnose",
+    text: "We look at the business as it is now. Workflow, numbers, decisions and the places where things keep slowing down.",
   },
   {
-    label: "Tech and B2B founders",
-    desc: "Founders across Western Europe who need clear systems, pricing, and a go to market plan they can actually execute.",
+    title: "Build",
+    text: "We turn the right pressure point into practical structure. That may be SOPs, a clearer offer, tracking tools or a focused plan.",
   },
   {
-    label: "Cross border entrepreneurs",
-    desc: "Founders across Latin America building borderless, digital first businesses who need operational clarity as they expand.",
-  },
-  {
-    label: "African SMEs",
-    desc: "Where Prowess Digital Solutions started. Business owners building properly, with real support and no shortcuts.",
+    title: "Support",
+    text: "You leave with routines, tools and guidance you can keep using as the business grows.",
   },
 ];
 
-// ── How we work ────────────────────────────────────────────────────────────
-const process = [
-  {
-    step: "01",
-    title: "Understand before we act",
-    desc: "Every engagement starts with a proper look at your actual situation. We ask the right questions and make sure we understand what is really happening before we suggest anything. No templates, no assumptions.",
-  },
-  {
-    step: "02",
-    title: "Build the right foundation",
-    desc: "Whether it is structure, systems, pricing, or the numbers, we focus on what your business actually needs at its current stage, not what sounds impressive.",
-  },
-  {
-    step: "03",
-    title: "Stay with you as you grow",
-    desc: "Most of our clients come back. Not because they are locked in, but because building a business is an ongoing process and consistent support makes a real difference.",
-  },
-];
+function PrimaryLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      {children}
+    </Link>
+  );
+}
+
+function SecondaryLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      {children}
+    </Link>
+  );
+}
 
 export default function ServicesPageClient() {
   return (
-    <div className="page-wrap">
-
-      <AgencyPageHeader
-        eyebrow="What We Do"
-        title={
-          <>
-            We teach businesses how to run with <span className="text-primary">structure.</span>
-          </>
-        }
-        description="Whether you are about to start a business, already running one, or trying to grow what you have built, Prowess Digital Solutions helps you put structure behind the work. Start with free tools, then move into diagnostics, systems and ongoing support when you are ready."
-        primaryAction={{ label: "Start a Conversation", href: "/contact" }}
-        secondaryAction={{ label: "See Everything We Offer", href: "#our-services" }}
-        proof={[
-          "Free business toolkit",
-          "Fixed scope offers with clear timelines",
-          "Tools and support for daily operations",
-        ]}
-      />
-
-      {/* ── FOUR PILLARS ──────────────────────────────────────────────────── */}
-      <section id="our-services" className="section bg-background">
+    <div className="min-h-screen bg-background">
+      <section className="border-b border-border bg-muted py-12 sm:py-16">
         <Container>
-          <Reveal>
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="h2">Everything we offer, in one place</h2>
-              <p className="lead mt-4">
-                From free tools you can use today, to fixed scope offers, practical tools, and
-                ongoing support, there is a starting point here for every stage of your business.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="mt-16 space-y-5">
-            {pillars.map((p, i) => (
-              <Reveal key={p.number} delay={i * 90} as="div"
-                className={`group relative overflow-hidden rounded-2xl border bg-card p-8 transition hover:-translate-y-1 hover:shadow-lg sm:p-10 ${
-                  p.free ? "border-primary/30 hover:border-primary/60" : "border-border hover:border-primary/40"
-                }`}
-              >
-                <div className="absolute inset-x-0 top-0 h-0.5 scale-x-0 bg-gradient-to-r from-primary to-primary/50 transition-transform duration-500 group-hover:scale-x-100" />
-
-                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
-                  <div className="flex-shrink-0 lg:w-48">
-                    <div className="text-5xl font-black leading-none text-muted">{p.number}</div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-widest text-primary">
-                        {p.label}
-                      </span>
-                      {p.free && (
-                        <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                          Free
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-foreground sm:text-2xl">{p.title}</h3>
-                    <p className="mt-3 text-base leading-relaxed text-muted-foreground">{p.body}</p>
-                    {p.cta && (
-                      <Link
-                        href={p.cta.href}
-                        className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:opacity-80"
-                      >
-                        {p.cta.label} →
-                      </Link>
-                    )}
-                  </div>
-
-                  <div className="flex-shrink-0 lg:w-56">
-                    <div className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                      {p.free ? "Available now" : "Includes"}
-                    </div>
-                    <ul className="space-y-2">
-                      {p.items.map((s) => (
-                        <li key={s} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-                          {s}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
+            <Reveal>
+              <div className="max-w-3xl">
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                  Business Services
+                </p>
+                <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
+                  Practical structure for businesses that are ready to run better.
+                </h1>
+                <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
+                  We help business owners find what is not working, organise the work, document
+                  the systems and track the numbers that make growth easier to manage.
+                </p>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                  <PrimaryLink href="/services/business-structure-diagnostic">
+                    Start with a diagnostic <ArrowRight size={16} aria-hidden="true" />
+                  </PrimaryLink>
+                  <SecondaryLink href="/case-studies">
+                    See case studies
+                  </SecondaryLink>
                 </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={100}>
+              <div className="rounded-lg border border-border bg-card p-5">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  What We Help Fix
+                </p>
+                <div className="mt-5 space-y-4">
+                  {[
+                    "Unclear business structure",
+                    "Undocumented day to day work",
+                    "Weak pricing or offer clarity",
+                    "Poor financial tracking",
+                    "Growth without control",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-3">
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
+                      <span className="text-sm font-medium leading-6 text-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </Container>
+      </section>
+
+      <section className="border-b border-border bg-background py-10 sm:py-12">
+        <Container>
+          <div className="grid gap-4 md:grid-cols-3">
+            {stageCards.map((stage, index) => (
+              <Reveal key={stage.label} delay={index * 60}>
+                <article className="h-full rounded-lg border border-border bg-card p-5">
+                  <p className="text-xs font-bold uppercase tracking-widest text-primary">{stage.label}</p>
+                  <h2 className="mt-3 text-lg font-bold text-foreground">{stage.title}</h2>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{stage.text}</p>
+                </article>
               </Reveal>
             ))}
           </div>
         </Container>
       </section>
 
-      {/* ── TOOLS CALLOUT ─────────────────────────────────────────────────── */}
-      <section className="section bg-background">
+      <section id="our-services" className="bg-muted py-12 sm:py-16">
         <Container>
           <Reveal>
-          <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-primary/20 shadow-sm">
-            <div className="grid lg:grid-cols-2">
-              <div className="dark bg-background p-10 lg:p-14">
-                <p className="mb-4 text-xs font-bold uppercase tracking-widest text-primary">
-                  Practical Tools
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                  Choose Your Support
                 </p>
-                <h3 className="text-2xl font-bold leading-snug text-foreground sm:text-3xl">
-                  Tools built to be used, not admired.
-                </h3>
-                <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-                  We built these tools ourselves and use them with our own clients. You get access
-                  to tools that already work, so you can run your business on real information
-                  instead of guesswork.
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  Start with the business problem that needs attention first.
+                </h2>
+              </div>
+              <SecondaryLink href="/pricing">
+                Compare pricing <ArrowRight size={16} aria-hidden="true" />
+              </SecondaryLink>
+            </div>
+          </Reveal>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
+            {services.map((service, index) => {
+              const Icon = serviceIcons[service.icon || "package"] || BriefcaseBusiness;
+              return (
+                <Reveal key={service.id} delay={index * 60}>
+                  <article className="flex h-full flex-col rounded-lg border border-border bg-card p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Icon size={21} aria-hidden="true" />
+                      </span>
+                      <span className="rounded-md border border-border bg-background px-3 py-1 text-xs font-bold text-muted-foreground">
+                        {service.price}
+                      </span>
+                    </div>
+                    <h3 className="mt-5 text-xl font-bold text-foreground">{service.title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.short}</p>
+                    <div className="mt-5 space-y-2 border-t border-border pt-4">
+                      {service.details.whatYouGet.slice(0, 3).map((item) => (
+                        <div key={item} className="flex gap-2 text-sm leading-6 text-foreground">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <Link
+                      href={`/services/${service.slug}`}
+                      className="mt-6 inline-flex min-h-10 w-fit items-center gap-2 text-sm font-semibold text-primary transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      Open service <ArrowRight size={16} aria-hidden="true" />
+                    </Link>
+                  </article>
+                </Reveal>
+              );
+            })}
+          </div>
+        </Container>
+      </section>
+
+      <section className="bg-primary py-12 sm:py-16">
+        <Container>
+          <Reveal>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary-foreground/75">
+                  Proof First
                 </p>
-                <Link
-                  href="/tools"
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-                >
-                  See the tools →
-                </Link>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
+                  Want to see how this works before you choose a service?
+                </h2>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-primary-foreground/80">
+                  The case studies show the problem, the structure we built and the practical
+                  changes clients could keep using after the work.
+                </p>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="/case-studies"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-foreground px-5 text-sm font-semibold text-primary transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    View case studies <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-primary-foreground/35 px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    Ask what fits
+                  </Link>
+                </div>
               </div>
 
-              <div className="bg-card p-10 lg:p-14">
-                <div className="space-y-6">
+              <div className="rounded-lg border border-primary-foreground/25 bg-primary-foreground/10 p-5">
+                <p className="text-xs font-bold uppercase tracking-widest text-primary-foreground/75">
+                  Case Studies Show
+                </p>
+                <div className="mt-5 space-y-4">
                   {[
-                    {
-                      name: "Startup Cost and Break Even Calculator",
-                      desc: "Know exactly what it costs to launch. Price correctly from day one. Find your break even point before you commit a single dollar.",
-                    },
-                    {
-                      name: "Profit and Cashflow Tracker",
-                      desc: "Track income and expenses monthly and annually. See your real profit, not just your revenue.",
-                    },
-                    {
-                      name: "Invoice Manager",
-                      desc: "Create professional invoices, track who has paid and who has not, and send reminders directly from the tool.",
-                    },
-                    {
-                      name: "Inventory Manager",
-                      desc: "Monitor your stock levels in real time and get alerts before you run out. Works for product and service businesses.",
-                    },
-                    {
-                      name: "Reach and Growth Planner",
-                      desc: "Plan your content, track ad campaigns, and manage your social calendar, all in one organised place.",
-                    },
-                  ].map((tool) => (
-                    <div key={tool.name} className="flex items-start gap-4">
-                      <span className="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                      </span>
-                      <div>
-                        <div className="text-sm font-bold text-foreground">{tool.name}</div>
-                        <div className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{tool.desc}</div>
-                      </div>
+                    "The business challenge",
+                    "The systems or tools put in place",
+                    "The result the client could feel or measure",
+                  ].map((item) => (
+                    <div key={item} className="flex gap-3 text-sm font-medium leading-6 text-primary-foreground">
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                      <span>{item}</span>
                     </div>
                   ))}
                 </div>
-                <p className="mt-8 text-xs text-muted-foreground">
-                  Tools are available to Prowess Digital Solutions clients with a valid access code.{" "}
-                  <Link href="/tools" className="font-semibold text-primary hover:underline">
-                    Learn more →
-                  </Link>
-                </p>
               </div>
             </div>
-          </div>
           </Reveal>
         </Container>
       </section>
 
-      {/* ── PROOF PATH ───────────────────────────────────────────────────── */}
-      <section className="section bg-card">
+      <section className="bg-background py-12 sm:py-16">
         <Container>
           <Reveal>
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
-              <div>
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
-                  Before You Choose
-                </p>
-                <h2 className="text-3xl font-bold leading-snug text-foreground sm:text-4xl">
-                  See how the work looks in real businesses.
-                </h2>
-                <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">
-                  The case studies show the kinds of problems we help business owners untangle,
-                  from unclear operations to weak tracking, messy handovers and growth that feels
-                  harder than it should.
-                </p>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/case-studies"
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    View case studies
-                  </Link>
-                  <Link
-                    href="/services/business-structure-diagnostic"
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-background px-6 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    Start with a diagnostic
-                  </Link>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-                {[
-                  {
-                    title: "Understand the problem",
-                    body: "We look at what is actually happening before suggesting a fix.",
-                  },
-                  {
-                    title: "Build the right system",
-                    body: "The work turns messy processes into clearer routines, tools and documents.",
-                  },
-                  {
-                    title: "Make growth easier to manage",
-                    body: "The goal is a business owner who can see the next decision more clearly.",
-                  },
-                ].map((item) => (
-                  <div key={item.title} className="rounded-lg border border-border bg-background p-5">
-                    <h3 className="text-base font-bold text-foreground">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                Tools Included In The Work
+              </p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Useful tools, not just advice.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-muted-foreground">
+                Some offers include access to tools that help you keep tracking and improving the
+                business after the engagement.
+              </p>
             </div>
           </Reveal>
-        </Container>
-      </section>
 
-      {/* ── WHO WE WORK WITH ──────────────────────────────────────────────── */}
-      <section className="section bg-muted">
-        <Container>
-          <div className="mx-auto max-w-5xl">
-            <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-              <Reveal as="div">
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
-                  Who This Is For
-                </p>
-                <h2 className="text-3xl font-bold leading-snug text-foreground sm:text-4xl">
-                  For founders who are serious about building properly.
-                </h2>
-                <p className="mt-5 text-base leading-relaxed text-muted-foreground">
-                  We work with people at every stage, from someone who has not started yet and
-                  does not know where to begin, to an established business that needs a proper
-                  structural overhaul. Wherever you are building, if you want real support, this
-                  is for you.
-                </p>
-                <Link
-                  href="/contact"
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-90"
-                >
-                  Talk to us →
-                </Link>
-              </Reveal>
-
-              <div className="space-y-4">
-                {whoWeWork.map((w, i) => (
-                  <Reveal key={w.label} delay={100 + i * 80} as="div"
-                    className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 transition hover:border-primary/30 hover:shadow-sm"
-                  >
-                    <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
-                      <span className="h-2 w-2 rounded-full bg-primary" />
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {toolCards.map((tool, index) => {
+              const Icon = tool.icon;
+              return (
+                <Reveal key={tool.title} delay={index * 50}>
+                  <article className="h-full rounded-lg border border-border bg-card p-5">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Icon size={19} aria-hidden="true" />
                     </span>
-                    <div>
-                      <div className="font-bold text-foreground">{w.label}</div>
-                      <div className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{w.desc}</div>
-                    </div>
-                  </Reveal>
-                ))}
-              </div>
-            </div>
+                    <h3 className="mt-4 text-base font-bold text-foreground">{tool.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{tool.text}</p>
+                  </article>
+                </Reveal>
+              );
+            })}
+          </div>
+
+          <div className="mt-7">
+            <SecondaryLink href="/tools">
+              Explore all tools <ArrowRight size={16} aria-hidden="true" />
+            </SecondaryLink>
           </div>
         </Container>
       </section>
 
-      {/* ── HOW WE WORK ───────────────────────────────────────────────────── */}
-      <div>
-        <section className="section bg-muted">
-          <Container>
+      <section className="border-y border-border bg-muted py-12 sm:py-16">
+        <Container>
+          <div className="grid gap-8 lg:grid-cols-[340px_minmax(0,1fr)]">
             <Reveal>
-              <div className="mx-auto max-w-2xl text-center">
-                <h2 className="text-3xl font-bold text-foreground sm:text-4xl">How we work</h2>
-                <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-                  The same three principles apply to every engagement, regardless of the offer.
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                  How It Works
                 </p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  Simple enough to start. Structured enough to matter.
+                </h2>
               </div>
             </Reveal>
-            <div className="mt-14 grid gap-6 sm:grid-cols-3">
-              {process.map((item, i) => (
-                <Reveal key={item.step} delay={i * 100} as="div"
-                  className="relative rounded-2xl border border-border bg-card p-8 transition hover:-translate-y-1 hover:shadow-md"
-                >
-                  <div className="text-4xl font-black leading-none text-muted-foreground/30">{item.step}</div>
-                  <h3 className="mt-4 text-lg font-bold text-foreground">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {processSteps.map((step, index) => (
+                <Reveal key={step.title} delay={index * 60}>
+                  <article className="h-full rounded-lg border border-border bg-card p-5">
+                    <span className="text-sm font-bold text-primary">{String(index + 1).padStart(2, "0")}</span>
+                    <h3 className="mt-4 text-lg font-bold text-foreground">{step.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{step.text}</p>
+                  </article>
                 </Reveal>
               ))}
             </div>
-          </Container>
-        </section>
-      </div>
+          </div>
+        </Container>
+      </section>
 
-      {/* ── CTA ───────────────────────────────────────────────────────────── */}
-      <section className="section bg-primary">
+      <section className="bg-background py-12 sm:py-16">
         <Container>
           <Reveal>
-            <div className="mx-auto max-w-4xl text-center">
-              <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl lg:text-5xl">
-                Not sure where to start?
-              </h2>
-              <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-primary-foreground/80">
-                Start with the Business Structure Diagnostic. In 48 to 72 hours we will look at your
-                current situation, identify what is actually holding you back, and map out the
-                clearest path forward. No pressure, no sales pitch, just honest, structured guidance.
-              </p>
-              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link href="/services/business-structure-diagnostic">
-                  <button className="w-full rounded-xl bg-primary-foreground px-10 py-4 text-base font-semibold text-primary shadow-lg transition hover:scale-[1.02] sm:w-auto">
-                    Start the Diagnostic
-                  </button>
-                </Link>
-                <Link href="/pricing">
-                  <button className="w-full rounded-xl border-2 border-primary-foreground/40 bg-transparent px-10 py-4 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/10 sm:w-auto">
-                    View Pricing
-                  </button>
-                </Link>
+            <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                    Next Step
+                  </p>
+                  <h2 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                    If you are unsure, start with the diagnostic.
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                    It gives you a clear picture of what is working, what is leaking time or money
+                    and what to fix first.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                  <PrimaryLink href="/services/business-structure-diagnostic">
+                    Start the diagnostic <ArrowRight size={16} aria-hidden="true" />
+                  </PrimaryLink>
+                  <SecondaryLink href="/case-studies">
+                    Read client stories
+                  </SecondaryLink>
+                </div>
               </div>
             </div>
           </Reveal>
         </Container>
       </section>
-
     </div>
   );
 }

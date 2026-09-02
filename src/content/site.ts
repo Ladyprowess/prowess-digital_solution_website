@@ -36,6 +36,7 @@ export const navMore = [
   { href: "/skills", label: "Skills" },
   { href: "/about", label: "About Us" },
   { href: "/services", label: "For Businesses" },
+  { href: "/case-studies", label: "Case Studies" },
   { href: "/work-with-us", label: "Work With Us" },
   { href: "/contact", label: "Contact Us" },
 ] as const;
