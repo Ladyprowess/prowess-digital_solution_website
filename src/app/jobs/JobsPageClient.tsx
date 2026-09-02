@@ -46,7 +46,7 @@ function toCardData(j: JobQueryRow): JobCardData {
   };
 }
 
-export default function JobsPage() {
+export default function JobsPageClient() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <JobsPageContent />

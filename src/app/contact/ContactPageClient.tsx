@@ -35,7 +35,7 @@ const INQUIRY_TYPES = [
   "Support",
 ];
 
-export default function ContactPage() {
+export default function ContactPageClient() {
   const [form, setForm] = useState<FormState>({
     full_name: "",
     email: "",

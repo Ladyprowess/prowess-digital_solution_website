@@ -124,7 +124,7 @@ function CheckIcon() {
 
 const SPOTLIGHT_AUTO_ADVANCE_MS = 6000;
 
-export default function SkillToBusinessPage() {
+export default function SkillToBusinessPageClient() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const [spotlightIndex, setSpotlightIndex] = useState(0);

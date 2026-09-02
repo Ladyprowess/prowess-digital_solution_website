@@ -85,7 +85,7 @@ const categories: ChecklistCategory[] = [
   },
 ];
 
-export default function BusinessHealthCheckPage() {
+export default function BusinessHealthCheckPageClient() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [expandedCategory, setExpandedCategory] = useState<number | null>(0);
   const [email, setEmail] = useState("");

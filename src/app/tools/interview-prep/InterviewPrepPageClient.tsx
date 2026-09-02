@@ -304,7 +304,7 @@ function PracticeView({
   );
 }
 
-export default function InterviewPrepPage() {
+export default function InterviewPrepPageClient() {
   const { status } = useMemberSession();
   const [loading, setLoading] = useState(true);
   const [locked, setLocked] = useState(false);

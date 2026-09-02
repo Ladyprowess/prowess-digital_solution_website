@@ -10,7 +10,7 @@ import { useMemberSession } from "@/lib/useMemberSession";
 
 type CvRow = { id: string; title: string; template: string; updated_at: string };
 
-export default function CvBuilderPage() {
+export default function CvBuilderPageClient() {
   return (
     <Suspense fallback={null}>
       <CvTemplateGallery />

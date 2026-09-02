@@ -23,7 +23,7 @@ const PAGE_SIZE = 12;
 type SkillLookup = { id: string; slug: string; name: string; description: string | null };
 type CareerPathLookup = { slug: string; title: string; description: string | null };
 
-export default function LearnPage() {
+export default function LearnPageClient() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <LearnPageContent />

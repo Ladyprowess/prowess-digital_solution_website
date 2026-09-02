@@ -33,7 +33,7 @@ type PathRow = {
 
 type PathWithCounts = CareerPathCardData & { category: string | null };
 
-export default function CareerPathsPage() {
+export default function CareerPathsPageClient() {
   const [paths, setPaths] = useState<PathWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

@@ -314,7 +314,7 @@ const REASON_MSG:Record<string,string>={
   not_included:"Your current plan does not include this tool. Upgrade your membership to unlock it.",
 };
 
-export default function InventoryPage(){
+export default function InventoryPageClient(){
   const [code,setCode]=useState("");
   const [grantedCode,setGrantedCode]=useState<string|null>(null);
   const [status,setStatus]=useState<"idle"|"checking"|"denied"|"granted">("idle");

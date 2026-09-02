@@ -99,7 +99,7 @@ const process = [
   },
 ];
 
-export default function ServicesPage() {
+export default function ServicesPageClient() {
   return (
     <div className="page-wrap">
 

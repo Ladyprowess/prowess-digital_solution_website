@@ -86,7 +86,7 @@ function Dash() {
   );
 }
 
-export default function PricingPage() {
+export default function PricingPageClient() {
   const popularIdx = 1; // Foundation
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [currency, setCurrency] = useState<"USD" | "NGN">("USD");

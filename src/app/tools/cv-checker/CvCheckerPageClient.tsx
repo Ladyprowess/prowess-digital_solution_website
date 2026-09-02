@@ -12,7 +12,7 @@ const inputCls = "w-full rounded-lg border border-border bg-card px-4 py-3 text-
 const labelCls = "mb-1.5 block text-sm font-semibold text-foreground";
 const hintCls = "mt-1.5 text-xs leading-5 text-muted-foreground";
 
-export default function CvCheckerPage() {
+export default function CvCheckerPageClient() {
   const formRef = useRef<HTMLFormElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");

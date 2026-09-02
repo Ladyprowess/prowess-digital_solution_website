@@ -45,7 +45,7 @@ function toCardData(o: OpportunityQueryRow): OpportunityCardData {
 
 const BASE_SELECT = "id, slug, title, organisation_name, organisation_logo_url, location_type, country, city, eligibility_summary, eligible_locations, benefit_tags, deadline_at, published_at, featured, opportunity_types(name), opportunity_skill_map(skills(slug, name))";
 
-export default function OpportunitiesPage() {
+export default function OpportunitiesPageClient() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <OpportunitiesPageContent />

@@ -21,7 +21,7 @@ function ChevronRight() {
   );
 }
 
-export default function SkillsPage() {
+export default function SkillsPageClient() {
   const [skills, setSkills] = useState<SkillWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

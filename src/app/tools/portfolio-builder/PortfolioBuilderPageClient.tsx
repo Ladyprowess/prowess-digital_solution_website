@@ -133,7 +133,7 @@ function PortfolioPreview({ fullName, headline, bio, photoUrl, projects }: { ful
   );
 }
 
-export default function PortfolioBuilderPage() {
+export default function PortfolioBuilderPageClient() {
   return (
     <Suspense fallback={null}>
       <PortfolioBuilder />

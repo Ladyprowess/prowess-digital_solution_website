@@ -31,7 +31,7 @@ type Pagination = {
   totalPages: number;
 };
 
-export default function CaseStudiesPage() {
+export default function CaseStudiesPageClient() {
   const PAGE_SIZE = 6;
 
   const [items, setItems] = useState<CaseStudy[]>([]);
