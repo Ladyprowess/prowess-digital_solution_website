@@ -11,10 +11,12 @@ type Lesson = {
   id: string;
   module_id: string;
   title: string;
-  content_type: "video" | "text" | "youtube" | "pdf" | "external" | "quiz";
+  content_type: "video" | "text" | "youtube" | "pdf" | "external" | "quiz" | "assignment";
   content_url: string | null;
   content_text: string | null;
   quiz_id: string | null;
+  assignment_id: string | null;
+  assignment_status: "draft" | "published" | null;
   required: boolean;
   position: number;
 };
@@ -25,10 +27,13 @@ type CompletionRules = {
   require_final_assessment: boolean;
   final_assessment_quiz_id: string | null;
   minimum_final_score_percent: number | null;
+  require_assignments: boolean;
+  require_peer_reviews: boolean;
+  required_peer_review_count: number;
   issue_certificate_automatically: boolean;
 };
 
-const CONTENT_TYPES = ["video", "text", "youtube", "pdf", "external", "quiz"] as const;
+const CONTENT_TYPES = ["video", "text", "youtube", "pdf", "external", "quiz", "assignment"] as const;
 const inputCls = "w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -92,10 +97,37 @@ function ModuleCard({ courseId, module, lessons, onChange }: { courseId: string;
       return;
     }
 
-    // Editing an existing quiz-lesson only ever updates its title here -
-    // the linked quiz's settings/questions are edited on its own sub-page.
+    if (contentType === "assignment" && !editingLessonId) {
+      // Same two-insert, no-transaction shape as the quiz branch above -
+      // an assignment needs its own row to point at. Its instructions,
+      // embedded quiz, upload/peer-review toggles are all edited on its
+      // own sub-page right after, same as quiz settings are.
+      const { data: assignmentRow, error: assignmentErr } = await supabase
+        .from("assignments")
+        .insert({ title: title.trim(), instructions: "" })
+        .select("id")
+        .single();
+      if (assignmentErr) return setErr(assignmentErr.message);
+
+      const { error: lessonErr } = await supabase.from("course_lessons").insert({
+        title: title.trim(),
+        content_type: "assignment",
+        assignment_id: assignmentRow.id,
+        module_id: module.id,
+        position: lessons.length,
+      });
+      if (lessonErr) return setErr(lessonErr.message);
+
+      resetLessonForm();
+      onChange();
+      return;
+    }
+
+    // Editing an existing quiz/assignment lesson only ever updates its
+    // title here - the linked quiz/assignment's own settings are edited
+    // on its own sub-page.
     const payload =
-      contentType === "quiz"
+      contentType === "quiz" || contentType === "assignment"
         ? { title: title.trim() }
         : {
             title: title.trim(),
@@ -136,10 +168,17 @@ function ModuleCard({ courseId, module, lessons, onChange }: { courseId: string;
         <ul className="mt-4 space-y-2">
           {lessons.map((l) => (
             <li key={l.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2 text-sm">
-              <span className="text-foreground">{l.title} <span className="text-muted-foreground">({l.content_type})</span></span>
+              <span className="text-foreground">
+                {l.title} <span className="text-muted-foreground">({l.content_type})</span>
+                {l.content_type === "assignment" && l.assignment_status === "draft" && (
+                  <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Draft assignment - not visible to learners</span>
+                )}
+              </span>
               <span className="flex-shrink-0">
                 {l.content_type === "quiz" && l.quiz_id ? (
                   <Link href={`/admin/learn/${courseId}/quiz/${l.quiz_id}`} className="mr-3 text-xs font-semibold text-primary hover:underline">Manage quiz →</Link>
+                ) : l.content_type === "assignment" && l.assignment_id ? (
+                  <Link href={`/admin/learn/${courseId}/assignment/${l.assignment_id}`} className="mr-3 text-xs font-semibold text-primary hover:underline">Manage assignment →</Link>
                 ) : (
                   <button onClick={() => startEditLesson(l)} className="mr-3 text-xs font-semibold text-primary hover:underline">Edit</button>
                 )}
@@ -167,6 +206,12 @@ function ModuleCard({ courseId, module, lessons, onChange }: { courseId: string;
             {editingLessonId
               ? "This lesson's quiz settings and questions are edited from its own page - use \"Manage quiz\" in the list above."
               : "Adding this creates a new quiz. You'll set its questions and settings on its own page right after."}
+          </p>
+        ) : contentType === "assignment" ? (
+          <p className="text-sm text-muted-foreground">
+            {editingLessonId
+              ? "This lesson's assignment (instructions, submission options, peer review) is edited from its own page - use \"Manage assignment\" in the list above."
+              : "Adding this creates a new assignment, saved as a draft. You'll set its instructions and options on its own page right after - it stays invisible to learners until published there."}
           </p>
         ) : contentType === "text" ? (
           <Field label="Content">
@@ -205,10 +250,12 @@ function CompletionCard({
   courseId,
   hasRequiredLesson,
   assessmentQuizzes,
+  hasAssignmentLesson,
 }: {
   courseId: string;
   hasRequiredLesson: boolean;
   assessmentQuizzes: QuizOption[];
+  hasAssignmentLesson: boolean;
 }) {
   const [rules, setRules] = useState<CompletionRules>({
     require_all_required_activities: true,
@@ -216,6 +263,9 @@ function CompletionCard({
     require_final_assessment: false,
     final_assessment_quiz_id: null,
     minimum_final_score_percent: null,
+    require_assignments: false,
+    require_peer_reviews: false,
+    required_peer_review_count: 1,
     issue_certificate_automatically: false,
   });
   const [loading, setLoading] = useState(true);
@@ -239,7 +289,7 @@ function CompletionCard({
     // check), so catching it here gives a clear, actionable message instead
     // of a silent "nobody's course completes". Two distinct vacuous shapes:
     // nothing checked at all, or something checked with no real target.
-    if (!rules.require_all_required_activities && !rules.require_all_quizzes_passed && !rules.require_final_assessment) {
+    if (!rules.require_all_required_activities && !rules.require_all_quizzes_passed && !rules.require_final_assessment && !rules.require_assignments && !rules.require_peer_reviews) {
       return setErr("Enable at least one completion rule below - otherwise this course can never be marked complete.");
     }
     if (rules.require_all_required_activities && !hasRequiredLesson) {
@@ -250,6 +300,12 @@ function CompletionCard({
     }
     if (rules.require_final_assessment && !rules.final_assessment_quiz_id) {
       return setErr("Select a final assessment quiz, or uncheck \"require final assessment\".");
+    }
+    if (rules.require_assignments && !hasAssignmentLesson) {
+      return setErr("This course has no assignment lessons yet, so \"require assignments\" has nothing to check.");
+    }
+    if (rules.require_peer_reviews && rules.required_peer_review_count < 1) {
+      return setErr("Required peer review count must be at least 1.");
     }
 
     const { error } = await supabase.from("course_completion_rules").upsert(
@@ -333,6 +389,43 @@ function CompletionCard({
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
+            checked={rules.require_assignments}
+            onChange={(e) => setRules({ ...rules, require_assignments: e.target.checked })}
+          />
+          Require all assignments graded &amp; passed
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={rules.require_peer_reviews}
+            onChange={(e) => setRules({ ...rules, require_peer_reviews: e.target.checked })}
+          />
+          Require peer reviews
+        </label>
+
+        {rules.require_peer_reviews && (
+          <div className="ml-6 space-y-2">
+            <Field label="Required peer reviews (course-wide)">
+              <input
+                type="number"
+                min={1}
+                value={rules.required_peer_review_count}
+                onChange={(e) => setRules({ ...rules, required_peer_review_count: Math.max(1, Number(e.target.value) || 1) })}
+                className={inputCls}
+              />
+            </Field>
+            <p className="text-xs text-muted-foreground">
+              A learner satisfies this by reviewing any {rules.required_peer_review_count} peer-reviewable submission{rules.required_peer_review_count === 1 ? "" : "s"} anywhere
+              in this course - not per assignment. Completion depends on enough OTHER learners having submitted eligible work to review; in a very small cohort this can
+              become impossible to satisfy. No automatic waiver exists yet - if that happens, it needs to be handled manually.
+            </p>
+          </div>
+        )}
+
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
             checked={rules.issue_certificate_automatically}
             onChange={(e) => setRules({ ...rules, issue_certificate_automatically: e.target.checked })}
           />
@@ -376,10 +469,17 @@ function CourseManageAdmin({ courseId }: { courseId: string }) {
     if (moduleIds.length > 0) {
       const { data: lessonRows } = await supabase
         .from("course_lessons")
-        .select("id, module_id, title, content_type, content_url, content_text, quiz_id, required, position")
+        .select("id, module_id, title, content_type, content_url, content_text, quiz_id, assignment_id, required, position")
         .in("module_id", moduleIds)
         .order("position");
-      setLessons(lessonRows || []);
+
+      const assignmentIds = (lessonRows || []).filter((l) => l.assignment_id).map((l) => l.assignment_id as string);
+      const assignmentStatusById = new Map<string, "draft" | "published">();
+      if (assignmentIds.length > 0) {
+        const { data: assignmentRows } = await supabase.from("assignments").select("id, status").in("id", assignmentIds);
+        for (const a of assignmentRows || []) assignmentStatusById.set(a.id, a.status);
+      }
+      setLessons((lessonRows || []).map((l) => ({ ...l, assignment_status: l.assignment_id ? assignmentStatusById.get(l.assignment_id) ?? null : null })));
 
       // Same two-step fetch the evaluator uses: this course's lessons'
       // quiz_ids, then those quizzes filtered client-side to assessment
@@ -465,6 +565,7 @@ function CourseManageAdmin({ courseId }: { courseId: string }) {
             courseId={courseId}
             hasRequiredLesson={lessons.some((l) => l.required !== false)}
             assessmentQuizzes={assessmentQuizzes}
+            hasAssignmentLesson={lessons.some((l) => l.content_type === "assignment")}
           />
         </div>
       </div>

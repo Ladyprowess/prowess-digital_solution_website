@@ -74,7 +74,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ quizId:
     // it. No pass mark set -> submitting always completes it. A pass mark
     // set -> only a passing attempt completes it; a failed attempt is
     // recorded (scored) but does not tick the lesson off.
-    const countsAsComplete = passMark == null || passed === true;
+    //
+    // An "assignment_quiz" is only half of an Assignment's requirement -
+    // passing the embedded quiz must NOT create lesson_completions or mark
+    // anything complete by itself; the admin grading route decides final
+    // completion once both the quiz (if any) and the manual grade are
+    // satisfied. Only "quiz_lesson"/"standalone" quizzes complete their
+    // lesson here, same as before this context existed.
+    const countsAsComplete = access.context !== "assignment_quiz" && (passMark == null || passed === true);
     let lessonCompleted = false;
 
     if (countsAsComplete && access.lessonId && access.courseId) {

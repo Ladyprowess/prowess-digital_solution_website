@@ -7,10 +7,11 @@ import { BuyButton } from "@/components/BuyButton";
 import { getYoutubeThumbnail } from "@/lib/youtube";
 import { RichText } from "@/components/RichText";
 import { QuizRunner } from "@/components/learn/QuizRunner";
+import { AssignmentRunner } from "@/components/learn/AssignmentRunner";
 import { LessonDiscussion } from "@/components/learn/LessonDiscussion";
 import { completionBanner, activityBanner, type CompletionBanner } from "@/lib/certificates/messages";
 
-type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; quiz_id: string | null; position: number };
+type Lesson = { id: string; title: string; content_type: string; content_url: string | null; content_text: string | null; quiz_id: string | null; assignment_id: string | null; position: number };
 type Module = { id: string; title: string; position: number; course_lessons: Lesson[] };
 
 export function CourseContent({
@@ -169,7 +170,7 @@ export function CourseContent({
               <li key={l.id} className="rounded-xl border border-border/60 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-semibold text-foreground">{l.title}</span>
-                  {signedIn && l.content_type !== "quiz" && (
+                  {signedIn && l.content_type !== "quiz" && l.content_type !== "assignment" && (
                     <button
                       onClick={() => toggleComplete(l.id)}
                       className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${completed.has(l.id) ? "bg-primary/10 text-primary" : "border border-border text-muted-foreground"}`}
@@ -177,7 +178,7 @@ export function CourseContent({
                       {completed.has(l.id) ? "✓ Completed" : "Mark complete"}
                     </button>
                   )}
-                  {signedIn && l.content_type === "quiz" && completed.has(l.id) && (
+                  {signedIn && (l.content_type === "quiz" || l.content_type === "assignment") && completed.has(l.id) && (
                     <span className="flex-shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">✓ Completed</span>
                   )}
                 </div>
@@ -213,6 +214,9 @@ export function CourseContent({
                     lessonId={l.id}
                     onComplete={() => setCompleted((prev) => new Set(prev).add(l.id))}
                   />
+                )}
+                {l.content_type === "assignment" && l.assignment_id && (
+                  <AssignmentRunner assignmentId={l.assignment_id} lessonId={l.id} />
                 )}
                 <LessonDiscussion courseId={courseId} lessonId={l.id} />
               </li>

@@ -13,6 +13,7 @@ import { ResponsibilitiesAccordion } from "@/components/careerPaths/Responsibili
 import { RoadmapStrip, type RoadmapStageData } from "@/components/careerPaths/RoadmapStrip";
 import { SkillMatrix, type SkillMatrixRow } from "@/components/careerPaths/SkillMatrix";
 import { LearningSection } from "@/components/careerPaths/LearningSection";
+import { LearnProgressSummary } from "@/components/discovery/LearnProgressSummary";
 import { JobsSection } from "@/components/careerPaths/JobsSection";
 import { OpportunitiesSection } from "@/components/careerPaths/OpportunitiesSection";
 import { RoleBranchDiagram, type RoleNode } from "@/components/careerPaths/RoleBranchDiagram";
@@ -572,6 +573,10 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
               Start with the structured courses connected to this career path.
             </p>
             <div className="mt-5">
+              <LearnProgressSummary
+                courses={learningItems.map((i) => ({ id: i.id, slug: i.slug, title: i.title }))}
+                context="career path"
+              />
               <LearningSection items={learningItems} skillSlugs={skillSlugs} />
             </div>
           </section>

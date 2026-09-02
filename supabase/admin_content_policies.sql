@@ -62,7 +62,10 @@ begin
     'discussion_posts',
     'discussion_replies',
     'course_reviews',
-    'content_reports'
+    'content_reports',
+    'assignments',
+    'assignment_submissions',
+    'assignment_peer_reviews'
   ]
   loop
     execute format('drop policy if exists "admin_full_access" on public.%I', t);

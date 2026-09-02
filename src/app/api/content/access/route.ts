@@ -111,7 +111,7 @@ export async function POST(req: Request) {
     if (itemType === "course") {
       const { data: modules } = await supabase
         .from("course_modules")
-        .select("id, title, position, course_lessons(id, title, content_type, content_url, content_text, quiz_id, position)")
+        .select("id, title, position, course_lessons(id, title, content_type, content_url, content_text, quiz_id, assignment_id, position)")
         .eq("course_id", itemId)
         .order("position");
       return NextResponse.json({ ok: true, modules: modules || [] });

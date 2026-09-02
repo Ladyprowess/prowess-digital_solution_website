@@ -62,11 +62,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ courseI
         : { data: null };
 
       // The lesson must (a) really belong to this course, (b) not be a
-      // quiz lesson (those earn points via the quiz submit route instead -
-      // awarding lesson_completed too would double count), and (c) have a
-      // real lesson_completions row for this caller - never award off the
-      // client's say-so alone.
-      if (lesson && lesson.content_type !== "quiz" && completionRow) {
+      // quiz or assignment lesson (those complete via the quiz submit
+      // route / the admin grading route instead - awarding lesson_completed
+      // here too would double count, and an assignment lesson should never
+      // reach "complete" from this client-driven path at all), and (c)
+      // have a real lesson_completions row for this caller - never award
+      // off the client's say-so alone.
+      if (lesson && lesson.content_type !== "quiz" && lesson.content_type !== "assignment" && completionRow) {
         try {
           lessonPoints = await awardPoints(member.id, "lesson_completed", lessonId);
         } catch (err) {

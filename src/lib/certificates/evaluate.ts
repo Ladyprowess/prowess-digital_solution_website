@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { awardPoints, type Badge } from "@/lib/achievements/evaluate";
+import { getActiveSubmission } from "@/lib/assignments/access";
 
 export type EvaluationResult = {
   completed: boolean;
@@ -50,7 +51,7 @@ async function fetchCourseLessons(supabase: ReturnType<typeof supabaseAdmin>, co
   if (moduleIds.length === 0) return [];
   const { data: lessons } = await supabase
     .from("course_lessons")
-    .select("id, required, quiz_id")
+    .select("id, required, quiz_id, assignment_id")
     .in("module_id", moduleIds);
   return lessons || [];
 }
@@ -173,8 +174,76 @@ export async function evaluateCourseCompletion(courseId: string, userId: string)
       }
     }
 
-    // require_assignments / require_peer_reviews are never evaluated -
-    // schema-only until the Assignment system exists.
+    if (rules.require_assignments) {
+      const assignmentIds = lessons.filter((l) => l.assignment_id).map((l) => l.assignment_id as string);
+      // Zero assignment lessons with the flag on is unsatisfiable, not
+      // vacuously fine - mirrors require_final_assessment's exact
+      // treatment of a missing final_assessment_quiz_id.
+      anyRealTarget = true;
+      if (assignmentIds.length === 0) {
+        allSatisfied = false;
+      } else {
+        const { data: assignmentRows } = await supabase
+          .from("assignments")
+          .select("id, quiz_id")
+          .in("id", assignmentIds);
+
+        for (const assignment of assignmentRows || []) {
+          // Half 1 (if attached): the embedded quiz must exist, be
+          // published, and have been passed - a missing/draft/deleted
+          // quiz makes the whole assignment unsatisfiable, never silently
+          // skipped.
+          if (assignment.quiz_id) {
+            const { data: quiz } = await supabase
+              .from("quizzes")
+              .select("status")
+              .eq("id", assignment.quiz_id)
+              .maybeSingle();
+            if (!quiz || quiz.status !== "published") {
+              allSatisfied = false;
+              continue;
+            }
+            // .limit(1), not .maybeSingle() - a learner can have more than
+            // one quiz_attempts row for the same quiz (retries), including
+            // more than one passing one. .maybeSingle() errors out on 2+
+            // rows, which would silently read back as "not passed" here -
+            // the exact reason require_final_assessment's own check above
+            // already avoids .maybeSingle() for this same query shape.
+            const { data: quizAttempts } = await supabase
+              .from("quiz_attempts")
+              .select("id")
+              .eq("quiz_id", assignment.quiz_id)
+              .eq("user_id", userId)
+              .eq("passed", true)
+              .limit(1);
+            if (!quizAttempts || quizAttempts.length === 0) {
+              allSatisfied = false;
+              continue;
+            }
+          }
+
+          // Half 2: the official admin grade, via the SAME "active
+          // submission" definition every other caller uses - never a
+          // separate "latest by date" query that could diverge.
+          const activeSubmission = await getActiveSubmission(assignment.id, userId);
+          if (!activeSubmission || activeSubmission.status !== "graded" || activeSubmission.passed !== true) {
+            allSatisfied = false;
+          }
+        }
+      }
+    }
+
+    if (rules.require_peer_reviews) {
+      // Deliberately course-wide: "review N submissions anywhere in this
+      // course," not "review N per assignment."
+      anyRealTarget = true;
+      const { count } = await supabase
+        .from("assignment_peer_reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("reviewer_user_id", userId)
+        .eq("course_id", courseId);
+      if ((count || 0) < rules.required_peer_review_count) allSatisfied = false;
+    }
 
     // A vacuous ruleset (enabled rules with no real, checkable target)
     // must not silently complete every entitled learner on first visit -

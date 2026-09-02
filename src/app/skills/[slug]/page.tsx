@@ -10,6 +10,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { JobCard, type JobCardData } from "@/components/jobs/JobCard";
 import { OpportunityCard, type OpportunityCardData } from "@/components/opportunities/OpportunityCard";
 import { LearnCard } from "@/components/learn/LearnCard";
+import { LearnProgressSummary } from "@/components/discovery/LearnProgressSummary";
 import { SkillCard, type SkillCardData } from "@/components/skills/SkillCard";
 import { getSkillGraph, getRelatedSkills } from "@/lib/careerPathGraph";
 import { courseToLearnItem, COURSE_SELECT, type LearnItem, type CourseRow } from "@/lib/learn/types";
@@ -217,6 +218,10 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
 
           <Reveal delay={120}>
             <section className={skill.about ? "mt-8 rounded-lg border border-border bg-card p-6" : "rounded-lg border border-border bg-card p-6"}>
+              <LearnProgressSummary
+                courses={learningItems.map((i) => ({ id: i.id, slug: i.slug, title: i.title }))}
+                context="skill"
+              />
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
