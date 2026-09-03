@@ -172,24 +172,76 @@ async function getMoreResources(resourceId: string, category: string | null, ski
   const skillMatchIds = Array.from(new Set((bySkill.data || []).map((r) => r.resource_id))).filter((id) => id !== resourceId);
   const bySkillRows = skillMatchIds.length > 0 ? await base().in("id", skillMatchIds).limit(6) : { data: [] };
 
-  let merged = [...(byCategory.data || []), ...(bySkillRows.data || [])];
-  if (merged.length < 3) {
+  // Dedupe before deciding whether the list is thin. The category and skill
+  // queries routinely return the same rows, so counting the raw merge made
+  // two results look like four and skipped the recency top-up that was
+  // supposed to fill the gap.
+  const dedupe = (rows: unknown[]) =>
+    Array.from(new Map((rows as { id: string }[]).map((r) => [r.id, r])).values()) as unknown as ResourceItem[];
+
+  let pool = dedupe([...(byCategory.data || []), ...(bySkillRows.data || [])]);
+  if (pool.length < 3) {
     const recent = await base().order("published_at", { ascending: false, nullsFirst: false }).limit(6);
-    merged = [...merged, ...(recent.data || [])];
+    pool = dedupe([...pool, ...(recent.data || [])]);
   }
 
-  const unique = Array.from(new Map(merged.map((r) => [r.id as string, r])).values()).slice(0, 6);
+  // Relevance alone quietly buried everything paid. With most of the
+  // library free, a free resource's category and recency matches filled all
+  // six slots with other free resources, so the pages people actually land
+  // on never pointed at anything they could buy - while a paid resource's
+  // page, having no same-category siblings, fell through to the mixed
+  // recency list and showed free ones. Up to two slots are now held for
+  // paid resources, fetched separately when the relevant ones are all free.
+  let premium = pool.filter((item) => item.access === "premium");
+  if (premium.length === 0) {
+    const paid = await base().eq("access", "premium").order("published_at", { ascending: false, nullsFirst: false }).limit(2);
+    premium = (paid.data || []) as unknown as ResourceItem[];
+  }
+
+  const LIMIT = 6;
+  const premiumQuota = Math.min(2, premium.length);
+  const free = pool.filter((item) => item.access !== "premium");
+
+  const keep = new Set<string>([
+    ...free.slice(0, LIMIT - premiumQuota).map((item) => item.id),
+    ...premium.slice(0, premiumQuota).map((item) => item.id),
+  ]);
+  // Top up from the relevance pool if either side came up short.
+  for (const item of pool) {
+    if (keep.size >= LIMIT) break;
+    keep.add(item.id);
+  }
+
+  // Filtering the combined list back through `keep` restores relevance
+  // order - the quota decides who is in, not what position they sit in.
+  const chosen = [...pool, ...premium.filter((item) => !pool.some((p) => p.id === item.id))]
+    .filter((item) => keep.has(item.id))
+    .slice(0, LIMIT);
 
   // Covers live in a private bucket, so cover_url is null on the row and
   // has to be signed here - same as /api/resources does for the listing.
   return Promise.all(
-    unique.map(async (row) => {
-      const item = row as unknown as ResourceItem;
+    chosen.map(async (item) => {
       if (!item.cover_path) return item;
       const { data: signed } = await admin.storage.from("resource-covers").createSignedUrl(item.cover_path, 60 * 60);
       return signed?.signedUrl ? { ...item, cover_url: signed.signedUrl } : item;
     })
   );
+}
+
+// Same shape ResourceBody parses for the in-reader panel, duplicated here
+// rather than imported so the server page doesn't pull a client module in
+// just for ten lines of string handling.
+function parseContentsLines(value: string | null | undefined) {
+  return (value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const withPage = line.match(/^(.*?)\s*\|\s*(\d+)\s*$/);
+      return withPage ? { label: withPage[1].trim(), page: Number(withPage[2]) } : { label: line, page: null };
+    })
+    .filter((entry) => entry.label.length > 0);
 }
 
 function linesFrom(value: string | null) {
@@ -254,7 +306,6 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
     ? new Date(resource.published_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : null;
   const resourceKind = TYPE_COPY[resource.resource_type || ""] || { verb: "Open", noun: "resource" };
-  const sortedMockups = [...(resource.resource_mockups || [])].sort((a, b) => a.position - b.position);
 
   // One byline-style strip under the title instead of the old stack of
   // metadata cards plus a second copy of the same fields in the sidebar --
@@ -333,20 +384,26 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
 
   // An admin who wrote a preview note but uploaded no mockup images still
   // gets their note shown - it used to be dropped unless images existed.
-  const previewBlock = sortedMockups.length > 0 || resource.preview_note ? (
+  // Rendered by the page, not by ResourceBody: a paid resource's body
+  // short-circuits to the paywall, so a contents list living in there was
+  // hidden behind the very purchase it exists to justify. Out here it shows
+  // whether or not somebody has bought yet.
+  const contentsEntries = parseContentsLines(resource.table_of_contents);
+  const contentsBlock = contentsEntries.length > 0 ? (
     <section className="rounded-lg border border-border bg-card p-6">
-      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Preview</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-        {resource.preview_note || "See the style, layout and level of detail before you open it."}
-      </p>
-      {sortedMockups.length > 0 && (
-        <div className="mt-5 flex gap-4 overflow-x-auto pb-2">
-          {sortedMockups.map((m, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={m.url} alt={`${resource.title} preview ${i + 1}`} className="h-64 w-44 flex-shrink-0 rounded-lg border border-border object-cover" />
-          ))}
-        </div>
-      )}
+      <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Contents</h2>
+      <p className="mt-2 text-sm text-muted-foreground">What this {resourceKind.noun} covers, in order.</p>
+      <ol className="mt-5 divide-y divide-border">
+        {contentsEntries.map((entry, index) => (
+          <li key={`${entry.label}-${index}`} className="flex items-baseline justify-between gap-4 py-3">
+            <span className="flex gap-3 text-sm leading-6 text-foreground">
+              <span className="w-5 flex-shrink-0 text-xs font-bold text-primary">{String(index + 1).padStart(2, "0")}</span>
+              {entry.label}
+            </span>
+            {entry.page !== null && <span className="flex-shrink-0 text-xs font-semibold text-muted-foreground">p. {entry.page}</span>}
+          </li>
+        ))}
+      </ol>
     </section>
   ) : null;
 
@@ -428,20 +485,19 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
                               <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                 <Icon size={16} aria-hidden="true" />
                               </span>
+                              {/* Formats only. The prices sit in the picker
+                                  that actually takes the payment, so they
+                                  are stated once, at the point of choosing,
+                                  rather than twice on the same screen. */}
                               <div className="min-w-0 flex-1">
-                                <div className="flex items-baseline justify-between gap-2">
-                                  <p className="text-sm font-bold text-foreground">{option.title}</p>
-                                  <p className="whitespace-nowrap text-sm font-bold text-primary">{priceLabel(option.usd, option.ngn)}</p>
-                                </div>
+                                <p className="text-sm font-bold text-foreground">{option.title}</p>
                                 <p className="text-xs leading-5 text-muted-foreground">{option.text}</p>
                               </div>
                             </div>
                           );
                         })
                       ) : (
-                        <p className="text-sm leading-6 text-muted-foreground">
-                          {headlinePrice ? `One payment of ${headlinePrice}, then it stays in your account.` : "Unlock this resource to keep it in your account."}
-                        </p>
+                        <p className="text-sm leading-6 text-muted-foreground">One payment, then it stays in your account.</p>
                       )}
                     </div>
                     <a href="#resource-content" className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
@@ -463,9 +519,11 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
         {isPremium && (
           <>
             {sellingBlock && <Reveal delay={100}>{sellingBlock}</Reveal>}
-            {previewBlock && <Reveal delay={120}>{previewBlock}</Reveal>}
+            {contentsBlock && <Reveal delay={120}>{contentsBlock}</Reveal>}
           </>
         )}
+
+        {!isPremium && contentsBlock && <Reveal delay={110}>{contentsBlock}</Reveal>}
 
         <Reveal delay={120}>
           <section id="resource-content" className="scroll-mt-28">
@@ -495,7 +553,6 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
         {!isPremium && (
           <>
             {sellingBlock && <Reveal delay={140}>{sellingBlock}</Reveal>}
-            {previewBlock && <Reveal delay={150}>{previewBlock}</Reveal>}
           </>
         )}
 

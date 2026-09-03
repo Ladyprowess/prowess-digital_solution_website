@@ -221,19 +221,11 @@ export function ResourceBody({
         <PdfViewer url={downloadUrl!} title={title} contents={authoredContents} />
       ) : (
         <>
-          {authoredContents.length > 0 ? (
-            <nav className="rounded-2xl border border-border bg-card p-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Inside the resource</p>
-              <ol className="mt-3 space-y-1.5 text-sm">
-                {authoredContents.map((entry, i) => (
-                  <li key={`${entry.label}-${i}`} className="flex items-baseline justify-between gap-3 text-foreground">
-                    <span>{entry.label}</span>
-                    {entry.page !== null && <span className="flex-shrink-0 text-xs font-semibold text-muted-foreground">p. {entry.page}</span>}
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          ) : toc.length >= 3 ? (
+          {/* The admin's own contents list is rendered by the resource page
+              itself, above this, so that a paid resource shows it without
+              having to be bought first. Only the list generated from the
+              written content's own headings belongs here. */}
+          {authoredContents.length === 0 && toc.length >= 3 ? (
             <nav className="rounded-2xl border border-border bg-card p-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Inside the resource</p>
               <ul className="mt-3 space-y-1.5 text-sm">
