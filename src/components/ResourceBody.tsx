@@ -28,6 +28,24 @@ type ResourceBodyData = {
 };
 
 type TocItem = { id: string; text: string; level: 2 | 3 };
+export type ContentsEntry = { label: string; page: number | null };
+
+// An admin-written contents list: one section per line, optionally ending
+// in "| 4" to say which page of the PDF it starts on. Written by hand
+// precisely so a resource that is only a PDF can have a real contents list
+// without anyone retyping the document as rich text.
+export function parseContents(value: string | null | undefined): ContentsEntry[] {
+  return (value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const withPage = line.match(/^(.*?)\s*\|\s*(\d+)\s*$/);
+      if (withPage) return { label: withPage[1].trim(), page: Number(withPage[2]) };
+      return { label: line, page: null };
+    })
+    .filter((entry) => entry.label.length > 0);
+}
 
 export function ResourceBody({
   resourceId,
@@ -37,6 +55,7 @@ export function ResourceBody({
   contentDisplay = "text",
   allowDownload = true,
   formatPrices = null,
+  tableOfContents = null,
 }: {
   resourceId: string;
   title: string;
@@ -56,6 +75,9 @@ export function ResourceBody({
   // the plain BuyButton - see getItemPrice in content.ts for the same rule
   // applied server-side at checkout time.
   formatPrices?: EbookFormatPrices | null;
+  // Admin-written contents list. Independent of `content` on purpose: a
+  // PDF-only resource can have one without any written content at all.
+  tableOfContents?: string | null;
 }) {
   const [status, setStatus] = useState<"loading" | "entitled" | "locked">("loading");
   const [data, setData] = useState<ResourceBodyData | null>(null);
@@ -128,10 +150,13 @@ export function ResourceBody({
 
   if (status === "locked") {
     return (
-      <div className="mt-10 rounded-2xl border-2 border-primary/20 bg-muted p-8 text-center">
-        <h2 className="text-lg font-bold text-foreground">This is premium</h2>
+      <div className="mt-10 rounded-lg border border-primary/20 bg-card p-6 text-center">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <FileText size={22} aria-hidden="true" />
+        </span>
+        <h2 className="mt-4 text-lg font-bold text-foreground">Unlock the full resource</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          {signedIn ? "You don't have access to this yet." : "Sign in if you've already bought this, or buy access below."}
+          {signedIn ? "Choose the format you want and continue from your account." : "Sign in if you already have access, or choose a format below."}
         </p>
         {hasFormatPricing ? (
           <EbookPurchasePicker resourceId={resourceId} formatPrices={formatPrices!} />
@@ -150,6 +175,7 @@ export function ResourceBody({
   // URL. Only fall back to a plain file_url when there's no file_path-based
   // download available (an admin-typed external link).
   const downloadUrl = data?.download_url || data?.file_url || null;
+  const authoredContents = parseContents(tableOfContents);
 
   // For a format-priced ebook, each digital format is gated on having
   // actually been bought - a "read" purchase never implies "download" and
@@ -177,25 +203,39 @@ export function ResourceBody({
   return (
     <div className="mt-10 space-y-6">
       {hasFormatPricing && unlockedFormats.length > 0 && (
-        <p className="text-sm font-semibold text-foreground">
-          You own: {unlockedFormats.map((f) => FORMAT_LABELS[f]).join(" · ")}
-        </p>
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <p className="text-sm font-semibold text-foreground">
+            Your access: {unlockedFormats.map((f) => FORMAT_LABELS[f]).join(" · ")}
+          </p>
+        </div>
       )}
 
       {ownsHardcopy && (
-        <div className="rounded-2xl border-2 border-primary/20 bg-muted p-6 text-center">
+        <div className="rounded-lg border border-primary/20 bg-card p-6 text-center">
           <h2 className="text-lg font-bold text-foreground">Hard copy ordered</h2>
           <p className="mt-2 text-sm text-muted-foreground">Your physical copy is being prepared. We&apos;ll contact you regarding delivery.</p>
         </div>
       )}
 
       {showEmbeddedPdf ? (
-        <PdfViewer url={downloadUrl!} title={title} />
+        <PdfViewer url={downloadUrl!} title={title} contents={authoredContents} />
       ) : (
         <>
-          {toc.length >= 3 && (
+          {authoredContents.length > 0 ? (
             <nav className="rounded-2xl border border-border bg-card p-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">On this page</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Inside the resource</p>
+              <ol className="mt-3 space-y-1.5 text-sm">
+                {authoredContents.map((entry, i) => (
+                  <li key={`${entry.label}-${i}`} className="flex items-baseline justify-between gap-3 text-foreground">
+                    <span>{entry.label}</span>
+                    {entry.page !== null && <span className="flex-shrink-0 text-xs font-semibold text-muted-foreground">p. {entry.page}</span>}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          ) : toc.length >= 3 ? (
+            <nav className="rounded-2xl border border-border bg-card p-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Inside the resource</p>
               <ul className="mt-3 space-y-1.5 text-sm">
                 {toc.map((item) => (
                   <li key={item.id} className={item.level === 3 ? "ml-4" : ""}>
@@ -204,7 +244,7 @@ export function ResourceBody({
                 ))}
               </ul>
             </nav>
-          )}
+          ) : null}
 
           {data?.content && ownsRead && (
             <div ref={contentRef}>
@@ -236,7 +276,7 @@ export function ResourceBody({
         </a>
       )}
 
-      {!(data?.content && ownsRead) && !data?.external_url && !downloadUrl && !ownsHardcopy && (
+      {!(data?.content && ownsRead) && !data?.external_url && !downloadUrl && !ownsHardcopy && authoredContents.length === 0 && (
         <div className="rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <FileText size={22} aria-hidden="true" />

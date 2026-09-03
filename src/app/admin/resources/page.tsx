@@ -83,6 +83,11 @@ function ResourcesAdmin() {
   const [externalUrl, setExternalUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [summary, setSummary] = useState("");
+  const [whatYouGet, setWhatYouGet] = useState("");
+  const [whoIsThisFor, setWhoIsThisFor] = useState("");
+  const [keyOutcomes, setKeyOutcomes] = useState("");
+  const [previewNote, setPreviewNote] = useState("");
+  const [tableOfContents, setTableOfContents] = useState("");
   const [content, setContent] = useState("");
   const [contentDisplay, setContentDisplay] = useState<(typeof CONTENT_DISPLAYS)[number]>("text");
   const [allowDownload, setAllowDownload] = useState(true);
@@ -170,7 +175,8 @@ function ResourcesAdmin() {
     setEditingResourceId(null);
     setTitle(""); setAudience("consumer"); setResourceType("guide"); setCategory(""); setLevel("");
     setSource("prowess"); setExternalUrl(""); setThumbnailUrl("");
-    setSummary(""); setContent(""); setContentDisplay("text"); setAllowDownload(true); setFileUrl("");
+    setSummary(""); setWhatYouGet(""); setWhoIsThisFor(""); setKeyOutcomes(""); setPreviewNote(""); setTableOfContents("");
+    setContent(""); setContentDisplay("text"); setAllowDownload(true); setFileUrl("");
     setCoverFile(null); setResourceFile(null); setExistingFileName(null);
     setAccess("free"); setPriceUsd(""); setPriceNgn(""); setFeatured(false); setPublishNow(true); setSelectedSkillIds([]);
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
@@ -186,7 +192,7 @@ function ResourcesAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("resources")
-      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, content, content_display, allow_download, file_url, file_name, access, price_usd, price_ngn, price_read_usd, price_read_ngn, price_download_usd, price_download_ngn, price_hardcopy_usd, price_hardcopy_ngn, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id), resource_mockups(url, position)")
+      .select("id, slug, title, audience, resource_type, category, level, source, external_url, thumbnail_url, description, what_you_get, who_is_this_for, key_outcomes, preview_note, table_of_contents, content, content_display, allow_download, file_url, file_name, access, price_usd, price_ngn, price_read_usd, price_read_ngn, price_download_usd, price_download_ngn, price_hardcopy_usd, price_hardcopy_ngn, featured, status, meta_title, meta_description, content_role, duration_minutes, why_recommended, reading_minutes, page_count, use_case, show_in_library, show_in_learn, show_in_recommended, show_on_homepage, show_in_business, show_in_career, resource_skill_map(skill_id), resource_mockups(url, position)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -195,7 +201,8 @@ function ResourcesAdmin() {
     const r = data as unknown as {
       id: string; slug: string; title: string; audience: (typeof AUDIENCES)[number]; resource_type: (typeof RESOURCE_TYPES)[number] | null;
       category: string | null; level: (typeof LEVELS)[number] | null; source: Source; external_url: string | null;
-      thumbnail_url: string | null; description: string | null; content: string | null; content_display: (typeof CONTENT_DISPLAYS)[number]; allow_download: boolean; file_url: string | null; file_name: string | null;
+      thumbnail_url: string | null; description: string | null; what_you_get: string | null; who_is_this_for: string | null; key_outcomes: string | null; preview_note: string | null; table_of_contents: string | null;
+      content: string | null; content_display: (typeof CONTENT_DISPLAYS)[number]; allow_download: boolean; file_url: string | null; file_name: string | null;
       access: "free" | "premium"; price_usd: number | null; price_ngn: number | null; featured: boolean;
       price_read_usd: number | null; price_read_ngn: number | null;
       price_download_usd: number | null; price_download_ngn: number | null;
@@ -219,6 +226,11 @@ function ResourcesAdmin() {
     setExternalUrl(r.external_url || "");
     setThumbnailUrl(r.thumbnail_url || "");
     setSummary(r.description || "");
+    setWhatYouGet(r.what_you_get || "");
+    setWhoIsThisFor(r.who_is_this_for || "");
+    setKeyOutcomes(r.key_outcomes || "");
+    setPreviewNote(r.preview_note || "");
+    setTableOfContents(r.table_of_contents || "");
     setContent(r.content || "");
     setContentDisplay(r.content_display || "text");
     setAllowDownload(r.allow_download ?? true);
@@ -336,6 +348,11 @@ function ResourcesAdmin() {
         // from before the B2C content model) - `summary` is only the local
         // field/state name here for a clearer form label, not the DB column.
         description: summary.trim() || null,
+        what_you_get: whatYouGet.trim() || null,
+        who_is_this_for: whoIsThisFor.trim() || null,
+        key_outcomes: keyOutcomes.trim() || null,
+        preview_note: previewNote.trim() || null,
+        table_of_contents: tableOfContents.trim() || null,
         content: content.trim() || null,
         content_display: contentDisplay,
         allow_download: allowDownload,
@@ -593,6 +610,47 @@ function ResourcesAdmin() {
               <textarea value={summary} onChange={(e) => setSummary(e.target.value)} className={`${inputCls} min-h-[80px]`} />
             </Field>
 
+            {resourceType !== "video" && (
+              <div className="grid gap-4 rounded-xl border border-border/60 p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Resource sales page</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">This is what makes the resource feel worth opening or buying. Put each point on a new line.</p>
+                </div>
+                <Field label="What the user gets">
+                  <textarea
+                    value={whatYouGet}
+                    onChange={(e) => setWhatYouGet(e.target.value)}
+                    className={`${inputCls} min-h-[96px]`}
+                    placeholder={"A step by step guide\nEditable checklist\nExamples the user can adapt"}
+                  />
+                </Field>
+                <Field label="Who this is for">
+                  <textarea
+                    value={whoIsThisFor}
+                    onChange={(e) => setWhoIsThisFor(e.target.value)}
+                    className={`${inputCls} min-h-[96px]`}
+                    placeholder={"People preparing to apply for jobs\nBusiness owners who need clearer systems"}
+                  />
+                </Field>
+                <Field label="Key outcomes">
+                  <textarea
+                    value={keyOutcomes}
+                    onChange={(e) => setKeyOutcomes(e.target.value)}
+                    className={`${inputCls} min-h-[96px]`}
+                    placeholder={"Know what to do next\nSave time with a ready structure\nAvoid common mistakes"}
+                  />
+                </Field>
+                <Field label="Preview note">
+                  <textarea
+                    value={previewNote}
+                    onChange={(e) => setPreviewNote(e.target.value)}
+                    className={`${inputCls} min-h-[80px]`}
+                    placeholder="A short note shown above the preview images or before the unlock area."
+                  />
+                </Field>
+              </div>
+            )}
+
             {source === "prowess" && resourceType !== "video" && (
               <>
                 <Field label="Content display">
@@ -602,6 +660,18 @@ function ResourcesAdmin() {
                   {contentDisplay === "pdf" && (
                     <p className="mt-1.5 text-xs text-muted-foreground">Make sure a PDF is uploaded below - the detail page will embed it in place of the written content.</p>
                   )}
+                </Field>
+                <Field label="Table of contents (optional)">
+                  <textarea
+                    value={tableOfContents}
+                    onChange={(e) => setTableOfContents(e.target.value)}
+                    className={`${inputCls} min-h-[110px]`}
+                    placeholder={"What branding really means | 2\nChoosing your colours and voice | 5\nPutting it on your store | 9"}
+                  />
+                  <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
+                    One section per line. Add <span className="font-semibold">| page number</span> after a section to make it jump straight to that page of the PDF.
+                    You can fill this in on its own - the written content below can stay empty.
+                  </p>
                 </Field>
                 <Field label="Content">
                   <RichTextEditor key={`content-${editingResourceId || "new"}`} value={content} onChange={setContent} placeholder="The actual guide/article/checklist content..." />

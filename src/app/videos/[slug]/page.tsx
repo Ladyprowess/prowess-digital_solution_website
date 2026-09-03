@@ -177,7 +177,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
                   </div>
                   <div>
                     <p className="text-sm font-bold text-foreground">Video overview</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">Watch the lesson, then use the connected courses and resources to go deeper.</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">Watch the video, then open only the most useful follow up material.</p>
                   </div>
                 </div>
                 <div className="mt-5 space-y-3">
@@ -237,7 +237,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
         )}
 
         <Reveal delay={160}>
-          <RelatedSection title="Continue with a course" items={graph.courses} render={() => graph.courses.map((c) => (
+          <RelatedSection title="Related courses" items={graph.courses} render={() => graph.courses.map((c) => (
             <Link key={c.slug} href={`/learn/${c.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>Course</span>
               <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
@@ -246,7 +246,7 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
         </Reveal>
 
         <Reveal delay={180}>
-          <RelatedSection title="Go deeper with these resources" items={graph.resources} render={() => graph.resources.map((r) => (
+          <RelatedSection title="Supporting resources" items={graph.resources} render={() => graph.resources.map((r) => (
             <Link key={r.slug} href={resourceHref(r)} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <span className="text-[10px] font-bold uppercase text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
               <p className="mt-1.5 text-sm font-semibold text-foreground">{r.title}</p>
@@ -254,35 +254,8 @@ export default async function VideoDetailPage({ params }: { params: Promise<{ sl
           ))} />
         </Reveal>
 
-        <Reveal delay={200}>
-          <RelatedSection title="Related career paths" items={graph.careerPaths} render={() => graph.careerPaths.map((c) => (
-            <Link key={c.slug} href={`/career-paths/${c.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${c.access === "premium" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{c.access}</span>
-              <p className="mt-1.5 text-sm font-semibold text-foreground">{c.title}</p>
-            </Link>
-          ))} />
-        </Reveal>
-
-        <Reveal delay={220}>
-          <RelatedSection title="Jobs connected to this topic" items={graph.jobs} render={() => graph.jobs.map((j) => (
-            <Link key={j.slug} href={`/jobs/${j.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <p className="text-sm font-semibold text-foreground">{j.title}</p>
-              {j.companies?.name && <p className="mt-0.5 text-xs text-muted-foreground">{j.companies.name}</p>}
-            </Link>
-          ))} />
-        </Reveal>
-
-        <Reveal delay={240}>
-          <RelatedSection title="Opportunities connected to this topic" items={graph.opportunities} render={() => graph.opportunities.map((o) => (
-            <Link key={o.slug} href={`/opportunities/${o.slug}`} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <p className="text-sm font-semibold text-foreground">{o.title}</p>
-              {o.organisation_name && <p className="mt-0.5 text-xs text-muted-foreground">{o.organisation_name}</p>}
-            </Link>
-          ))} />
-        </Reveal>
-
         {moreVideos.length > 0 && (
-          <Reveal delay={260}>
+          <Reveal delay={200}>
             <div className="mt-10">
               <h2 className="text-xs font-bold uppercase tracking-widest text-primary">More videos</h2>
               <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

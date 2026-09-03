@@ -40,6 +40,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // The pdf.js library and its worker must always be the same version -
+  // pdf.js refuses to run a worker built from a different release. The
+  // library is a "script" (cacheable below) while the worker is not, so
+  // caching one and not the other would eventually pair a stale library
+  // with a fresh worker and break every PDF. Neither is cached.
+  if (new URL(req.url).pathname.startsWith("/pdfjs/")) {
+    return;
+  }
+
   // Page navigations: network-first, since jobs/opportunities/content
   // change and nobody should see stale data while actually online. Falls
   // back to a cached copy of that page, then the offline page.
