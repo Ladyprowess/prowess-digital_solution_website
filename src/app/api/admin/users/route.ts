@@ -65,16 +65,21 @@ export async function GET(req: NextRequest) {
 
   const [{ data: profiles }, { data: purchases }] = await Promise.all([
     db.from("member_profiles").select("id, full_name, headline").in("id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]),
-    db.from("purchases").select("user_id, amount, payment_status").in("user_id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]),
+    db.from("purchases").select("user_id, amount, currency, payment_status").in("user_id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]),
   ]);
 
   const profileById = new Map((profiles || []).map((p) => [p.id, p]));
-  const purchaseStatsById = new Map<string, { count: number; total: number }>();
+  // Spend is tracked per currency. Adding a $10 sale to a N15,000 one gives
+  // a number that means nothing, and it used to be printed with a naira
+  // sign on top of that. Rows predating the dual-currency rollout carry no
+  // currency; those were naira.
+  const purchaseStatsById = new Map<string, { count: number; spent: Record<string, number> }>();
   for (const p of purchases || []) {
     if (!p.user_id || p.payment_status !== "paid") continue;
-    const existing = purchaseStatsById.get(p.user_id) || { count: 0, total: 0 };
+    const existing = purchaseStatsById.get(p.user_id) || { count: 0, spent: {} };
     existing.count += 1;
-    existing.total += Number(p.amount || 0);
+    const code = ((p.currency as string | null) || "NGN").toUpperCase();
+    existing.spent[code] = (existing.spent[code] || 0) + Number(p.amount || 0);
     purchaseStatsById.set(p.user_id, existing);
   }
 
@@ -87,7 +92,7 @@ export async function GET(req: NextRequest) {
     full_name: profileById.get(u.id)?.full_name || null,
     headline: profileById.get(u.id)?.headline || null,
     purchase_count: purchaseStatsById.get(u.id)?.count || 0,
-    total_spent: purchaseStatsById.get(u.id)?.total || 0,
+    spent_by_currency: purchaseStatsById.get(u.id)?.spent || {},
   }));
 
   return NextResponse.json({ users, page, perPage: PAGE_SIZE, total });

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { formatMoney } from "@/lib/formatMoney";
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -53,10 +54,15 @@ export default function AdminOverviewPage() {
     resourcesPublished: 0, resourcesDraft: 0,
     events: 0, users: 0,
   });
-  const [revenueSeries, setRevenueSeries] = useState<{ month: string; revenue: number }[]>([]);
+  // Per currency throughout. USD and NGN cannot be added into one number,
+  // and they cannot share one chart axis either - $10 next to N15,000 would
+  // flatten the dollar line to nothing. Each currency gets its own total
+  // and its own series, and the chart shows one at a time.
+  const [revenueSeriesByCurrency, setRevenueSeriesByCurrency] = useState<Record<string, { month: string; revenue: number }[]>>({});
+  const [chartCurrency, setChartCurrency] = useState("NGN");
   const [signupSeries, setSignupSeries] = useState<{ month: string; signups: number }[]>([]);
   const [contentBreakdown, setContentBreakdown] = useState<{ name: string; published: number; draft: number }[]>([]);
-  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [revenueByCurrency, setRevenueByCurrency] = useState<Record<string, number>>({});
   const [totalPurchases, setTotalPurchases] = useState(0);
 
   useEffect(() => {
@@ -83,11 +89,11 @@ export default function AdminOverviewPage() {
         supabase.from("member_profiles").select("id", { count: "exact", head: true }),
         // All-time totals for the stat cards: only the amount column, kept
         // light regardless of row count.
-        supabase.from("purchases").select("amount").eq("payment_status", "paid"),
+        supabase.from("purchases").select("amount, currency").eq("payment_status", "paid"),
         // The chart only needs the last 6 months, not the platform's whole
         // purchase history - same fix as the /resources and /videos
         // unbounded-fetch issue found earlier.
-        supabase.from("purchases").select("amount, created_at").eq("payment_status", "paid").gte("created_at", sixMonthsAgoIso),
+        supabase.from("purchases").select("amount, currency, created_at").eq("payment_status", "paid").gte("created_at", sixMonthsAgoIso),
         supabase.from("member_profiles").select("created_at").gte("created_at", sixMonthsAgoIso),
       ]);
 
@@ -109,17 +115,35 @@ export default function AdminOverviewPage() {
         { name: "Resources", published: c(resPub as CountRow), draft: c(resDraft as CountRow) },
       ]);
 
-      const paidAll = (paidAmounts.data as { amount: number }[]) || [];
-      setTotalRevenue(paidAll.reduce((sum, p) => sum + Number(p.amount || 0), 0));
+      const paidAll = (paidAmounts.data as { amount: number; currency: string | null }[]) || [];
+      const totals: Record<string, number> = {};
+      for (const p of paidAll) {
+        // Rows from before the dual-currency rollout carry no currency;
+        // those were naira, so that is what an empty value means.
+        const code = (p.currency || "NGN").toUpperCase();
+        totals[code] = (totals[code] || 0) + Number(p.amount || 0);
+      }
+      setRevenueByCurrency(totals);
       setTotalPurchases(paidAll.length);
 
       const months = lastMonths(6);
-      const revenueByMonth = new Map(months.map((m) => [m, 0]));
-      for (const p of (recentPurchases.data as { amount: number; created_at: string }[]) || []) {
+      const monthlyByCurrency: Record<string, Map<string, number>> = {};
+      for (const p of (recentPurchases.data as { amount: number; currency: string | null; created_at: string }[]) || []) {
         const key = monthKey(p.created_at);
-        if (revenueByMonth.has(key)) revenueByMonth.set(key, (revenueByMonth.get(key) || 0) + Number(p.amount || 0));
+        const code = (p.currency || "NGN").toUpperCase();
+        if (!monthlyByCurrency[code]) monthlyByCurrency[code] = new Map(months.map((m) => [m, 0]));
+        const bucket = monthlyByCurrency[code];
+        if (bucket.has(key)) bucket.set(key, (bucket.get(key) || 0) + Number(p.amount || 0));
       }
-      setRevenueSeries(months.map((m) => ({ month: monthLabel(m), revenue: revenueByMonth.get(m) || 0 })));
+      const series: Record<string, { month: string; revenue: number }[]> = {};
+      for (const [code, bucket] of Object.entries(monthlyByCurrency)) {
+        series[code] = months.map((m) => ({ month: monthLabel(m), revenue: bucket.get(m) || 0 }));
+      }
+      setRevenueSeriesByCurrency(series);
+      // Open on whichever currency has actually taken the most money, so
+      // the chart is not sitting on an empty currency by default.
+      const busiest = Object.entries(totals).sort(([, a], [, b]) => b - a)[0]?.[0];
+      if (busiest) setChartCurrency(busiest);
 
       const signupsByMonth = new Map(months.map((m) => [m, 0]));
       for (const m of (recentSignups.data as { created_at: string }[]) || []) {
@@ -134,13 +158,21 @@ export default function AdminOverviewPage() {
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
+  const revenueEntries = Object.entries(revenueByCurrency).sort(([a], [b]) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
+  const revenueLabel = revenueEntries.length === 0
+    ? formatMoney(0, "NGN")
+    : revenueEntries.map(([code, amount]) => formatMoney(amount, code === "USD" ? "USD" : "NGN")).join("  ·  ");
+  const chartCurrencies = Object.keys(revenueSeriesByCurrency).sort((a, b) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
+  const activeSeries = revenueSeriesByCurrency[chartCurrency] || [];
+  const chartCode: "USD" | "NGN" = chartCurrency === "USD" ? "USD" : "NGN";
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground">Overview</h1>
       <p className="mt-1 text-sm text-muted-foreground">A snapshot of Prowess Digital Solutions right now.</p>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        <StatCard label="Total Revenue" value={`₦${totalRevenue.toLocaleString()}`} href="/admin/purchases" />
+        <StatCard label="Total Revenue" value={revenueLabel} href="/admin/purchases" />
         <StatCard label="Paid Purchases" value={totalPurchases} href="/admin/purchases" />
         <StatCard label="Users" value={stats.users} href="/admin/users" />
         <StatCard label="Events" value={stats.events} href="/admin/events" />
@@ -152,10 +184,26 @@ export default function AdminOverviewPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="text-sm font-semibold text-foreground">Revenue - last 6 months</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-foreground">Revenue - last 6 months</h2>
+            {chartCurrencies.length > 1 && (
+              <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
+                {chartCurrencies.map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setChartCurrency(code)}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${code === chartCurrency ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {code}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueSeries}>
+              <AreaChart data={activeSeries}>
                 <defs>
                   <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.35} />
@@ -164,8 +212,8 @@ export default function AdminOverviewPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={12} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={12} width={40} />
-                <Tooltip formatter={(v: number) => [`₦${v.toLocaleString()}`, "Revenue"]} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={12} width={56} tickFormatter={(v: number) => formatMoney(v, chartCode)} />
+                <Tooltip formatter={(v: number) => [formatMoney(v, chartCode), `Revenue (${chartCurrency})`]} />
                 <Area type="monotone" dataKey="revenue" stroke="var(--primary)" fill="url(#revFill)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>

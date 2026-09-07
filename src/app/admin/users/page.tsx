@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatMoney } from "@/lib/formatMoney";
 
 type AdminUser = {
   id: string;
@@ -12,7 +13,7 @@ type AdminUser = {
   full_name: string | null;
   headline: string | null;
   purchase_count: number;
-  total_spent: number;
+  spent_by_currency: Record<string, number>;
 };
 
 export default function AdminUsersPage() {
@@ -22,7 +23,14 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const PAGE_SIZE = 20;
+  // One figure per currency, never summed together.
+function formatSpend(spent: Record<string, number>) {
+  const entries = Object.entries(spent || {}).sort(([a], [b]) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
+  if (entries.length === 0) return formatMoney(0, "NGN");
+  return entries.map(([code, amount]) => formatMoney(amount, code === "USD" ? "USD" : "NGN")).join(" · ");
+}
+
+const PAGE_SIZE = 20;
 
   const load = useCallback(async (pageToLoad: number, q: string) => {
     setLoading(true);
@@ -99,7 +107,7 @@ export default function AdminUsersPage() {
                     <td className="py-2 pr-4 text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
                     <td className="py-2 pr-4 text-muted-foreground">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : "Never"}</td>
                     <td className="py-2 pr-4 text-muted-foreground">{u.purchase_count}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">₦{u.total_spent.toLocaleString()}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">{formatSpend(u.spent_by_currency)}</td>
                   </tr>
                 ))}
               </tbody>

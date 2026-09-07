@@ -94,13 +94,39 @@ async function getMoreVideos(video: VideoDetail): Promise<VideoCardData[]> {
   return Array.from(new Map(merged.map((v) => [v.id, v])).values()).slice(0, 6);
 }
 
+const SITE_URL = "https://prowessdigitalsolutions.com";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const video = await getVideo(slug);
   if (!video) return { title: "Video not found" };
+
+  const description = video.description?.slice(0, 155) || `${video.title} on Prowess Digital Solutions.`;
+  const url = `${SITE_URL}/videos/${video.slug}`;
+  // Videos live in the same resources table, so the same cover route serves
+  // them - it falls through to the video's thumbnail, then to the site
+  // image. Without this a shared video link showed the generic site card,
+  // same as resources did.
+  const image = `${SITE_URL}/api/resources/${video.id}/cover`;
+
   return {
     title: video.title,
-    description: video.description?.slice(0, 155) || `${video.title} on Prowess Digital Solutions.`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: video.title,
+      description,
+      url,
+      type: "video.other",
+      siteName: "Prowess Digital Solutions",
+      images: [{ url: image, alt: video.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: video.title,
+      description,
+      images: [image],
+    },
   };
 }
 

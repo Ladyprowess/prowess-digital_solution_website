@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, EmptyState } from "@/components/account/AccountUI";
 import { hrefFor } from "@/lib/account/itemLinks";
 import { supabase } from "@/lib/supabase";
+import { formatMoney } from "@/lib/formatMoney";
 
 type EbookFormat = "read" | "download" | "hardcopy";
 type Purchase = {
@@ -55,7 +56,7 @@ export default function PurchasesPage() {
                       ) : (
                         <span className="font-medium text-foreground">{p.title}</span>
                       )}
-                      <span className="flex-shrink-0 text-xs text-muted-foreground">{p.currency} {p.amount.toLocaleString()}</span>
+                      <span className="flex-shrink-0 text-xs text-muted-foreground">{formatMoney(Number(p.amount), (p.currency || "NGN").toUpperCase() === "USD" ? "USD" : "NGN")}</span>
                     </div>
 
                     {hasFormats && (

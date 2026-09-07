@@ -255,13 +255,45 @@ function priceLabel(usd: number | null, ngn: number | null) {
   return [usd ? formatMoney(usd, "USD") : null, ngn ? formatMoney(ngn, "NGN") : null].filter(Boolean).join(" / ");
 }
 
+const SITE_URL = "https://prowessdigitalsolutions.com";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const resource = await getResource(slug);
   if (!resource) return { title: "Resource not found" };
+
+  const description = resource.description?.slice(0, 155) || `${resource.title} on Prowess Digital Solutions.`;
+  const url = `${SITE_URL}/resources/${resource.slug}`;
+
+  // Only title and description used to be set here. Next inherits every
+  // field a page does not declare, so the whole openGraph block fell
+  // through from the root layout - meaning a shared resource link showed
+  // the site's generic name, tagline and default image rather than the
+  // resource's own. The image points at /api/resources/[id]/cover, which is
+  // stable and public; the signed cover_url this page renders on screen
+  // expires within the hour and is useless to a crawler that re-fetches
+  // days later. That route falls back to the site image on its own, so a
+  // resource with no cover still shares with a picture.
+  const image = `${SITE_URL}/api/resources/${resource.id}/cover`;
+
   return {
     title: resource.title,
-    description: resource.description?.slice(0, 155) || `${resource.title} on Prowess Digital Solutions.`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: resource.title,
+      description,
+      url,
+      type: "article",
+      siteName: "Prowess Digital Solutions",
+      images: [{ url: image, alt: resource.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: resource.title,
+      description,
+      images: [image],
+    },
   };
 }
 

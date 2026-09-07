@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { AdminPagination } from "@/components/admin/AdminPagination";
+import { formatMoney } from "@/lib/formatMoney";
 
 type Purchase = {
   id: string;
@@ -36,7 +37,10 @@ export default function AdminPurchasesPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [total, setTotal] = useState(0);
-  const [totalRevenue, setTotalRevenue] = useState(0);
+  // Kept per currency. A single number cannot describe takings in two
+  // currencies, and the old one summed them all and printed the result with
+  // a naira sign - so a $10 sale read as N10.
+  const [revenueByCurrency, setRevenueByCurrency] = useState<Record<string, number>>({});
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<(typeof STATUS_OPTIONS)[number]>("");
   const [itemType, setItemType] = useState<(typeof ITEM_TYPE_OPTIONS)[number]>("");
@@ -59,11 +63,18 @@ export default function AdminPurchasesPage() {
     setTotal(count || 0);
 
     // Revenue total respects the current filters, not just the current page.
-    let revenueQuery = supabase.from("purchases").select("amount").eq("payment_status", "paid");
+    let revenueQuery = supabase.from("purchases").select("amount, currency").eq("payment_status", "paid");
     if (itemType) revenueQuery = revenueQuery.eq("item_type", itemType);
     if (search.trim()) revenueQuery = revenueQuery.ilike("email", `%${search.trim()}%`);
     const { data: revenueRows } = await revenueQuery;
-    setTotalRevenue(((revenueRows as { amount: number }[]) || []).reduce((sum, r) => sum + Number(r.amount || 0), 0));
+    const totals: Record<string, number> = {};
+    for (const row of ((revenueRows as { amount: number; currency: string | null }[]) || [])) {
+      // Rows written before the dual-currency rollout carry no currency at
+      // all; those were naira, so that is what an empty value means here.
+      const code = (row.currency || "NGN").toUpperCase();
+      totals[code] = (totals[code] || 0) + Number(row.amount || 0);
+    }
+    setRevenueByCurrency(totals);
 
     const idsByType: Record<string, Set<string>> = { resource: new Set(), course: new Set(), career_path: new Set() };
     for (const p of rows) idsByType[p.item_type]?.add(p.item_id);
@@ -87,9 +98,17 @@ export default function AdminPurchasesPage() {
     return () => clearTimeout(t);
   }, [load]);
 
-  useEffect(() => { setPage(1); }, [status, itemType, search]);
+  // Resetting the page in an effect ran the whole query twice on every
+  // filter change - once against the stale page, then again after the reset
+  // landed. Changing a filter is a single user action, so it sets both.
+  function applyFilter(change: () => void) {
+    change();
+    setPage(1);
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // USD first so the bigger-ticket currency reads first, then anything else.
+  const revenueEntries = Object.entries(revenueByCurrency).sort(([a], [b]) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
 
   return (
     <div>
@@ -99,8 +118,20 @@ export default function AdminPurchasesPage() {
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-border bg-card p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Paid Revenue</p>
-          <p className="mt-2 text-2xl font-bold text-foreground">₦{totalRevenue.toLocaleString()}</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">Always paid only - ignores the status filter below</p>
+          <div className="mt-2 space-y-0.5">
+            {revenueEntries.length === 0 ? (
+              <p className="text-2xl font-bold text-foreground">{formatMoney(0, "NGN")}</p>
+            ) : (
+              revenueEntries.map(([code, amount]) => (
+                <p key={code} className="text-2xl font-bold text-foreground">
+                  {formatMoney(amount, code === "USD" ? "USD" : "NGN")}
+                </p>
+              ))
+            )}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Paid only - ignores the status filter. Each currency is totalled on its own.
+          </p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Matching purchases</p>
@@ -111,15 +142,15 @@ export default function AdminPurchasesPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => applyFilter(() => setSearch(e.target.value))}
           placeholder="Search by email..."
           className="w-full max-w-xs rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground"
         />
-        <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground">
+        <select value={status} onChange={(e) => applyFilter(() => setStatus(e.target.value as typeof status))} className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground">
           <option value="">All statuses</option>
           {STATUS_OPTIONS.filter(Boolean).map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={itemType} onChange={(e) => setItemType(e.target.value as typeof itemType)} className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground">
+        <select value={itemType} onChange={(e) => applyFilter(() => setItemType(e.target.value as typeof itemType))} className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground">
           <option value="">All item types</option>
           {ITEM_TYPE_OPTIONS.filter(Boolean).map((t) => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
         </select>
@@ -149,7 +180,7 @@ export default function AdminPurchasesPage() {
                     <td className="py-2 pr-4 font-medium text-foreground">{titles[p.item_id] || "Untitled"}</td>
                     <td className="py-2 pr-4 text-muted-foreground">{p.item_type.replace("_", " ")}</td>
                     <td className="py-2 pr-4 text-muted-foreground">{p.email}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">{p.currency} {Number(p.amount).toLocaleString()}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">{formatMoney(Number(p.amount), (p.currency || "NGN").toUpperCase() === "USD" ? "USD" : "NGN")}</td>
                     <td className="py-2 pr-4">
                       <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${STATUS_STYLES[p.payment_status] || "bg-muted text-muted-foreground"}`}>
                         {p.payment_status}
