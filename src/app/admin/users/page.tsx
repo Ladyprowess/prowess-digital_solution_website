@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatMoney } from "@/lib/formatMoney";
+import { AdminCurrencyToggle, useAdminCurrency } from "@/components/admin/AdminCurrency";
 
 type AdminUser = {
   id: string;
@@ -23,14 +24,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  // One figure per currency, never summed together.
-function formatSpend(spent: Record<string, number>) {
-  const entries = Object.entries(spent || {}).sort(([a], [b]) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
-  if (entries.length === 0) return formatMoney(0, "NGN");
-  return entries.map(([code, amount]) => formatMoney(amount, code === "USD" ? "USD" : "NGN")).join(" · ");
-}
-
-const PAGE_SIZE = 20;
+  const currency = useAdminCurrency();
+  const PAGE_SIZE = 20;
 
   const load = useCallback(async (pageToLoad: number, q: string) => {
     setLoading(true);
@@ -66,7 +61,10 @@ const PAGE_SIZE = 20;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground">Users</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="text-2xl font-bold text-foreground">Users</h1>
+        <AdminCurrencyToggle />
+      </div>
       <p className="mt-1 text-sm text-muted-foreground">Everyone with a Prowess Digital Solutions member account.</p>
 
       <input
@@ -93,7 +91,7 @@ const PAGE_SIZE = 20;
                   <th className="py-2 pr-4">Joined</th>
                   <th className="py-2 pr-4">Last sign-in</th>
                   <th className="py-2 pr-4">Purchases</th>
-                  <th className="py-2 pr-4">Spent</th>
+                  <th className="py-2 pr-4">Spent ({currency})</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,7 +105,7 @@ const PAGE_SIZE = 20;
                     <td className="py-2 pr-4 text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
                     <td className="py-2 pr-4 text-muted-foreground">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : "Never"}</td>
                     <td className="py-2 pr-4 text-muted-foreground">{u.purchase_count}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">{formatSpend(u.spent_by_currency)}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">{(u.spent_by_currency || {})[currency] ? formatMoney(u.spent_by_currency[currency], currency) : "-"}</td>
                   </tr>
                 ))}
               </tbody>

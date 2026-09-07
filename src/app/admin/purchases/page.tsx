@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { formatMoney } from "@/lib/formatMoney";
+import { AdminCurrencyToggle, suggestAdminCurrency, useAdminCurrency } from "@/components/admin/AdminCurrency";
 
 type Purchase = {
   id: string;
@@ -46,6 +47,7 @@ export default function AdminPurchasesPage() {
   const [itemType, setItemType] = useState<(typeof ITEM_TYPE_OPTIONS)[number]>("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const currency = useAdminCurrency();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -75,6 +77,8 @@ export default function AdminPurchasesPage() {
       totals[code] = (totals[code] || 0) + Number(row.amount || 0);
     }
     setRevenueByCurrency(totals);
+    const busiest = Object.entries(totals).sort(([, a], [, b]) => b - a)[0]?.[0];
+    if (busiest === "USD" || busiest === "NGN") suggestAdminCurrency(busiest);
 
     const idsByType: Record<string, Set<string>> = { resource: new Set(), course: new Set(), career_path: new Set() };
     for (const p of rows) idsByType[p.item_type]?.add(p.item_id);
@@ -108,29 +112,23 @@ export default function AdminPurchasesPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   // USD first so the bigger-ticket currency reads first, then anything else.
-  const revenueEntries = Object.entries(revenueByCurrency).sort(([a], [b]) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground">Purchases</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Every premium content purchase across Prowess Digital Solutions.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Purchases</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Every premium content purchase across Prowess Digital Solutions.</p>
+        </div>
+        <AdminCurrencyToggle />
+      </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-border bg-card p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Paid Revenue</p>
-          <div className="mt-2 space-y-0.5">
-            {revenueEntries.length === 0 ? (
-              <p className="text-2xl font-bold text-foreground">{formatMoney(0, "NGN")}</p>
-            ) : (
-              revenueEntries.map(([code, amount]) => (
-                <p key={code} className="text-2xl font-bold text-foreground">
-                  {formatMoney(amount, code === "USD" ? "USD" : "NGN")}
-                </p>
-              ))
-            )}
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Paid Revenue ({currency})</p>
+          <p className="mt-2 text-2xl font-bold text-foreground">{formatMoney(revenueByCurrency[currency] || 0, currency)}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Paid only - ignores the status filter. Each currency is totalled on its own.
+            Paid only - ignores the status filter. Switch currency at the top; the two are never added together.
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/formatMoney";
+import { AdminCurrencyToggle, suggestAdminCurrency, useAdminCurrency } from "@/components/admin/AdminCurrency";
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -59,7 +60,7 @@ export default function AdminOverviewPage() {
   // flatten the dollar line to nothing. Each currency gets its own total
   // and its own series, and the chart shows one at a time.
   const [revenueSeriesByCurrency, setRevenueSeriesByCurrency] = useState<Record<string, { month: string; revenue: number }[]>>({});
-  const [chartCurrency, setChartCurrency] = useState("NGN");
+  const currency = useAdminCurrency();
   const [signupSeries, setSignupSeries] = useState<{ month: string; signups: number }[]>([]);
   const [contentBreakdown, setContentBreakdown] = useState<{ name: string; published: number; draft: number }[]>([]);
   const [revenueByCurrency, setRevenueByCurrency] = useState<Record<string, number>>({});
@@ -140,10 +141,11 @@ export default function AdminOverviewPage() {
         series[code] = months.map((m) => ({ month: monthLabel(m), revenue: bucket.get(m) || 0 }));
       }
       setRevenueSeriesByCurrency(series);
-      // Open on whichever currency has actually taken the most money, so
-      // the chart is not sitting on an empty currency by default.
+      // Open on whichever currency has actually taken the most money, so a
+      // first visit is not staring at a confident zero. Only applies until
+      // somebody uses the toggle - after that their choice stands.
       const busiest = Object.entries(totals).sort(([, a], [, b]) => b - a)[0]?.[0];
-      if (busiest) setChartCurrency(busiest);
+      if (busiest === "USD" || busiest === "NGN") suggestAdminCurrency(busiest);
 
       const signupsByMonth = new Map(months.map((m) => [m, 0]));
       for (const m of (recentSignups.data as { created_at: string }[]) || []) {
@@ -158,21 +160,23 @@ export default function AdminOverviewPage() {
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
-  const revenueEntries = Object.entries(revenueByCurrency).sort(([a], [b]) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
-  const revenueLabel = revenueEntries.length === 0
-    ? formatMoney(0, "NGN")
-    : revenueEntries.map(([code, amount]) => formatMoney(amount, code === "USD" ? "USD" : "NGN")).join("  ·  ");
-  const chartCurrencies = Object.keys(revenueSeriesByCurrency).sort((a, b) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
-  const activeSeries = revenueSeriesByCurrency[chartCurrency] || [];
-  const chartCode: "USD" | "NGN" = chartCurrency === "USD" ? "USD" : "NGN";
+  // Everything on this page reports the currency the toggle is set to. The
+  // two are never added together - they are separate books.
+  const revenueLabel = formatMoney(revenueByCurrency[currency] || 0, currency);
+  const activeSeries = revenueSeriesByCurrency[currency] || [];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground">Overview</h1>
-      <p className="mt-1 text-sm text-muted-foreground">A snapshot of Prowess Digital Solutions right now.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Overview</h1>
+          <p className="mt-1 text-sm text-muted-foreground">A snapshot of Prowess Digital Solutions right now.</p>
+        </div>
+        <AdminCurrencyToggle />
+      </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        <StatCard label="Total Revenue" value={revenueLabel} href="/admin/purchases" />
+        <StatCard label={`Total Revenue (${currency})`} value={revenueLabel} href="/admin/purchases" />
         <StatCard label="Paid Purchases" value={totalPurchases} href="/admin/purchases" />
         <StatCard label="Users" value={stats.users} href="/admin/users" />
         <StatCard label="Events" value={stats.events} href="/admin/events" />
@@ -184,23 +188,7 @@ export default function AdminOverviewPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-foreground">Revenue - last 6 months</h2>
-            {chartCurrencies.length > 1 && (
-              <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
-                {chartCurrencies.map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setChartCurrency(code)}
-                    className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${code === chartCurrency ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    {code}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <h2 className="text-sm font-semibold text-foreground">Revenue ({currency}) - last 6 months</h2>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={activeSeries}>
@@ -212,8 +200,8 @@ export default function AdminOverviewPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={12} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={12} width={56} tickFormatter={(v: number) => formatMoney(v, chartCode)} />
-                <Tooltip formatter={(v: number) => [formatMoney(v, chartCode), `Revenue (${chartCurrency})`]} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={12} width={56} tickFormatter={(v: number) => formatMoney(v, currency)} />
+                <Tooltip formatter={(v: number) => [formatMoney(v, currency), `Revenue (${currency})`]} />
                 <Area type="monotone" dataKey="revenue" stroke="var(--primary)" fill="url(#revFill)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
