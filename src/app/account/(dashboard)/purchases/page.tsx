@@ -18,6 +18,11 @@ const FORMAT_LABELS: Record<EbookFormat, string> = { read: "Read Online", downlo
 
 export default function PurchasesPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  // Sent by the API, totalled there from every paid row. Not derived from
+  // `purchases` on this page: that list is grouped one row per item, so an
+  // ebook bought in two formats would only count the later payment.
+  const [spent, setSpent] = useState<Record<string, number>>({});
+  const [purchaseCount, setPurchaseCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,14 +33,46 @@ export default function PurchasesPage() {
         ? await fetch("/api/account/purchases", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => null)
         : null;
       setPurchases(res?.ok ? res.items : []);
+      setSpent(res?.ok ? res.spent || {} : {});
+      setPurchaseCount(res?.ok ? res.purchaseCount || 0 : 0);
       setLoading(false);
     })();
   }, []);
+
+  const spentEntries = Object.entries(spent).sort(([a], [b]) => (a === "USD" ? -1 : b === "USD" ? 1 : a.localeCompare(b)));
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground">My Purchases</h1>
       <p className="mt-1 text-sm text-muted-foreground">Everything you&rsquo;ve bought, and how to read, download, or track it.</p>
+
+      {/* Each currency stands on its own. No toggle here, unlike admin -
+          this is somebody's own record of what they actually paid, and
+          hiding half of it behind a switch would be the wrong call. */}
+      {!loading && spentEntries.length > 0 && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total spent</p>
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              {spentEntries.map(([code, amount]) => (
+                <p key={code} className="text-2xl font-bold text-foreground">
+                  {formatMoney(amount, code === "USD" ? "USD" : "NGN")}
+                </p>
+              ))}
+            </div>
+            {spentEntries.length > 1 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">Shown separately - these are different currencies.</p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Payments</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{purchaseCount}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Across {purchases.length} {purchases.length === 1 ? "item" : "items"}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6">
         <Card title="Purchases">

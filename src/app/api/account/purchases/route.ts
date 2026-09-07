@@ -73,5 +73,19 @@ export async function GET(req: Request) {
     })
   );
 
-  return NextResponse.json({ ok: true, items });
+  // Totalled from the raw paid rows, not from `items`. Grouping keeps only
+  // the most recent row's amount per item, so somebody who bought the read
+  // format and later the download would have had the first payment dropped
+  // from any total computed off the grouped list.
+  //
+  // Per currency, never added together - a $10 purchase and a N15,000 one
+  // are two separate figures, and no exchange rate exists anywhere here to
+  // honestly turn them into one.
+  const spent: Record<string, number> = {};
+  for (const p of purchases || []) {
+    const code = ((p.currency as string | null) || "NGN").toUpperCase();
+    spent[code] = (spent[code] || 0) + Number(p.amount || 0);
+  }
+
+  return NextResponse.json({ ok: true, items, spent, purchaseCount: (purchases || []).length });
 }
