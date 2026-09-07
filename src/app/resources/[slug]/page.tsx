@@ -268,14 +268,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // Only title and description used to be set here. Next inherits every
   // field a page does not declare, so the whole openGraph block fell
   // through from the root layout - meaning a shared resource link showed
-  // the site's generic name, tagline and default image rather than the
-  // resource's own. The image points at /api/resources/[id]/cover, which is
-  // stable and public; the signed cover_url this page renders on screen
-  // expires within the hour and is useless to a crawler that re-fetches
-  // days later. That route falls back to the site image on its own, so a
-  // resource with no cover still shares with a picture.
-  const image = `${SITE_URL}/api/resources/${resource.id}/cover`;
-
+  // the site's generic name and tagline rather than the resource's own.
+  // The picture is not set here on purpose: opengraph-image.tsx in this
+  // folder supplies it, and that convention also declares the image's
+  // width, height and type, which is what a crawler needs to render a card
+  // instead of falling back to text only.
   return {
     title: resource.title,
     description,
@@ -286,13 +283,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url,
       type: "article",
       siteName: "Prowess Digital Solutions",
-      images: [{ url: image, alt: resource.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: resource.title,
       description,
-      images: [image],
     },
   };
 }

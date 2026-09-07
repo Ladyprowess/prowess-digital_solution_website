@@ -107,8 +107,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // them - it falls through to the video's thumbnail, then to the site
   // image. Without this a shared video link showed the generic site card,
   // same as resources did.
-  const image = `${SITE_URL}/api/resources/${video.id}/cover`;
-
   return {
     title: video.title,
     description,
@@ -119,13 +117,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url,
       type: "video.other",
       siteName: "Prowess Digital Solutions",
-      images: [{ url: image, alt: video.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: video.title,
       description,
-      images: [image],
     },
   };
 }
