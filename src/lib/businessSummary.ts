@@ -1,4 +1,4 @@
-export type BusinessSummary = { title: string; content: string; image?: string };
+export type BusinessSummary = { title: string; content: string; image?: string; imageWidth?: number };
 const escape = (text: string) => text.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export function summaryDocument({title,content,image}: BusinessSummary) {
  if(image?.startsWith('data:image/png;base64,'))return `<!doctype html><html><head><title>${escape(title)}</title><style>@page{margin:10mm}body{margin:0;text-align:center}img{max-width:100%;width:420px;height:auto}</style></head><body><img src="${image}" alt="${escape(title)}"></body></html>`;
@@ -18,7 +18,7 @@ export async function previewSummary(title: string, content: string, selector?: 
   if(source){try{
    const {captureBusinessResult}=await import('./captureBusinessResult');
    const image=await captureBusinessResult(source);
-   window.dispatchEvent(new CustomEvent<BusinessSummary>('prowess-summary',{detail:{title,content,image}}));return;
+   window.dispatchEvent(new CustomEvent<BusinessSummary>('prowess-summary',{detail:{title,content,image,imageWidth:Math.ceil(source.getBoundingClientRect().width)}}));return;
   }catch{window.alert('Unable to prepare your result. Please try again.');return;}}
  }
 

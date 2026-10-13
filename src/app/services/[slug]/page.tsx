@@ -4,6 +4,7 @@ import Link from "next/link";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { services, packages, offerToPackageSlug } from "@/content/site";
+import SopLanding from "@/components/services/SopLanding";
 import DiagnosticLanding from "@/components/DiagnosticLanding";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
@@ -56,6 +57,8 @@ export default async function ServicePage({ params }: PageProps) {
   if (!service) return notFound();
 
   if (service.slug === "business-structure-diagnostic") return <DiagnosticLanding service={service} />;
+
+  if (service.slug === "sop-vault") return <SopLanding service={service} />;
 
   const includedInPlan = packages.find((p) => p.slug === offerToPackageSlug[service.slug]) || null;
 

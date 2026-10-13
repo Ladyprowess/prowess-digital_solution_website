@@ -100,7 +100,7 @@ export default function PricingPageClient() {
     <div className="pb-16">
 
       <div className="mx-auto max-w-7xl px-6 pt-8 text-sm text-muted-foreground">
-        Looking for the one-time Business Structure Diagnostic? $120, delivered in five business days after payment confirmation and receipt of all required information. <Link href={DIAGNOSTIC_LINK} className="text-primary underline">Explore the diagnostic and enquire about a one-time engagement</Link>. The plans below are recurring business support, separate from premium learning and career-tool access.
+        Looking for the one-time Business Structure Diagnostic? $60 - $120, delivered in five business days after payment confirmation and receipt of all required information. <Link href={DIAGNOSTIC_LINK} className="text-primary underline">Explore the diagnostic and enquire about a one-time engagement</Link>. The plans below are recurring business support, separate from premium learning and career-tool access.
       </div>
       <AgencyPageHeader
         eyebrow="Pricing"

@@ -13,7 +13,7 @@ Recorded 13 October 2026 from the owner's approved feedback.
 
 ## Diagnostic page application
 
-Use the existing diagnostic URL and enquiry backend. Keep the confirmed one-time fee of $120, five business days after confirmed payment and complete information, written review/report, prioritised 30-day roadmap, relevant tools, 45-minute review call and one follow-up email within seven calendar days after the call. Preserve published exclusions.
+Use the existing diagnostic URL and enquiry backend. Keep the confirmed one-time fee of $60 - $120, five business days after confirmed payment and complete information, written review/report, prioritised 30-day roadmap, relevant tools, 45-minute review call and one follow-up email within seven calendar days after the call. Preserve published exclusions.
 
 Journey: interactive scope preview → free health check with named result → deliverables and terms → enquiry on the same page → suitability confirmation → payment instructions. Submission success stays on-page; failed submissions retain inputs for retry. Analytics include assessment start/completion and successful enquiries without form contents or personal data.
 
@@ -30,3 +30,13 @@ The initial diagnostic layout was rejected as too basic. Replaced its scope tabs
 Do not use “illustrative” in customer-facing copy. Use direct, professional language and avoid repeated explanations that make the tools sound unserious. Label report previews simply as previews where needed; never present generated scenarios as actual client evidence. This preference applies to future work as well as the services and diagnostic pages.
 
 Owner wording update: Do not use “example” or “sample” as customer-facing labels or explanatory copy either. Use direct business wording. Keep claims grounded; do not frame generated scenarios as observed client findings.
+
+## SOP Vault
+
+Added a dedicated `/services/sop-vault` page with a workflow cabinet, four selectable procedures, per-workflow responsible roles and completion checks, exact visible-result export, deliverables and rollout journey. Existing $300–$550 range and three-to-four-process starting scope retained. Enquiry links use `/contact?service=sop-vault`. Local browser checks passed for completion controls, captured-result popup and mobile width, with no runtime errors. ESLint and TypeScript passed. No deployment or enquiry submission performed.
+
+SOP refinement: owner rejected the first SOP layout and unreadably scaled popup. Result images now open at their original CSS width with zoom and two-axis scrolling in a wider, bounded dialog. SOP workflow navigation now spans the top of a full-width workbench; procedures use larger text and a centred reading area instead of a narrow sidebar/report split. Keep visible-result exports unchanged in content.
+
+Owner rejected the overall SOP design. Rebuilt its visual direction with an interactive handover scene, compact two-column procedure cards, reviewed-state feedback and a lighter deliverables layout. Replaced accumulated SOP CSS overrides with a single responsive stylesheet. Preserved readable result preview and existing offer terms. Local completion/preview checks passed, with no mobile overflow or runtime errors; lint and TypeScript passed. Visual direction awaits owner review.
+
+SOP enquiry and motion update: all SOP enquiry CTAs now target an in-page form using `/api/contact` with the SOP Vault inquiry type. Success remains on-page; errors retain inputs, duplicate submissions are guarded, and lead tracking fires only after confirmed success. Hero toggles every five seconds with pause/resume, pauses automatic cycling after manual state selection, and respects reduced-motion preferences. No live enquiry submitted during implementation.

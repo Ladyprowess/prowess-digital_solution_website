@@ -130,11 +130,11 @@ export const services: Service[] = [
     title: "Business Structure Diagnostic",
     short:
       "A focused review of your business model, offer, pricing, sales process, operations and basic financial tracking, with a written report and a practical 30-day action plan.",
-    price: "$120",
+    price: "$60 - $120",
     cta: "Enquire about the diagnostic",
     details: {
       description:
-        "The Business Structure Diagnostic helps business owners understand structural gaps, operational bottlenecks, risks and what needs attention first. We assess your business model, target customers, offer, pricing, sales process, daily operations and basic financial tracking.\n\nThe fixed one-time fee is $120. Start by describing your business, current challenges and goals in the enquiry form. Prowess Digital Solutions confirms whether the diagnostic is appropriate before providing payment instructions.",
+        "The Business Structure Diagnostic helps business owners understand structural gaps, operational bottlenecks, risks and what needs attention first. We assess your business model, target customers, offer, pricing, sales process, daily operations and basic financial tracking.\n\nThe fixed one-time fee is $60 - $120. Start by describing your business, current challenges and goals in the enquiry form. Prowess Digital Solutions confirms whether the diagnostic is appropriate before providing payment instructions.",
       whoFor: [
         "Business owners who need clarity on what is not working and what to fix first",
         "Solo founders and small teams who want to improve their business structure and daily operations",
