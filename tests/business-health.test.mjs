@@ -20,3 +20,15 @@ test('scores reflect answers and recommendations target only gaps', () => {
   assert.equal(mixed.score, 70);
   assert.deepEqual(Array.from(mixed.priorities, x => x.area), ['Pricing', 'Sales']);
 });
+
+test('findings explain selected answers and prioritise missing practices before partial ones',()=>{
+ const findings=module.exports.healthFindings([1,2,0,2,1]);
+ assert.equal(findings[0].area,'Sales');
+ assert.equal(findings[0].answer,module.exports.healthAnswers[2][0]);
+ assert.ok(findings[0].action.includes('enquiry tracker'));
+ const partial=module.exports.healthFindings([1,2,1,2,1]).find(x=>x.area==='Sales');
+ assert.ok(partial.action.includes('overdue follow-ups'));
+ assert.notEqual(partial.action,findings[0].action);
+ assert.equal(findings.filter(x=>x.value===2).length,2);
+ assert.equal(module.exports.healthFindings([-1,0,0,0,0]).length,0);
+});
