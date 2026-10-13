@@ -55,7 +55,7 @@ export function ListingCard({
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card p-5 transition-[border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${color.ring}`}
+      className={`group relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-card p-5 transition-[border-color,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${color.ring}`}
     >
       <span className={`absolute inset-x-0 top-0 h-0.5 ${color.bar} opacity-70 transition-opacity duration-150 ease-out group-hover:opacity-100`} />
 

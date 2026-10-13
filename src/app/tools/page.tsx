@@ -71,7 +71,7 @@ function ToolCard({ tool, premium }: { tool: ToolRow; premium?: boolean }) {
   return (
     <Link
       href={tool.href!}
-      className={`group relative flex flex-col overflow-hidden rounded-lg border bg-card p-6 shadow-sm transition-[border-color,background-color,transform,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+      className={`group relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border bg-card p-6 shadow-sm transition-[border-color,background-color,transform,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
         premium ? "border-primary/30 bg-primary/5" : "border-border"
       }`}
     >
@@ -88,11 +88,11 @@ function ToolCard({ tool, premium }: { tool: ToolRow; premium?: boolean }) {
         </span>
       </div>
       <h3 className="mt-4 text-lg font-bold text-foreground">{tool.title}</h3>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">{tool.description}</p>
+      <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{tool.description}</p>
       {tool.detail && (
         <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-primary">{tool.detail}</p>
       )}
-      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
         Open tool
       </span>
     </Link>
@@ -252,7 +252,7 @@ export default function ToolsPage() {
                   </p>
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {premium.map((tool, i) => (
-                      <Reveal key={tool.key} delay={i * 40}>
+                      <Reveal key={tool.key} delay={i * 40} className="h-full min-w-0">
                         <ToolCard tool={tool} premium />
                       </Reveal>
                     ))}
@@ -268,7 +268,7 @@ export default function ToolsPage() {
                   </p>
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {free.map((tool, i) => (
-                      <Reveal key={tool.key} delay={i * 40}>
+                      <Reveal key={tool.key} delay={i * 40} className="h-full min-w-0">
                         <ToolCard tool={tool} />
                       </Reveal>
                     ))}

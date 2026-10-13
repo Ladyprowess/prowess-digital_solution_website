@@ -14,7 +14,7 @@ export type ProjectCardData = {
 // someone would build and what it practices).
 export function ProjectCard({ project }: { project: ProjectCardData }) {
   return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card p-5">
+    <div className="flex h-full min-w-0 flex-col rounded-2xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-base font-bold text-foreground">{project.title}</h3>
         {project.level && (

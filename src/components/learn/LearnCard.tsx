@@ -47,7 +47,7 @@ export function LearnCard({ item }: { item: LearnItem }) {
   const price = priceLabel(item);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+    <div className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
       <Link href={item.href} className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <div className="relative h-40 w-full overflow-hidden bg-muted">
           {item.thumbnail_url ? (

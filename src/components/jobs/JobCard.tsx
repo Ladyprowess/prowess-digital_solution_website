@@ -60,7 +60,7 @@ export function JobCard({ job }: { job: JobCardData }) {
   const closingSoon = isClosingSoon(job.deadline_at);
 
   return (
-    <div className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${color.ring}`}>
+    <div className={`group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${color.ring}`}>
       <span className={`absolute inset-x-0 top-0 h-1 ${color.bar} opacity-70 transition group-hover:opacity-100`} />
 
       <Link href={`/jobs/${job.slug}`} className="flex flex-1 flex-col">

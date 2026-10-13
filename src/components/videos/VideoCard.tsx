@@ -34,9 +34,9 @@ export function VideoCard({ video, progressPercent }: { video: VideoCardData; pr
   return (
     <Link
       href={`/videos/${video.slug}`}
-      className="group block overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
-      <div className="relative aspect-video w-full bg-muted">
+      <div className="relative aspect-video w-full shrink-0 bg-muted">
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element -- external video-host thumbnail, not a local/optimizable asset
           <img src={thumb} alt={video.title} className="h-full w-full object-cover" />
@@ -59,7 +59,7 @@ export function VideoCard({ video, progressPercent }: { video: VideoCardData; pr
           </div>
         )}
       </div>
-      <div className="p-5">
+      <div className="flex-1 p-5">
         {video.category && <p className="text-xs font-semibold uppercase tracking-wide text-primary">{video.category}</p>}
         <h3 className="mt-1 line-clamp-2 font-semibold text-foreground">{video.title}</h3>
         {typeof progressPercent === "number" ? (
