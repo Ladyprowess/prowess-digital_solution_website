@@ -28,3 +28,5 @@ The initial diagnostic layout was rejected as too basic. Replaced its scope tabs
 ## Owner wording preference
 
 Do not use “illustrative” in customer-facing copy. Use direct, professional language and avoid repeated explanations that make the tools sound unserious. Label report previews simply as previews where needed; never present generated scenarios as actual client evidence. This preference applies to future work as well as the services and diagnostic pages.
+
+Owner wording update: Do not use “example” or “sample” as customer-facing labels or explanatory copy either. Use direct business wording. Keep claims grounded; do not frame generated scenarios as observed client findings.

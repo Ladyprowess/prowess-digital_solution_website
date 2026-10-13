@@ -133,3 +133,5 @@ _Last updated: 2026-07-27 via `brand-design` skill. Palette: Steel Teal, Rebuilt
 ### Customer-facing wording update (13 October 2026)
 
 Do not use “illustrative” in customer-facing copy. Avoid repetitive demo disclaimers. Use concise business language and simple preview labels where appropriate, without implying invented scenarios are real client results.
+
+Owner wording update: Do not use “example” or “sample” as customer-facing labels or explanatory copy either. Use direct business wording. Keep claims grounded; do not frame generated scenarios as observed client findings.
