@@ -1,4 +1,5 @@
 "use client";
+import { trackEvent } from "@/lib/analytics";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -42,6 +43,7 @@ export function BuyButton({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setErr("Please sign in to continue."); setLoading(false); return; }
 
+      trackEvent("begin_checkout", { flow: "content" });
       const res = await fetch("/api/content/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
@@ -49,12 +51,14 @@ export function BuyButton({
       });
       const data = await res.json();
       if (!data.ok || !data.authorizationUrl) {
+        trackEvent("checkout_error", { flow: "content" });
         setErr(data.error || "Could not start checkout.");
         setLoading(false);
         return;
       }
       window.location.href = data.authorizationUrl;
     } catch {
+      trackEvent("checkout_error", { flow: "content" });
       setErr("Something went wrong.");
       setLoading(false);
     }

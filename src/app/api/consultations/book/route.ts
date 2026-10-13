@@ -1,3 +1,4 @@
+import { consultationPrice } from "@/lib/payments/consultationPrice";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createGoogleEvent } from "@/lib/googleCalendar";
@@ -46,12 +47,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Selected service not available." }, { status: 400 });
     }
 
-    // The client picks which currency to pay in; the server picks the
-    // amount for that currency, never trusting an amount from the client.
-    // Falls back to USD if NGN wasn't requested or isn't set for this
-    // service.
-    const currency: "USD" | "NGN" = requestedCurrency === "NGN" && service.price_ngn != null ? "NGN" : "USD";
-    const amount = currency === "USD" ? Number(service.price_usd || 0) : Number(service.price_ngn || 0);
+    const price = consultationPrice(service, requestedCurrency);
+    if (!price) {
+      return NextResponse.json({ ok: false, error: "This service is not priced in the selected currency." }, { status: 400 });
+    }
+    const { currency, amount } = price;
     const duration_minutes = Number(service.duration_minutes || 30);
     const isPaid = amount > 0;
 

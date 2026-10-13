@@ -99,11 +99,14 @@ export default function PricingPageClient() {
   return (
     <div className="pb-16">
 
+      <div className="mx-auto max-w-7xl px-6 pt-8 text-sm text-muted-foreground">
+        Looking for a standalone service? <Link href={DIAGNOSTIC_LINK} className="text-primary underline">Explore the diagnostic and enquire about a one-time engagement</Link>. The plans below are recurring business support, separate from premium learning and career-tool access.
+      </div>
       <AgencyPageHeader
         eyebrow="Pricing"
         title={
           <>
-            Simple pricing. <span className="text-primary">Clear outcomes.</span>
+            Ongoing business support. <span className="text-primary">Recurring memberships.</span>
           </>
         }
         description="Fixed monthly membership tiers. No hidden charges, no vague promises. Pay yearly and save 20%."

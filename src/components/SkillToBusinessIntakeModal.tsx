@@ -1,4 +1,5 @@
 "use client";
+import { trackEvent } from "@/lib/analytics";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -51,6 +52,7 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
     };
 
     try {
+      trackEvent("begin_checkout", { flow: "skill_to_business" });
       const res = await fetch("/api/skill-to-business/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
@@ -59,6 +61,7 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
       const data = await res.json();
 
       if (!res.ok || !data.ok) {
+        trackEvent("checkout_error", { flow: "skill_to_business" });
         setError(data.error || "Could not start checkout. Please try again.");
         setLoading(false);
         return;
@@ -66,6 +69,7 @@ export default function SkillToBusinessIntakeModal({ open, onClose }: Props) {
 
       window.location.href = data.authorizationUrl;
     } catch {
+      trackEvent("checkout_error", { flow: "skill_to_business" });
       setError("Could not start checkout. Please try again.");
       setLoading(false);
     }

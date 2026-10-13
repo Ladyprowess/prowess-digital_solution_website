@@ -1,3 +1,4 @@
+import { services } from "@/content/site";
 import type { Metadata } from "next";
 import ContactPageClient from "./ContactPageClient";
 
@@ -19,6 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
-  return <ContactPageClient />;
+export default async function Page({ searchParams }: { searchParams: Promise<{ service?: string }> }) {
+  const { service } = await searchParams;
+  const selected = services.find((item) => item.slug === service);
+  return <ContactPageClient initialInquiry={selected?.title || ""} />;
 }

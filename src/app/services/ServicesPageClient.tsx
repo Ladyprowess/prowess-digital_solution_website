@@ -177,7 +177,7 @@ export default function ServicesPageClient() {
                 </h2>
               </div>
               <SecondaryLink href="/pricing">
-                Compare pricing <ArrowRight size={16} aria-hidden="true" />
+                Compare ongoing support <ArrowRight size={16} aria-hidden="true" />
               </SecondaryLink>
             </div>
           </Reveal>
@@ -193,7 +193,7 @@ export default function ServicesPageClient() {
                         <Icon size={21} aria-hidden="true" />
                       </span>
                       <span className="rounded-md border border-border bg-background px-3 py-1 text-xs font-bold text-muted-foreground">
-                        {service.price}
+                        {service.slug === "business-structure-diagnostic" ? "One-time fee" : "Standalone estimate"}: {service.price}
                       </span>
                     </div>
                     <h3 className="mt-5 text-xl font-bold text-foreground">{service.title}</h3>

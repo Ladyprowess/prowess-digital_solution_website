@@ -12,6 +12,7 @@ import {
   Library,
   Map,
   Menu,
+  Mail,
   Search,
   UsersRound,
   Video,
@@ -28,6 +29,7 @@ const menuGroups = [
   {
     title: "Explore",
     items: [
+      { href: "/events", label: "Events", description: "Workshops and programmes", icon: UsersRound },
       { href: "/blog", label: "Blog", description: "Articles and practical notes", icon: FileText },
       { href: "/videos", label: "Videos", description: "Lessons and useful talks", icon: Video },
       { href: "/resources", label: "Library", description: "Books, guides and templates", icon: Library },
@@ -44,7 +46,8 @@ const menuGroups = [
   {
     title: "Business",
     items: [
-      { href: "/services", label: "For Businesses", description: "Diagnostics, SOPs and support", icon: BriefcaseBusiness },
+      { href: "/about", label: "About us", description: "The people behind Prowess", icon: BriefcaseBusiness },
+      { href: "/contact", label: "Contact", description: "Questions and service enquiries", icon: Mail },
       { href: "/case-studies", label: "Case Studies", description: "Client problems and results", icon: Search },
     ],
   },

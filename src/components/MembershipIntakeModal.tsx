@@ -1,4 +1,5 @@
 "use client";
+import { trackEvent } from "@/lib/analytics";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -60,6 +61,7 @@ export default function MembershipIntakeModal({ open, onClose, plan, interval, c
     };
 
     try {
+      trackEvent("begin_checkout", { flow: "business_membership" });
       const res = await fetch("/api/memberships/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
@@ -68,6 +70,7 @@ export default function MembershipIntakeModal({ open, onClose, plan, interval, c
       const data = await res.json();
 
       if (!res.ok || !data.ok) {
+        trackEvent("checkout_error", { flow: "business_membership" });
         setError(data.error || "Could not start checkout. Please try again.");
         setLoading(false);
         return;
@@ -75,6 +78,7 @@ export default function MembershipIntakeModal({ open, onClose, plan, interval, c
 
       window.location.href = data.authorizationUrl;
     } catch {
+      trackEvent("checkout_error", { flow: "business_membership" });
       setError("Could not start checkout. Please try again.");
       setLoading(false);
     }

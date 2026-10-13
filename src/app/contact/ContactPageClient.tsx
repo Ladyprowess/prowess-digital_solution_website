@@ -1,5 +1,7 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics";
+import { services } from "@/content/site";
 import { useMemo, useState } from "react";
 import Container from "@/components/Container";
 import Button from "@/components/Button";
@@ -26,6 +28,8 @@ type FormState = {
 
 const BUSINESS_STAGES = ["Starting Out", "Growing", "Scaling"];
 const INQUIRY_TYPES = [
+  ...services.map((service) => service.title),
+  "Membership pricing",
   "General Enquiry",
   "Business Clarity Session",
   "Business Audit",
@@ -35,13 +39,13 @@ const INQUIRY_TYPES = [
   "Support",
 ];
 
-export default function ContactPageClient() {
+export default function ContactPageClient({ initialInquiry = "" }: { initialInquiry?: string }) {
   const [form, setForm] = useState<FormState>({
     full_name: "",
     email: "",
     phone: "",
     business_stage: "",
-    inquiry_type: "",
+    inquiry_type: initialInquiry,
     message: "",
     website: "",
   });
@@ -112,6 +116,7 @@ export default function ContactPageClient() {
         return;
       }
 
+      trackEvent("generate_lead", { source: "contact_form" });
       setSent(true);
       setForm({
         full_name: "",
@@ -257,6 +262,9 @@ export default function ContactPageClient() {
                   />
                 </div>
 
+                {form.inquiry_type === "Business Structure Diagnostic" && (
+                  <p className="text-sm text-muted-foreground">Fixed one-time fee: ₦180,000 or $120. Describe your business, current challenges and goals above. We confirm whether the diagnostic is appropriate before providing payment instructions.</p>
+                )}
                 {error ? (
                   <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {error}

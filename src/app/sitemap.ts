@@ -1,3 +1,4 @@
+import { publicContentSitemap } from "@/lib/publicSitemap";
 import { MetadataRoute } from "next";
 import { services } from "@/content/site";
 
@@ -26,7 +27,7 @@ async function getAllWpPostSlugs(): Promise<WPPostLite[]> {
       if (!res.ok) break;
 
       const data = await res.json();
-      const posts = (data?.posts || []) as any[];
+      const posts = (data?.posts || []) as WPPostLite[];
 
       if (!posts.length) break;
 
@@ -52,6 +53,7 @@ async function getAllWpPostSlugs(): Promise<WPPostLite[]> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
+    ...["jobs", "opportunities", "learn", "tools", "career-paths", "skills", "videos", "consultation"].map((path) => ({ url: `${baseUrl}/${path}`, changeFrequency: "weekly" as const, priority: 0.7 })),
     { url: `${baseUrl}/`, lastModified: new Date(), changeFrequency: "monthly", priority: 1.0 },
     { url: `${baseUrl}/services`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.8 },
@@ -73,7 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const wpPosts = await getAllWpPostSlugs();
+  const [wpPosts, contentPages] = await Promise.all([getAllWpPostSlugs(), publicContentSitemap(baseUrl)]);
   const blogPostPages: MetadataRoute.Sitemap = wpPosts.map((p) => ({
     url: `${baseUrl}/blog/${p.slug}`,
     lastModified: p.date ? new Date(p.date) : new Date(),
@@ -81,5 +83,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...servicePages, ...blogPostPages];
+  return [...staticPages, ...servicePages, ...blogPostPages, ...contentPages];
 }

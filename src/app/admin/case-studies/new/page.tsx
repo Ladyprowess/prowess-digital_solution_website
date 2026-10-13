@@ -14,19 +14,11 @@ export default function NewCaseStudyPage() {
   const [beforeState, setBeforeState] = useState("");
   const [afterState, setAfterState] = useState("");
 
-  const [resultsJson, setResultsJson] = useState(
-    `[
-  { "label": "Revenue Growth", "value": "45%" },
-  { "label": "Cash Flow Improvement", "value": "$850/month" }
-]`
-  );
-
-  const [testimonial, setTestimonial] = useState(
-    "The first conversation changed everything. I finally understood what was holding my business back."
-  );
+  const [resultsJson, setResultsJson] = useState("[]");
+  const [testimonial, setTestimonial] = useState("");
 
   const [timelineMonths, setTimelineMonths] = useState<number>(6);
-  const [isPublished, setIsPublished] = useState(true);
+  const [isPublished, setIsPublished] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -87,7 +79,7 @@ export default function NewCaseStudyPage() {
       }
       
       // success
-      setMsg("Saved. Your case study is now live.");
+      setMsg(isPublished ? "Saved. Your case study is now live." : "Saved as a draft.");
       
       // Optionally clear form
       // setTitle(""); setSlug(""); setImageUrl(""); setChallenge(""); setSolution("");

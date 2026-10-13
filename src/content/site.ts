@@ -21,12 +21,11 @@ export const pillars = [
 // other site. Removing the duplicate also gives the five real pillars more
 // breathing room in the nav bar.
 export const navPrimary = [
-  { href: "/jobs", label: "Work" },
+  { href: "/services", label: "Business support" },
+  { href: "/learn", label: "Learning" },
+  { href: "/jobs", label: "Jobs" },
   { href: "/opportunities", label: "Opportunities" },
-  { href: "/learn", label: "Learn" },
-  { href: "/tools", label: "Build" },
-  { href: "/events", label: "Connect" },
-  { href: "/contact", label: "Contact" },
+  { href: "/tools", label: "Tools" },
 ] as const;
 
 export const navMore = [
@@ -130,27 +129,28 @@ export const services: Service[] = [
     icon: "audit",
     title: "Business Structure Diagnostic",
     short:
-      "A fast, focused review of how your business actually runs today. In 48 to 72 hours you get an honest outside look at what is working, what is leaking time or money, and what to fix first.",
-    price: "$180 – $320",
-    cta: "Start the Diagnostic",
+      "A focused review of your business model, offer, pricing, sales process, operations and basic financial tracking, with a written report and a practical 30-day action plan.",
+    price: "₦180,000 or $120",
+    cta: "Enquire about the diagnostic",
     details: {
       description:
-        "A Business Structure Diagnostic is a fast, focused review of how your business actually runs today. In 48 to 72 hours, we look at your workflow, your numbers, and the way decisions get made, and hand you a clear picture of what is working, what is leaking time or money, and what to fix first.\n\nThis is not a long coaching engagement. It is a short, sharp look at your business from the outside, the kind of perspective that is hard to get when you are inside the business every day. We ask the questions you have not had time to ask yourself, and we give you a written plan you can act on immediately.\n\nSolo founders, local service businesses, and small teams everywhere use this as their starting point with us. Whether you are running a service business in Lagos, a shop in London, or a small agency in Buenos Aires, the diagnostic works the same way. We look at what is actually happening in your business, not what your business plan says should be happening.",
+        "The Business Structure Diagnostic helps business owners understand structural gaps, operational bottlenecks, risks and what needs attention first. We assess your business model, target customers, offer, pricing, sales process, daily operations and basic financial tracking.\n\nThe fixed one-time fee is ₦180,000 or $120. Start by describing your business, current challenges and goals in the enquiry form. Prowess Digital Solutions confirms whether the diagnostic is appropriate before providing payment instructions.",
       whoFor: [
-        "Founders who sense something is off but cannot pinpoint exactly where",
-        "Solo business owners and small teams who want an outside, honest look at how things really run",
-        "Local service businesses such as technicians, coaches, and boutique owners who built the business on skill, not systems",
-        "Anyone about to invest more time or money in a business and wanting to know the real state of it first",
+        "Business owners who need clarity on what is not working and what to fix first",
+        "Solo founders and small teams who want to improve their business structure and daily operations",
       ],
       whatYouGet: [
-        "A financial and workflow review of your business as it runs today",
-        "A written report identifying where time or revenue is leaking",
-        "A clear, prioritised action plan you can start using immediately",
-        "A fixed 48 to 72 hour turnaround from the moment we start",
-        "A short call to walk through the findings together",
+        "Business review: an assessment of your business model, target customers, offer, pricing, sales process, daily operations and basic financial tracking.",
+        "Business Structure Diagnostic Report: a written report highlighting structural gaps, operational bottlenecks, risks and areas requiring attention.",
+        "Prioritised Action Plan: a practical 30-day roadmap with recommended actions in order of priority and suggested timelines.",
+        "Tools and recommendations: relevant templates, checklists or tracking tools to help you implement the recommendations.",
+        "Review call: one 45-minute online session to walk through the findings, explain recommendations and answer questions.",
       ],
       notes: [
-        "This is the recommended starting point for anyone new to working with us. Everything else we offer builds on what the diagnostic finds.",
+        "Delivery: five business days, starting when payment has been confirmed and you have submitted all required information.",
+        "Follow-up: one email within seven calendar days after the review call to clarify the report or action plan.",
+        "Not included: bookkeeping, tax or legal advice, implementation of recommended changes, financial statement audits, market research, or preparation of a full business plan.",
+        "Additional calls and ongoing advisory support are not included.",
       ],
     },
   },

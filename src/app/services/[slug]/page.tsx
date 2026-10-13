@@ -95,24 +95,20 @@ export default async function ServicePage({ params }: PageProps) {
               </p>
             </Reveal>
 
-            {includedInPlan ? (
-              <Reveal delay={220} y={14}>
-                <div className="mt-6 text-foreground">
-                  <span className="text-muted-foreground">Included in the </span>
-                  <span className="font-semibold">{includedInPlan.title}</span>
-                  <span className="text-muted-foreground"> membership, from </span>
-                  <span className="font-semibold">${includedInPlan.monthlyPrice.toLocaleString("en-US")}/mo</span>
-                </div>
-              </Reveal>
-            ) : null}
+            <div className="mt-6 rounded-xl border border-border bg-muted p-5">
+              <p className="font-semibold text-foreground">{service.slug === "business-structure-diagnostic" ? "Fixed one-time fee" : "Standalone service estimate"}: {service.price}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Describe your business, current challenges and goals. We confirm whether this service is appropriate before providing payment instructions. Sending an enquiry does not start a subscription or take payment.</p>
+              {includedInPlan && <p className="mt-3 text-sm text-muted-foreground">For ongoing support, this service is also included in the {includedInPlan.title} business membership. <Link className="underline text-primary" href={`/pricing#${includedInPlan.slug}`}>Compare recurring support</Link>.</p>}
+            </div>
 
             <Reveal delay={280} y={18}>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href={includedInPlan ? `/pricing#${includedInPlan.slug}` : "/pricing"}
+                  href={`/contact?service=${service.slug}`}
+                  data-track="service_enquiry" data-offer={service.slug}
                   className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:opacity-95 hover:shadow-md"
                 >
-                  {service.cta}
+                  Enquire about this service
                 </Link>
 
                 <Link

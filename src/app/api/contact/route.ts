@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const message = String(body?.message || "").trim();
 
     // Honeypot
-    const company_site = String(body?.company_site || "").trim();
+    const company_site = String(body?.company_site || body?.website || "").trim();
     if (company_site) return NextResponse.json({ ok: true });
 
     if (!full_name || !email || !email.includes("@") || !inquiry_type || !message) {

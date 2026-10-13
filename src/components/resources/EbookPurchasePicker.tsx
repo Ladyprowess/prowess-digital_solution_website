@@ -1,4 +1,5 @@
 "use client";
+import { trackEvent } from "@/lib/analytics";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -74,6 +75,7 @@ export function EbookPurchasePicker({
     setErr("");
 
     if (selected === "hardcopy" && (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim())) {
+      trackEvent("checkout_error", { flow: "ebook" });
       setErr("Please fill in your delivery details.");
       return;
     }
@@ -83,6 +85,7 @@ export function EbookPurchasePicker({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setErr("Please sign in to continue."); setLoading(false); return; }
 
+      trackEvent("begin_checkout", { flow: "ebook" });
       const res = await fetch("/api/content/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
@@ -98,12 +101,14 @@ export function EbookPurchasePicker({
       });
       const data = await res.json();
       if (!data.ok || !data.authorizationUrl) {
+        trackEvent("checkout_error", { flow: "ebook" });
         setErr(data.error || "Could not start checkout.");
         setLoading(false);
         return;
       }
       window.location.href = data.authorizationUrl;
     } catch {
+      trackEvent("checkout_error", { flow: "ebook" });
       setErr("Something went wrong.");
       setLoading(false);
     }
