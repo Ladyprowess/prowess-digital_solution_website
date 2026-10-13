@@ -40,3 +40,7 @@ SOP refinement: owner rejected the first SOP layout and unreadably scaled popup.
 Owner rejected the overall SOP design. Rebuilt its visual direction with an interactive handover scene, compact two-column procedure cards, reviewed-state feedback and a lighter deliverables layout. Replaced accumulated SOP CSS overrides with a single responsive stylesheet. Preserved readable result preview and existing offer terms. Local completion/preview checks passed, with no mobile overflow or runtime errors; lint and TypeScript passed. Visual direction awaits owner review.
 
 SOP enquiry and motion update: all SOP enquiry CTAs now target an in-page form using `/api/contact` with the SOP Vault inquiry type. Success remains on-page; errors retain inputs, duplicate submissions are guarded, and lead tracking fires only after confirmed success. Hero toggles every five seconds with pause/resume, pauses automatic cycling after manual state selection, and respects reduced-motion preferences. No live enquiry submitted during implementation.
+
+## Go To Market and Offer Playbook
+
+Dedicated page includes an automatically cycling offer/pricing/channel hero with manual pause, an offer-statement builder, three selectable starting-channel plans, visible-result export and an in-page enquiry form using the existing contact backend. Preserve $280–$480 and confirm scope/timing/final fee before payment. Shared enquiry component retains SOP defaults while accepting the Playbook offer details. No live enquiry or deployment performed.

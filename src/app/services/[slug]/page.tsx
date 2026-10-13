@@ -4,6 +4,7 @@ import Link from "next/link";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { services, packages, offerToPackageSlug } from "@/content/site";
+import PlaybookLanding from "@/components/services/PlaybookLanding";
 import SopLanding from "@/components/services/SopLanding";
 import DiagnosticLanding from "@/components/DiagnosticLanding";
 
@@ -59,6 +60,8 @@ export default async function ServicePage({ params }: PageProps) {
   if (service.slug === "business-structure-diagnostic") return <DiagnosticLanding service={service} />;
 
   if (service.slug === "sop-vault") return <SopLanding service={service} />;
+
+  if (service.slug === "go-to-market-offer-playbook") return <PlaybookLanding service={service} />;
 
   const includedInPlan = packages.find((p) => p.slug === offerToPackageSlug[service.slug]) || null;
 
