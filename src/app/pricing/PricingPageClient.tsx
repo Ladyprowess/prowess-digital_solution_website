@@ -100,7 +100,7 @@ export default function PricingPageClient() {
     <div className="pb-16">
 
       <div className="mx-auto max-w-7xl px-6 pt-8 text-sm text-muted-foreground">
-        Looking for a standalone service? <Link href={DIAGNOSTIC_LINK} className="text-primary underline">Explore the diagnostic and enquire about a one-time engagement</Link>. The plans below are recurring business support, separate from premium learning and career-tool access.
+        Looking for the one-time Business Structure Diagnostic? ₦180,000 or $120, delivered in five business days after payment confirmation and receipt of all required information. <Link href={DIAGNOSTIC_LINK} className="text-primary underline">Explore the diagnostic and enquire about a one-time engagement</Link>. The plans below are recurring business support, separate from premium learning and career-tool access.
       </div>
       <AgencyPageHeader
         eyebrow="Pricing"
@@ -231,7 +231,7 @@ export default function PricingPageClient() {
                   )}
 
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-foreground">{p.title}</h3>
+                    <h3 className="text-lg font-bold text-foreground">{p.title} membership</h3>
                     <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{p.purpose}</p>
 
                     <div className="mt-5">
@@ -282,7 +282,7 @@ export default function PricingPageClient() {
                         : "border border-border text-foreground hover:bg-muted"
                     }`}
                   >
-                    Get Started
+                    Choose recurring membership
                   </button>
                 </div>
                 </Reveal>

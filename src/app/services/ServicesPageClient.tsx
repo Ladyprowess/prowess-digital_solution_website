@@ -198,6 +198,9 @@ export default function ServicesPageClient() {
                     </div>
                     <h3 className="mt-5 text-xl font-bold text-foreground">{service.title}</h3>
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.short}</p>
+                    {service.slug === "business-structure-diagnostic" && (
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">Five business days after payment confirmation and receipt of all required information. Includes a written report, 30-day action plan and one 45-minute review call.</p>
+                    )}
                     <div className="mt-5 space-y-2 border-t border-border pt-4">
                       {service.details.whatYouGet.slice(0, 3).map((item) => (
                         <div key={item} className="flex gap-2 text-sm leading-6 text-foreground">
@@ -210,7 +213,7 @@ export default function ServicesPageClient() {
                       href={`/services/${service.slug}`}
                       className="mt-6 inline-flex min-h-10 w-fit items-center gap-2 text-sm font-semibold text-primary transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                      Open service <ArrowRight size={16} aria-hidden="true" />
+                      View scope and enquiry details <ArrowRight size={16} aria-hidden="true" />
                     </Link>
                   </article>
                 </Reveal>

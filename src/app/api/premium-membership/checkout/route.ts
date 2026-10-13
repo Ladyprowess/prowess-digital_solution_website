@@ -10,7 +10,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolu
 // (premium_membership_subscriptions_one_open_per_user) also protects - kept
 // in this one place so the application-level check below and the index
 // stay describing the same invariant.
-const OPEN_STATUSES = ["pending", "active"];
+const OPEN_STATUSES = ["pending", "active", "lapsed"];
 
 // Used by /account/membership to show current status. Deliberately the
 // caller's own most recent row only (not a query into every subscription
@@ -50,11 +50,11 @@ export async function POST(req: Request) {
 
     const pricing = await getPremiumMembershipPricing();
     const requestedCurrency: "USD" | "NGN" = currency === "NGN" ? "NGN" : "USD";
-    const amount = interval === "monthly"
+    let amount = interval === "monthly"
       ? (requestedCurrency === "USD" ? pricing.monthlyUsd : pricing.monthlyNgn)
       : (requestedCurrency === "USD" ? pricing.annualUsd : pricing.annualNgn);
 
-    if (!amount) {
+    if (!Number.isFinite(amount) || !amount || amount <= 0 || (currency != null && currency !== "USD" && currency !== "NGN")) {
       return NextResponse.json({ ok: false, error: "Premium isn't priced in that currency yet." }, { status: 400 });
     }
 
@@ -64,44 +64,31 @@ export async function POST(req: Request) {
     // real guarantee is the partial unique index on the table itself (see
     // the race-handling catch further down); this check just avoids making
     // an unnecessary Flutterwave call in the common (non-racing) case.
-    const { data: openSub } = await supabase
+    const { data: openSub, error: openError } = await supabase
       .from("premium_membership_subscriptions")
       .select("*")
       .eq("user_id", member.id)
       .in("subscription_status", OPEN_STATUSES)
       .maybeSingle();
 
+    if (openError) throw new Error("Could not check existing subscription");
     let subscriptionId: string;
 
-    if (openSub?.subscription_status === "active") {
-      return NextResponse.json({ ok: false, error: "You already have active Premium access." }, { status: 400 });
+    if (openSub?.subscription_status === "active" || openSub?.subscription_status === "lapsed") {
+      return NextResponse.json({ ok: false, error: "You already have a Premium subscription. Resolve or cancel it before starting another." }, { status: 400 });
     }
 
-    if (openSub && openSub.billing_interval === interval && openSub.currency === requestedCurrency) {
-      // Same terms as an unresolved checkout already in progress - reuse
-      // the same row rather than creating a second one. Refresh its stored
-      // amount to the current price before reusing it: if pricing changed
-      // in /admin/settings between the first attempt and this retry, the
-      // row would otherwise keep charging against a stale amount, and
-      // markPremiumMembershipPaid's amount-match check would then reject a
-      // legitimately-paid charge for not matching the (wrong) stored value.
-      subscriptionId = openSub.id;
-      await supabase
-        .from("premium_membership_subscriptions")
-        .update({
-          amount_usd: requestedCurrency === "USD" ? amount : null,
-          amount_ngn: requestedCurrency === "NGN" ? amount : null,
-        })
-        .eq("id", subscriptionId);
-    } else {
-      if (openSub) {
-        // A pending checkout exists but for different terms (interval or
-        // currency changed since the member last tried) - it never got
-        // paid and never will under its old terms, so replace it rather
-        // than leaving an orphaned pending row behind.
-        await supabase.from("premium_membership_subscriptions").delete().eq("id", openSub.id);
+    if (openSub) {
+      if (openSub.billing_interval !== interval || openSub.currency !== requestedCurrency) {
+        return NextResponse.json({ ok: false, error: "An earlier checkout is still pending. Complete or resolve it before changing billing terms." }, { status: 409 });
       }
-
+      if (openSub.checkout_url) return NextResponse.json({ ok: true, authorizationUrl: openSub.checkout_url });
+      if (openSub.flutterwave_reference) return NextResponse.json({ ok: false, error: "Your previous payment is still pending. Please contact support before paying again." }, { status: 409 });
+      subscriptionId = openSub.id;
+      // A row with no provider reference was never offered for payment. Keep its original price.
+      amount = Number(requestedCurrency === "USD" ? openSub.amount_usd : openSub.amount_ngn);
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid pending checkout price");
+    } else {
       const { data: profile } = await supabase
         .from("member_profiles")
         .select("full_name")
@@ -148,12 +135,10 @@ export async function POST(req: Request) {
       currency: requestedCurrency,
     });
 
-    await supabase
-      .from("premium_membership_subscriptions")
-      .update({ flutterwave_plan_id: planId })
-      .eq("id", subscriptionId);
-
     const reference = generateReference("PREM");
+    const { data: claimed, error: referenceError } = await supabase.from("premium_membership_subscriptions")
+      .update({ flutterwave_reference: reference, flutterwave_plan_id: planId }).eq("id", subscriptionId).is("flutterwave_reference", null).eq("payment_status", "pending").select("id");
+    if (referenceError || !claimed?.length) throw new Error("Could not save payment reference. Please try again.");
 
     const { link } = await initializePayment({
       email: member.email,
@@ -165,11 +150,8 @@ export async function POST(req: Request) {
       paymentPlanId: planId,
     });
 
-    await supabase
-      .from("premium_membership_subscriptions")
-      .update({ flutterwave_reference: reference })
-      .eq("id", subscriptionId);
-
+    const { error: linkError } = await supabase.from("premium_membership_subscriptions").update({ checkout_url: link }).eq("id", subscriptionId);
+    if (linkError) throw new Error("Could not save checkout. Contact support before retrying.");
     return NextResponse.json({ ok: true, authorizationUrl: link });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Checkout failed";

@@ -1,3 +1,5 @@
+import { escapeEmail } from "@/lib/payments/emailEscape";
+import { matchesPayment } from "@/lib/payments/validation";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
@@ -72,14 +74,14 @@ function orderConfirmationEmailHtml(params: {
 
   const itemImageCell = mockupUrl
     ? `<td style="width:64px;padding-right:14px;vertical-align:top;">
-        <img src="${mockupUrl}" width="64" height="85" style="width:64px;height:85px;object-fit:cover;border-radius:8px;border:1px solid #dde6e6;display:block;" alt="" />
+        <img src="${escapeEmail(mockupUrl)}" width="64" height="85" style="width:64px;height:85px;object-fit:cover;border-radius:8px;border:1px solid #dde6e6;display:block;" alt="" />
       </td>`
     : "";
 
   const shippingRow = format === "hardcopy" && shippingAddress
     ? `<tr><td style="padding:0 28px 20px;">
         <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#0b1b1d;">Shipping to</p>
-        <p style="margin:0;font-size:13px;line-height:1.5;color:#4b6062;">${shippingAddress}</p>
+        <p style="margin:0;font-size:13px;line-height:1.5;color:#4b6062;">${escapeEmail(shippingAddress)}</p>
       </td></tr>`
     : "";
 
@@ -107,8 +109,8 @@ function orderConfirmationEmailHtml(params: {
                       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                         <tr>
                           <td style="vertical-align:top;">
-                            <p style="margin:0 0 2px;font-size:14.5px;font-weight:700;color:#0b1b1d;">${itemTitle}</p>
-                            <p style="margin:0;font-size:12px;color:#4b6062;">${typeLine}</p>
+                            <p style="margin:0 0 2px;font-size:14.5px;font-weight:700;color:#0b1b1d;">${escapeEmail(itemTitle)}</p>
+                            <p style="margin:0;font-size:12px;color:#4b6062;">${escapeEmail(typeLine)}</p>
                           </td>
                           <td style="vertical-align:top;text-align:right;white-space:nowrap;">
                             <p style="margin:0;font-size:14px;font-weight:700;color:#3d5f62;">${currency} ${amount.toLocaleString()}</p>
@@ -123,8 +125,8 @@ function orderConfirmationEmailHtml(params: {
             <tr>
               <td style="background:#f2f6f6;padding:14px 18px;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                  <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Order number</td><td style="font-size:13px;font-weight:600;color:#0b1b1d;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;">${reference}</td></tr>
-                  <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Date</td><td style="font-size:13px;font-weight:600;color:#0b1b1d;text-align:right;">${dateLabel}</td></tr>
+                  <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Order number</td><td style="font-size:13px;font-weight:600;color:#0b1b1d;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;">${escapeEmail(reference)}</td></tr>
+                  <tr><td style="font-size:12px;color:#4b6062;padding:5px 0;">Date</td><td style="font-size:13px;font-weight:600;color:#0b1b1d;text-align:right;">${escapeEmail(dateLabel)}</td></tr>
                 </table>
               </td>
             </tr>
@@ -136,7 +138,7 @@ function orderConfirmationEmailHtml(params: {
         <td align="center" style="padding:12px 28px 8px;">
           ${format === "hardcopy"
             ? `<p style="margin:0;font-size:13.5px;line-height:1.6;color:#4b6062;">Your physical copy is being prepared. We&rsquo;ll contact you regarding delivery.</p>`
-            : `<a href="${itemUrl}" style="display:inline-block;background:#507c80;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:13px 30px;border-radius:8px;">${ctaLabel}</a>`}
+            : `<a href="${escapeEmail(itemUrl)}" style="display:inline-block;background:#507c80;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:13px 30px;border-radius:8px;">${ctaLabel}</a>`}
         </td>
       </tr>
       <tr>
@@ -170,9 +172,9 @@ function adminSaleNotificationHtml(params: {
   const shippingBlock = format === "hardcopy"
     ? `<h3 style="margin:16px 0 8px;font-size:14px;color:#0b1b1d;">Ship to</h3>
        <table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #dde6e6;border-radius:10px;background:#f2f6f6;padding:4px 18px;width:100%;max-width:460px;">
-         <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;">Name</td><td style="font-size:13px;font-weight:700;text-align:right;">${shippingFullName || "-"}</td></tr>
-         <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Phone</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${shippingPhone || "-"}</td></tr>
-         <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Address</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${shippingAddress || "-"}</td></tr>
+         <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;">Name</td><td style="font-size:13px;font-weight:700;text-align:right;">${escapeEmail(shippingFullName || "-")}</td></tr>
+         <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Phone</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${escapeEmail(shippingPhone || "-")}</td></tr>
+         <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Address</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${escapeEmail(shippingAddress || "-")}</td></tr>
        </table>`
     : "";
 
@@ -181,10 +183,10 @@ function adminSaleNotificationHtml(params: {
     <h2 style="margin:0 0 12px;font-size:16px;color:#0b1b1d;">New sale</h2>
     <p style="margin:0 0 14px;font-size:14px;color:#4b6062;">Someone just bought a resource.</p>
     <table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #dde6e6;border-radius:10px;background:#f2f6f6;padding:4px 18px;width:100%;max-width:460px;">
-      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;">Item</td><td style="font-size:13px;font-weight:700;text-align:right;">${displayTitle}</td></tr>
-      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Buyer email</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${buyerEmail}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;">Item</td><td style="font-size:13px;font-weight:700;text-align:right;">${escapeEmail(displayTitle)}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Buyer email</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${escapeEmail(buyerEmail)}</td></tr>
       <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Amount</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${currency} ${amount.toLocaleString()}</td></tr>
-      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Order number</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${reference}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Order number</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${escapeEmail(reference)}</td></tr>
     </table>
     ${shippingBlock}
   </div>`;
@@ -206,18 +208,19 @@ export async function markContentPurchasePaid(purchaseId: string, reference: str
     .single();
 
   if (purchaseErr || !purchase) return { ok: false as const };
-  if (purchase.payment_status === "paid") return { ok: true as const, alreadyPaid: true };
 
   // Never trust that the currency the client checked out with is what
   // Flutterwave actually charged - re-verify the real transaction and
   // require both the amount and the currency to match what the server
   // computed at checkout time (stored on this row), before marking paid.
   const verified = await verifyTransaction(reference);
-  const amountMatches = Math.round(Number(verified?.amount || 0) * 100) === Math.round(Number(purchase.amount) * 100);
-  const currencyMatches = String(verified?.currency || "").toUpperCase() === String(purchase.currency).toUpperCase();
-  if (verified?.status !== "successful" || !amountMatches || !currencyMatches) {
+  if (!matchesPayment(verified, { reference, type: "content_purchase", idKey: "purchase_id", id: purchase.id,
+    amount: purchase.amount, currency: purchase.currency || "USD", email: purchase.email,
+    storedReference: purchase.flutterwave_reference })) {
     return { ok: false as const };
   }
+
+  if (purchase.payment_status === "paid") return { ok: true as const, alreadyPaid: true };
 
   // The initial select above is not atomic with this update: the webhook
   // and the client-side verify route can both read "pending" before either
@@ -347,7 +350,7 @@ export async function getItemPrice(itemType: string, itemId: string) {
     const { data: resourceData } = await supabase
       .from(table)
       .select("title, access, price_usd, price_ngn, price, price_currency, resource_type, price_read_usd, price_read_ngn, price_download_usd, price_download_ngn, price_hardcopy_usd, price_hardcopy_ngn")
-      .eq("id", itemId)
+      .eq("id", itemId).eq("status", "published")
       .maybeSingle();
     data = resourceData;
 
@@ -364,7 +367,7 @@ export async function getItemPrice(itemType: string, itemId: string) {
     const { data: otherData } = await supabase
       .from(table)
       .select("title, access, price_usd, price_ngn, price, price_currency")
-      .eq("id", itemId)
+      .eq("id", itemId).eq("status", "published")
       .maybeSingle();
     data = otherData;
   }

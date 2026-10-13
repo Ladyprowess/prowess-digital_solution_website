@@ -1,3 +1,4 @@
+import { paymentPrice } from "@/lib/payments/validation";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifyMember } from "@/lib/auth/verifyMember";
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "This item isn't available for purchase." }, { status: 400 });
     }
 
-    const requestedCurrency = currency === "NGN" || currency === "USD" ? currency : null;
+    const requestedCurrency = currency;
     let resolvedCurrency: "USD" | "NGN";
     let amount: number | null;
     let purchaseFormat: "read" | "download" | "hardcopy" | null = null;
@@ -59,12 +60,9 @@ export async function POST(req: Request) {
       purchaseFormat = requestedFormat;
 
       const formatPrice = priced.formats[requestedFormat];
-      resolvedCurrency = requestedCurrency && formatPrice[requestedCurrency === "USD" ? "usd" : "ngn"]
-        ? requestedCurrency
-        : formatPrice.usd
-          ? "USD"
-          : "NGN";
-      amount = resolvedCurrency === "USD" ? formatPrice.usd : formatPrice.ngn;
+      const selected = paymentPrice(formatPrice.usd, formatPrice.ngn, requestedCurrency);
+      if (!selected) return NextResponse.json({ ok: false, error: "This format is not priced in that currency." }, { status: 400 });
+      ({ currency: resolvedCurrency, amount } = selected);
 
       if (requestedFormat === "hardcopy") {
         const fullName = String(shipping?.fullName || "").trim();
@@ -76,12 +74,9 @@ export async function POST(req: Request) {
         shippingFields = { full_name: fullName, phone, address };
       }
     } else {
-      resolvedCurrency = requestedCurrency && priced[requestedCurrency === "USD" ? "usd" : "ngn"]
-        ? requestedCurrency
-        : priced.usd
-          ? "USD"
-          : "NGN";
-      amount = resolvedCurrency === "USD" ? priced.usd : priced.ngn;
+      const selected = paymentPrice(priced.usd, priced.ngn, requestedCurrency);
+      if (!selected) return NextResponse.json({ ok: false, error: "This item is not priced in that currency." }, { status: 400 });
+      ({ currency: resolvedCurrency, amount } = selected);
     }
 
     if (!amount) {
@@ -93,6 +88,7 @@ export async function POST(req: Request) {
       .from("purchases")
       .insert({
         email,
+        user_id: member.id,
         item_type: itemType,
         item_id: itemId,
         amount,
@@ -111,6 +107,9 @@ export async function POST(req: Request) {
     }
 
     const reference = generateReference("CONTENT");
+    const { error: referenceError } = await supabase.from("purchases")
+      .update({ flutterwave_reference: reference }).eq("id", row.id);
+    if (referenceError) throw new Error("Could not save payment reference. Please try again.");
 
     const { link } = await initializePayment({
       email,
@@ -120,8 +119,6 @@ export async function POST(req: Request) {
       callbackUrl: `${SITE_URL}/purchase/success`,
       metadata: { type: "content_purchase", purchase_id: row.id },
     });
-
-    await supabase.from("purchases").update({ flutterwave_reference: reference }).eq("id", row.id);
 
     return NextResponse.json({ ok: true, authorizationUrl: link });
   } catch (err) {

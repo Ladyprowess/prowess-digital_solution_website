@@ -56,10 +56,13 @@ const perks = [
 export default function WorkWithUsPageClient() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
+  const [rolesError, setRolesError] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     const loadRoles = async () => {
       setLoadingRoles(true);
+      setRolesError(false);
       try {
         const res = await fetch("/api/careers/roles", { cache: "no-store" });
         const text = await res.text();
@@ -69,13 +72,14 @@ export default function WorkWithUsPageClient() {
         setRoles(json.items || []);
       } catch (e) {
         console.error(e);
+        setRolesError(true);
         setRoles([]);
       } finally {
         setLoadingRoles(false);
       }
     };
     loadRoles();
-  }, []);
+  }, [retry]);
 
   const hasOpenings = roles.length > 0;
 
@@ -164,6 +168,11 @@ export default function WorkWithUsPageClient() {
             {loadingRoles ? (
               <div className="rounded-2xl border border-border bg-card px-6 py-14 text-center">
                 <p className="text-sm text-muted-foreground">Loading openings…</p>
+              </div>
+            ) : rolesError ? (
+              <div role="alert" className="rounded-2xl border border-border p-6">
+                <p>We could not load the recruitment listings. Please try again.</p>
+                <button type="button" onClick={() => setRetry(value => value + 1)} className="mt-3 text-primary underline">Retry</button>
               </div>
             ) : hasOpenings ? (
               <div className="grid gap-5 md:grid-cols-2">

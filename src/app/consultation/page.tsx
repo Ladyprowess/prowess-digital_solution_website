@@ -156,8 +156,8 @@ export default function ConsultationPage() {
       }
 
       setMsg("Something went wrong. No payment link returned.");
-    } catch (e: any) {
-      setMsg(e?.message || "Network error");
+    } catch (e: unknown) {
+      setMsg(e instanceof Error ? e.message : "Network error");
     } finally {
       setLoading(false);
     }
@@ -172,24 +172,27 @@ export default function ConsultationPage() {
             Book a <span className="text-primary">consultation.</span>
           </>
         }
-        description="Choose a time that works for you. Pay and confirm instantly."
+        description="Choose a consultation service and time. Review its price before booking; paid appointments are confirmed after payment verification."
         proof={[
           "Business days only, Mon-Fri 10:00-17:00",
-          "Instant confirmation by email",
-          "Pay securely, reschedule if needed",
+          "Confirmation follows successful booking",
+          "Review the service and price before payment",
         ]}
       />
 
       <section className="py-10 sm:py-14">
         <Container>
         <div className="mx-auto max-w-4xl">
+          <p className="mb-6 text-sm leading-6 text-muted-foreground">
+            This form books an appointment. To ask a question or request the Business Structure Diagnostic, <a className="text-primary underline" href="/contact?service=business-structure-diagnostic">send an enquiry first</a>. Prowess confirms suitability before sending diagnostic payment instructions. Booking a consultation does not purchase the diagnostic or start a membership.
+          </p>
           <Reveal>
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-10">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">Book a Consultation</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Choose a time that works for you. Pay and confirm instantly.
+                  Choose a consultation service and time. Review its price before booking; paid appointments are confirmed after payment verification.
                 </p>
               </div>
 

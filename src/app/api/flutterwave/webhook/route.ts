@@ -5,7 +5,8 @@ import { markConsultationPaid } from "@/lib/payments/consultation";
 import { markSkillToBusinessPaid } from "@/lib/payments/skillToBusiness";
 import { markContentPurchasePaid } from "@/lib/payments/content";
 import { markPremiumMembershipPaid, markPremiumMembershipRenewalFailed, markPremiumMembershipCancelled } from "@/lib/payments/premiumMembership";
-import { sendEventRegistrationEmails } from "@/lib/events/emails";
+import { markEventPaid } from "@/lib/payments/event";
+import { timingSafeEqual } from "node:crypto";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,9 @@ function verifyFlutterwaveSignature(signature: string | null) {
   if (!signature) return false;
   const secretHash = process.env.FLUTTERWAVE_WEBHOOK_HASH;
   if (!secretHash) return false;
-  return signature === secretHash;
+  const actual = Buffer.from(signature);
+  const expected = Buffer.from(secretHash);
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
 export async function POST(req: Request) {
@@ -42,9 +45,9 @@ export async function POST(req: Request) {
       }
       if (data?.status === "failed" && metadata?.subscription_id) {
         if (metadata?.type === "membership") {
-          await markMembershipRenewalFailed(String(metadata.subscription_id));
+          requireProcessed(await markMembershipRenewalFailed(String(metadata.subscription_id)));
         } else if (metadata?.type === "premium_membership") {
-          await markPremiumMembershipRenewalFailed(String(metadata.subscription_id));
+          requireProcessed(await markPremiumMembershipRenewalFailed(String(metadata.subscription_id)));
         }
       }
       return NextResponse.json({ ok: true });
@@ -53,18 +56,17 @@ export async function POST(req: Request) {
     if (event === "subscription.cancelled") {
       const resolved = await resolveSubscriptionId(data, metadata);
       if (resolved?.table === "membership") {
-        await markMembershipCancelled(resolved.id);
+        requireProcessed(await markMembershipCancelled(resolved.id));
       } else if (resolved?.table === "premium_membership") {
-        await markPremiumMembershipCancelled(resolved.id);
+        requireProcessed(await markPremiumMembershipCancelled(resolved.id));
       }
       return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ ok: true });
   } catch {
-    // Flutterwave expects 200 OK even if we fail internally, to avoid
-    // endless retries on a payload we can't process anyway.
-    return NextResponse.json({ ok: true });
+    // Return failure so the provider can retry temporary reconciliation errors.
+    return NextResponse.json({ ok: false, error: "Webhook processing failed" }, { status: 500 });
   }
 }
 
@@ -74,93 +76,47 @@ async function handleSuccessfulCharge(data: Record<string, unknown>, metadata: R
 
   if (metadata?.type === "membership") {
     const subscriptionId = metadata?.subscription_id as string | undefined;
-    if (!subscriptionId) return NextResponse.json({ ok: true });
-    await markMembershipPaid(subscriptionId, reference);
+    if (!subscriptionId) throw new Error("Missing subscription metadata");
+    requireProcessed(await markMembershipPaid(subscriptionId, reference));
     return NextResponse.json({ ok: true });
   }
 
   if (metadata?.type === "premium_membership") {
     const subscriptionId = metadata?.subscription_id as string | undefined;
-    if (!subscriptionId) return NextResponse.json({ ok: true });
-    await markPremiumMembershipPaid(subscriptionId, reference);
+    if (!subscriptionId) throw new Error("Missing subscription metadata");
+    requireProcessed(await markPremiumMembershipPaid(subscriptionId, reference));
     return NextResponse.json({ ok: true });
   }
 
   if (metadata?.type === "consultation") {
-    await markConsultationPaid(reference);
+    requireProcessed(await markConsultationPaid(reference));
     return NextResponse.json({ ok: true });
   }
 
   if (metadata?.type === "event") {
-    await handleEventPayment(reference, metadata, data);
+    requireProcessed(await markEventPaid(reference));
     return NextResponse.json({ ok: true });
   }
 
   if (metadata?.type === "skill_to_business") {
     const purchaseId = metadata?.purchase_id as string | undefined;
-    if (purchaseId) await markSkillToBusinessPaid(purchaseId, reference);
+    if (!purchaseId) throw new Error("Missing purchase metadata");
+    requireProcessed(await markSkillToBusinessPaid(purchaseId, reference));
     return NextResponse.json({ ok: true });
   }
 
   if (metadata?.type === "content_purchase") {
     const purchaseId = metadata?.purchase_id as string | undefined;
-    if (purchaseId) await markContentPurchasePaid(purchaseId, reference);
+    if (!purchaseId) throw new Error("Missing purchase metadata");
+    requireProcessed(await markContentPurchasePaid(purchaseId, reference));
     return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({ ok: true });
 }
 
-async function handleEventPayment(reference: string, metadata: Record<string, unknown>, charge: Record<string, unknown>) {
-  const supabase = supabaseAdmin();
-
-  const { data: existing } = await supabase
-    .from("event_registrations")
-    .select("id")
-    .eq("flutterwave_reference", reference)
-    .maybeSingle();
-
-  if (existing) return; // already reconciled by the client-side verify call
-
-  const event_id = metadata?.event_id;
-  const full_name = metadata?.full_name;
-  const email = metadata?.email;
-  const phone = metadata?.phone || "";
-  if (!event_id || !full_name) return;
-
-  // Never trust metadata alone - check that this webhook's own charge data
-  // (amount/currency, straight from Flutterwave, not the client) actually
-  // matches one of this event's real prices before registering anyone.
-  const { data: eventRow } = await supabase
-    .from("events")
-    .select("price_usd,price_ngn")
-    .eq("id", event_id)
-    .maybeSingle();
-
-  const chargedCurrency = String(charge?.currency || "").toUpperCase();
-  const expectedAmount = chargedCurrency === "NGN" ? eventRow?.price_ngn : chargedCurrency === "USD" ? eventRow?.price_usd : null;
-  const amountMatches = expectedAmount != null && Math.round(Number(charge?.amount || 0) * 100) === Math.round(Number(expectedAmount) * 100);
-  if (!amountMatches) return;
-
-  await supabase.from("event_registrations").insert([
-    {
-      event_id,
-      full_name: String(full_name).trim(),
-      email: email ? String(email).trim() : null,
-      phone: phone ? String(phone).trim() : null,
-      payment_status: "paid",
-      flutterwave_reference: reference,
-    },
-  ]);
-
-  if (email) {
-    await sendEventRegistrationEmails({
-      eventId: String(event_id),
-      registrantName: String(full_name).trim(),
-      registrantEmail: String(email).trim(),
-      paymentStatus: "paid",
-    }).catch(() => {});
-  }
+function requireProcessed(result: { ok: boolean }) {
+  if (!result.ok) throw new Error("Payment reconciliation failed");
 }
 
 // subscription.cancelled payloads vary by how the plan/subscription was
@@ -206,7 +162,7 @@ async function resolveSubscriptionId(
       .from("premium_membership_subscriptions")
       .select("id")
       .eq("flutterwave_subscription_id", String(subscriptionResourceId))
-      .eq("subscription_status", "active")
+      .in("subscription_status", ["active", "lapsed"])
       .maybeSingle();
     if (byFlwSubId) return { id: byFlwSubId.id, table: "premium_membership" };
   }
@@ -220,7 +176,7 @@ async function resolveSubscriptionId(
     .select("id")
     .eq("flutterwave_plan_id", String(planId))
     .eq("email", email)
-    .eq("subscription_status", "active")
+    .in("subscription_status", ["active", "lapsed"])
     .maybeSingle();
   if (membershipSub) return { id: membershipSub.id, table: "membership" };
 
@@ -229,7 +185,7 @@ async function resolveSubscriptionId(
     .select("id")
     .eq("flutterwave_plan_id", String(planId))
     .eq("email", email)
-    .eq("subscription_status", "active")
+    .in("subscription_status", ["active", "lapsed"])
     .maybeSingle();
   if (premiumSub) return { id: premiumSub.id, table: "premium_membership" };
 

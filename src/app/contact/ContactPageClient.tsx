@@ -273,7 +273,7 @@ export default function ContactPageClient({ initialInquiry = "" }: { initialInqu
 
                 {sent ? (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    Message sent. We will reply soon.
+                    Enquiry received. We will review your message and reply with the next step. No appointment or payment has been made.
                   </div>
                 ) : null}
 
@@ -286,7 +286,7 @@ export default function ContactPageClient({ initialInquiry = "" }: { initialInqu
                 </Button>
 
                 <p className="text-sm text-muted-foreground">
-                  We typically respond within 24 hours during business days (Mon–Fri, 9AM–5PM WAT)
+                  We review enquiries during business hours (Mon–Fri, 9AM–5PM WAT) and reply with the next step.
                 </p>
               </form>
             </div>
@@ -317,7 +317,7 @@ export default function ContactPageClient({ initialInquiry = "" }: { initialInqu
                     <h3 className="font-serif text-xl font-semibold text-foreground">Email</h3>
                     <p className="mt-1 text-base font-medium text-foreground">{CONTACT_EMAIL}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Send us an email anytime. We respond within 24 hours.
+                      Send us an email with your question, business challenges or goals.
                     </p>
                   </div>
                 </div>

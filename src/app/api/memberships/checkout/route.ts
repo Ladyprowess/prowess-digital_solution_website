@@ -45,6 +45,7 @@ export async function POST(req: Request) {
     // The client picks which currency to pay in; the server picks the
     // amount for that currency, never trusting an amount from the client.
     // Falls back to USD if NGN wasn't requested or isn't set for this tier.
+    if (currency != null && currency !== "USD" && currency !== "NGN") return NextResponse.json({ ok: false, error: "Unsupported currency" }, { status: 400 });
     const resolvedCurrency: "USD" | "NGN" = currency === "NGN" && plan.monthlyPriceNGN != null ? "NGN" : "USD";
     const monthlyAmount = resolvedCurrency === "USD" ? plan.monthlyPrice : (plan.monthlyPriceNGN as number);
     const amount = interval === "monthly" ? monthlyAmount : annualTotalPrice(monthlyAmount);
@@ -82,12 +83,16 @@ export async function POST(req: Request) {
       currency: resolvedCurrency,
     });
 
-    await supabase
+    const { error: planError } = await supabase
       .from("membership_subscriptions")
       .update({ flutterwave_plan_id: planId })
       .eq("id", row.id);
 
+    if (planError) throw new Error("Could not save billing plan");
     const reference = generateReference("MEM");
+    const { error: referenceError } = await supabase.from("membership_subscriptions")
+      .update({ flutterwave_reference: reference }).eq("id", row.id);
+    if (referenceError) throw new Error("Could not save payment reference. Please try again.");
 
     const { link } = await initializePayment({
       email,
@@ -98,11 +103,6 @@ export async function POST(req: Request) {
       metadata: { type: "membership", subscription_id: row.id },
       paymentPlanId: planId,
     });
-
-    await supabase
-      .from("membership_subscriptions")
-      .update({ flutterwave_reference: reference })
-      .eq("id", row.id);
 
     return NextResponse.json({ ok: true, authorizationUrl: link });
   } catch (err) {

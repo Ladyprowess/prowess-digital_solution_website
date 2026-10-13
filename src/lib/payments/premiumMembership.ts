@@ -1,3 +1,5 @@
+import { escapeEmail } from "@/lib/payments/emailEscape";
+import { matchesPayment } from "@/lib/payments/validation";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
@@ -29,10 +31,11 @@ export async function hasPremiumAccess(caller: { userId?: string | null; email?:
     .from("premium_membership_subscriptions")
     .select("id")
     .eq("subscription_status", "active")
+    .eq("payment_status", "paid")
     .limit(1);
 
   if (caller.userId && caller.email) {
-    query = query.or(`user_id.eq.${caller.userId},email.eq.${caller.email}`);
+    query = query.or(`user_id.eq.${caller.userId},email.eq.${JSON.stringify(caller.email)}`);
   } else if (caller.userId) {
     query = query.eq("user_id", caller.userId);
   } else if (caller.email) {
@@ -66,6 +69,7 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
     .single();
 
   if (subErr || !sub) return { ok: false as const };
+  if (sub.subscription_status === "cancelled" && sub.payment_status !== "paid") return { ok: false as const };
 
   // Never trust that the currency the client checked out with is what was
   // actually charged - re-verify the real transaction and require both the
@@ -75,9 +79,9 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
   // too, not just the initial one.
   const verified = await verifyTransaction(reference);
   const expectedAmount = sub.currency === "NGN" ? sub.amount_ngn : sub.amount_usd;
-  const amountMatches = expectedAmount != null && Math.round(Number(verified?.amount || 0) * 100) === Math.round(Number(expectedAmount) * 100);
-  const currencyMatches = String(verified?.currency || "").toUpperCase() === String(sub.currency || "USD").toUpperCase();
-  if (verified?.status !== "successful" || !amountMatches || !currencyMatches) {
+  if (!matchesPayment(verified, { reference, type: "premium_membership", idKey: "subscription_id", id: sub.id,
+    amount: expectedAmount, currency: sub.currency || "USD", email: sub.email,
+    storedReference: sub.payment_status === "paid" ? null : sub.flutterwave_reference })) {
     return { ok: false as const };
   }
 
@@ -98,6 +102,10 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
     (verifiedAny?.subscription as { id?: string | number } | undefined)?.id ??
     null;
 
+  if (sub.payment_status === "paid" && (sub.subscription_status === "cancelled" ||
+    (sub.lapsed_at && (!verified.created_at || new Date(verified.created_at).getTime() <= new Date(sub.lapsed_at).getTime())))) {
+    return { ok: true as const, alreadyPaid: true };
+  }
   if (sub.payment_status === "paid") {
     // A renewal charge on an already-paid subscription. Only touch the
     // fields that represent "is this subscription currently in good
@@ -110,7 +118,8 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
       updates.subscription_status = "active";
       updates.lapsed_at = null;
     }
-    await supabase.from("premium_membership_subscriptions").update(updates).eq("id", sub.id);
+    const { error: renewalError } = await supabase.from("premium_membership_subscriptions").update(updates).eq("id", sub.id).neq("subscription_status", "cancelled");
+    if (renewalError) return { ok: false as const };
     return { ok: true as const, alreadyPaid: true };
   }
 
@@ -124,6 +133,7 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
     })
     .eq("id", sub.id)
     .neq("payment_status", "paid")
+    .neq("subscription_status", "cancelled")
     .select("id");
 
   if (updErr) return { ok: false as const };
@@ -142,7 +152,7 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
     subject: `Your ${planTitle} is confirmed`,
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2>You're in${sub.full_name ? `, ${sub.full_name}` : ""}.</h2>
+        <h2>You're in${sub.full_name ? `, ${escapeEmail(sub.full_name)}` : ""}.</h2>
         <p>Your <b>${planTitle}</b> payment has been received (billed ${sub.billing_interval}, ${amountLabel}).</p>
         <p>Every premium CV template and unlimited saved CVs are unlocked on your account now - head to
            <a href="https://prowessdigitalsolutions.com/tools/cv-builder">prowessdigitalsolutions.com/tools/cv-builder</a> to use them.</p>
@@ -174,11 +184,13 @@ export async function markPremiumMembershipRenewalFailed(subscriptionId: string)
     .single();
 
   if (error || !sub) return { ok: false as const };
+  if (sub.payment_status !== "paid" || sub.subscription_status === "cancelled") return { ok: true as const };
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("premium_membership_subscriptions")
     .update({ subscription_status: "lapsed", lapsed_at: new Date().toISOString() })
     .eq("id", sub.id);
+  if (updateError) return { ok: false as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL;
@@ -190,7 +202,7 @@ export async function markPremiumMembershipRenewalFailed(subscriptionId: string)
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>A Premium Membership renewal charge failed</h2>
-          <p><b>Email:</b> ${sub.email} · <b>Billing:</b> ${sub.billing_interval}</p>
+          <p><b>Email:</b> ${escapeEmail(sub.email)} · <b>Billing:</b> ${sub.billing_interval}</p>
           <p>Flutterwave will retry automatically. If it fails 3 times, the subscription is cancelled and you'll get a separate notice.</p>
         </div>
       `,
@@ -219,11 +231,13 @@ export async function markPremiumMembershipCancelled(subscriptionId: string) {
     .single();
 
   if (error || !sub) return { ok: false as const };
+  if (sub.subscription_status === "cancelled") return { ok: true as const };
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("premium_membership_subscriptions")
     .update({ subscription_status: "cancelled", lapsed_at: sub.lapsed_at || new Date().toISOString() })
     .eq("id", sub.id);
+  if (updateError) return { ok: false as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL;
@@ -249,7 +263,7 @@ export async function markPremiumMembershipCancelled(subscriptionId: string) {
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>Premium Membership cancelled</h2>
-          <p><b>Email:</b> ${sub.email} · <b>Billing:</b> ${sub.billing_interval}</p>
+          <p><b>Email:</b> ${escapeEmail(sub.email)} · <b>Billing:</b> ${sub.billing_interval}</p>
         </div>
       `,
     }).catch(() => {});

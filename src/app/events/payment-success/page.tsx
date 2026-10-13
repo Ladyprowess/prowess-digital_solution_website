@@ -15,7 +15,7 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     async function verify() {
-      const reference = getQueryParam("reference");
+      const reference = getQueryParam("tx_ref") || getQueryParam("reference");
 
       if (!reference) {
         setMessage("Missing payment reference.");
@@ -38,7 +38,7 @@ export default function PaymentSuccessPage() {
       setMessage("Payment confirmed. You are registered for the event.");
     }
 
-    verify();
+    verify().catch(() => setMessage("We could not confirm your payment yet. Refresh to retry. Please do not pay again."));
   }, []);
 
   return (

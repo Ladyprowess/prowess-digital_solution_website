@@ -1,6 +1,9 @@
+import { escapeEmail } from "@/lib/payments/emailEscape";
+import { ensureToolGrant } from "@/lib/payments/toolGrant";
+import { matchesPayment } from "@/lib/payments/validation";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
-import { genAccessCode, PREMIUM_TOOL_KEYS, PREMIUM_TOOL_NAMES } from "@/lib/tools/tierAccess";
+import { PREMIUM_TOOL_KEYS, PREMIUM_TOOL_NAMES } from "@/lib/tools/tierAccess";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
 import { formatMoney } from "@/lib/formatMoney";
 
@@ -21,7 +24,6 @@ export async function markSkillToBusinessPaid(purchaseId: string, reference: str
     .single();
 
   if (purchaseErr || !purchase) return { ok: false as const };
-  if (purchase.payment_status === "paid") return { ok: true as const, alreadyPaid: true };
 
   // This previously did no amount/currency verification at all - trusted
   // that a webhook or verify call for this purchase_id meant it was really
@@ -29,29 +31,15 @@ export async function markSkillToBusinessPaid(purchaseId: string, reference: str
   // the amount the server computed at checkout time (stored on this row).
   const verified = await verifyTransaction(reference);
   const expectedAmount = purchase.currency === "NGN" ? purchase.amount_ngn : purchase.amount_usd;
-  const amountMatches = expectedAmount != null && Math.round(Number(verified?.amount || 0) * 100) === Math.round(Number(expectedAmount) * 100);
-  const currencyMatches = String(verified?.currency || "").toUpperCase() === String(purchase.currency || "USD").toUpperCase();
-  if (verified?.status !== "successful" || !amountMatches || !currencyMatches) {
+  if (!matchesPayment(verified, { reference, type: "skill_to_business", idKey: "purchase_id", id: purchase.id,
+    amount: expectedAmount, currency: purchase.currency || "USD", email: purchase.email,
+    storedReference: purchase.flutterwave_reference })) {
     return { ok: false as const };
   }
 
-  const { error: updErr } = await supabase
-    .from("skill_to_business_purchases")
-    .update({ payment_status: "paid", flutterwave_reference: reference })
-    .eq("id", purchase.id)
-    .neq("payment_status", "paid");
+  if (purchase.payment_status === "paid") return { ok: true as const, alreadyPaid: true };
 
-  if (updErr) return { ok: false as const };
-
-  const fromEmail = process.env.RESEND_FROM_EMAIL!;
-  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
-
-  // Full access to every premium tool for one year - this program includes
-  // the whole suite, unlike membership tiers which are scoped per plan.
-  const accessCode = genAccessCode();
-
-  await supabase.from("client_codes").insert({
-    code: accessCode,
+  const accessCode = await ensureToolGrant(`skill_to_business:${purchase.id}`, {
     name: purchase.full_name,
     email: purchase.email,
     business: purchase.skill_or_business,
@@ -64,6 +52,23 @@ export async function markSkillToBusinessPaid(purchaseId: string, reference: str
     plan_slug: "skill-to-business",
   });
 
+
+  const { data: updatedRows, error: updErr } = await supabase
+    .from("skill_to_business_purchases")
+    .update({ payment_status: "paid", flutterwave_reference: reference })
+    .eq("id", purchase.id)
+    .neq("payment_status", "paid")
+    .select("id");
+
+  if (updErr) return { ok: false as const };
+  if (!updatedRows?.length) return { ok: true as const, alreadyPaid: true };
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL!;
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
+
+  // Full access to every premium tool for one year - this program includes
+  // the whole suite, unlike membership tiers which are scoped per plan.
+
   const toolsList = PREMIUM_TOOL_KEYS.map((t) => `<li>${PREMIUM_TOOL_NAMES[t]}</li>`).join("");
 
   await resend.emails.send({
@@ -72,7 +77,7 @@ export async function markSkillToBusinessPaid(purchaseId: string, reference: str
     subject: "You're enrolled - Skill to Business",
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2>You're in, ${purchase.full_name}.</h2>
+        <h2>You're in, ${escapeEmail(purchase.full_name)}.</h2>
         <p>Your Skill to Business enrollment payment has been received.</p>
         <p>Here is what happens next: we will reach out to you directly to schedule your
            Business Foundation Session and get your Starter Pack to you.</p>
@@ -94,10 +99,10 @@ export async function markSkillToBusinessPaid(purchaseId: string, reference: str
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>New Skill to Business enrollment</h2>
-        <p><b>Name:</b> ${purchase.full_name}</p>
-        <p><b>Email:</b> ${purchase.email}</p>
-        <p><b>Phone:</b> ${purchase.phone || "-"}</p>
-        <p><b>Skill / business:</b> ${purchase.skill_or_business}</p>
+        <p><b>Name:</b> ${escapeEmail(purchase.full_name)}</p>
+        <p><b>Email:</b> ${escapeEmail(purchase.email)}</p>
+        <p><b>Phone:</b> ${escapeEmail(purchase.phone || "-")}</p>
+        <p><b>Skill / business:</b> ${escapeEmail(purchase.skill_or_business)}</p>
         <p><b>Amount:</b> ${formatMoney(expectedAmount, (purchase.currency as "USD" | "NGN") || "USD")}</p>
         <p><b>Ref:</b> ${reference}</p>
         <p><b>Tools access code auto-issued:</b> ${accessCode} (all tools, 1 year)</p>

@@ -25,6 +25,7 @@ export async function POST(req: Request) {
 
     // The client picks which currency to pay in; the server picks the
     // amount for that currency, never trusting an amount from the client.
+    if (currency != null && currency !== "USD" && currency !== "NGN") return NextResponse.json({ ok: false, error: "Unsupported currency" }, { status: 400 });
     const resolvedCurrency: "USD" | "NGN" = currency === "NGN" && PRICE_NGN != null ? "NGN" : "USD";
     const amount = resolvedCurrency === "USD" ? PRICE_USD : (PRICE_NGN as number);
 
@@ -49,6 +50,9 @@ export async function POST(req: Request) {
     }
 
     const reference = generateReference("STB");
+    const { error: referenceError } = await supabase.from("skill_to_business_purchases")
+      .update({ flutterwave_reference: reference }).eq("id", row.id);
+    if (referenceError) throw new Error("Could not save payment reference. Please try again.");
 
     const { link } = await initializePayment({
       email,
@@ -58,11 +62,6 @@ export async function POST(req: Request) {
       callbackUrl: `${SITE_URL}/skill-to-business/success`,
       metadata: { type: "skill_to_business", purchase_id: row.id },
     });
-
-    await supabase
-      .from("skill_to_business_purchases")
-      .update({ flutterwave_reference: reference })
-      .eq("id", row.id);
 
     return NextResponse.json({ ok: true, authorizationUrl: link });
   } catch (err) {

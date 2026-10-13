@@ -1,3 +1,4 @@
+import { paymentPrice } from "@/lib/payments/validation";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
 
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("id,registration_type,price_usd,price_ngn")
+      .select("id,registration_type,price_usd,price_ngn,status,date")
       .eq("id", event_id)
       .limit(1)
       .single();
@@ -29,6 +30,9 @@ export async function POST(req: Request) {
     if (eventError || !event) {
       return NextResponse.json({ error: "Event not found." }, { status: 404 });
     }
+
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    if (event.status !== "published" || (event.date && event.date < today)) return NextResponse.json({ error: "Registration is closed." }, { status: 400 });
 
     // FREE EVENT
     if (event.registration_type === "free") {
@@ -60,20 +64,13 @@ export async function POST(req: Request) {
     // requested, never trusting an amount from the client. Falls back to
     // whichever currency the event actually has a price in if the client
     // didn't send one (legacy single-currency events, or an old client).
-    const requestedCurrency = currency === "NGN" || currency === "USD" ? currency : null;
-    const resolvedCurrency = requestedCurrency && (requestedCurrency === "USD" ? event.price_usd : event.price_ngn)
-      ? requestedCurrency
-      : event.price_usd
-        ? "USD"
-        : "NGN";
-    const amount = Number((resolvedCurrency === "USD" ? event.price_usd : event.price_ngn) || 0);
-
-    if (!amount || amount < 1) {
-      return NextResponse.json({ error: "This event isn't priced in that currency." }, { status: 400 });
-    }
+    if (event.registration_type !== "paid") return NextResponse.json({ error: "Use this event’s registration instructions." }, { status: 400 });
+    const selected = paymentPrice(event.price_usd, event.price_ngn, currency);
+    if (!selected) return NextResponse.json({ error: "This event is not priced in that currency." }, { status: 400 });
+    const { currency: resolvedCurrency, amount } = selected;
 
     const reference = generateReference("EVT");
-    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/events/payment-success`;
+    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com"}/events/payment-success`;
 
     const { link } = await initializePayment({
       email: String(email).trim(),
@@ -83,6 +80,8 @@ export async function POST(req: Request) {
       callbackUrl,
       metadata: {
         type: "event",
+        checkout_amount: amount,
+        checkout_currency: resolvedCurrency,
         event_id,
         full_name: String(full_name).trim(),
         email: String(email).trim(),

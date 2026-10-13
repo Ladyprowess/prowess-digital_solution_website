@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 
 type Params = {
+  eventId?: string;
   summary: string;
   description?: string;
   startISO: string;
@@ -36,9 +37,11 @@ export async function createGoogleEvent(p: Params) {
 
   const calendar = google.calendar({ version: "v3", auth });
 
+  try {
   const res = await calendar.events.insert({
     calendarId,
     requestBody: {
+      ...(p.eventId ? { id: p.eventId } : {}),
       summary: p.summary,
       description: p.description || "",
       start: { dateTime: p.startISO, timeZone: p.timezone },
@@ -47,4 +50,8 @@ export async function createGoogleEvent(p: Params) {
   });
 
   return res.data.id || null;
+  } catch (error) {
+    if (p.eventId && (error as { code?: number }).code === 409) return p.eventId;
+    throw error;
+  }
 }

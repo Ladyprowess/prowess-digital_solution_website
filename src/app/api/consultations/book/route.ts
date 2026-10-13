@@ -25,6 +25,9 @@ export async function POST(req: Request) {
     const scheduled_time = String(body?.scheduled_time || "").trim(); // HH:mm
     const timezone = String(body?.timezone || "Africa/Lagos").trim();
     const notes = body?.notes ? String(body.notes).trim() : null;
+    if (body?.currency != null && body.currency !== "NGN" && body.currency !== "USD") {
+      return NextResponse.json({ ok: false, error: "Unsupported currency." }, { status: 400 });
+    }
     const requestedCurrency = body?.currency === "NGN" ? "NGN" : body?.currency === "USD" ? "USD" : null;
 
     if (!service_id || !full_name || !email || !scheduled_date || !scheduled_time) {
@@ -53,12 +56,13 @@ export async function POST(req: Request) {
     }
     const { currency, amount } = price;
     const duration_minutes = Number(service.duration_minutes || 30);
+    if (!Number.isFinite(duration_minutes) || duration_minutes <= 0) return NextResponse.json({ ok: false, error: "Invalid service duration." }, { status: 400 });
     const isPaid = amount > 0;
 
     // 2) Compute start_at / end_at
     const startISO = buildStartISO(scheduled_date, scheduled_time);
     const start = new Date(startISO);
-    if (Number.isNaN(start.getTime())) {
+    if (Number.isNaN(start.getTime()) || start.getTime() <= Date.now()) {
       return NextResponse.json({ ok: false, error: "Invalid date/time selected." }, { status: 400 });
     }
 
@@ -98,7 +102,7 @@ export async function POST(req: Request) {
 
     // Handle insert errors properly (including duplicate slot)
     if (insErr || !booking) {
-      const pgErr = insErr as any;
+      const pgErr = insErr;
     
       if (pgErr?.code === "23505") {
         return NextResponse.json(
@@ -119,6 +123,7 @@ export async function POST(req: Request) {
     // ✅ FREE => confirm immediately (calendar + email)
     if (!isPaid) {
       const gEventId = await createGoogleEvent({
+        eventId: `c${booking.id.replace(/-/g, "")}`,
         summary: `Consultation: ${service.name}`,
         description: `Booked by: ${booking.full_name}\nEmail: ${booking.email}\nPhone: ${
           booking.phone || "-"
@@ -148,6 +153,7 @@ return NextResponse.json({ ok: false, error: "Failed to send confirmation email.
 }
 
 if (marked && marked.length > 0) {
+try {
 await sendConsultationEmail({
   to: booking.email,
   name: booking.full_name,
@@ -156,13 +162,17 @@ await sendConsultationEmail({
   endISO: booking.end_at,
   timezone: booking.timezone || "Africa/Lagos",
 });
+} catch (error) {
+  await supabase.from("consultation_bookings").update({ confirmation_email_sent_at: null }).eq("id", booking.id);
+  throw error;
+}
 }
     
       return NextResponse.json({ ok: true, mode: "free", booking_id: booking.id }, { status: 200 });
     }
     // ✅ PAID => Flutterwave initialise
     const safeRef = String(booking.flutterwave_reference); // guaranteed for paid
-    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/consultation/success?reference=${encodeURIComponent(
+    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com"}/consultation/success?reference=${encodeURIComponent(
       safeRef
     )}`;
 

@@ -18,6 +18,8 @@ function secretKey() {
 async function flwFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${FLW_BASE}${path}`, {
     ...options,
+    cache: "no-store",
+    signal: options.signal || AbortSignal.timeout(20000),
     headers: {
       Authorization: `Bearer ${secretKey()}`,
       "Content-Type": "application/json",
@@ -63,12 +65,13 @@ export async function getOrCreatePaymentPlan(params: {
 }): Promise<string> {
   const { slug, title, interval, amount, currency } = params;
   const supabase = supabaseAdmin();
+  const pricedSlug = `${slug}:${Math.round(amount * 100)}`;
 
   const { data: existing } = await supabase
     .from("payment_plans")
     .select("plan_id")
     .eq("provider", "flutterwave")
-    .eq("slug", slug)
+    .eq("slug", pricedSlug)
     .eq("interval", interval)
     .eq("currency", currency)
     .maybeSingle();
@@ -91,7 +94,7 @@ export async function getOrCreatePaymentPlan(params: {
 
   await supabase.from("payment_plans").insert({
     provider: "flutterwave",
-    slug,
+    slug: pricedSlug,
     interval,
     currency,
     plan_id: planId,
@@ -116,6 +119,7 @@ export async function initializePayment(params: {
 }) {
   const { email, amount, currency, reference, callbackUrl, metadata, paymentPlanId } = params;
 
+  if (!Number.isFinite(amount) || amount <= 0 || !["USD", "NGN"].includes(currency)) throw new Error("Invalid payment price");
   const result = await flwFetch("/payments", {
     method: "POST",
     body: JSON.stringify({
@@ -129,8 +133,10 @@ export async function initializePayment(params: {
     }),
   });
 
+  const link = result?.data?.link;
+  if (typeof link !== "string" || !link.startsWith("https://")) throw new Error("Payment provider did not return a checkout link");
   return {
-    link: result?.data?.link as string,
+    link,
     reference,
   };
 }
@@ -139,8 +145,10 @@ export async function initializePayment(params: {
 // reference, not Flutterwave's internal numeric transaction id), never the
 // client's say-so.
 export async function verifyTransaction(reference: string) {
+  if (typeof reference !== "string" || !reference.trim() || reference.length > 200) throw new Error("Invalid payment reference");
   const result = await flwFetch(
     `/transactions/verify_by_reference?tx_ref=${encodeURIComponent(reference)}`
   );
+  if (result?.data?.tx_ref !== reference) throw new Error("Payment reference mismatch");
   return result?.data;
 }

@@ -1,6 +1,9 @@
+import { escapeEmail } from "@/lib/payments/emailEscape";
+import { ensureToolGrant } from "@/lib/payments/toolGrant";
+import { matchesPayment } from "@/lib/payments/validation";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
-import { genAccessCode, toolsForPlan, PREMIUM_TOOL_NAMES } from "@/lib/tools/tierAccess";
+import { toolsForPlan, PREMIUM_TOOL_NAMES } from "@/lib/tools/tierAccess";
 import { verifyTransaction } from "@/lib/payments/flutterwave";
 import { formatMoney } from "@/lib/formatMoney";
 
@@ -20,6 +23,7 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     .single();
 
   if (subErr || !sub) return { ok: false as const };
+  if (sub.subscription_status === "cancelled" && sub.payment_status !== "paid") return { ok: false as const };
 
   // Never trust that the currency the client checked out with is what was
   // actually charged - re-verify the real transaction and require both the
@@ -29,12 +33,16 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
   // renewal charge too, not just the initial one.
   const verified = await verifyTransaction(reference);
   const expectedAmount = sub.currency === "NGN" ? sub.amount_ngn : sub.amount_usd;
-  const amountMatches = expectedAmount != null && Math.round(Number(verified?.amount || 0) * 100) === Math.round(Number(expectedAmount) * 100);
-  const currencyMatches = String(verified?.currency || "").toUpperCase() === String(sub.currency || "USD").toUpperCase();
-  if (verified?.status !== "successful" || !amountMatches || !currencyMatches) {
+  if (!matchesPayment(verified, { reference, type: "membership", idKey: "subscription_id", id: sub.id,
+    amount: expectedAmount, currency: sub.currency || "USD", email: sub.email,
+    storedReference: sub.payment_status === "paid" ? null : sub.flutterwave_reference })) {
     return { ok: false as const };
   }
 
+  if (sub.payment_status === "paid" && (sub.subscription_status === "cancelled" ||
+    (sub.lapsed_at && (!verified.created_at || new Date(verified.created_at).getTime() <= new Date(sub.lapsed_at).getTime())))) {
+    return { ok: true as const, alreadyPaid: true };
+  }
   if (sub.payment_status === "paid") {
     // A renewal charge on an already-paid subscription - the access code
     // from the first charge is still valid, so don't re-send emails or
@@ -42,41 +50,17 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     // renewal failed and this one recovered before Flutterwave cancelled
     // the subscription outright.
     if (sub.subscription_status === "lapsed") {
-      await supabase
+      const { error: renewalError } = await supabase
         .from("membership_subscriptions")
         .update({ subscription_status: "active", lapsed_at: null, flutterwave_reference: reference })
-        .eq("id", sub.id);
+        .eq("id", sub.id).eq("subscription_status", "lapsed");
+      if (renewalError) return { ok: false as const };
     }
     return { ok: true as const, alreadyPaid: true };
   }
 
-  const { error: updErr } = await supabase
-    .from("membership_subscriptions")
-    .update({
-      payment_status: "paid",
-      flutterwave_reference: reference,
-      subscription_status: "active",
-      lapsed_at: null,
-    })
-    .eq("id", sub.id)
-    .neq("payment_status", "paid");
-
-  if (updErr) return { ok: false as const };
-
-  const fromEmail = process.env.RESEND_FROM_EMAIL!;
-  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
-  const planTitle = String(sub.plan_slug)
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c: string) => c.toUpperCase());
-
-  // Auto-issue a tools access code scoped to exactly what this tier includes,
-  // so the client can get into their tools immediately rather than waiting
-  // on a manual admin step.
   const unlockedTools = toolsForPlan(sub.plan_slug);
-  const accessCode = genAccessCode();
-
-  await supabase.from("client_codes").insert({
-    code: accessCode,
+  const accessCode = await ensureToolGrant(`membership:${sub.id}`, {
     name: sub.full_name,
     email: sub.email,
     business: sub.business_name,
@@ -88,6 +72,33 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     plan_slug: sub.plan_slug,
   });
 
+
+  const { data: updatedRows, error: updErr } = await supabase
+    .from("membership_subscriptions")
+    .update({
+      payment_status: "paid",
+      flutterwave_reference: reference,
+      subscription_status: "active",
+      lapsed_at: null,
+    })
+    .eq("id", sub.id)
+    .neq("payment_status", "paid")
+    .neq("subscription_status", "cancelled")
+    .select("id");
+
+  if (updErr) return { ok: false as const };
+  if (!updatedRows?.length) return { ok: true as const, alreadyPaid: true };
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL!;
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
+  const planTitle = String(sub.plan_slug)
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+  // Auto-issue a tools access code scoped to exactly what this tier includes,
+  // so the client can get into their tools immediately rather than waiting
+  // on a manual admin step.
+
   const toolsList = unlockedTools.length
     ? unlockedTools.map((t) => `<li>${PREMIUM_TOOL_NAMES[t]}</li>`).join("")
     : "<li>No premium tools are included on this tier.</li>";
@@ -98,10 +109,10 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     subject: `Your ${planTitle} membership is confirmed`,
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2>You're in - thank you, ${sub.full_name}.</h2>
+        <h2>You're in - thank you, ${escapeEmail(sub.full_name)}.</h2>
         <p>Your <b>${planTitle}</b> membership payment has been received (billed ${sub.billing_interval}).</p>
         <p>Here is what happens next: we have your business details and what you would like us to focus on
-           (${sub.service_focus}), and we will reach out to you directly within 24 hours to get started.</p>
+           (${escapeEmail(sub.service_focus)}), and we will reach out to you directly within 24 hours to get started.</p>
         <p>Your tools access is ready right now. Your access code is:</p>
         <p style="font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 1px;">${accessCode}</p>
         <p>This code unlocks:</p>
@@ -119,13 +130,13 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>New ${planTitle} membership (${sub.billing_interval})</h2>
-        <p><b>Name:</b> ${sub.full_name}</p>
-        <p><b>Email:</b> ${sub.email}</p>
-        <p><b>Phone:</b> ${sub.phone || "-"}</p>
-        <p><b>Business:</b> ${sub.business_name}</p>
-        <p><b>Website:</b> ${sub.website || "-"}</p>
-        <p><b>What their business does:</b> ${sub.business_description}</p>
-        <p><b>What they want us to focus on:</b> ${sub.service_focus}</p>
+        <p><b>Name:</b> ${escapeEmail(sub.full_name)}</p>
+        <p><b>Email:</b> ${escapeEmail(sub.email)}</p>
+        <p><b>Phone:</b> ${escapeEmail(sub.phone || "-")}</p>
+        <p><b>Business:</b> ${escapeEmail(sub.business_name)}</p>
+        <p><b>Website:</b> ${escapeEmail(sub.website || "-")}</p>
+        <p><b>What their business does:</b> ${escapeEmail(sub.business_description)}</p>
+        <p><b>What they want us to focus on:</b> ${escapeEmail(sub.service_focus)}</p>
         <p><b>Amount:</b> ${formatMoney(expectedAmount, (sub.currency as "USD" | "NGN") || "USD")} (${sub.billing_interval})</p>
         <p><b>Ref:</b> ${reference}</p>
         <p><b>Tools access code auto-issued:</b> ${accessCode} (${unlockedTools.join(", ") || "no tools on this tier"})</p>
@@ -153,11 +164,13 @@ export async function markMembershipRenewalFailed(subscriptionId: string) {
     .single();
 
   if (error || !sub) return { ok: false as const };
+  if (sub.payment_status !== "paid" || sub.subscription_status === "cancelled") return { ok: true as const };
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("membership_subscriptions")
     .update({ subscription_status: "lapsed", lapsed_at: new Date().toISOString() })
     .eq("id", sub.id);
+  if (updateError) return { ok: false as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
@@ -169,7 +182,7 @@ export async function markMembershipRenewalFailed(subscriptionId: string) {
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>A membership renewal charge failed</h2>
-        <p><b>Name:</b> ${sub.full_name} · <b>Email:</b> ${sub.email}</p>
+        <p><b>Name:</b> ${escapeEmail(sub.full_name)} · <b>Email:</b> ${escapeEmail(sub.email)}</p>
         <p><b>Plan:</b> ${sub.plan_slug} (${sub.billing_interval})</p>
         <p>Flutterwave will retry automatically. If it fails 3 times, the subscription is cancelled and you'll get a separate notice.</p>
       </div>
@@ -194,17 +207,26 @@ export async function markMembershipCancelled(subscriptionId: string) {
     .single();
 
   if (error || !sub) return { ok: false as const };
+  if (sub.subscription_status === "cancelled") return { ok: true as const };
 
-  await supabase
-    .from("membership_subscriptions")
-    .update({ subscription_status: "cancelled", lapsed_at: sub.lapsed_at || new Date().toISOString() })
-    .eq("id", sub.id);
-
-  await supabase
+  let revoke = supabase
     .from("client_codes")
     .update({ status: "revoked" })
     .eq("email", sub.email)
     .eq("plan_slug", sub.plan_slug);
+  const { data: scoped } = await supabase.from("client_codes").select("code").eq("payment_key", `membership:${sub.id}`).limit(1);
+  if (scoped?.length) revoke = revoke.eq("payment_key", `membership:${sub.id}`);
+  else revoke = revoke.is("payment_key", null);
+  const { error: revokeError } = await revoke;
+  if (revokeError) return { ok: false as const };
+
+  const { error: updateError } = await supabase
+    .from("membership_subscriptions")
+    .update({ subscription_status: "cancelled", lapsed_at: sub.lapsed_at || new Date().toISOString() })
+    .eq("id", sub.id);
+  if (updateError) return { ok: false as const };
+
+
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
@@ -229,7 +251,7 @@ export async function markMembershipCancelled(subscriptionId: string) {
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Membership cancelled</h2>
-        <p><b>Name:</b> ${sub.full_name} · <b>Email:</b> ${sub.email}</p>
+        <p><b>Name:</b> ${escapeEmail(sub.full_name)} · <b>Email:</b> ${escapeEmail(sub.email)}</p>
         <p><b>Plan:</b> ${sub.plan_slug} (${sub.billing_interval})</p>
         <p>Tools access has been revoked.</p>
       </div>

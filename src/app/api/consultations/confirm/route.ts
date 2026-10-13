@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { sendConsultationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -32,28 +31,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const { data: service } = await supabase
-      .from("consultation_services")
-      .select("name")
-      .eq("id", booking.service_id)
-      .single();
-
     if (booking.payment_status !== "free") {
-      await supabase
-        .from("consultation_bookings")
-        .update({ payment_status: "free" })
-        .eq("id", booking_id);
+      return NextResponse.json({ ok: false, error: "This booking requires payment verification." }, { status: 400 });
     }
-
-    await sendConsultationEmail({
-      to: booking.email,
-      name: booking.full_name,
-      service_name: service?.name || "Consultation",
-      startISO: booking.start_at,
-      endISO: booking.end_at,
-      timezone: booking.timezone || "Africa/Lagos",
-    });
-
+    // Booking creation handles confirmation. This endpoint must never change payment state or resend email.
     return NextResponse.json({ ok: true, status: "free" });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Server error";

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 function searchTermsForQuery(q: string): string[] {
-  const terms = [q];
+  const terms = [q, ...q.split(/\s+/).filter(term => term.length > 2)];
   const normalized = q.toLowerCase();
   if (normalized.includes("sexual wellness")) {
     terms.push("sex");
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const q = (searchParams.get("q") || "").trim();
+    const q = (searchParams.get("q") || "").trim().slice(0, 200);
     const category = (searchParams.get("category") || "").trim();
     const stage = (searchParams.get("stage") || "").trim();
     const type = (searchParams.get("type") || "").trim();
@@ -85,7 +85,7 @@ export async function GET(req: Request) {
     // search
     if (q) {
       const searchTerms = searchTermsForQuery(q);
-      query = query.or(searchTerms.flatMap((term) => [`title.ilike.%${term}%`, `description.ilike.%${term}%`]).join(","));
+      query = query.or(searchTerms.flatMap((term) => [`title.ilike.${JSON.stringify(`%${term}%`)}`, `description.ilike.${JSON.stringify(`%${term}%`)}`]).join(","));
     }
 
     // Newest-first only -- "popular"/"rating" sorts used to order by

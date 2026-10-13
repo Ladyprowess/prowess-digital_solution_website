@@ -455,7 +455,7 @@ export default function ModernHomePage() {
           <div className="inline-flex items-center rounded-md bg-primary-foreground/10 px-4 py-2 text-xs font-semibold text-primary-foreground ring-1 ring-primary-foreground/15">Tools</div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">Tools to help you move forward</h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/85">
-            Use calculators, trackers, guides, templates, and business helpers today. Career tools like CV and interview prep are next.
+            Explore business calculators and trackers alongside CV Builder, CV Checker, Interview Prep and Portfolio Builder. Each tool explains its features and access requirements.
           </p>
           <Link href="/tools" className="mt-8 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary-foreground px-7 text-sm font-semibold text-primary transition-[background-color,transform] duration-150 ease-out hover:scale-[1.01] hover:bg-primary-foreground/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
             Explore all tools

@@ -38,7 +38,7 @@ export async function hasEntitlement(
     .limit(1);
 
   if (caller.userId && caller.email) {
-    query = query.or(`user_id.eq.${caller.userId},email.eq.${caller.email}`);
+    query = query.or(`user_id.eq.${caller.userId},email.eq.${JSON.stringify(caller.email)}`);
   } else if (caller.userId) {
     query = query.eq("user_id", caller.userId);
   } else if (caller.email) {
@@ -75,7 +75,7 @@ export async function getPurchasedFormats(
     .not("format", "is", null);
 
   if (caller.userId && caller.email) {
-    query = query.or(`user_id.eq.${caller.userId},email.eq.${caller.email}`);
+    query = query.or(`user_id.eq.${caller.userId},email.eq.${JSON.stringify(caller.email)}`);
   } else if (caller.userId) {
     query = query.eq("user_id", caller.userId);
   } else if (caller.email) {

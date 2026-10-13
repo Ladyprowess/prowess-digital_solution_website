@@ -190,6 +190,12 @@ function ResourcesPageContent() {
                   {loading ? "Loading books and guides..." : loadError ? "Resources are temporarily unavailable." : `${total} resource${total === 1 ? "" : "s"} found`}
                 </p>
               </div>
+              {!activeFiltersPresent && (
+                <div className="mt-6 flex justify-center gap-5">
+                  <Link href="/learn" className="text-primary underline">Explore learning</Link>
+                  <Link href="/videos" className="text-primary underline">Watch videos</Link>
+                </div>
+              )}
               {activeFiltersPresent && (
                 <button
                   type="button"
@@ -230,8 +236,14 @@ function ResourcesPageContent() {
               <Library className="mx-auto text-primary" size={28} strokeWidth={1.6} aria-hidden="true" />
               <h2 className="mt-4 text-lg font-semibold text-foreground">No resources found</h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                {activeFiltersPresent ? "No resource matches your current search or filters." : "New ebooks, guides, templates and checklists will appear here when they are published."}
+                {activeFiltersPresent ? "No resource matches your current search or filters." : "There are no published resources in the library right now. You can explore courses and videos while new material is prepared."}
               </p>
+              {!activeFiltersPresent && (
+                <div className="mt-6 flex justify-center gap-5">
+                  <Link href="/learn" className="text-primary underline">Explore learning</Link>
+                  <Link href="/videos" className="text-primary underline">Watch videos</Link>
+                </div>
+              )}
               {activeFiltersPresent && (
                 <button
                   type="button"
@@ -252,6 +264,7 @@ function ResourcesPageContent() {
         </Container>
       </section>
 
+      {(!loadError && (items.length > 0 || activeFiltersPresent)) && <>
       {/* LIBRARY SHELVES */}
       <section className="border-t border-border bg-muted/35 py-12">
         <Container>
@@ -314,6 +327,7 @@ function ResourcesPageContent() {
         </Container>
       </section>
 
+      </>}
       {/* CLOSING CTA */}
       <section className="border-t border-border py-14">
         <Container>
