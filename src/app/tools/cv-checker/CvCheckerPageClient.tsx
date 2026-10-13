@@ -59,7 +59,7 @@ export default function CvCheckerPageClient() {
               </div>
               <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Submit your CV for a practical review.</h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-                Upload your CV and tell us what you are applying for. An admin notification is sent immediately, then the review is handled by the Prowess team.
+                Upload your CV and tell us what you are applying for. An admin notification is sent immediately, then the review is handled by the Prowess Digital Solutions team.
               </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-5">

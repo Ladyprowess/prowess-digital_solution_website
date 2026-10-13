@@ -2,35 +2,24 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import type { Service } from "@/content/site";
+import Link from "next/link";
 import Container from "@/components/Container";
 import { trackEvent } from "@/lib/analytics";
-import { healthQuestions, scoreHealth } from "@/lib/businessHealth";
-
+import BusinessHealthExperience from "@/components/BusinessHealthExperience";
+import SummaryPreview from "@/components/services/SummaryPreview";
+import { ArrowDown, ArrowRight } from "lucide-react";
+import { DiagnosticBoard, DiagnosticReportPreview } from "./services/DiagnosticExplorer";
+import s from "./services/Diagnostic.module.css";
 const focus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 const button = `inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60 ${focus}`;
 const input = `mt-2 w-full rounded-lg border border-border bg-background p-3 text-foreground ${focus}`;
 const tracking = { source: "business_diagnostic", offer: "business-structure-diagnostic" };
 
 export default function DiagnosticLanding({ service }: { service: Service }) {
-  const [answers, setAnswers] = useState<number[]>(Array(healthQuestions.length).fill(-1));
-  const [result, setResult] = useState<ReturnType<typeof scoreHealth>>(null);
-  const started = useRef(false);
-  const completed = useRef(false);
   const submitting = useRef(false);
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-
-  function assess(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const next = scoreHealth(answers);
-    if (!next) return;
-    setResult(next);
-    if (!completed.current) {
-      completed.current = true;
-      trackEvent("assessment_complete", tracking);
-    }
-  }
 
   async function enquire(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,61 +51,20 @@ export default function DiagnosticLanding({ service }: { service: Service }) {
     }
   }
 
-  return <div className="bg-background text-foreground">
-    <section className="border-b border-border bg-muted/40 py-16 sm:py-24">
-      <Container><div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-widest text-primary">Business Structure Diagnostic</p>
-        <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">Identify the operational problems holding your business back.</h1>
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">Everything depends on you. Prices feel like guesswork. Tasks live in your head. Start by finding the parts of your business that need more structure.</p>
-        <a href="#health-check" className={`${button} mt-8`}>Take the 60-Second Business Health Check</a>
-        <p className="mt-4 text-sm text-muted-foreground">Five questions. An immediate result. No email required.</p>
-      </div></Container>
-    </section>
-
-    <Container><div className="mx-auto max-w-3xl space-y-20 py-16">
-      <section id="health-check" className="scroll-mt-28" aria-labelledby="health-heading">
-        <p className="text-sm font-semibold text-primary">01 / Understand where you stand</p>
-        <h2 id="health-heading" className="mt-3 text-3xl font-semibold">Your Business Health Check</h2>
-        <p className="mt-4 text-muted-foreground">Choose the answer closest to how your business works today. Each area is weighted equally: Not yet = 0, Sometimes = 1, Consistently = 2.</p>
-        <form onSubmit={assess} className="mt-8 space-y-6">
-          {healthQuestions.map((item, index) => <fieldset key={item.area} className="rounded-xl border border-border p-5">
-            <legend className="px-2 font-medium">{index + 1}. {item.question}</legend>
-            <div className="flex flex-wrap gap-3">{["Not yet", "Sometimes", "Consistently"].map((label, value) => <label key={label} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-border px-4 py-3 has-checked:bg-primary/10">
-              <input className={focus} type="radio" name={`health-${index}`} value={value} required checked={answers[index] === value} onChange={() => {
-                if (!started.current) { started.current = true; trackEvent("assessment_start", tracking); }
-                setAnswers(previous => previous.map((answer, position) => position === index ? value : answer));
-                setResult(null);
-              }} />{label}
-            </label>)}</div>
-          </fieldset>)}
-          <button className={button} type="submit">See my business health score</button>
-        </form>
-        <div aria-live="polite" aria-atomic="true">{result && <div className="mt-8 rounded-xl border border-border bg-muted p-6">
-          <h3 className="text-2xl font-semibold">Your score: {result.score}/100</h3>
-          <p className="mt-3 text-muted-foreground">This is a reflection of your answers, not an independent audit or a prediction of business success.</p>
-          <h4 className="mt-6 font-semibold">{result.priorities.length ? "Areas to work on" : "Keep strengthening your systems"}</h4>
-          {result.priorities.length ? <ul className="mt-3 space-y-4">{result.priorities.map(item => <li key={item.area}><strong>{item.area}:</strong> {item.action}</li>)}</ul> : <p className="mt-3">Your answers suggest consistent habits across all five areas. Review whether your documented processes still work as your business grows.</p>}
-          <a href="#diagnostic-offer" className={`${button} mt-6`}>Explore the full diagnostic</a>
-        </div>}</div>
-        <p className="mt-4 text-sm text-muted-foreground">Answers stay on this page and are not included in your enquiry or analytics.</p>
-      </section>
-
-      <section id="diagnostic-offer" className="scroll-mt-28" aria-labelledby="offer-heading">
-        <p className="text-sm font-semibold text-primary">02 / Get a practical plan</p>
-        <h2 id="offer-heading" className="mt-3 text-3xl font-semibold">{service.title}</h2>
-        <p className="mt-4 text-lg text-muted-foreground">{service.short}</p>
-        <div className="my-8 border-y border-border py-6"><p className="text-sm text-muted-foreground">Fixed one-time fee</p><p className="mt-2 text-3xl font-semibold">{service.price}</p><p className="mt-3">A standalone engagement. No recurring membership is required.</p></div>
-        <h3 className="text-xl font-semibold">What you receive</h3>
-        <ol className="mt-5 list-decimal space-y-4 pl-6">{service.details.whatYouGet.map(item => <li key={item}>{item}</li>)}</ol>
-        <h3 className="mt-8 text-xl font-semibold">Delivery and scope</h3>
-        <ul className="mt-4 space-y-4 text-muted-foreground">{service.details.notes?.map(item => <li key={item}>{item}</li>)}</ul>
-        <a href="#diagnostic-enquiry" className={`${button} mt-8`}>Enquire about the diagnostic</a>
-      </section>
-
+  return <div className={s.page}>
+    <section className={s.hero}><Container><Link href="/services" className={s.back}>← All business services</Link><div className={s.heroGrid}>
+      <div><p className={s.eyebrow}>Prowess Digital Solutions / Business Structure Diagnostic</p><h1>See what is holding<br/>your business <em>back.</em></h1><p className={s.intro}>You are doing the work. But the same problems keep returning. Get a clear view of the gaps, and a practical plan for what to address first.</p><div className={s.actions}><a href="#health-check" className={button}>Check my business <ArrowDown size={17}/></a><a href="#diagnostic-enquiry" className={s.textLink}>Enquire about the diagnostic <ArrowRight size={16}/></a></div><p className={s.caption}>Start with a free five-question health check. No email required.</p></div>
+      <DiagnosticBoard/>
+    </div></Container></section>
+    <div className={s.facts}><Container><div><span><strong>{service.price}</strong> Fixed one-time fee</span><span><strong>5 business days</strong> After payment and complete information</span><span><strong>45-minute call</strong> Walk through your findings</span></div></Container></div>
+    <Container><div className={s.sections}><DiagnosticReportPreview/>
+      <section id="health-check" className={s.section} aria-labelledby="health-heading"><div className={s.sectionHeading}><div><p className={s.eyebrow}>01 / Start with your own view</p><h2 id="health-heading">Where does your business stand?</h2></div><p>Get a named result and practical starting points based on your answers. The paid diagnostic takes a closer look at your actual business.</p></div><BusinessHealthExperience source="business_diagnostic" offerHref="#diagnostic-offer"/></section>
+      <section id="diagnostic-offer" className={s.section} aria-labelledby="offer-heading"><div className={s.sectionHeading}><div><p className={s.eyebrow}>02 / Turn the findings into a plan</p><h2 id="offer-heading">Clarity you can work with.</h2></div><p>{service.short}</p></div><div className={s.offerGrid}><div>{service.details.whatYouGet.map((item,i)=><details className={s.deliverable} key={item} open={i===0?true:undefined}><summary><span>{String(i+1).padStart(2,"0")}</span>{["Business review","Your diagnostic report","Your 30-day action plan","Tools and recommendations","A 45-minute review call"][i]}</summary><p>{item}</p></details>)}</div><aside className={s.offerCard}><p className={s.eyebrow}>One engagement. A clear scope.</p><h3>{service.price}</h3><p>Fixed one-time fee. No recurring membership required.</p><hr/><p>Start with an enquiry. Prowess Digital Solutions confirms suitability before providing payment instructions.</p><a href="#diagnostic-enquiry" className={button}>Enquire about the diagnostic <ArrowRight size={17}/></a><span className={s.caption}>No payment is taken when you enquire.</span></aside></div><details className={s.scope}><summary>Delivery, follow-up and what is not included</summary><ul>{service.details.notes?.map(item=><li key={item}>{item}</li>)}</ul></details></section>
+      <section className={s.section}><div className={s.sectionHeading}><div><p className={s.eyebrow}>From enquiry to action</p><h2>A clear next step at every stage.</h2></div></div><div className={s.timeline}>{[["Tell us about your business","Share your business, challenges and goals in the form below."],["Confirm the fit","We review suitability, then send payment instructions and explain the information required."],["Receive your findings","The five-business-day delivery period begins once payment is confirmed and all required information is received."],["Review and move forward","Discuss your report in a 45-minute call, with one follow-up email within seven calendar days after the call."]].map(([title,body],i)=><article key={title}><span>0{i+1}</span><h3>{title}</h3><p>{body}</p></article>)}</div></section>
       <section id="diagnostic-enquiry" className="scroll-mt-28 rounded-2xl border border-border bg-card p-6 sm:p-8" aria-labelledby="enquiry-heading">
         <p className="text-sm font-semibold text-primary">03 / Tell us about your business</p>
         <h2 id="enquiry-heading" className="mt-3 text-3xl font-semibold">Start with an enquiry</h2>
-        <p className="mt-4 text-muted-foreground">Prowess reviews your business, challenges and goals to confirm suitability before providing payment instructions. Submitting this form takes no payment.</p>
+        <p className="mt-4 text-muted-foreground">Prowess Digital Solutions reviews your business, challenges and goals to confirm suitability before providing payment instructions. Submitting this form takes no payment.</p>
         {sent ? <div role="status" className="mt-8 rounded-xl bg-muted p-6"><h3 className="text-xl font-semibold">Your diagnostic enquiry has been received.</h3><p className="mt-3">We’ll review your details and reply by email to confirm whether the diagnostic is appropriate. If it is, we’ll provide payment instructions. The five-business-day delivery period starts only after payment is confirmed and all required information is received.</p></div> : <form onSubmit={enquire} className="mt-8 space-y-5" aria-busy={pending}>
           <p className="text-sm text-muted-foreground">All fields are required unless marked optional. Please do not include passwords or financial account details.</p>
           <input name="company_site" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
@@ -135,6 +83,6 @@ export default function DiagnosticLanding({ service }: { service: Service }) {
           <button type="submit" className={button} disabled={pending}>{pending ? "Submitting enquiry…" : "Submit Diagnostic Enquiry"}</button>
         </form>}
       </section>
-    </div></Container>
+    </div></Container><SummaryPreview/>
   </div>;
 }

@@ -117,7 +117,7 @@ These remaining items prevent declaring the entire matrix complete. Existing cus
 
 ## Confirmed diagnostic terms
 
-The owner confirmed a fixed one-time fee of **₦180,000 or $120**. Deliverables are a business review covering model, customers, offer, pricing, sales, operations and basic financial tracking; a written diagnostic report; a prioritised 30-day roadmap with suggested timelines; relevant templates, checklists or tracking tools; and one 45-minute online review call.
+The owner confirmed a fixed one-time fee of **$120**. Deliverables are a business review covering model, customers, offer, pricing, sales, operations and basic financial tracking; a written diagnostic report; a prioritised 30-day roadmap with suggested timelines; relevant templates, checklists or tracking tools; and one 45-minute online review call.
 
 Turnaround is five business days after both payment confirmation and receipt of all required client information. Follow-up is one email within seven calendar days after the review call to clarify the report or action plan. Exclusions are bookkeeping, tax or legal advice, implementation, financial statement audits, market research, preparation of a full business plan, additional calls and ongoing advisory support.
 

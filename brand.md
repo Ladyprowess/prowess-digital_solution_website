@@ -129,3 +129,7 @@ No dash punctuation in generated copy (owner's explicit instruction - use period
 ---
 
 _Last updated: 2026-07-27 via `brand-design` skill. Palette: Steel Teal, Rebuilt (kept, not replaced) · Typography: Proxima Nova (kept) · Gradients: enabled (restrained)._
+
+### Customer-facing wording update (13 October 2026)
+
+Do not use “illustrative” in customer-facing copy. Avoid repetitive demo disclaimers. Use concise business language and simple preview labels where appropriate, without implying invented scenarios are real client results.

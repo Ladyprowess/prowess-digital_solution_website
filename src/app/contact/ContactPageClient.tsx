@@ -263,7 +263,7 @@ export default function ContactPageClient({ initialInquiry = "" }: { initialInqu
                 </div>
 
                 {form.inquiry_type === "Business Structure Diagnostic" && (
-                  <p className="text-sm text-muted-foreground">Fixed one-time fee: ₦180,000 or $120. Describe your business, current challenges and goals above. We confirm whether the diagnostic is appropriate before providing payment instructions.</p>
+                  <p className="text-sm text-muted-foreground">Fixed one-time fee: $120. Describe your business, current challenges and goals above. We confirm whether the diagnostic is appropriate before providing payment instructions.</p>
                 )}
                 {error ? (
                   <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
