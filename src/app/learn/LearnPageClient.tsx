@@ -1,11 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ArrowRight, BookOpen, BriefcaseBusiness, GraduationCap, Layers } from "lucide-react";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
+import { LoadError } from "@/components/LoadError";
+import { LearnTypeTabs } from "@/components/learn/LearnTypeTabs";
 import { Pagination } from "@/components/Pagination";
 import { LearnCard } from "@/components/learn/LearnCard";
 import { LearnFiltersSidebar } from "@/components/learn/LearnFiltersSidebar";
@@ -13,7 +15,7 @@ import { supabase } from "@/lib/supabase";
 import { SORT_OPTIONS } from "@/lib/learn/constants";
 import { filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type LearnFilters } from "@/lib/learn/filters";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
-import { courseToLearnItem, selectCourses, type LearnItem } from "@/lib/learn/types";
+import { courseToLearnItem, resourceToLearnItem, selectLearnResources, selectCourses, type LearnItem, type LearnResourceQuery } from "@/lib/learn/types";
 
 const PAGE_SIZE = 12;
 
@@ -40,6 +42,9 @@ function LearnPageContent() {
   const [skillUsage, setSkillUsage] = useState<Record<string, number>>({});
   const [items, setItems] = useState<LearnItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [courseCount, setCourseCount] = useState(0);
+  const [loadError, setLoadError] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [featured, setFeatured] = useState<LearnItem[]>([]);
@@ -75,67 +80,40 @@ function LearnPageContent() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      if (activeFiltersPresent || filters.page > 1) {
-        if (!cancelled) setFeatured([]);
-        return;
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setLoadError(false);
+      try {
+        const [courses, resources] = await Promise.all([
+          selectCourses(select => supabase.from("courses").select(select).eq("status", "published"), true),
+          selectLearnResources(select => supabase.from("resources").select(select) as unknown as LearnResourceQuery),
+        ]);
+        const all = [...courses.map(courseToLearnItem), ...resources.map(resourceToLearnItem)];
+        const query = filters.q.trim().toLowerCase();
+        const merged = all.filter(item =>
+          (!filters.kind || item.kind === filters.kind) &&
+          (!query || `${item.title} ${item.description || ""}`.toLowerCase().includes(query)) &&
+          (!filters.level || item.level === filters.level) &&
+          (!filters.access || item.access === filters.access) &&
+          (!filters.skills.length || item.skills.some(skill => filters.skills.includes(skill.slug)))
+        ).sort((a, b) => {
+          if (filters.sort !== "newest" && a.featured !== b.featured) return a.featured ? -1 : 1;
+          return (b.createdAt || "").localeCompare(a.createdAt || "") || `${a.kind}-${a.id}`.localeCompare(`${b.kind}-${b.id}`);
+        });
+        if (cancelled) return;
+        setTotal(merged.length);
+        setCourseCount(merged.filter(item => item.kind === "course").length);
+        const from = (filters.page - 1) * PAGE_SIZE;
+        setItems(merged.slice(from, from + PAGE_SIZE));
+        setFeatured(!activeFiltersPresent && filters.page === 1 ? all.filter(item => item.featured).slice(0, 6) : []);
+      } catch {
+        if (!cancelled) { setLoadError(true); setFeatured([]); }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      const rows = await selectCourses((select) =>
-        supabase.from("courses").select(select).eq("status", "published").eq("featured", true).order("created_at", { ascending: false }).limit(6)
-      );
-      if (cancelled) return;
-      setFeatured(rows.map(courseToLearnItem));
-    })();
-    return () => { cancelled = true; };
-  }, [activeFiltersPresent, filters.page]);
-
-  const loadItems = useCallback(async () => {
-    setLoading(true);
-
-    const skillIds = filters.skills.length > 0 ? skills.filter((s) => filters.skills.includes(s.slug)).map((s) => s.id) : null;
-    if (filters.skills.length > 0 && (!skillIds || skillIds.length === 0)) {
-      setItems([]); setTotal(0); setLoading(false);
-      return;
-    }
-
-    let ids: string[] | null = null;
-    if (skillIds) {
-      const { data } = await supabase.from("course_skill_map").select("course_id").in("skill_id", skillIds);
-      ids = Array.from(new Set((data || []).map((r) => r.course_id)));
-      if (ids.length === 0) {
-        setItems([]); setTotal(0); setLoading(false);
-        return;
-      }
-    }
-    const rows = await selectCourses((select) => {
-      let q = supabase.from("courses").select(select).eq("status", "published");
-      if (ids) q = q.in("id", ids);
-      if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);
-      if (filters.level) q = q.eq("level", filters.level);
-      if (filters.access) q = q.eq("access", filters.access);
-      return q;
-    });
-    let merged = rows.map(courseToLearnItem);
-
-    if (filters.sort === "newest") {
-      merged = merged.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-    } else {
-      merged = merged.sort((a, b) => {
-        if (a.featured !== b.featured) return a.featured ? -1 : 1;
-        return (b.createdAt || "").localeCompare(a.createdAt || "");
-      });
-    }
-
-    setTotal(merged.length);
-    const from = (filters.page - 1) * PAGE_SIZE;
-    setItems(merged.slice(from, from + PAGE_SIZE));
-    setLoading(false);
-  }, [filters, skills]);
-
-  useEffect(() => {
-    const t = setTimeout(loadItems, 150);
-    return () => clearTimeout(t);
-  }, [loadItems]);
+    }, 150);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [filters, activeFiltersPresent, retry]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const popularSkills = useMemo(() => {
@@ -148,10 +126,10 @@ function LearnPageContent() {
   const learningTotals = useMemo(() => {
     return [
       { label: "Results", value: total },
-      { label: "Courses", value: total },
+      { label: "Courses", value: courseCount },
       { label: "Skills", value: popularSkills.length },
     ];
-  }, [popularSkills.length, total]);
+  }, [popularSkills.length, total, courseCount]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -165,10 +143,10 @@ function LearnPageContent() {
                   Learn
                 </div>
                 <h1 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  Build practical skills through structured courses.
+                  Build practical skills through courses and resources.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                  Find focused courses for career growth, business skills, digital work and personal development.
+                  Explore courses, videos, ebooks and practical resources for career growth, business skills and personal development.
                 </p>
               </div>
             </Reveal>
@@ -182,7 +160,7 @@ function LearnPageContent() {
                 <div className="mt-5 grid grid-cols-3 gap-2">
                   {learningTotals.map((stat) => (
                     <div key={stat.label} className="rounded-lg bg-muted p-3 text-center">
-                      <p className="text-lg font-bold text-foreground">{loading ? "..." : stat.value}</p>
+                      <p className="text-lg font-bold text-foreground">{loading || loadError ? "..." : stat.value}</p>
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">{stat.label}</p>
                     </div>
                   ))}
@@ -208,7 +186,7 @@ function LearnPageContent() {
               className="mb-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Layers size={16} aria-hidden="true" />
-              {mobileFiltersOpen ? "Hide Filters" : "Filter Courses"}
+              {mobileFiltersOpen ? "Hide Filters" : "Filter learning"}
             </button>
             {mobileFiltersOpen && (
               <div className="mb-6">
@@ -225,11 +203,11 @@ function LearnPageContent() {
             <div>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary">Courses</p>
-                  <h2 className="mt-2 text-xl font-bold text-foreground">Course library</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{loading ? "Loading courses..." : `${total} course${total === 1 ? "" : "s"} found`}</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-primary">Learning</p>
+                  <h2 className="mt-2 text-xl font-bold text-foreground">Learning library</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{loading ? "Loading learning..." : loadError ? "Learning is temporarily unavailable." : `${total} item${total === 1 ? "" : "s"} found`}</p>
                 </div>
-                <label className="sr-only" htmlFor="learn-sort">Sort courses</label>
+                <label className="sr-only" htmlFor="learn-sort">Sort learning</label>
                 <select
                   id="learn-sort"
                   value={filters.sort}
@@ -240,6 +218,7 @@ function LearnPageContent() {
                 </select>
               </div>
 
+              <div className="mb-5"><LearnTypeTabs active={filters.kind} onChange={kind => updateFilters({ kind })} /></div>
               {loading ? (
                 <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
                   {Array.from({ length: 6 }).map((_, i) => (
@@ -254,12 +233,14 @@ function LearnPageContent() {
                     </div>
                   ))}
                 </div>
+              ) : loadError ? (
+                <LoadError message="We could not load learning. Please try again." onRetry={() => setRetry(value => value + 1)} />
               ) : items.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-border bg-card px-6 py-14 text-center">
                   <BookOpen size={34} className="mx-auto text-primary" aria-hidden="true" />
-                  <p className="text-lg font-semibold text-foreground">No courses found</p>
+                  <p className="text-lg font-semibold text-foreground">No learning found</p>
                   <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                    {activeFiltersPresent ? "No course matches your current search or filters." : "No courses are published yet. When a course goes live, it will appear here."}
+                    {activeFiltersPresent ? "No learning matches your current search or filters." : "Published courses and resources selected for Learn will appear here."}
                   </p>
                   {activeFiltersPresent && (
                     <button

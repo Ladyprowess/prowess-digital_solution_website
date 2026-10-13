@@ -1,5 +1,7 @@
 export const KIND_TABS = [
-  { value: "", label: "Courses" },
+  { value: "", label: "All learning" },
+  { value: "course", label: "Courses" },
+  { value: "resource", label: "Other resources" },
   { value: "video", label: "Videos" },
   { value: "article", label: "Articles" },
   { value: "ebook", label: "Ebooks" },

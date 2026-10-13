@@ -4,7 +4,7 @@
 // UNION, so this merge happens in TypeScript after two separate queries.
 import { creatorCredit } from "@/lib/learn/courseSource";
 
-export type LearnKind = "course" | "video" | "article" | "guide" | "ebook";
+export type LearnKind = "course" | "video" | "article" | "guide" | "ebook" | "resource";
 
 export type LearnItem = {
   id: string;
@@ -67,11 +67,12 @@ type CourseQueryResult = { data: unknown; error: { message: string } | null };
  * Every Learn feed goes through this so none of them can break on a
  * migration that has not been applied.
  */
-export async function selectCourses(build: (select: string) => PromiseLike<CourseQueryResult>): Promise<CourseRow[]> {
+export async function selectCourses(build: (select: string) => PromiseLike<CourseQueryResult>, strict = false): Promise<CourseRow[]> {
   const withSource = await build(COURSE_SELECT);
   if (!withSource.error) return (withSource.data as CourseRow[]) || [];
 
   const withoutSource = await build(COURSE_SELECT_BASE);
+  if (strict && withoutSource.error) throw new Error("Courses could not be loaded");
   return (withoutSource.data as CourseRow[]) || [];
 }
 export const RESOURCE_SELECT = "id, slug, title, description, resource_type, level, access, price_usd, price_ngn, thumbnail_url, featured, created_at, resource_skill_map(skills(slug, name))";
@@ -89,19 +90,27 @@ export function courseToLearnItem(c: CourseRow): LearnItem {
   };
 }
 
-// resource_type is a wider enum on the table than what Learn surfaces -
-// only video/article/guide/ebook rows are ever queried for this feed, so
-// the cast is safe (checklist/template/podcast/etc never reach this mapper).
+// Every resource marked for Learn is eligible. Other formats use a generic resource card.
 // Video gets its own dedicated detail page (/videos/[slug]) rather than
 // the generic /resources/[slug] every other resource type shares.
 export function resourceToLearnItem(r: ResourceRow): LearnItem {
   return {
-    id: r.id, slug: r.slug, href: r.resource_type === "video" ? `/videos/${r.slug}` : `/resources/${r.slug}`, kind: r.resource_type as LearnKind,
+    id: r.id, slug: r.slug, href: r.resource_type === "video" ? `/videos/${r.slug}` : `/resources/${r.slug}`, kind: LEARN_RESOURCE_KINDS.includes(r.resource_type || "") ? r.resource_type as LearnKind : "resource",
     title: r.title, description: r.description,
     level: r.level, access: r.access, price_usd: r.price_usd, price_ngn: r.price_ngn,
     thumbnail_url: r.thumbnail_url, featured: r.featured,
-    skills: r.resource_skill_map.map((m) => m.skills).filter((s): s is { slug: string; name: string } => Boolean(s)),
+    skills: (r.resource_skill_map || []).map((m) => m.skills).filter((s): s is { slug: string; name: string } => Boolean(s)),
     createdAt: r.created_at,
     creator: null,
   };
+}
+
+export type LearnResourceQuery = {
+  eq: (column: string, value: string | boolean) => { eq: (column: string, value: string | boolean) => PromiseLike<{ data: unknown; error: unknown }> };
+};
+
+export async function selectLearnResources(build: (select: string) => LearnResourceQuery): Promise<ResourceRow[]> {
+  const { data, error } = await build(RESOURCE_SELECT).eq("status", "published").eq("show_in_learn", true);
+  if (error) throw new Error("Learning resources could not be loaded");
+  return (data as ResourceRow[]) || [];
 }

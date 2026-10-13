@@ -13,7 +13,7 @@ export function LearnTypeTabs({
   return (
     <div className="flex flex-wrap gap-2">
       {KIND_TABS.map((t) => {
-        const tabActive = active === t.value || (t.value === "" && active === "course");
+        const tabActive = active === t.value;
         return (
           <button
             key={t.value}
