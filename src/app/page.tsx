@@ -163,8 +163,8 @@ export default function ModernHomePage() {
         // created_at, so a single pageSize-capped fetch could cut off the
         // actual featured pick before it ever reaches the client if 5+
         // resources are curated.
-        fetch("/api/resources?show_on_homepage=true&featured=true&audience=consumer,both&exclude_resource_type=video&pageSize=1").then((r) => r.json()),
-        fetch("/api/resources?show_on_homepage=true&audience=consumer,both&exclude_resource_type=video&pageSize=5").then((r) => r.json()),
+        fetch("/api/resources?show_on_homepage=true&featured=true&exclude_resource_type=video&pageSize=1").then((r) => r.json()),
+        fetch("/api/resources?show_on_homepage=true&exclude_resource_type=video&pageSize=5").then((r) => r.json()),
         // Direct query, not /api/resources -- video covers come from
         // thumbnail_url/YouTube, not a signed Storage cover_path, so there's
         // no reason to route through the server for these (unlike the

@@ -313,8 +313,8 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
         </Reveal>
 
         <Reveal delay={320}>
-          <RelatedSection title="RECOMMENDED RESOURCES" items={graph.resources} render={() => graph.resources.map((r) => (
-            <Link key={r.slug} href={`/resources/${r.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
+          <RelatedSection title="RECOMMENDED RESOURCES" items={[...graph.resources, ...graph.videos]} render={() => [...graph.resources, ...graph.videos].map((r) => (
+            <Link key={r.slug} href={r.resource_type === "video" ? `/videos/${r.slug}` : `/resources/${r.slug}`} className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/30">
               <span className="text-[10px] font-bold uppercase text-muted-foreground">{r.resource_type?.replace("_", " ") || "Resource"}</span>
               <p className="mt-1.5 text-sm font-semibold text-foreground">{r.title}</p>
             </Link>

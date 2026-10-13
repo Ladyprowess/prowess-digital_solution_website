@@ -94,6 +94,7 @@ function ResourcesPageContent() {
       try {
         const params = new URLSearchParams();
         params.set("exclude_resource_type", "video");
+        if (filters.placement) params.set(`show_in_${filters.placement}`, "true");
         params.set("audience", audienceValues(filters.audience).join(","));
         if (filters.type) params.set("resource_type", filters.type);
         if (filters.useCase) params.set("use_case", filters.useCase);
@@ -112,7 +113,7 @@ function ResourcesPageContent() {
       }
     }, 150);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [filters.audience, filters.type, filters.useCase, filters.q, filters.page, retry]);
+  }, [filters.placement, filters.audience, filters.type, filters.useCase, filters.q, filters.page, retry]);
 
   function updateFilters(patch: Partial<ResourceFilters>) {
     const next: ResourceFilters = { ...filters, ...patch };
@@ -210,6 +211,14 @@ function ResourcesPageContent() {
 
           <Reveal delay={40}>
             <div className="mb-8 space-y-3 rounded-lg border border-border bg-card p-3 sm:p-4">
+              <label className="block text-sm font-semibold">
+                Collection
+                <select value={filters.placement} onChange={event => updateFilters({ placement: event.target.value })} className="ml-3 rounded-lg border border-border bg-card px-3 py-2">
+                  <option value="">Library</option>
+                  <option value="business">Business content</option>
+                  <option value="career">Career content</option>
+                </select>
+              </label>
               <PillTabs tabs={AUDIENCE_TABS} active={filters.audience} onChange={(v) => updateFilters({ audience: v })} />
               <PillTabs tabs={TYPE_TABS} active={filters.type} onChange={(v) => updateFilters({ type: v })} />
             </div>

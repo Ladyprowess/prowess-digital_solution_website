@@ -13,7 +13,7 @@ import { LearnCard } from "@/components/learn/LearnCard";
 import { LearnProgressSummary } from "@/components/discovery/LearnProgressSummary";
 import { SkillCard, type SkillCardData } from "@/components/skills/SkillCard";
 import { getSkillGraph, getRelatedSkills } from "@/lib/careerPathGraph";
-import { courseToLearnItem, selectCourses, type LearnItem, type CourseRow } from "@/lib/learn/types";
+import { courseToLearnItem, resourceToLearnItem, RESOURCE_SELECT, type ResourceRow, selectCourses, type LearnItem, type CourseRow } from "@/lib/learn/types";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -130,9 +130,15 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
     deadline_at: o.deadline_at, featured: o.featured,
   }));
 
+  const resourceIds = await idsForSkill("resource_skill_map", "resource_id", skill.id);
+  const { data: recommendedRows } = resourceIds.length
+    ? await supabase.from("resources").select(RESOURCE_SELECT).eq("status", "published")
+        .eq("show_in_recommended", true).in("id", resourceIds).order("featured", { ascending: false }).limit(CARD_LIMIT).returns<ResourceRow[]>()
+    : { data: [] };
   const learningItems: LearnItem[] = [
     ...(courseRows as CourseRow[]).map(courseToLearnItem),
-  ].slice(0, CARD_LIMIT);
+    ...(recommendedRows || []).map(resourceToLearnItem),
+  ];
 
   const relatedSkillStats = await statsForSkills(relatedSkills.map((s) => s.id));
   const relatedSkillCards: SkillCardData[] = relatedSkills.map((s) => ({
@@ -165,7 +171,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
                 <div className="mt-7 flex flex-wrap items-center gap-3">
                   {learningItems.length > 0 && (
                     <Link href={`/learn?skills=${skill.slug}`} className="inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                      Start with courses
+                      Start learning
                     </Link>
                   )}
                   {jobCards.length > 0 && (
@@ -219,23 +225,23 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
           <Reveal delay={120}>
             <section className={skill.about ? "mt-8 rounded-lg border border-border bg-card p-6" : "rounded-lg border border-border bg-card p-6"}>
               <LearnProgressSummary
-                courses={learningItems.map((i) => ({ id: i.id, slug: i.slug, title: i.title }))}
+                courses={learningItems.filter(item => item.kind === "course").map((i) => ({ id: i.id, slug: i.slug, title: i.title }))}
                 context="skill"
               />
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <GraduationCap size={18} className="text-primary" aria-hidden="true" />
-                    <p className="text-xs font-bold uppercase tracking-widest text-primary">Courses</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-primary">Learning</p>
                   </div>
                   <h2 className="mt-2 text-xl font-bold text-foreground">Learn {skill.name}</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                    Structured courses selected for this skill.
+                    Courses and resources selected for this skill.
                   </p>
                 </div>
                 {learningItems.length > 0 && (
                   <Link href={`/learn?skills=${skill.slug}`} className="inline-flex min-h-10 items-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                    Browse courses
+                    Browse learning
                   </Link>
                 )}
               </div>
@@ -360,7 +366,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <Link href={`/learn?skills=${skill.slug}`} className="inline-flex min-h-10 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                Start with courses
+                Start learning
               </Link>
               <Link href={`/jobs?skills=${skill.slug}`} className="inline-flex min-h-10 items-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 Find Jobs

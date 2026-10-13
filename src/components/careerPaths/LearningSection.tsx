@@ -19,12 +19,12 @@ export function LearningSection({ items, skillSlugs }: { items: LearnItem[]; ski
               <BookOpen size={20} aria-hidden="true" />
             </span>
             <div>
-              <p className="text-sm font-bold text-foreground">Courses are not available yet</p>
-              <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">New courses for this career path will appear here once they are published.</p>
+              <p className="text-sm font-bold text-foreground">Learning is not available yet</p>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">Courses and resources for this career path will appear here once they are published.</p>
             </div>
           </div>
           <Link href={`/learn?skills=${skillSlugs.join(",")}`} className="inline-flex min-h-10 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-          Browse courses
+          Browse learning
         </Link>
         </div>
       </div>
@@ -35,11 +35,11 @@ export function LearningSection({ items, skillSlugs }: { items: LearnItem[]; ski
     <div>
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-bold text-foreground">Courses</p>
+          <p className="text-sm font-bold text-foreground">Recommended learning</p>
           <p className="text-sm leading-6 text-muted-foreground">Structured learning selected for this career direction.</p>
         </div>
         <Link href={`/learn?skills=${skillSlugs.join(",")}`} className="inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-          Browse courses
+          Browse learning
         </Link>
       </div>
       <div className="mt-4">

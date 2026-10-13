@@ -49,7 +49,7 @@ export async function GET(req: Request) {
     // library, so an explicit show_on_homepage request skips the
     // show_in_library gate rather than requiring both.
     if (showOnHomepage === "true") query = query.eq("show_on_homepage", true);
-    else query = query.eq("show_in_library", true);
+    else if (showInBusiness !== "true" && showInCareer !== "true") query = query.eq("show_in_library", true);
     // Lets a caller that already shows show_on_homepage resources in their
     // own curated section (the homepage's "Resources worth exploring")
     // avoid pulling the same row into a second, un-curated section further

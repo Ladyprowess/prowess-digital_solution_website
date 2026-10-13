@@ -5,17 +5,19 @@
 // to either column), so there's nothing meaningful to let the user choose.
 export type ResourceFilters = {
   q: string;
+  placement: string;
   audience: string; // "" | consumer | business
   type: string; // "" | resource_type value
   useCase: string; // "" | use_case value
   page: number;
 };
 
-export const DEFAULT_FILTERS: ResourceFilters = { q: "", audience: "", type: "", useCase: "", page: 1 };
+export const DEFAULT_FILTERS: ResourceFilters = { q: "", placement: "", audience: "", type: "", useCase: "", page: 1 };
 
 export function filtersFromSearchParams(sp: URLSearchParams): ResourceFilters {
   return {
     q: sp.get("q") || "",
+    placement: ["business", "career"].includes(sp.get("placement") || "") ? sp.get("placement")! : "",
     audience: sp.get("audience") || "",
     type: sp.get("type") || "",
     useCase: sp.get("use_case") || "",
@@ -25,6 +27,7 @@ export function filtersFromSearchParams(sp: URLSearchParams): ResourceFilters {
 
 export function searchParamsFromFilters(f: ResourceFilters): URLSearchParams {
   const sp = new URLSearchParams();
+  if (f.placement) sp.set("placement", f.placement);
   if (f.q) sp.set("q", f.q);
   if (f.audience) sp.set("audience", f.audience);
   if (f.type) sp.set("type", f.type);
@@ -33,7 +36,7 @@ export function searchParamsFromFilters(f: ResourceFilters): URLSearchParams {
   return sp;
 }
 
-const FACET_KEYS: (keyof ResourceFilters)[] = ["q", "audience", "type", "useCase"];
+const FACET_KEYS: (keyof ResourceFilters)[] = ["q", "placement", "audience", "type", "useCase"];
 
 export function hasActiveFilters(f: ResourceFilters): boolean {
   return FACET_KEYS.some((k) => f[k] !== DEFAULT_FILTERS[k]);
