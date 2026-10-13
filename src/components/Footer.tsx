@@ -78,6 +78,7 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
               <li><Link href="/tools" className="text-muted-foreground hover:text-foreground">Business Tools</Link></li>
               <li><Link href="/resources" className="text-muted-foreground hover:text-foreground">Business Resources</Link></li>
               <li><Link href="/services" className="text-muted-foreground hover:text-foreground">Services</Link></li>
+              <li><Link href="/services" className="text-muted-foreground hover:text-foreground">Business Structure Diagnostic</Link></li>
               <li><Link href="/case-studies" className="text-muted-foreground hover:text-foreground">Case Studies</Link></li>
               <li><Link href="/consultation" className="text-muted-foreground hover:text-foreground">Consultation</Link></li>
               <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link></li>

@@ -24,7 +24,8 @@ test('both HTML emails escape submitted content and retain line breaks', () => {
   }
 });
 
-function route(errors = []) {
+function route(errors = [], payload = enquiry) {
+  const saved = [];
   const sent = [];
   const { POST } = load('src/app/api/contact/route.ts', {
     process: { env: { RESEND_TO: 'team@example.com', RESEND_FROM_EMAIL: 'Prowess <hello@example.com>' } },
@@ -33,11 +34,11 @@ function route(errors = []) {
       if (name === '@/lib/emails/contact') return templates;
       if (name === 'next/server') return { NextResponse: { json: (body, options) => Response.json(body, options) } };
       if (name === 'resend') return { Resend: class { emails = { send: async (payload) => { sent.push(payload); return { error: errors[sent.length - 1] || null }; } }; } };
-      if (name === '@supabase/supabase-js') return { createClient: () => ({ from: () => ({ insert: async () => ({ error: null }) }) }) };
+      if (name === '@supabase/supabase-js') return { createClient: () => ({ from: () => ({ insert: async (rows) => { saved.push(...rows); return { error: null }; } }) }) };
       throw new Error(name);
     },
   });
-  return { sent, submit: () => POST(new Request('https://example.com/api/contact', { method: 'POST', body: JSON.stringify(enquiry) })) };
+  return { sent, saved, submit: () => POST(new Request('https://example.com/api/contact', { method: 'POST', body: JSON.stringify(payload) })) };
 }
 
 test('admin notification and customer acknowledgement have separate recipients and reply addresses', async () => {
@@ -61,4 +62,28 @@ test('admin delivery failure does not send a misleading customer acknowledgement
   const { sent, submit } = route([{ message: 'Delivery unavailable' }]);
   assert.equal((await submit()).status, 500);
   assert.equal(sent.length, 1);
+});
+
+
+test('diagnostic enquiries use shared delivery and preserve controlled source', async () => {
+  const { saved, sent, submit } = route([], { ...enquiry, source: 'business_diagnostic' });
+  assert.equal((await submit()).status, 200);
+  assert.equal(saved[0].source, 'business_diagnostic');
+  assert.ok(sent[0].text.includes('business_diagnostic'));
+});
+test('unknown source falls back to website and invalid diagnostic topics are rejected', async () => {
+  const general = route([], { ...enquiry, source: '<script>' });
+  await general.submit();
+  assert.equal(general.saved[0].source, 'website');
+  const invalid = route([], { ...enquiry, source: 'business_diagnostic', inquiry_type: 'Other' });
+  assert.equal((await invalid.submit()).status, 400);
+  assert.equal(invalid.sent.length, 0);
+});
+test('oversized messages and malformed addresses never reach storage or email', async () => {
+  for (const payload of [{ ...enquiry, message: 'x'.repeat(10001) }, { ...enquiry, email: 'bad@' }]) {
+    const target = route([], payload);
+    assert.equal((await target.submit()).status, 400);
+    assert.equal(target.saved.length, 0);
+    assert.equal(target.sent.length, 0);
+  }
 });

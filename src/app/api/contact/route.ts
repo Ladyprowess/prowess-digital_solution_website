@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     const business_stage = String(body?.business_stage || "").trim();
     const inquiry_type = String(body?.inquiry_type || "").trim();
     const message = String(body?.message || "").trim();
+    const source = body?.source === "business_diagnostic" ? "business_diagnostic" : "website";
 
     // Honeypot
     const company_site = String(body?.company_site || body?.website || "").trim();
@@ -34,6 +35,10 @@ export async function POST(req: Request) {
       );
     }
 
+    if (full_name.length > 200 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.length > 50 || business_stage.length > 100 || inquiry_type.length > 200 || message.length > 10000 || (source === "business_diagnostic" && inquiry_type !== "Business Structure Diagnostic")) {
+      return NextResponse.json({ ok: false, error: "Please check your contact details and shorten any unusually long fields." }, { status: 400 });
+    }
+
     // 1) Save message (optional but recommended)
     const { error: insertError } = await supabase.from("contact_messages").insert([
       {
@@ -43,7 +48,7 @@ export async function POST(req: Request) {
         business_stage: business_stage || null,
         inquiry_type,
         message,
-        source: "website",
+        source,
       },
     ]);
 
@@ -55,7 +60,7 @@ export async function POST(req: Request) {
     }
     
 
-    const enquiry = { full_name, email, phone, business_stage, inquiry_type, message };
+    const enquiry = { full_name, email, phone, business_stage, inquiry_type, message, source } as const;
     // Separate recipients: clients receive an acknowledgement, not the internal notification.
     const { error: mailError } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,

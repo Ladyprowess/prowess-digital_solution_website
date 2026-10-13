@@ -46,6 +46,7 @@ const menuGroups = [
   {
     title: "Business",
     items: [
+      { href: "/services", label: "All business services", description: "Explore our full range of business support", icon: BriefcaseBusiness },
       { href: "/about", label: "About us", description: "The people behind Prowess", icon: BriefcaseBusiness },
       { href: "/contact", label: "Contact", description: "Questions and service enquiries", icon: Mail },
       { href: "/case-studies", label: "Case Studies", description: "Client problems and results", icon: Search },
@@ -106,7 +107,7 @@ export default function Navbar() {
 
   return (
     <>
-    <header className="sticky top-0 z-50">
+    <header className="fixed inset-x-0 top-0 z-50">
       <div className="border-b border-border bg-background/95 backdrop-blur">
         <Container>
           <div className="grid h-20 grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3 xl:grid-cols-[minmax(160px,200px)_1fr_260px] xl:gap-8">

@@ -29,6 +29,8 @@ export default function SiteShell({ children, footer }: { children: React.ReactN
   return (
     <>
       <Navbar />
+      {/* Reserve the fixed navigation's height so page content stays visible. */}
+      <div aria-hidden="true" className="h-20 shrink-0" />
       <main className="min-h-[70vh]">{children}</main>
       {footer}
       <InstallPrompt />

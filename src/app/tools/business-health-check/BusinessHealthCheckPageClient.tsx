@@ -304,7 +304,7 @@ export default function BusinessHealthCheckPageClient() {
               written report and prioritised action plan within five business days after payment confirmation and receipt of all required information.
             </p>
             <Link
-              href="/contact?service=business-structure-diagnostic"
+              href="/services"
               className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
               Start the Diagnostic

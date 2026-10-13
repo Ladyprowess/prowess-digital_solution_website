@@ -1,382 +1,70 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  CheckCircle2,
-  ClipboardCheck,
-  Gauge,
-  LineChart,
-  NotebookText,
-  SearchCheck,
-  Target,
-  UsersRound,
-  Wrench,
-} from "lucide-react";
-import Container from "@/components/Container";
-import { Reveal } from "@/components/Reveal";
+import { ArrowDown, ArrowRight, Check, FileText, Printer } from "lucide-react";
 import { services } from "@/content/site";
+import { businessScenario } from "@/lib/businessScenario";
+import BusinessHealthExperience from "@/components/BusinessHealthExperience";
+import BusinessScene from "@/components/services/BusinessScene";
+import s from "@/components/services/Workshop.module.css";
 
-const serviceIcons: Record<string, LucideIcon> = {
-  audit: SearchCheck,
-  sop: NotebookText,
-  strategy: Target,
-  tools: LineChart,
-  clarity: SearchCheck,
-  setup: Wrench,
-  workflow: ClipboardCheck,
-  training: UsersRound,
-  mentorship: UsersRound,
-  package: BriefcaseBusiness,
-};
-
-const stageCards = [
-  {
-    label: "Starting",
-    title: "Get clear before you build.",
-    text: "Clarify the offer, check the numbers and understand what has to be in place before you spend more.",
-  },
-  {
-    label: "Running",
-    title: "Turn repeated work into systems.",
-    text: "Document the work, clean up handovers and stop depending on memory for daily operations.",
-  },
-  {
-    label: "Growing",
-    title: "Keep control as demand increases.",
-    text: "Track performance, train the team and make better decisions with a clearer operating rhythm.",
-  },
-];
-
-const toolCards = [
-  { title: "Startup Cost Calculator", text: "Know launch costs and break even point.", icon: Gauge },
-  { title: "Cashflow Tracker", text: "See income, expenses and monthly movement.", icon: LineChart },
-  { title: "Invoice Manager", text: "Create invoices and track payment follow ups.", icon: ClipboardCheck },
-  { title: "Inventory Manager", text: "Monitor stock before shortages become expensive.", icon: Wrench },
-];
-
+const workshopNames = ["01 / Financial planning", "02 / Process builder", "03 / Offer development", "04 / Health check"];
 const processSteps = [
-  {
-    title: "Diagnose",
-    text: "We look at the business as it is now. Workflow, numbers, decisions and the places where things keep slowing down.",
-  },
-  {
-    title: "Build",
-    text: "We turn the right pressure point into practical structure. That may be SOPs, a clearer offer, tracking tools or a focused plan.",
-  },
-  {
-    title: "Support",
-    text: "You leave with routines, tools and guidance you can keep using as the business grows.",
-  },
+ {title:"Capture the enquiry", detail:"Record the customer, request and next-action date in one shared place."},
+ {title:"Agree the work",detail:"Confirm scope, price and delivery date with the customer before starting."},
+ {title:"Assign an owner",detail:"Name who does the work and who checks it. Make the handover explicit."},
+ {title:"Check and deliver",detail:"Use a completion checklist, then confirm delivery with the customer."},
+ {title:"Close the loop",detail:"Check payment status, collect feedback and record anything to improve."},
 ];
+const samples = [
+ {name:"Diagnostic report",code:"01 / FINDINGS",title:"Where the business loses its thread",body:"ILLUSTRATIVE BUSINESS: A SMALL DESIGN STUDIO\n\nObservation: enquiries arrive through email and chat. No shared record shows who is following up.\n\nPotential risk: the team cannot reliably distinguish an active conversation from an abandoned enquiry. This is a hypothesis to check against the actual records.\n\nPriority action: create one enquiry register with a named owner, stage and next-action date.\n\nEvidence to review: a sample of recent enquiries, response times and handovers. The paid diagnostic bases its findings on your business information."},
+ {name:"30-day action plan",code:"02 / PRIORITIES",title:"A month of practical progress",body:"WEEK 1 · MAKE THE WORK VISIBLE\nCollect active enquiries in one register. Assign an owner to every item.\n\nWEEK 2 · AGREE THE PROCESS\nDocument the steps from enquiry to delivery. Ask the team to test them on a real order.\n\nWEEK 3 · PUT IT INTO PRACTICE\nUse the process daily. Record missed steps and unclear handovers.\n\nWEEK 4 · REVIEW AND ADJUST\nReview follow-up completion and response times. Update the process where the evidence shows friction.\n\nIllustrative plan, not a promise of business results."},
+ {name:"An operating procedure",code:"03 / SYSTEMS",title:"A handover somebody else can follow",body:"PROCESS: CONFIRMING A NEW PROJECT\n\nTrigger: customer accepts the proposed scope.\nOwner: project coordinator.\nInputs: agreed scope, customer details, delivery date and payment terms.\n\n1. Record the agreement in the project register.\n2. Assign the delivery owner and review date.\n3. Send the customer the agreed next steps.\n4. Confirm the delivery owner has the required information.\n\nCompletion check: the project has an owner, an agreed scope and a recorded timeline.\nException: missing information goes back to the coordinator before work starts."},
+ {name:"Offer & numbers brief",code:"04 / DECISIONS",title:"Make the assumptions visible",body:"OFFER EXAMPLE\nA stock-planning setup for independent retailers who struggle with repeat shortages.\n\nFIRST TEST\nSpeak with three relevant retailers. Check the priority of the problem, what they do now and what would justify paying for help.\n\nMONTHLY SCENARIO\n50 sales at 100 each: 5,000 revenue.\nVariable costs of 40 per sale: 2,000.\nFixed costs: 1,500.\nRemaining before tax and financing: 1,500.\n\nUse one currency throughout. These are fictional assumptions, not a forecast. Timing of payments requires a separate cashflow view."},
+];
+const format=(value:number)=>value.toLocaleString(undefined,{maximumFractionDigits:2});
+function saveFile(name:string,content:string){const url=URL.createObjectURL(new Blob([content],{type:"text/plain;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
-function PrimaryLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      {children}
-    </Link>
-  );
-}
+export default function ServicesPageClient(){
+ const [station,setStation]=useState(0);
+ const [numbers,setNumbers]=useState(["100","40","50","1500"]);
+ const [currency,setCurrency]=useState("USD");
+ const [receipt,setReceipt]=useState<{values:string[];currency:string;result:NonNullable<ReturnType<typeof businessScenario>>;id:number}|null>(null);
+ const printNumber=useRef(0);
+ const result=businessScenario(numbers[0],numbers[1],numbers[2],numbers[3]);
+ const [built,setBuilt]=useState<number[]>([]);
+ const [offer,setOffer]=useState(["","",""]);
+ const [sample,setSample]=useState<number|null>(null);
+ function updateNumber(index:number,value:string){setNumbers(old=>old.map((v,i)=>i===index?value:v));}
+ const receiptText=receipt?`PROWESS · FINANCIAL SUMMARY\nCurrency: ${receipt.currency}\nPrice per sale: ${receipt.values[0]}\nVariable cost: ${receipt.values[1]}\nMonthly sales: ${receipt.values[2]}\nFixed costs: ${receipt.values[3]}\nRevenue: ${format(receipt.result.revenue)}\nAfter costs: ${format(receipt.result.profit)}\nBreak-even sales: ${receipt.result.breakEven??"Not achievable at this price"}\nSCENARIO ANALYSIS COMPLETE\nExcludes tax, financing and timing of payments.`:"";
+ return <div className={s.page}>
+  <section className={s.hero}><div className={`${s.wrap} ${s.heroGrid}`}>
+   <div><p className={s.eyebrow}>Prowess Digital Solutions / Business support</p><h1>Build a business<br/>with clarity,<br/><em>structure and control.</em></h1><p className={s.intro}>Strengthen your operations, clarify your offer and understand your numbers. Practical services and tools built around the way your business works.</p><div className={s.actions}><a href="#business-scene" className={s.primary}>Explore business solutions <ArrowDown size={17}/></a><a href="#our-services" className={s.secondary}>Explore our services <ArrowRight size={17}/></a></div><p className={s.note}>Four practical business tools. Free to use. No account required.</p></div>
+   <div className={s.desk}><div className={s.deskPaper}><p className={s.eyebrow}>Make informed decisions.</p><h3>Clear priorities.<br/>Practical next steps.</h3>{[["Know your numbers","Financial planning"],["Document your operations","Process builder"],["Explain your value","Offer development"],["Find your starting point","Health check"]].map(([label,value],i)=><a href="#workshop" onClick={()=>setStation(i)} className={s.deskRow} key={label}><span>{label}</span><ArrowRight size={16} aria-label={value}/></a>)}<p className={s.note}>Assess your business and develop a practical next step.</p></div><div className={s.deskTag}>Clarity. Structure.<br/>Sustainable growth.</div></div>
+  </div></section>
+  <div className={s.wrap}><nav className={s.jumpbar} aria-label="Services page sections"><a href="#business-scene">01 / FIND YOUR STARTING POINT</a><a href="#our-services">02 / CHOOSE YOUR SUPPORT</a><a href="#sample-desk">03 / OPEN THE DELIVERABLES</a><a href="#how-it-works">04 / HOW WE WORK</a></nav></div>
 
-function SecondaryLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      {children}
-    </Link>
-  );
-}
+  <BusinessScene/>
+  <section id="workshop" className={s.section}><div className={s.wrap}><div className={s.heading}><div><p className={s.eyebrow}>Practical business tools</p><h2>Assess, plan and improve<br/>your business.</h2></div><p>Explore a financial scenario, document a process or refine your offer. Use these tools to identify priorities before choosing the support you need.</p></div>
+   <div className={s.tabs} aria-label="Business planning tools">{workshopNames.map((name,i)=><button className={s.tab} aria-pressed={station===i} key={name} onClick={()=>setStation(i)}>{name}</button>)}</div>
+   <div className={s.station}>
+    {station===0&&<><div className={s.machineGrid}><div><p className={s.eyebrow}>Financial planning / Monthly scenario</p><h3 style={{margin:"12px 0"}}>Understand revenue, costs and profitability.</h3><p className={s.note}>Enter your assumptions, then generate a financial summary showing revenue, costs and the estimated operating balance.</p><div className={s.machine} style={{marginTop:24}}><div className={s.display}><span style={{fontSize:11}}>MONTHLY REVENUE · {currency}</span><strong>{result?format(result.revenue):"Check inputs"}</strong></div><div style={{display:"flex",gap:8,marginTop:16}}>{["USD","NGN"].map(c=><button key={c} aria-pressed={currency===c} onClick={()=>setCurrency(c)} style={{padding:"8px 12px",border:"1px solid #778f91",borderRadius:5,background:currency===c?"#48676a":"transparent",fontSize:12}}>{c}</button>)}</div><div className={s.controlGrid}>{["Price per sale","Cost per sale","Monthly sales","Fixed monthly costs"].map((label,i)=><div className={s.control} key={label}><label htmlFor={`money-${i}`}>{label}</label><div className={s.controls}><button aria-label={`Decrease ${label}`} onClick={()=>updateNumber(i,String(Math.max(0,(Number(numbers[i])||0)-(i===2?1:10))))}>−</button><input id={`money-${i}`} type="number" min="0" step={i===2?1:"0.01"} value={numbers[i]} onChange={e=>updateNumber(i,e.target.value)}/><button aria-label={`Increase ${label}`} onClick={()=>updateNumber(i,String((Number(numbers[i])||0)+(i===2?1:10)))}>+</button></div></div>)}</div><button className={s.printButton} disabled={!result} onClick={()=>{if(result)setReceipt({values:[...numbers],currency,result,id:++printNumber.current});}}><span>{receipt?"Update financial summary":"Generate financial summary"}</span><Printer size={20}/></button></div>{!result&&<p role="alert" className={s.note}>Use non-negative numbers and a whole number of sales.</p>}<p className={s.note}>Currency changes the label only, not the amounts. Excludes tax, financing and payment timing. Your numbers stay on this page.</p></div>
+     <div className={s.printer}><p className={s.eyebrow} style={{textAlign:"center",marginBottom:20}}>Your financial summary</p><div className={s.slot}/><div className={s.paperViewport} aria-live="polite">{receipt?<div key={receipt.id} className={s.receipt}><h4>PROWESS</h4><small>FINANCIAL SUMMARY / SCENARIO {String(receipt.id).padStart(3,"0")}<br/>{receipt.currency} · MONTHLY ESTIMATE</small>{[["Sales",receipt.values[2]],["Price per sale",format(Number(receipt.values[0]))],["Revenue",format(receipt.result.revenue)],["Variable costs",format(Number(receipt.values[1])*Number(receipt.values[2]))],["Fixed costs",format(Number(receipt.values[3]))]].map(([label,value])=><div key={label} className={s.receiptRow}><span>{label}</span><b>{value}</b></div>)}<div className={s.receiptTotal}><span style={{display:"block",fontSize:10,fontWeight:400}}>AFTER VARIABLE & FIXED COSTS</span>{format(receipt.result.profit)}</div><div className={s.receiptRow}><span>Break-even sales</span><b>{receipt.result.breakEven??"Not achievable"}</b></div><div className={s.stamp}>ANALYSIS COMPLETE</div><small style={{marginBottom:0}}>Planning estimate based on your inputs.<br/>Excludes tax, financing and payment timing.</small></div>:<div className={s.blankReceipt}><Printer size={30} style={{margin:"0 auto 16px"}}/><strong>Your financial summary will appear here.</strong><br/>Enter your assumptions and select Generate financial summary to review the estimated results.</div>}</div>{receipt&&<button className={s.inlineLink} onClick={()=>saveFile("prowess-scenario.txt",receiptText)}>Download financial summary <ArrowDown size={15}/></button>}</div></div><div className={s.stationFoot}><span>Want a dashboard configured around your actual business?</span><Link href="/services/financial-tracking-dashboard" className={s.inlineLink}>Explore financial tracking <ArrowRight size={16}/></Link></div></>}
 
-export default function ServicesPageClient() {
-  return (
-    <div className="min-h-screen bg-background">
-      <section className="border-b border-border bg-muted py-12 sm:py-16">
-        <Container>
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
-            <Reveal>
-              <div className="max-w-3xl">
-                <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                  Business Services
-                </p>
-                <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
-                  Practical structure for businesses that are ready to run better.
-                </h1>
-                <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-                  We help business owners find what is not working, organise the work, document
-                  the systems and track the numbers that make growth easier to manage.
-                </p>
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <PrimaryLink href="/contact?service=business-structure-diagnostic">
-                    Start with a diagnostic <ArrowRight size={16} aria-hidden="true" />
-                  </PrimaryLink>
-                  <SecondaryLink href="/case-studies">
-                    See case studies
-                  </SecondaryLink>
-                </div>
-              </div>
-            </Reveal>
+    {station===1&&<><div className={s.workflow}><div><p className={s.eyebrow}>Process documentation</p><h3 style={{marginTop:12}}>Build a repeatable<br/>business process.</h3><p className={s.note}>Build a simple order-to-delivery process. Click the steps to add them to your operating sheet. Click again to remove.</p><div className={s.tasks}>{processSteps.map((step,i)=><button className={s.task} aria-pressed={built.includes(i)} key={step.title} onClick={()=>setBuilt(old=>old.includes(i)?old.filter(x=>x!==i):[...old,i].sort())}><span>{built.includes(i)?<Check size={18}/>:String(i+1).padStart(2,"0")}</span><span>{step.title}</span></button>)}</div></div><div className={s.flowPaper}><p className={s.eyebrow}>Your process outline</p><h3 style={{marginTop:14}}>Enquiry → Delivery</h3><p className={s.note}>{built.length} of 5 steps added</p><div aria-live="polite">{built.length?built.map(i=><div className={s.flowStep} key={i}><b>{String(i+1).padStart(2,"0")}</b><div><strong>{processSteps[i].title}</strong><p style={{fontSize:13,lineHeight:1.7,marginTop:5}}>{processSteps[i].detail}</p></div></div>):<p style={{padding:"45px 0",fontFamily:"Georgia, serif",fontSize:23,color:"#748384"}}>Select the steps to include in your process. Each step will appear here with implementation guidance.</p>}</div>{built.length>0&&<button className={s.inlineLink} onClick={()=>saveFile("my-operating-sheet.txt",`ORDER-TO-DELIVERY WORKING TEMPLATE\n\n${built.map(i=>`${i+1}. ${processSteps[i].title}\n${processSteps[i].detail}\nOwner: ______\nCompletion check: ______`).join("\n\n")}\n\nAdapt this template to your business and test it with your team.`)}>Download my operating sheet <ArrowDown size={15}/></button>}</div></div><div className={s.stationFoot}><span>A template is the beginning. Your actual workflows deserve their own documentation.</span><Link className={s.inlineLink} href="/services/sop-vault">Explore the SOP Vault <ArrowRight size={16}/></Link></div></>}
 
-            <Reveal delay={100}>
-              <div className="rounded-lg border border-border bg-card p-5">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  What We Help Fix
-                </p>
-                <div className="mt-5 space-y-4">
-                  {[
-                    "Unclear business structure",
-                    "Undocumented day to day work",
-                    "Weak pricing or offer clarity",
-                    "Poor financial tracking",
-                    "Growth without control",
-                  ].map((item) => (
-                    <div key={item} className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
-                      <span className="text-sm font-medium leading-6 text-foreground">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </Container>
-      </section>
+    {station===2&&<><div className={s.workflow}><div><p className={s.eyebrow}>Offer development</p><h3 style={{marginTop:12}}>Define your customer.<br/>Clarify your value.</h3><p className={s.note}>Identify your target customer, the problem you address and the outcome you provide to develop a clear offer statement.</p><div className={s.offerFields}>{[["Who do you help?","independent retailers"],["What problem do they face?","unpredictable stock shortages"],["What can they achieve with your help?","plan stock with less waste"]].map(([label,placeholder],i)=><label key={label}>{label}<input maxLength={180} placeholder={placeholder} value={offer[i]} onChange={e=>setOffer(old=>old.map((v,j)=>i===j?e.target.value:v))}/></label>)}</div></div><div className={s.offerPreview}><span className={s.eyebrow}>Your draft offer statement</span><p>We help <em>{offer[0].trim()||"[your customer]"}</em> address <em>{offer[1].trim()||"[their problem]"}</em> so they can <em>{offer[2].trim()||"[the outcome]"}</em>.</p><span style={{fontSize:12,lineHeight:1.8,color:"#c2cfd0"}}>Next: test this with three potential customers. Is the problem a priority? What do they do now? What would make them choose you?</span>{offer.every(v=>v.trim())&&<button className={s.inlineLink} style={{color:"#a9c3c5",marginTop:18}} onClick={()=>saveFile("my-offer-draft.txt",`We help ${offer[0]} address ${offer[1]} so they can ${offer[2]}.\n\nA working draft, not market validation. Test the priority of the problem and willingness to pay with potential customers.`)}>Download offer statement <ArrowDown size={16}/></button>}</div></div><div className={s.stationFoot}><span>Turn the first sentence into a clear offer, pricing and acquisition plan.</span><Link className={s.inlineLink} href="/services/go-to-market-offer-playbook">Explore the Offer Playbook <ArrowRight size={16}/></Link></div></>}
+    {station===3&&<BusinessHealthExperience/>}
+   </div>
+  </div></section>
 
-      <section className="border-b border-border bg-background py-10 sm:py-12">
-        <Container>
-          <div className="grid gap-4 md:grid-cols-3">
-            {stageCards.map((stage, index) => (
-              <Reveal key={stage.label} delay={index * 60}>
-                <article className="h-full rounded-lg border border-border bg-card p-5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary">{stage.label}</p>
-                  <h2 className="mt-3 text-lg font-bold text-foreground">{stage.title}</h2>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{stage.text}</p>
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
+  <section id="our-services" className={`${s.section} ${s.services}`}><div className={s.wrap}><div className={s.heading}><div><p className={s.eyebrow}>From a useful first step to work built around you</p><h2>Four ways to build<br/>a stronger business.</h2></div><p>The free tools help you explore. Our services bring your actual processes, priorities and numbers into focus. Choose the problem you want to work on first.</p></div><div className={s.serviceGrid}>{services.map((service,i)=><article className={s.serviceCard} key={service.slug}><div className={s.price}><span>0{i+1} / {i===0?"CLARITY":i===1?"OPERATIONS":i===2?"DIRECTION":"VISIBILITY"}</span><span>{service.price}</span></div><h3>{service.title}</h3><p>{service.short}</p><ul>{service.details.whatYouGet.slice(0,3).map(item=><li key={item}><Check size={16} style={{flexShrink:0,marginTop:4,color:"#a9c3c5"}}/><span>{item}</span></li>)}</ul><p style={{fontSize:12,marginBottom:18}}>{i===0?"Fixed one-time fee. Five business days after payment and all required information.":"Standalone estimate. Scope is confirmed before payment."}</p><Link href={`/services/${service.slug}`} className={s.primary}>Explore this service <ArrowRight size={16}/></Link></article>)}</div></div></section>
 
-      <section id="our-services" className="bg-muted py-12 sm:py-16">
-        <Container>
-          <Reveal>
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                  Choose Your Support
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                  Start with the business problem that needs attention first.
-                </h2>
-              </div>
-              <SecondaryLink href="/pricing">
-                Compare ongoing support <ArrowRight size={16} aria-hidden="true" />
-              </SecondaryLink>
-            </div>
-          </Reveal>
+  <section id="sample-desk" className={s.section}><div className={s.wrap}><div className={s.heading}><div><p className={s.eyebrow}>Open the deliverables</p><h2>What does “structure”<br/>actually look like?</h2></div><p>Review a sample deliverable. These are illustrative excerpts using fictional businesses, not client results or a representation of a completed engagement.</p></div><div className={s.files}>{samples.map((file,i)=><button className={s.file} aria-pressed={sample===i} aria-expanded={sample===i} aria-controls="sample-document" onClick={()=>setSample(sample===i?null:i)} key={file.name}><FileText size={25}/><h3>{file.name}</h3><span>{file.code} ↗</span></button>)}</div>{sample!==null&&<article id="sample-document" className={s.document}><div style={{display:"flex",justifyContent:"space-between",gap:20}}><span className={s.eyebrow}>Illustrative sample / {samples[sample].code}</span><button onClick={()=>setSample(null)} aria-label="Close sample" style={{minHeight:40,minWidth:40,fontSize:22}}>×</button></div><h3>{samples[sample].title}</h3><p>{samples[sample].body}</p><button className={s.inlineLink} onClick={()=>saveFile("prowess-illustrative-sample.txt",`ILLUSTRATIVE SAMPLE · FICTIONAL BUSINESS\n\n${samples[sample].title}\n\n${samples[sample].body}`)}>Download this sample <ArrowDown size={16}/></button></article>}</div></section>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {services.map((service, index) => {
-              const Icon = serviceIcons[service.icon || "package"] || BriefcaseBusiness;
-              return (
-                <Reveal key={service.id} delay={index * 60}>
-                  <article className="flex h-full flex-col rounded-lg border border-border bg-card p-6">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Icon size={21} aria-hidden="true" />
-                      </span>
-                      <span className="rounded-md border border-border bg-background px-3 py-1 text-xs font-bold text-muted-foreground">
-                        {service.slug === "business-structure-diagnostic" ? "One-time fee" : "Standalone estimate"}: {service.price}
-                      </span>
-                    </div>
-                    <h3 className="mt-5 text-xl font-bold text-foreground">{service.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.short}</p>
-                    {service.slug === "business-structure-diagnostic" && (
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">Five business days after payment confirmation and receipt of all required information. Includes a written report, 30-day action plan and one 45-minute review call.</p>
-                    )}
-                    <div className="mt-5 space-y-2 border-t border-border pt-4">
-                      {service.details.whatYouGet.slice(0, 3).map((item) => (
-                        <div key={item} className="flex gap-2 text-sm leading-6 text-foreground">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
-                          <span>{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <Link
-                      href={`/services/${service.slug}`}
-                      className="mt-6 inline-flex min-h-10 w-fit items-center gap-2 text-sm font-semibold text-primary transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      View scope and enquiry details <ArrowRight size={16} aria-hidden="true" />
-                    </Link>
-                  </article>
-                </Reveal>
-              );
-            })}
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-primary py-12 sm:py-16">
-        <Container>
-          <Reveal>
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-primary-foreground/75">
-                  Proof First
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
-                  Want to see how this works before you choose a service?
-                </h2>
-                <p className="mt-4 max-w-2xl text-base leading-7 text-primary-foreground/80">
-                  The case studies show the problem, the structure we built and the practical
-                  changes clients could keep using after the work.
-                </p>
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/case-studies"
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-foreground px-5 text-sm font-semibold text-primary transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    View case studies <ArrowRight size={16} aria-hidden="true" />
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-primary-foreground/35 px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    Ask what fits
-                  </Link>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-primary-foreground/25 bg-primary-foreground/10 p-5">
-                <p className="text-xs font-bold uppercase tracking-widest text-primary-foreground/75">
-                  Case Studies Show
-                </p>
-                <div className="mt-5 space-y-4">
-                  {[
-                    "The business challenge",
-                    "The systems or tools put in place",
-                    "The result the client could feel or measure",
-                  ].map((item) => (
-                    <div key={item} className="flex gap-3 text-sm font-medium leading-6 text-primary-foreground">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0" aria-hidden="true" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </Container>
-      </section>
-
-      <section className="bg-background py-12 sm:py-16">
-        <Container>
-          <Reveal>
-            <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                Tools Included In The Work
-              </p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Useful tools, not just advice.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-muted-foreground">
-                Some offers include access to tools that help you keep tracking and improving the
-                business after the engagement.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {toolCards.map((tool, index) => {
-              const Icon = tool.icon;
-              return (
-                <Reveal key={tool.title} delay={index * 50}>
-                  <article className="h-full rounded-lg border border-border bg-card p-5">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Icon size={19} aria-hidden="true" />
-                    </span>
-                    <h3 className="mt-4 text-base font-bold text-foreground">{tool.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{tool.text}</p>
-                  </article>
-                </Reveal>
-              );
-            })}
-          </div>
-
-          <div className="mt-7">
-            <SecondaryLink href="/tools">
-              Explore all tools <ArrowRight size={16} aria-hidden="true" />
-            </SecondaryLink>
-          </div>
-        </Container>
-      </section>
-
-      <section className="border-y border-border bg-muted py-12 sm:py-16">
-        <Container>
-          <div className="grid gap-8 lg:grid-cols-[340px_minmax(0,1fr)]">
-            <Reveal>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                  How It Works
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                  Simple enough to start. Structured enough to matter.
-                </h2>
-              </div>
-            </Reveal>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {processSteps.map((step, index) => (
-                <Reveal key={step.title} delay={index * 60}>
-                  <article className="h-full rounded-lg border border-border bg-card p-5">
-                    <span className="text-sm font-bold text-primary">{String(index + 1).padStart(2, "0")}</span>
-                    <h3 className="mt-4 text-lg font-bold text-foreground">{step.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{step.text}</p>
-                  </article>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-background py-12 sm:py-16">
-        <Container>
-          <Reveal>
-            <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                    Next Step
-                  </p>
-                  <h2 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                    If you are unsure, start with the diagnostic.
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                    It gives you a clear picture of what is working, what is leaking time or money
-                    and what to fix first.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                  <PrimaryLink href="/contact?service=business-structure-diagnostic">
-                    Start the diagnostic <ArrowRight size={16} aria-hidden="true" />
-                  </PrimaryLink>
-                  <SecondaryLink href="/case-studies">
-                    Read client stories
-                  </SecondaryLink>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </Container>
-      </section>
-    </div>
-  );
+  <section id="how-it-works" className={s.section} style={{paddingTop:0}}><div className={s.wrap}><p className={s.eyebrow}>A clear next step, without the guesswork</p><div className={s.heading}><h2>A clear process.<br/>From enquiry to delivery.</h2></div><div className={s.steps}>{[["01 / START A CONVERSATION","Tell us what needs attention.","Choose a service and describe your business, challenges and goals. If you are unsure, the diagnostic is a starting point."],["02 / AGREE THE WORK","Know what you are paying for.","We confirm suitability, scope and the next steps before providing payment instructions. An enquiry does not start a subscription."],["03 / PUT IT TO WORK","Leave with something usable.","Receive the agreed findings, documents or configured tools. Each service page explains what is included and what happens next."]].map(([n,title,body])=><article key={n}><span className={s.eyebrow}>{n}</span><h3>{title}</h3><p>{body}</p></article>)}</div></div></section>
+  <section className={s.closing}><div className={s.wrap}><p className={s.eyebrow}>Start where you are</p><h2 style={{marginTop:14}}>Choose the right support<br/>for your next stage.</h2><p className={s.intro} style={{marginTop:18}}>Choose a focused engagement, or explore a recurring support plan if you need a longer partnership.</p><div className={s.actions}><Link className={s.primary} href="/services/business-structure-diagnostic">Explore the diagnostic <ArrowRight size={17}/></Link><Link className={s.secondary} href="/pricing">Compare ongoing support</Link></div><p className={s.note}>Standalone services and recurring memberships are separate choices.</p></div></section>
+  <section className={s.section}><div className={s.wrap}><div className={s.heading}><h2>Frequently asked questions.</h2></div>{[["Do I have to buy the diagnostic first?","No. You can enquire about the SOP Vault, Offer Playbook or Financial Tracking Dashboard directly. The diagnostic helps when you are unsure what to address first."],["Are the business tools free?","Yes. You can use these experiences and download your results without creating an account. They are simplified starting points, separate from the personalised paid services."],["Is this a subscription?","The four services are standalone engagements. Diagnostic, Foundation, Growth and Full Support memberships are separate recurring options described on the Pricing page."],["What happens after I enquire?","Prowess reviews your needs and confirms suitability before providing payment instructions. For the diagnostic, delivery takes five business days after both payment confirmation and receipt of all required information."],["Can I see client work?","The samples on this page are illustrative. Visit our case studies for published client work, or ask about relevant examples when you enquire."]].map(([q,a])=><details className={s.faq} key={q}><summary>{q}</summary><p>{a}</p></details>)}<Link href="/case-studies" className={s.inlineLink}>Explore case studies <ArrowRight size={16}/></Link></div></section>
+ </div>;
 }

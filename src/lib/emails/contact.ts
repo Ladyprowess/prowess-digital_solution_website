@@ -5,6 +5,7 @@ export type ContactEnquiry = {
   business_stage: string;
   inquiry_type: string;
   message: string;
+  source?: "website" | "business_diagnostic";
 };
 
 function escape(value: string) {
@@ -37,8 +38,8 @@ function messagePanel(message: string) {
 
 export function contactAdminEmail(data: ContactEnquiry) {
   const subject = `New enquiry: ${data.inquiry_type.replace(/[\r\n]/g, ' ')}`;
-  const content = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0">${field('Service or topic',data.inquiry_type)}${field('Name',data.full_name)}${field('Email',data.email)}${data.phone ? field('Phone',data.phone) : ''}${data.business_stage ? field('Business stage',data.business_stage) : ''}</table>${messagePanel(data.message)}<p class="muted" style="margin:24px 0 0;font-size:14px;line-height:1.7;color:#465e60;">Reply to this email to respond directly to the enquirer.</p>`;
-  return { subject, html: frame('A new website enquiry is ready for your review.', 'A new enquiry has arrived', 'Review the details below and reply when you’re ready.', content), text: `New website enquiry\n\nTopic: ${data.inquiry_type}\nName: ${data.full_name}\nEmail: ${data.email}\nPhone: ${data.phone || 'Not provided'}\nBusiness stage: ${data.business_stage || 'Not provided'}\n\nMessage:\n${data.message}\n\nReply to respond directly to the enquirer.` };
+  const content = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0">${field('Source', data.source === 'business_diagnostic' ? 'Business diagnostic landing page' : 'Website')}${field('Service or topic',data.inquiry_type)}${field('Name',data.full_name)}${field('Email',data.email)}${data.phone ? field('Phone',data.phone) : ''}${data.business_stage ? field('Business stage',data.business_stage) : ''}</table>${messagePanel(data.message)}<p class="muted" style="margin:24px 0 0;font-size:14px;line-height:1.7;color:#465e60;">Reply to this email to respond directly to the enquirer.</p>`;
+  return { subject, html: frame('A new website enquiry is ready for your review.', 'A new enquiry has arrived', 'Review the details below and reply when you’re ready.', content), text: `New website enquiry\n\nSource: ${data.source || 'website'}\nTopic: ${data.inquiry_type}\nName: ${data.full_name}\nEmail: ${data.email}\nPhone: ${data.phone || 'Not provided'}\nBusiness stage: ${data.business_stage || 'Not provided'}\n\nMessage:\n${data.message}\n\nReply to respond directly to the enquirer.` };
 }
 
 export function contactCustomerEmail(data: ContactEnquiry) {

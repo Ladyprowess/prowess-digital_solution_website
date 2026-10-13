@@ -163,7 +163,7 @@ export default function CaseStudiesPageClient() {
         }
         description="Real transformations from businesses who started with a single Business Structure Diagnostic. See how clear thinking and simple systems lead to steady, measurable growth."
         primaryAction={{ label: "See Success Stories", href: "#results" }}
-        secondaryAction={{ label: "Start the Diagnostic", href: "/contact?service=business-structure-diagnostic" }}
+        secondaryAction={{ label: "Start the Diagnostic", href: "/services" }}
         proof={[
           "Real client challenges and solutions",
           "Measured results, not vague promises",

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useEffect, useMemo, useState } from "react";
 import Container from "@/components/Container";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
@@ -184,7 +186,7 @@ export default function ConsultationPage() {
         <Container>
         <div className="mx-auto max-w-4xl">
           <p className="mb-6 text-sm leading-6 text-muted-foreground">
-            This form books an appointment. To ask a question or request the Business Structure Diagnostic, <a className="text-primary underline" href="/contact?service=business-structure-diagnostic">send an enquiry first</a>. Prowess confirms suitability before sending diagnostic payment instructions. Booking a consultation does not purchase the diagnostic or start a membership.
+            This form books an appointment. To ask a question or request the Business Structure Diagnostic, <Link className="text-primary underline" href="/services">send an enquiry first</Link>. Prowess confirms suitability before sending diagnostic payment instructions. Booking a consultation does not purchase the diagnostic or start a membership.
           </p>
           <Reveal>
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-10">

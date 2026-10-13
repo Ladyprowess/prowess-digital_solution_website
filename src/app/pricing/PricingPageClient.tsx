@@ -16,7 +16,7 @@ import { CurrencyToggle } from "@/components/CurrencyToggle";
 // then hit a tier with no NGN amount at all.
 const ALL_TIERS_HAVE_NGN = packages.every((p) => p.monthlyPriceNGN != null);
 
-const DIAGNOSTIC_LINK = "/services/business-structure-diagnostic";
+const DIAGNOSTIC_LINK = "/services";
 
 // Features mapped to 4 tiers: Diagnostic | Foundation | Growth | Full Support
 // Kept in sync with the deliverables in src/content/site.ts `packages`.

@@ -224,7 +224,7 @@ return (
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href="/contact?service=business-structure-diagnostic"
+                  href="/services"
                   className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-95"
                 >
                   Start the Diagnostic

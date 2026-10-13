@@ -4,6 +4,7 @@ import Link from "next/link";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { services, packages, offerToPackageSlug } from "@/content/site";
+import DiagnosticLanding from "@/components/DiagnosticLanding";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
@@ -53,6 +54,8 @@ export default async function ServicePage({ params }: PageProps) {
 
   const service = getService(slug);
   if (!service) return notFound();
+
+  if (service.slug === "business-structure-diagnostic") return <DiagnosticLanding service={service} />;
 
   const includedInPlan = packages.find((p) => p.slug === offerToPackageSlug[service.slug]) || null;
 
@@ -192,7 +195,7 @@ export default async function ServicePage({ params }: PageProps) {
                   </Link>
 
                   <Link
-                    href="/contact?service=business-structure-diagnostic"
+                    href="/services"
                     data-track="service_enquiry"
                     data-offer="business-structure-diagnostic"
                     className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 font-semibold text-foreground transition hover:-translate-y-0.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
