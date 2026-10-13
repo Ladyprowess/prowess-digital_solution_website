@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { flushSync } from "react-dom";
 import Container from "@/components/Container";
+import SummaryPreview from "@/components/services/SummaryPreview";
+import { previewSummary } from "@/lib/businessSummary";
+import { PageMotion } from "@/components/PageMotion";
 
 type ChecklistCategory = {
   title: string;
@@ -142,7 +145,8 @@ export default function BusinessHealthCheckPageClient() {
         setSubmitting(false);
         return;
       }
-      setUnlocked(true);
+      flushSync(() => setUnlocked(true));
+      void previewSummary("Your business foundations", `${progressPercent}% — ${getScoreLabel()}`, "#operational-health-result");
       setSubmitting(false);
     } catch {
       setError("Could not save your results. Please try again.");
@@ -151,7 +155,7 @@ export default function BusinessHealthCheckPageClient() {
   }
 
   return (
-    <div className="page-wrap section">
+    <PageMotion><div className="page-wrap section">
       <Container>
         <div className="mx-auto max-w-3xl text-center">
           <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">Free Self-Audit</p>
@@ -164,7 +168,7 @@ export default function BusinessHealthCheckPageClient() {
 
         <div className="mx-auto mt-10 max-w-3xl space-y-8">
           {/* SCORE (blurred until unlocked) */}
-          <div className="relative rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div id="health-score" className="relative scroll-mt-28 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Your Progress</p>
@@ -205,7 +209,7 @@ export default function BusinessHealthCheckPageClient() {
                   disabled={submitting || checkedCount === 0}
                   className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
                 >
-                  {submitting ? "Unlocking..." : "See My Score"}
+                  {submitting ? "Unlocking..." : "Get my result"}
                 </button>
               </form>
             )}
@@ -214,6 +218,26 @@ export default function BusinessHealthCheckPageClient() {
             )}
             {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
           </div>
+
+          {unlocked && <section className="rounded-2xl border border-border bg-card p-6" aria-label="Your health check result">
+            <div id="operational-health-result">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Operational health self-audit</p>
+              <h2 className="mt-3 text-2xl font-semibold">Your business foundations</h2>
+              <div className="receiptTotal my-5 text-4xl font-bold text-primary">{progressPercent}%<span className="block text-sm font-normal text-muted-foreground">{checkedCount} of {totalItems} checkpoints in place</span></div>
+              <p className="mb-6">{getScoreLabel()}</p>
+              {categories.map((cat, index) => {
+                const {done,total}=getCategoryProgress(index);
+                const gaps=cat.items.filter((_,i)=>!checked[`${index}-${i}`]);
+                return <div key={cat.title} className="border-t border-border py-4">
+                  <div className="receiptRow flex justify-between gap-4"><h3 className="font-semibold">{cat.title}</h3><b>{done}/{total}</b></div>
+                  <p className="mt-2 text-sm text-muted-foreground">{gaps.length ? 'To review and put in place:' : 'All checkpoints marked in place. Keep these practices current.'}</p>
+                  {gaps.length>0&&<ul className="mt-2 list-disc space-y-2 pl-5 text-sm">{gaps.map(item=><li key={item}>{item}</li>)}</ul>}
+                </div>;
+              })}
+              <footer className="mt-4 text-xs text-muted-foreground">Based on your checklist selections. Unchecked items are priorities to review, not verified failures. Each checkpoint has equal weight.</footer>
+            </div>
+            <button type="button" onClick={()=>void previewSummary('Your business foundations', `${progressPercent}% — ${getScoreLabel()}`, '#operational-health-result')} className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline underline-offset-4">Preview / Print my result <span aria-hidden="true">↓</span></button>
+          </section>}
 
           {/* CATEGORIES */}
           <div className="space-y-3">
@@ -297,21 +321,25 @@ export default function BusinessHealthCheckPageClient() {
             })}
           </div>
 
-          {/* CTA */}
           <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Found gaps? That is completely normal. The Business Structure Diagnostic gives you a
-              written report and prioritised action plan within five business days after payment confirmation and receipt of all required information.
+            <h2 className="text-xl font-semibold">Keep your business health result</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Get your score, category breakdown and priorities in one printout. Download it or save it as a PDF.
             </p>
-            <Link
-              href="/services"
-              className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            <button
+              type="button"
+              onClick={()=>{
+                if(unlocked){void previewSummary('Your business foundations', `${progressPercent}% — ${getScoreLabel()}`, '#operational-health-result');}
+                else {document.getElementById('health-score')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});document.querySelector<HTMLInputElement>('#health-score input[type="email"]')?.focus({preventScroll:true});}
+              }}
+              className="mt-4 inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
-              Start the Diagnostic
-            </Link>
+              {unlocked?'Preview / Print my result':'Get my result'}
+            </button>
+            {!unlocked&&<p className="mt-3 text-xs text-muted-foreground">Enter your email in the score section to unlock your result.</p>}
           </div>
         </div>
       </Container>
-    </div>
+    </div><SummaryPreview/></PageMotion>
   );
 }
