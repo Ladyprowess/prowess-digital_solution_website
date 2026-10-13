@@ -164,13 +164,14 @@ export async function markMembershipRenewalFailed(subscriptionId: string) {
     .single();
 
   if (error || !sub) return { ok: false as const };
-  if (sub.payment_status !== "paid" || sub.subscription_status === "cancelled") return { ok: true as const };
+  if (sub.payment_status !== "paid" || sub.subscription_status !== "active") return { ok: true as const };
 
-  const { error: updateError } = await supabase
+  const { data: changed, error: updateError } = await supabase
     .from("membership_subscriptions")
     .update({ subscription_status: "lapsed", lapsed_at: new Date().toISOString() })
-    .eq("id", sub.id);
+    .eq("id", sub.id).eq("subscription_status", "active").eq("payment_status", "paid").select("id");
   if (updateError) return { ok: false as const };
+  if (!changed?.length) return { ok: true as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
@@ -238,7 +239,7 @@ export async function markMembershipCancelled(subscriptionId: string) {
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Your ${sub.plan_slug} membership has ended</h2>
-        <p>Your subscription payment could not be completed, so your membership and tools access have been cancelled.</p>
+        <p>Your membership has ended and its tools access has been cancelled.</p>
         <p>You can restart anytime from <a href="https://prowessdigitalsolutions.com/pricing">prowessdigitalsolutions.com/pricing</a>.</p>
       </div>
     `,

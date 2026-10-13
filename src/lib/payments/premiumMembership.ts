@@ -184,13 +184,14 @@ export async function markPremiumMembershipRenewalFailed(subscriptionId: string)
     .single();
 
   if (error || !sub) return { ok: false as const };
-  if (sub.payment_status !== "paid" || sub.subscription_status === "cancelled") return { ok: true as const };
+  if (sub.payment_status !== "paid" || sub.subscription_status !== "active") return { ok: true as const };
 
-  const { error: updateError } = await supabase
+  const { data: changed, error: updateError } = await supabase
     .from("premium_membership_subscriptions")
     .update({ subscription_status: "lapsed", lapsed_at: new Date().toISOString() })
-    .eq("id", sub.id);
+    .eq("id", sub.id).eq("subscription_status", "active").eq("payment_status", "paid").select("id");
   if (updateError) return { ok: false as const };
+  if (!changed?.length) return { ok: true as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL;
@@ -249,7 +250,7 @@ export async function markPremiumMembershipCancelled(subscriptionId: string) {
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Your Premium Membership has ended</h2>
-        <p>Your subscription payment could not be completed, so Premium access has been switched off. Any CVs you already built keep working exactly as they are - you just won't be able to create new premium-template CVs or save additional CVs until you resubscribe.</p>
+        <p>Your subscription has ended, so Premium access has been switched off. Any CVs you already built keep working exactly as they are - you just won't be able to create new premium-template CVs or save additional CVs until you resubscribe.</p>
         <p>You can restart any time from <a href="https://prowessdigitalsolutions.com/account/membership">your account's Membership page</a>.</p>
       </div>
     `,

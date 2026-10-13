@@ -106,3 +106,21 @@ test('content checkout rejects missing selected currency before creating an orde
  const response=await POST(new Request('https://example.com',{method:'POST',body:JSON.stringify({itemType:'course',itemId:'c1',currency:'NGN'})}));
  assert.equal(response.status,400);
 });
+
+for(const [name,fn] of [['membership','markMembershipRenewalFailed'],['premiumMembership','markPremiumMembershipRenewalFailed']]){
+ test(`${name}: duplicate failures and cancelled subscriptions are unchanged`,async()=>{
+  for(const status of ['lapsed','cancelled','pending']){
+   const db=dbFor({id:'s1',payment_status:'paid',subscription_status:status});let emails=0;
+   const imports={'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/validation':validation,'@/lib/payments/toolGrant':{},'@/lib/tools/tierAccess':{},'@/lib/payments/flutterwave':{},'@/lib/formatMoney':{},'@/lib/resendClient':{resend:{emails:{send:async()=>{emails++;}}}}};
+   const result=await load(`src/lib/payments/${name}.ts`,imports)[fn]('s1');assert.equal(result.ok,true);assert.equal(db.writes.length,0);assert.equal(emails,0);
+  }
+ });
+}
+test('tool data API enforces purchased tool scope for reading and writing',async()=>{
+ const db=dbFor({status:'active',type:'forever',allowed_tools:['calculator']});
+ const routes=load('src/app/api/tools-data/route.ts',{'next/server':next,'@supabase/supabase-js':{createClient:()=>db}},{URL});
+ const denied=await routes.GET(new Request('https://example.com/api/tools-data?code=PDS-TEST&tool=invoice'));
+ assert.equal(denied.status,401);
+ const post=await routes.POST(new Request('https://example.com',{method:'POST',body:JSON.stringify({code:'PDS-TEST',tool:'invoice',data:{}})}));assert.equal(post.status,401);assert.equal(db.writes.length,0);
+ const allowed=await routes.GET(new Request('https://example.com/api/tools-data?code=PDS-TEST&tool=calculator'));assert.equal(allowed.status,200);
+});

@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
   const { code, tool } = await req.json();
-  if (!code) return NextResponse.json({ valid: false, reason: "invalid" });
+  if (typeof code !== "string" || !code.trim() || (tool != null && typeof tool !== "string")) return NextResponse.json({ valid: false, reason: "invalid" });
 
   const { data, error } = await supabase
     .from("client_codes")
