@@ -1,14 +1,17 @@
+import { authorizeNotification } from "@/lib/emails/authorizeNotification";
+import { escapeEmail } from "@/lib/payments/emailEscape";
 // FILE: src/app/api/notify-payroll/route.ts
 // Sends email to member when admin marks their payroll as paid.
 
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { resend } from "@/lib/resendClient";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const B = "#507c80";
 
 export async function POST(req: NextRequest) {
   try {
+    const denied = await authorizeNotification(req);
+    if (denied) return denied;
     const {
       to, recipientName, month,
       finalAmount, currencySymbol,
@@ -21,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const fmtMoney = (value: number | string | null | undefined) =>
-      `${currencySymbol}${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      `${escapeEmail(currencySymbol)}${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const payTypeLabel = payType === "per_article" ? "Per Article" : "Monthly Salary";
 
@@ -52,7 +55,7 @@ export async function POST(req: NextRequest) {
       ? `<tr>
            <td style="padding-bottom:12px;">
              <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Reason for Payment</span><br/>
-             <span style="font-size:13px;color:#64748b;margin-top:4px;display:block;">${notes || adjustmentNote}</span>
+             <span style="font-size:13px;color:#64748b;margin-top:4px;display:block;">${escapeEmail(notes || adjustmentNote)}</span>
            </td>
          </tr>`
       : "";
@@ -75,14 +78,14 @@ export async function POST(req: NextRequest) {
 
         <tr>
           <td style="padding:36px 40px;">
-            <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
+            <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${escapeEmail(recipientName)},</div>
             <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">Your payment has been sent! 💸</div>
-            <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Your ${payType === "per_article" ? "article-based" : "monthly"} payment for ${month} has been marked as paid.</div>
+            <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Your ${payType === "per_article" ? "article-based" : "monthly"} payment for ${escapeEmail(month)} has been marked as paid.</div>
 
             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:28px;margin-bottom:28px;text-align:center;">
               <div style="font-size:13px;color:#16a34a;font-weight:600;margin-bottom:6px;">Amount Paid</div>
               <div style="font-size:40px;font-weight:800;color:#16a34a;">${fmtMoney(finalAmount)}</div>
-              <div style="font-size:12px;color:#94a3b8;margin-top:6px;">${month}</div>
+              <div style="font-size:12px;color:#94a3b8;margin-top:6px;">${escapeEmail(month)}</div>
             </div>
 
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:28px;">
@@ -124,13 +127,14 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    await resend.emails.send({
+    const delivery = await resend.emails.send({
       from: "Prowess Digital Solutions <info@prowessdigitalsolutions.com>",
       to: [to],
       subject: `Payment Received - ${month}`,
       html,
     });
 
+    if (delivery.error) return NextResponse.json({ error: "Notification could not be sent." }, { status: 502 });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("notify-payroll error:", err);

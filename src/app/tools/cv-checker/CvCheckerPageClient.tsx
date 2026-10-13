@@ -44,7 +44,7 @@ export default function CvCheckerPageClient() {
 
     formRef.current?.reset();
     setStatus("success");
-    setMessage("Your CV has been submitted. The team has been notified and will review it manually.");
+    setMessage(res.confirmationSent ? "Your CV has been submitted for manual review. Check your email for confirmation." : "Your CV has been saved for manual review, but the confirmation email could not be sent. Please do not upload it again. Contact us if you need to follow up.");
   }
 
   return (
@@ -141,7 +141,7 @@ export default function CvCheckerPageClient() {
               <div className="rounded-lg border border-border bg-card p-5">
                 <h2 className="text-base font-bold text-foreground">What happens next</h2>
                 <ul className="mt-4 space-y-3">
-                  {["Your CV is uploaded securely.", "The admin receives a notification.", "The team reviews it manually.", "You receive practical feedback by email."].map((item) => (
+                  {["Your CV is uploaded securely.", "Your submission is recorded for review.", "The team reviews it manually.", "You receive practical feedback by email."].map((item) => (
                     <li key={item} className="flex gap-2 text-sm leading-6 text-muted-foreground">
                       <CheckCircle2 className="mt-1 h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
                       <span>{item}</span>

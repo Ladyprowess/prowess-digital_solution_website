@@ -10,6 +10,6 @@ Deletion removes listing content, cascading skill mappings, and saved-item links
 
 The two importers handle a suppressed reimport as skipped, not as a new imported listing. Deploy their code changes alongside the migration. Deleted detail URLs naturally return not found when read from the database; previously cached pages may persist until their cache is refreshed. No redirects to unrelated pages are added.
 
-Validation: isolated PostgreSQL tests passed for closed status, elapsed deadline, elapsed expiry, future/open/draft preservation, repeated cleanup, deletion of saved links and skill mappings, personal-note preservation, import suppression and denied anonymous function execution. The local test stubbed cron.schedule; production scheduling requires pg_cron to be available and the migration to succeed.
+Validation: isolated PostgreSQL tests passed for closed status, elapsed deadline, elapsed expiry, future/open/draft preservation, repeated cleanup, deletion of saved and skill mappings, personal-note preservation, import suppression and denied anonymous function execution. The local test stubbed cron.schedule; production scheduling requires pg_cron to be available and the migration to succeed.
 
 Activation status: not applied to production. Supabase CLI has no access token and no database connection credential was available in the checkout. After application, verify the named entry in cron.job and successful runs in cron.job_run_details. Do not interpret the migration file alone as an active production schedule.

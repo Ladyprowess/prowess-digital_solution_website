@@ -1,10 +1,13 @@
+import { authorizeNotification } from "@/lib/emails/authorizeNotification";
+import { escapeEmail } from "@/lib/payments/emailEscape";
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { resend } from "@/lib/resendClient";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   try {
+    const denied = await authorizeNotification(req);
+    if (denied) return denied;
     const { to, title, body, authorName } = await req.json();
 
     if (!to || !title) {
@@ -37,11 +40,11 @@ export async function POST(req: NextRequest) {
           <tr>
             <td style="padding:36px 40px;">
               <div style="font-size:13px;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">New Announcement</div>
-              <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">${title}</div>
-              <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Posted by ${authorName || "a team member"}</div>
+              <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">${escapeEmail(title)}</div>
+              <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Posted by ${escapeEmail(authorName || "a team member")}</div>
 
               <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:22px;margin-bottom:28px;">
-                <div style="font-size:14px;color:#374151;line-height:1.7;white-space:pre-wrap;">${bodySnippet || ""}</div>
+                <div style="font-size:14px;color:#374151;line-height:1.7;white-space:pre-wrap;">${escapeEmail(bodySnippet || "")}</div>
               </div>
 
               <div style="text-align:center;margin-bottom:8px;">
@@ -69,13 +72,14 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    await resend.emails.send({
+    const delivery = await resend.emails.send({
       from: "Prowess Digital Solutions <info@prowessdigitalsolutions.com>",
       to: [to],
       subject: `New Announcement: ${title}`,
       html,
     });
 
+    if (delivery.error) return NextResponse.json({ error: "Notification could not be sent." }, { status: 502 });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("notify-announcement error:", err);

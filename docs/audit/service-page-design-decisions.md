@@ -64,3 +64,50 @@ Replaced the static ledger hero with a centred introduction and a working financ
 ### Financial workspace refinement
 
 Replaced the tall joined grey panel across all three views with independent, compact input and result cards. Inputs use a two-column grid where space permits; results use a short metric breakdown and a dedicated visual. Receipt export retains the financial text and values and excludes decorative visuals. Verified calculations, invalid-input recovery, receipt export and 390/768/1440 widths without overflow; inspected the desktop workspace screenshot. TypeScript and lint passed.
+
+## Consolidated service review — 13 October 2026
+
+Scope: `/services` and the Diagnostic, SOP Vault, Offer Playbook and Financial Dashboard pages. This is a local service-journey review, not a whole-platform payment or production audit.
+
+Verified:
+- Four service enquiry forms with intercepted HTTP responses: failed submissions retain input; retry succeeds in place; service topic and diagnostic source are correct. No real emails or database writes were made.
+- All four detail pages at 390, 768 and 1440 pixels: no horizontal overflow, broken local section anchors or browser runtime errors in the exercised journeys.
+- SOP procedure, Diagnostic report, main financial/process/offer/health results and all four deliverable previews: receipt image loads at full resolution, PNG download uses the identical preview image, and Print / Save PDF invokes the printable receipt document.
+- Playbook receipt preview and local PDF generation; Financial Dashboard calculations, invalid-input recovery, slider propagation and receipt content.
+- Fourteen automated calculation, result-formatting and contact-email tests passed. TypeScript, scoped ESLint and whitespace checks passed.
+
+Corrections: retained removal of the extra SOP-only enquiry link from the service grid; removed two remaining customer-facing uses of “example” in the process builder.
+
+No blocking issue found in the exercised local service journeys. Release checks still outstanding: a full build using the project's Node.js 24 requirement, deployed route/receipt checks, and real enquiry delivery with designated recipients. Browser checks used Chromium; Safari/iOS rendering and physical printer output were not verified. No deployment was performed during this review.
+
+## Interactive homepage opening — 13 October 2026
+
+Replaced the static hero navigation with four audience paths, twelve selectable situations and practical three-action plans linked to existing destinations. Progress is stored only in this browser, with a visible fallback when storage is unavailable. No email or account is required. Removed the duplicate goal-card section; retained search, content feeds and other homepage destinations. Added the missing newsletter anchor used by the empty listing state. Analytics use controlled audience/destination labels, not entered text or checklist contents. Verified all twelve plans, progress restoration, 390/768/1440 layouts, TypeScript and scoped lint. The opening was visually inspected in Chromium. Local changes only.
+
+### Homepage experience revision
+
+The owner rejected the checklist opening. Replaced it with three hands-on scenes: a storefront with price/volume controls and immediate cost/balance results, a communication challenge with answer-specific feedback, and a selectable direction map linking to skills, career paths, jobs and opportunities. Search and all four primary destinations remain accessible. The old local checklist state is no longer read or written. Verified the business calculation through keyboard input, challenge feedback, and widths 390/768/1440 without overflow or browser errors. TypeScript and scoped lint passed; desktop appearance inspected. No deployment.
+
+## Homepage: personal launchpad (13 October 2026)
+
+The owner selected **a personal launchpad: visitors choose an ambition and the whole homepage changes around their journey**. This supersedes the rejected hero-only storefront, quiz and direction-map treatment.
+
+- The homepage now uses `components/home/HomeLaunchpad.tsx`, `journeys.ts` and `Launchpad.module.css`. It no longer renders the old HeroSection followed by disconnected catalogue sections.
+- Four ambitions remain: Grow my business, Build my skills, Find work and Find opportunities. Each changes the starting questions, suggested route, tools, discovery emphasis, openings and closing message. All destinations remain accessible through navigation and the search/footer links.
+- Visitors choose their immediate situation, explore all three route steps, switch tools, browse courses/resources/videos and save useful actions. Saves are a shortlist, not completed tasks or claimed achievements.
+- Direction, selected situation and saved actions persist in this browser under `pds-home-launchpad-v1`. No personal form data is stored. Storage failure falls back to the current session with honest wording.
+- The existing published-content queries and homepage resource curation remain. Jobs and opportunities retain expiry filtering. Loading errors have a retry action, requests have a 15-second abort timeout, and empty collections link to the relevant directory.
+- The training image, genuine attributed website-client feedback, general search and newsletter submission remain part of the page. No live email was sent and no records were added for verification.
+- Local checks: TypeScript and scoped ESLint; all four ambition switches; saved-step persistence after reload; no horizontal overflow at 375/768/1440px; populated content, shelf switching and failure/retry using intercepted test responses. The actual published inventory and delivery configuration were not inferred from those fixtures. No deployment performed.
+
+## Refinements and email review (13 October 2026)
+
+- Removed decorative section/tab numbers across the homepage and services. Kept numerical results, prices, weeks and meaningful process sequences.
+- Renamed the homepage shortcut collection to saved and its action to Save link. Copy explains that these are browser-local shortcuts, not bookings or completed work.
+- Added shared one-time fade/lift/scale entrances on the homepage and service pages, with headline entrance motion and reduced-motion support. No animation controls added.
+- All repository application email senders now use a shared transport that adds branded layout to plain emails, preserves existing designed layouts, improves small-text contrast/size, adds plain-text alternatives and reports provider errors without logging recipient content.
+- CV Checker now has designed admin and customer emails, file/field validation, configuration checks before upload, and honest delivery flags after the submission is stored. A failed email does not request a duplicate CV upload. Review and feedback remain manual. Document links last seven days.
+- Careers subscription now uses the persisted newsletter flow instead of a placeholder hosted template. Signup confirmations include preference unsubscribe links. Event-send counts distinguish provider rejections from accepted messages.
+- Internal notification APIs require a verified session and active team recipient; payroll/winner/announcement also require an admin or leader role. Dashboard requests now pass the session token. This is a targeted email-endpoint change, not a complete staff-role security audit.
+- Validation: 33 targeted regression tests passed (email layout, CV submission, contact, notification authorization and payment integrity); TypeScript passed with a 4 GB heap; browser checks showed no horizontal overflow at 375px on the homepage and the checked service pages. CV admin/customer previews rendered at phone width. Motion was present normally and absent with reduced motion. No live messages were sent, no deployment performed.
+- Delivery acceptance is not proof of inbox delivery. Real Gmail/Outlook rendering, provider configuration, and externally managed Supabase Auth email templates still require live-account verification. Failed stored-payment/CV notifications are logged; durable queued retry is not added in this pass.

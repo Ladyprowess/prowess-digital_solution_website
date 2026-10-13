@@ -1,16 +1,19 @@
+import { authorizeNotification } from "@/lib/emails/authorizeNotification";
+import { escapeEmail } from "@/lib/payments/emailEscape";
 // FILE: src/app/api/notify-month-winner/route.ts
 // Sends email when admin closes the month - winner gets a celebratory email,
 // team members get an announcement email.
 
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { resend } from "@/lib/resendClient";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const B = "#507c80";
 const PURPLE = "#9333ea";
 
 export async function POST(req: NextRequest) {
   try {
+    const denied = await authorizeNotification(req);
+    if (denied) return denied;
     const {
       to, winnerName, month,
       totalPoints, tasksCompleted, logsSubmitted,
@@ -49,26 +52,26 @@ export async function POST(req: NextRequest) {
           <td style="padding:36px 40px;">
             <div style="text-align:center;margin-bottom:28px;">
               <div style="font-size:56px;margin-bottom:12px;">🌟</div>
-              <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${winnerName},</div>
+              <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${escapeEmail(winnerName)},</div>
               <div style="font-size:26px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">
                 You are Team Member of the Month!
               </div>
-              <div style="font-size:14px;color:#94a3b8;">Congratulations on your outstanding performance in ${month}.</div>
+              <div style="font-size:14px;color:#94a3b8;">Congratulations on your outstanding performance in ${escapeEmail(month)}.</div>
             </div>
 
             <div style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:2px solid #e879f9;border-radius:14px;padding:28px;margin-bottom:28px;text-align:center;">
-              <div style="font-size:13px;color:#86198f;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Your Stats for ${month}</div>
+              <div style="font-size:13px;color:#86198f;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Your Stats for ${escapeEmail(month)}</div>
               <div style="display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:16px;">
                 <div>
-                  <div style="font-size:32px;font-weight:800;color:${PURPLE};">${totalPoints}</div>
+                  <div style="font-size:32px;font-weight:800;color:${PURPLE};">${escapeEmail(totalPoints)}</div>
                   <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Points</div>
                 </div>
                 <div>
-                  <div style="font-size:32px;font-weight:800;color:#22c55e;">${tasksCompleted}</div>
+                  <div style="font-size:32px;font-weight:800;color:#22c55e;">${escapeEmail(tasksCompleted)}</div>
                   <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Tasks Completed</div>
                 </div>
                 <div>
-                  <div style="font-size:32px;font-weight:800;color:#6366f1;">${logsSubmitted}</div>
+                  <div style="font-size:32px;font-weight:800;color:#6366f1;">${escapeEmail(logsSubmitted)}</div>
                   <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Logs Submitted</div>
                 </div>
               </div>
@@ -76,7 +79,7 @@ export async function POST(req: NextRequest) {
 
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:28px;">
               <div style="font-size:13px;color:#64748b;line-height:1.7;">
-                Out of ${teamSize} team member${teamSize !== 1 ? "s" : ""}, you stood out the most this month through your dedication, consistency, and hard work. The entire Prowess Digital Solutions team is proud of you - keep shining! 🎉
+                Out of ${escapeEmail(teamSize)} team member${teamSize !== 1 ? "s" : ""}, you stood out the most this month through your dedication, consistency, and hard work. The entire Prowess Digital Solutions team is proud of you - keep shining! 🎉
               </div>
             </div>
 
@@ -120,7 +123,7 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="background:linear-gradient(135deg,${PURPLE},#a855f7);padding:32px 40px;">
             <div style="font-size:22px;font-weight:800;color:white;letter-spacing:-0.5px;">Prowess Digital Solutions</div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;">Team Member of the Month - ${month}</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;">Team Member of the Month - ${escapeEmail(month)}</div>
           </td>
         </tr>
 
@@ -131,23 +134,23 @@ export async function POST(req: NextRequest) {
               <div style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">
                 Meet this month's star performer!
               </div>
-              <div style="font-size:14px;color:#94a3b8;">${month} · Prowess Digital Solutions</div>
+              <div style="font-size:14px;color:#94a3b8;">${escapeEmail(month)} · Prowess Digital Solutions</div>
             </div>
 
             <div style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:2px solid #e879f9;border-radius:14px;padding:28px;margin-bottom:28px;text-align:center;">
               <div style="font-size:13px;color:#86198f;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">Team Member of the Month</div>
-              <div style="font-size:28px;font-weight:800;color:#0f172a;margin-bottom:16px;">${winnerName}</div>
+              <div style="font-size:28px;font-weight:800;color:#0f172a;margin-bottom:16px;">${escapeEmail(winnerName)}</div>
               <div style="display:flex;justify-content:center;gap:36px;flex-wrap:wrap;">
                 <div>
-                  <div style="font-size:28px;font-weight:800;color:${PURPLE};">${totalPoints}</div>
+                  <div style="font-size:28px;font-weight:800;color:${PURPLE};">${escapeEmail(totalPoints)}</div>
                   <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Points</div>
                 </div>
                 <div>
-                  <div style="font-size:28px;font-weight:800;color:#22c55e;">${tasksCompleted}</div>
+                  <div style="font-size:28px;font-weight:800;color:#22c55e;">${escapeEmail(tasksCompleted)}</div>
                   <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Tasks Completed</div>
                 </div>
                 <div>
-                  <div style="font-size:28px;font-weight:800;color:#6366f1;">${logsSubmitted}</div>
+                  <div style="font-size:28px;font-weight:800;color:#6366f1;">${escapeEmail(logsSubmitted)}</div>
                   <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Logs Submitted</div>
                 </div>
               </div>
@@ -155,7 +158,7 @@ export async function POST(req: NextRequest) {
 
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:28px;">
               <div style="font-size:13px;color:#64748b;line-height:1.7;">
-                Please join us in congratulating <strong style="color:#0f172a;">${winnerName}</strong> on this well-deserved recognition! Their hard work and consistency throughout ${month} set a fantastic example for the whole team. 🎉
+                Please join us in congratulating <strong style="color:#0f172a;">${escapeEmail(winnerName)}</strong> on this well-deserved recognition! Their hard work and consistency throughout ${escapeEmail(month)} set a fantastic example for the whole team. 🎉
               </div>
             </div>
 
@@ -184,13 +187,14 @@ export async function POST(req: NextRequest) {
 </html>`;
     }
 
-    await resend.emails.send({
+    const delivery = await resend.emails.send({
       from: "Prowess Digital Solutions <info@prowessdigitalsolutions.com>",
       to: [to],
       subject,
       html,
     });
 
+    if (delivery.error) return NextResponse.json({ error: "Notification could not be sent." }, { status: 502 });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("notify-month-winner error:", err);

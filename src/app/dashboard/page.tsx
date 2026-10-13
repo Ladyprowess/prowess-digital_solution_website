@@ -7,6 +7,14 @@ import ProwessDashboard from "@/components/dashboard/ProwessDashboard";
 
 const B = "#507c80";
 
+async function notifyTeam(url: string, options: RequestInit) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  const response = await fetch(url, { ...options, headers: { ...options.headers, Authorization: `Bearer ${session.access_token}` } });
+  if (!response.ok) console.error('Team notification was not delivered.');
+  return response;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [state,   setState]   = useState<any>(null);
@@ -237,7 +245,7 @@ export default function DashboardPage() {
     if (!admins.length) return;
     await Promise.allSettled(
       admins.map((admin: { email?: string | null }) =>
-        fetch("/api/notify-dashboard-admin", {
+        notifyTeam("/api/notify-dashboard-admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...payload, to: admin.email }),
@@ -298,7 +306,7 @@ export default function DashboardPage() {
       for (const uid of assigneeIds) {
         const assignee = state.users.find((u: any) => u.id === uid);
         if (assignee?.email) {
-          fetch("/api/notify-task", {
+          notifyTeam("/api/notify-task", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -432,7 +440,7 @@ export default function DashboardPage() {
     for (const uid of validAssigneeIds) {
       const assignee = state.users.find((u: any) => u.id === uid);
       if (assignee?.email) {
-        fetch("/api/notify-task", {
+        notifyTeam("/api/notify-task", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -495,7 +503,7 @@ export default function DashboardPage() {
       );
       Promise.allSettled(
         recipients.map((u: any) =>
-          fetch("/api/notify-announcement", {
+          notifyTeam("/api/notify-announcement", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ to: u.email, title: form.title, body: form.body, authorName }),
@@ -586,7 +594,7 @@ export default function DashboardPage() {
     if (mentions?.mentionEveryone) {
       Promise.allSettled(
         activeOthers.map((u: any) =>
-          fetch("/api/notify-mention", {
+          notifyTeam("/api/notify-mention", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ to: u.email, taggerName: senderName, messageBody: body, everyone: true }),
@@ -597,7 +605,7 @@ export default function DashboardPage() {
       const targets = activeOthers.filter((u: any) => mentions.mentionIds!.includes(u.id));
       Promise.allSettled(
         targets.map((u: any) =>
-          fetch("/api/notify-mention", {
+          notifyTeam("/api/notify-mention", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ to: u.email, taggerName: senderName, messageBody: body, everyone: false }),
@@ -852,7 +860,7 @@ export default function DashboardPage() {
     const member = sale && state.users.find((u: any) => u.id === sale.member_id);
     if (member?.email) {
       const month = new Date(sale.sale_date).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-      fetch("/api/notify-commission", {
+      notifyTeam("/api/notify-commission", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "commission-paid", to: member.email,
@@ -886,7 +894,7 @@ export default function DashboardPage() {
       const member = state.users.find((u: any) => u.id === memberId);
       if (!member?.email) return;
       const totalPaid = memberSales.reduce((sum: number, s: any) => sum + parseFloat(s.commission_amount), 0);
-      fetch("/api/notify-commission", {
+      notifyTeam("/api/notify-commission", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "commission-paid", to: member.email, recipientName: member.full_name, totalPaid, currencySymbol: memberSales[0].currency_symbol, month: monthLabel, saleCount: memberSales.length }),
       }).catch(() => {});
@@ -970,7 +978,7 @@ export default function DashboardPage() {
     if (member?.email && entry) {
       const monthLabel = new Date(entry.month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
       const finalAmount = entry.final_amount ?? (parseFloat(entry.base_amount) + parseFloat(entry.adjustment || "0"));
-      fetch("/api/notify-payroll", {
+      notifyTeam("/api/notify-payroll", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: member.email,
@@ -1094,7 +1102,7 @@ export default function DashboardPage() {
       const winnerUser = state.users.find((u: any) => u.id === winner.userId);
       const monthLabel = new Date(month + "-01").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
       if (winnerUser?.email) {
-        fetch("/api/notify-month-winner", {
+        notifyTeam("/api/notify-month-winner", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1113,7 +1121,7 @@ export default function DashboardPage() {
       for (const s of scores.slice(1)) {
         const u = state.users.find((usr: any) => usr.id === s.userId);
         if (u?.email) {
-          fetch("/api/notify-month-winner", {
+          notifyTeam("/api/notify-month-winner", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

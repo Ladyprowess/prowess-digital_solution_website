@@ -33,7 +33,7 @@ function route(errors = [], payload = enquiry) {
     require(name) {
       if (name === '@/lib/emails/contact') return templates;
       if (name === 'next/server') return { NextResponse: { json: (body, options) => Response.json(body, options) } };
-      if (name === 'resend') return { Resend: class { emails = { send: async (payload) => { sent.push(payload); return { error: errors[sent.length - 1] || null }; } }; } };
+      if (name === '@/lib/resendClient') return { resend: { emails: { send: async (payload) => { sent.push(payload); return { error: errors[sent.length - 1] || null }; } } } };
       if (name === '@supabase/supabase-js') return { createClient: () => ({ from: () => ({ insert: async (rows) => { saved.push(...rows); return { error: null }; } }) }) };
       throw new Error(name);
     },

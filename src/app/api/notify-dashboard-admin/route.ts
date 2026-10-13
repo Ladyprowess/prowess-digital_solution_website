@@ -1,7 +1,8 @@
+import { authorizeNotification } from "@/lib/emails/authorizeNotification";
+import { escapeEmail } from "@/lib/payments/emailEscape";
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { resend } from "@/lib/resendClient";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const BRAND = "#507c80";
 
 function wrapEmail(title: string, body: string) {
@@ -11,7 +12,7 @@ function wrapEmail(title: string, body: string) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${title}</title>
+  <title>${escapeEmail(title)}</title>
 </head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
@@ -46,6 +47,8 @@ function wrapEmail(title: string, body: string) {
 
 export async function POST(req: NextRequest) {
   try {
+    const denied = await authorizeNotification(req);
+    if (denied) return denied;
     const {
       type,
       to,
@@ -73,7 +76,7 @@ export async function POST(req: NextRequest) {
     let html = "";
 
     if (type === "task-submitted") {
-      subject = `Task Submitted: ${taskTitle || "Untitled task"}`;
+      subject = `Task Submitted: ${escapeEmail(taskTitle || "Untitled task")}`;
       html = wrapEmail(subject, `
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:10px;">Task submitted for review</div>
         <div style="font-size:14px;color:#64748b;line-height:1.7;margin-bottom:22px;">
@@ -81,12 +84,12 @@ export async function POST(req: NextRequest) {
         </div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;">
           <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Task</div>
-          <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px;">${taskTitle || "Untitled task"}</div>
-          ${project ? `<div style="font-size:13px;color:#64748b;margin-top:8px;">Project: ${project}</div>` : ""}
+          <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px;">${escapeEmail(taskTitle || "Untitled task")}</div>
+          ${project ? `<div style="font-size:13px;color:#64748b;margin-top:8px;">Project: ${escapeEmail(project)}</div>` : ""}
         </div>
       `);
     } else if (type === "activity-submitted") {
-      subject = `Activity Submitted: ${taskTitle || "New activity log"}`;
+      subject = `Activity Submitted: ${escapeEmail(taskTitle || "New activity log")}`;
       html = wrapEmail(subject, `
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:10px;">Activity submitted for review</div>
         <div style="font-size:14px;color:#64748b;line-height:1.7;margin-bottom:22px;">
@@ -94,8 +97,8 @@ export async function POST(req: NextRequest) {
         </div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;">
           <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Activity</div>
-          <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px;">${taskTitle || "New activity log"}</div>
-          ${project ? `<div style="font-size:13px;color:#64748b;margin-top:8px;">Project: ${project}</div>` : ""}
+          <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px;">${escapeEmail(taskTitle || "New activity log")}</div>
+          ${project ? `<div style="font-size:13px;color:#64748b;margin-top:8px;">Project: ${escapeEmail(project)}</div>` : ""}
         </div>
       `);
     } else if (type === "month-marked") {
@@ -103,7 +106,7 @@ export async function POST(req: NextRequest) {
       html = wrapEmail(subject, `
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:10px;">Team Member of the Month has been marked</div>
         <div style="font-size:14px;color:#64748b;line-height:1.7;margin-bottom:22px;">
-          ${month || "This month"} has been closed on the dashboard.
+          ${escapeEmail(month || "This month")} has been closed on the dashboard.
         </div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;">
           <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Winner</div>
@@ -121,7 +124,7 @@ export async function POST(req: NextRequest) {
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;">
           <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Payment Details</div>
           <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:6px;">${currencySymbol || ""}${Number(finalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          <div style="font-size:13px;color:#64748b;margin-top:8px;">${month || "This month"} • ${payType === "per_article" ? `Per Article${articleCount !== undefined ? ` • ${articleCount} article${articleCount === 1 ? "" : "s"}` : ""}` : "Monthly Salary"}</div>
+          <div style="font-size:13px;color:#64748b;margin-top:8px;">${escapeEmail(month || "This month")} • ${payType === "per_article" ? `Per Article${articleCount !== undefined ? ` • ${articleCount} article${articleCount === 1 ? "" : "s"}` : ""}` : "Monthly Salary"}</div>
           ${notes ? `<div style="font-size:13px;color:#64748b;margin-top:8px;">Reason for payment: ${notes}</div>` : ""}
         </div>
       `);
@@ -129,13 +132,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unknown notification type" }, { status: 400 });
     }
 
-    await resend.emails.send({
+    const delivery = await resend.emails.send({
       from: "Prowess Digital Solutions <info@prowessdigitalsolutions.com>",
       to: [to],
       subject,
       html,
     });
 
+    if (delivery.error) return NextResponse.json({ error: "Notification could not be sent." }, { status: 502 });
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to send admin notification.";

@@ -1,3 +1,4 @@
+import { escapeEmail } from "@/lib/payments/emailEscape";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
@@ -31,12 +32,12 @@ export async function POST(req: Request) {
       await resend.emails.send({
         from: fromEmail,
         to: adminEmail,
-        subject: `New lead: ${source}`,
+        subject: `New lead: ${escapeEmail(source)}`,
         html: `
           <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2>New lead from ${source}</h2>
-            <p><b>Email:</b> ${email}</p>
-            <p><b>Score:</b> ${scorePercent ?? "-"}% (${checkedCount ?? "-"} of ${totalItems ?? "-"})</p>
+            <h2>New lead from ${escapeEmail(source)}</h2>
+            <p><b>Email:</b> ${escapeEmail(email)}</p>
+            <p><b>Score:</b> ${escapeEmail(scorePercent ?? "-")}% (${escapeEmail(checkedCount ?? "-")} of ${escapeEmail(totalItems ?? "-")})</p>
           </div>
         `,
       });

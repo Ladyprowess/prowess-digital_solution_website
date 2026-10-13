@@ -1,11 +1,10 @@
 import { contactAdminEmail, contactCustomerEmail } from "@/lib/emails/contact";
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import { resend } from "@/lib/resendClient";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,

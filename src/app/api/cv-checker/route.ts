@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { cvAdminEmail, cvCustomerEmail } from "@/lib/emails/cvChecker";
 import { resend } from "@/lib/resendClient";
 import { verifyMember } from "@/lib/auth/verifyMember";
 import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
@@ -12,15 +13,6 @@ const ALLOWED_TYPES = [
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 function fileExt(type: string) {
   if (type === "application/pdf") return "pdf";
@@ -53,7 +45,7 @@ export async function POST(req: Request) {
     const reviewFocus = String(formData.get("review_focus") || "").trim();
     const file = formData.get("cv") as File | null;
 
-    if (!fullName || !email || !email.includes("@") || !targetRole || !careerLevel || !file) {
+    if (!fullName || fullName.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !targetRole || targetRole.length > 200 || !careerLevel || careerLevel.length > 100 || reviewFocus.length > 5000 || phone.length > 60 || !(file instanceof File) || !file.size) {
       return NextResponse.json({ ok: false, error: "Please fill in the required fields and upload your CV." }, { status: 400 });
     }
 
@@ -65,6 +57,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "CV must be a PDF or Word document." }, { status: 400 });
     }
 
+    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || process.env.RESEND_TO;
+    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    if (!adminEmail || !fromEmail || !process.env.RESEND_API_KEY) {
+      return NextResponse.json({ ok: false, error: "CV submissions are temporarily unavailable. Please try again later." }, { status: 503 });
+    }
     const supabase = supabaseAdmin();
     const safeEmail = email.replace(/[^a-z0-9@._-]/g, "");
     const path = `cv-checker/${safeEmail}/${Date.now()}-cv.${fileExt(file.type)}`;
@@ -108,34 +105,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: insertError.message }, { status: 500 });
     }
 
-    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || process.env.RESEND_TO;
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
-    if (adminEmail && fromEmail) {
-      await resend.emails.send({
-        from: fromEmail,
-        to: adminEmail,
-        replyTo: email,
-        subject: `New CV checker submission: ${fullName}`,
-        html: `
-          <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b1d;">
-            <h2 style="margin:0 0 12px;">New CV checker submission</h2>
-            <p><strong>Name:</strong> ${escapeHtml(fullName)}</p>
-            <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-            <p><strong>Phone:</strong> ${escapeHtml(phone || "-")}</p>
-            <p><strong>Target role:</strong> ${escapeHtml(targetRole)}</p>
-            <p><strong>Career level:</strong> ${escapeHtml(careerLevel)}</p>
-            <p><strong>Review focus:</strong><br/>${escapeHtml(reviewFocus || "General CV review")}</p>
-            <p><strong>File:</strong> ${escapeHtml(file.name)} (${Math.round(file.size / 1024)} KB)</p>
-            ${signed?.signedUrl ? `<p><a href="${signed.signedUrl}">Open CV file</a></p>` : ""}
-            <p style="font-size:12px;color:#496167;">Signed file links expire after 7 days.</p>
-          </div>
-        `,
-      }).catch(() => {});
-    }
-
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "CV submission failed.";
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    const submission = { fullName, email, phone, targetRole, careerLevel, reviewFocus, fileName: file.name, fileSize: file.size };
+    // The submission is already stored. Delivery failure must not ask for a duplicate upload.
+    const [adminDelivery, customerDelivery] = await Promise.allSettled([
+      resend.emails.send({ from: fromEmail, to: adminEmail, replyTo: email, ...cvAdminEmail(submission, signed?.signedUrl || null) }),
+      resend.emails.send({ from: fromEmail, to: email, replyTo: adminEmail, ...cvCustomerEmail(submission) }),
+    ]);
+    const adminNotified = adminDelivery.status === 'fulfilled' && !adminDelivery.value.error;
+    const confirmationSent = customerDelivery.status === 'fulfilled' && !customerDelivery.value.error;
+    if (!adminNotified || !confirmationSent) console.error('CV submission stored; email delivery needs attention', { adminNotified, confirmationSent });
+    return NextResponse.json({ ok: true, adminNotified, confirmationSent });
+  } catch {
+    return NextResponse.json({ ok: false, error: "CV submission failed. Please try again." }, { status: 500 });
   }
 }

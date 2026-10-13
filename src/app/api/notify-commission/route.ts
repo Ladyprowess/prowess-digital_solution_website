@@ -1,3 +1,5 @@
+import { authorizeNotification } from "@/lib/emails/authorizeNotification";
+import { escapeEmail } from "@/lib/payments/emailEscape";
 // FILE: src/app/api/notify-commission/route.ts
 //
 // Sends an email notification when:
@@ -6,15 +8,16 @@
 // (c) Admin/leader marks commission as paid - notifies the member
 
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { resend } from "@/lib/resendClient";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const B = "#507c80";
 
 type NotifyType = "sale-logged" | "sale-confirmed" | "sale-rejected" | "commission-paid";
 
 export async function POST(req: NextRequest) {
   try {
+    const denied = await authorizeNotification(req);
+    if (denied) return denied;
     const body = await req.json();
     const { type, to, recipientName }: { type: NotifyType; to: string; recipientName: string } = body;
 
@@ -64,35 +67,35 @@ export async function POST(req: NextRequest) {
       const { memberName, clientName, saleAmount, currencySymbol, productService, saleDate } = body;
       subject = `New Sale Logged - Pending Confirmation`;
       html = wrap(`
-        <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
+        <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${escapeEmail(recipientName)},</div>
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">A sale needs your confirmation</div>
-        <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">${memberName} has logged a new sale awaiting review.</div>
+        <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">${escapeEmail(memberName)} has logged a new sale awaiting review.</div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:28px;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="padding-bottom:14px;">
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Sales Rep</span><br/>
-                <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${memberName}</span>
+                <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${escapeEmail(memberName)}</span>
               </td>
               <td style="padding-bottom:14px;">
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Client</span><br/>
-                <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${clientName}</span>
+                <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${escapeEmail(clientName)}</span>
               </td>
             </tr>
             <tr>
               <td style="padding-bottom:14px;">
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Sale Amount</span><br/>
-                <span style="font-size:18px;font-weight:800;color:${B};margin-top:4px;display:block;">${currencySymbol}${Number(saleAmount).toLocaleString()}</span>
+                <span style="font-size:18px;font-weight:800;color:${B};margin-top:4px;display:block;">${escapeEmail(currencySymbol)}${Number(saleAmount).toLocaleString()}</span>
               </td>
               <td style="padding-bottom:14px;">
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Commission (2%)</span><br/>
-                <span style="font-size:18px;font-weight:800;color:#10b981;margin-top:4px;display:block;">${currencySymbol}${(Number(saleAmount) * 0.02).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span style="font-size:18px;font-weight:800;color:#10b981;margin-top:4px;display:block;">${escapeEmail(currencySymbol)}${(Number(saleAmount) * 0.02).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </td>
             </tr>
             <tr>
               <td>
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Product / Service</span><br/>
-                <span style="font-size:13px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${productService}</span>
+                <span style="font-size:13px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${escapeEmail(productService)}</span>
               </td>
               <td>
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Sale Date</span><br/>
@@ -114,7 +117,7 @@ export async function POST(req: NextRequest) {
       const { clientName, saleAmount, currencySymbol, commissionAmount } = body;
       subject = `Your Sale Has Been Confirmed 🎉`;
       html = wrap(`
-        <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
+        <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${escapeEmail(recipientName)},</div>
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">Your sale has been confirmed!</div>
         <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Your commission for the sale below has been approved and is now tracked.</div>
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:24px;margin-bottom:28px;">
@@ -122,17 +125,17 @@ export async function POST(req: NextRequest) {
             <tr>
               <td style="padding-bottom:14px;">
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Client</span><br/>
-                <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${clientName}</span>
+                <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${escapeEmail(clientName)}</span>
               </td>
               <td style="padding-bottom:14px;">
                 <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Sale Amount</span><br/>
-                <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${currencySymbol}${Number(saleAmount).toLocaleString()}</span>
+                <span style="font-size:14px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${escapeEmail(currencySymbol)}${Number(saleAmount).toLocaleString()}</span>
               </td>
             </tr>
             <tr>
               <td colspan="2" style="text-align:center;padding-top:8px;">
                 <div style="font-size:13px;color:#16a34a;font-weight:600;margin-bottom:4px;">Your Commission Earned</div>
-                <div style="font-size:32px;font-weight:800;color:#16a34a;">${currencySymbol}${Number(commissionAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div style="font-size:32px;font-weight:800;color:#16a34a;">${escapeEmail(currencySymbol)}${Number(commissionAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Payout scheduled for end of month</div>
               </td>
             </tr>
@@ -151,13 +154,13 @@ export async function POST(req: NextRequest) {
       const { clientName, rejectionNote } = body;
       subject = `Sale Log Rejected - Action Required`;
       html = wrap(`
-        <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
+        <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${escapeEmail(recipientName)},</div>
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">Your sale log was rejected</div>
         <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">The following sale could not be confirmed. Please review the note below.</div>
         <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:24px;margin-bottom:28px;">
-          <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px;">Client: <span style="font-weight:400">${clientName}</span></div>
+          <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px;">Client: <span style="font-weight:400">${escapeEmail(clientName)}</span></div>
           ${rejectionNote ? `<div style="font-size:13px;font-weight:700;color:#374151;margin-top:12px;">Reason:</div>
-          <div style="font-size:13px;color:#64748b;margin-top:4px;line-height:1.6;">${rejectionNote}</div>` : ""}
+          <div style="font-size:13px;color:#64748b;margin-top:4px;line-height:1.6;">${escapeEmail(rejectionNote)}</div>` : ""}
         </div>
         <div style="text-align:center;">
           <a href="https://prowessdigitalsolutions.com/dashboard" style="display:inline-block;background:${B};color:white;font-size:14px;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;">
@@ -172,13 +175,13 @@ export async function POST(req: NextRequest) {
       const { totalPaid, currencySymbol, month } = body;
       subject = `Commission Paid - ${month}`;
       html = wrap(`
-        <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${recipientName},</div>
+        <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${escapeEmail(recipientName)},</div>
         <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">Your commission has been paid! 💸</div>
-        <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Your commission for ${month} has been marked as paid.</div>
+        <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;">Your commission for ${escapeEmail(month)} has been marked as paid.</div>
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:32px;margin-bottom:28px;text-align:center;">
           <div style="font-size:13px;color:#16a34a;font-weight:600;margin-bottom:6px;">Amount Paid</div>
-          <div style="font-size:40px;font-weight:800;color:#16a34a;">${currencySymbol}${Number(totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          <div style="font-size:12px;color:#94a3b8;margin-top:6px;">${month}</div>
+          <div style="font-size:40px;font-weight:800;color:#16a34a;">${escapeEmail(currencySymbol)}${Number(totalPaid).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:6px;">${escapeEmail(month)}</div>
         </div>
         <div style="text-align:center;">
           <a href="https://prowessdigitalsolutions.com/dashboard" style="display:inline-block;background:${B};color:white;font-size:14px;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;">
@@ -192,13 +195,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unknown notification type" }, { status: 400 });
     }
 
-    await resend.emails.send({
+    const delivery = await resend.emails.send({
       from: "Prowess Digital Solutions <info@prowessdigitalsolutions.com>",
       to: [to],
       subject,
       html,
     });
 
+    if (delivery.error) return NextResponse.json({ error: "Notification could not be sent." }, { status: 502 });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("notify-commission error:", err);

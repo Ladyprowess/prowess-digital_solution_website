@@ -47,7 +47,7 @@ export function contactCustomerEmail(data: ContactEnquiry) {
     ? 'We’ll review your business, challenges and goals to confirm whether the diagnostic is appropriate. If it is, we’ll send payment instructions. Your enquiry does not start a subscription or take payment.'
     : 'We’ll review your message and reply to discuss the next step. You can reply to this email if you have anything to add.';
   return {
-    subject: 'We’ve received your enquiry | Prowess',
+    subject: 'We’ve received your enquiry | Prowess Digital Solutions',
     html: frame('Thank you for getting in touch. Here’s what happens next.', 'Your enquiry is with us', `Hello ${escape(data.full_name)},<br>Thank you for contacting Prowess Digital Solutions. We’ve received your message.`, `<table role="presentation" width="100%" cellspacing="0" cellpadding="0">${field('Your enquiry',data.inquiry_type)}</table><h2 class="ink" style="margin:0 0 10px;font-size:18px;color:#0b1b1d;">What happens next</h2><p class="muted" style="margin:0 0 24px;font-size:15px;line-height:1.8;color:#465e60;">${escape(next)}</p>${messagePanel(data.message)}<p class="muted" style="margin:24px 0 0;font-size:14px;line-height:1.7;color:#465e60;">Thank you,<br>the Prowess Digital Solutions team</p>`),
     text: `Hello ${data.full_name},\n\nThank you for contacting Prowess Digital Solutions. We’ve received your enquiry about ${data.inquiry_type}.\n\nWhat happens next\n${next}\n\nYour message:\n${data.message}\n\nThank you,\nthe Prowess Digital Solutions team`,
   };

@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import { resend } from "@/lib/resendClient";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -27,7 +26,7 @@ type Preference = (typeof VALID_PREFERENCES)[number];
 const CONFIRMATIONS: Record<Preference, { subject: string; body: string }> = {
   jobs: {
     subject: "You're on the Prowess Digital Solutions job alert list",
-    body: "We'll email you the moment the Prowess Digital Solutions job board goes live, and whenever new jobs are added.",
+    body: "You're subscribed to updates from the Prowess Digital Solutions job board.",
   },
   internships: {
     subject: "You're subscribed to Prowess Digital Solutions internship alerts",
@@ -144,12 +143,13 @@ export async function POST(req: Request) {
       const extra = newlyAddedPreferences.length > 1
         ? `<p>You're also signed up for: ${newlyAddedPreferences.slice(1).join(", ")}.</p>`
         : "";
-      await resend.emails.send({
+      const delivery = await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL!,
         to: email,
         subject: copy.subject,
-        html: `<p>${copy.body}</p>${extra}`,
+        html: `<p>${copy.body}</p>${extra}<p>Manage your updates:</p><ul>${newlyAddedPreferences.map(preference => `<li><a href="https://prowessdigitalsolutions.com/api/subscribe/unsubscribe?email=${encodeURIComponent(email)}&amp;preference=${preference}">Unsubscribe from ${preference.replace(/_/g, ' ')}</a></li>`).join('')}</ul>`,
       });
+      return NextResponse.json({ ok: true, confirmationSent: !delivery.error });
     }
 
     return NextResponse.json({ ok: true });

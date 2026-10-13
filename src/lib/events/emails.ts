@@ -1,3 +1,4 @@
+import { escapeEmail } from "@/lib/payments/emailEscape";
 import { resend } from "@/lib/resendClient";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
@@ -24,21 +25,21 @@ function registrationConfirmationEmailHtml(params: {
         <td style="padding:32px 28px 8px;">
           <span style="display:inline-block;background:#e7eeee;color:#3d5f62;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:18px;">&#10003; Registration confirmed</span>
           <h2 style="margin:0 0 14px;font-size:19px;font-weight:700;color:#0b1b1d;">You're registered</h2>
-          <p style="margin:0 0 20px;font-size:14.5px;line-height:1.65;color:#4b6062;">You have successfully registered for <b>${eventTitle}</b>, scheduled for ${dateLabel}.</p>
+          <p style="margin:0 0 20px;font-size:14.5px;line-height:1.65;color:#4b6062;">You have successfully registered for <b>${escapeEmail(eventTitle)}</b>, scheduled for ${escapeEmail(dateLabel)}.</p>
         </td>
       </tr>
       ${
         joinLink
           ? `<tr>
         <td align="center" style="padding:12px 28px 8px;">
-          <a href="${joinLink}" style="display:inline-block;background:#507c80;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:13px 30px;border-radius:8px;">Join the event</a>
+          <a href="${escapeEmail(joinLink)}" style="display:inline-block;background:#507c80;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:13px 30px;border-radius:8px;">Join the event</a>
         </td>
       </tr>`
           : ""
       }
       <tr>
         <td align="center" style="padding:12px 28px 8px;">
-          <a href="${eventUrl}" style="display:inline-block;color:#3d5f62;font-size:13px;font-weight:600;text-decoration:none;">View event details</a>
+          <a href="${escapeEmail(eventUrl)}" style="display:inline-block;color:#3d5f62;font-size:13px;font-weight:600;text-decoration:none;">View event details</a>
         </td>
       </tr>
       <tr>
@@ -61,9 +62,9 @@ function adminRegistrationNotificationHtml(params: {
   <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;padding:8px;">
     <h2 style="margin:0 0 12px;font-size:16px;color:#0b1b1d;">New event registration</h2>
     <table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #dde6e6;border-radius:10px;background:#f2f6f6;padding:4px 18px;width:100%;max-width:460px;">
-      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;">Event</td><td style="font-size:13px;font-weight:700;text-align:right;">${eventTitle}</td></tr>
-      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Name</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${registrantName}</td></tr>
-      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Email</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${registrantEmail}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;">Event</td><td style="font-size:13px;font-weight:700;text-align:right;">${escapeEmail(eventTitle)}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Name</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${escapeEmail(registrantName)}</td></tr>
+      <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Email</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${escapeEmail(registrantEmail)}</td></tr>
       <tr><td style="font-size:13px;color:#4b6062;padding:9px 0;border-top:1px solid #dde6e6;">Type</td><td style="font-size:13px;font-weight:700;text-align:right;border-top:1px solid #dde6e6;">${paymentStatus === "paid" ? "Paid" : "Free"}</td></tr>
     </table>
   </div>`;

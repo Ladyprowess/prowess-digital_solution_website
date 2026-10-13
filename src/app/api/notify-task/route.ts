@@ -1,7 +1,8 @@
+import { authorizeNotification } from "@/lib/emails/authorizeNotification";
+import { escapeEmail } from "@/lib/payments/emailEscape";
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { resend } from "@/lib/resendClient";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const PRIORITY_COLOR: Record<string, string> = {
   high:   "#ef4444",
@@ -17,6 +18,8 @@ const PRIORITY_LABEL: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
+    const denied = await authorizeNotification(req);
+    if (denied) return denied;
     const {
       to, assigneeName, assignerName,
       taskTitle, taskDescription,
@@ -61,34 +64,34 @@ export async function POST(req: NextRequest) {
           <!-- Body -->
           <tr>
             <td style="padding:36px 40px;">
-              <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${assigneeName},</div>
+              <div style="font-size:15px;color:#64748b;margin-bottom:8px;">Hi ${escapeEmail(assigneeName)},</div>
               <div style="font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;line-height:1.2;">You have a new task</div>
-              <div style="font-size:14px;color:#94a3b8;margin-bottom:32px;">${assignerName} has assigned you the following task.</div>
+              <div style="font-size:14px;color:#94a3b8;margin-bottom:32px;">${escapeEmail(assignerName)} has assigned you the following task.</div>
 
               <!-- Task card -->
               <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:28px;">
-                <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:16px;">${taskTitle}</div>
+                <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:16px;">${escapeEmail(taskTitle)}</div>
 
                 ${taskDescription ? `
                 <div style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #e2e8f0;">
-                  ${descSnippet}
+                  ${escapeEmail(descSnippet)}
                 </div>` : ""}
 
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding-bottom:12px;">
                       <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Priority</span><br/>
-                      <span style="display:inline-block;margin-top:4px;font-size:12px;font-weight:700;color:${priorityColor};background:${priorityColor}18;padding:3px 10px;border-radius:20px;">${priorityLabel}</span>
+                      <span style="display:inline-block;margin-top:4px;font-size:12px;font-weight:700;color:${priorityColor};background:${priorityColor}18;padding:3px 10px;border-radius:20px;">${escapeEmail(priorityLabel)}</span>
                     </td>
                     ${deadlineText ? `
                     <td style="padding-bottom:12px;">
                       <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Deadline</span><br/>
-                      <span style="font-size:13px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${deadlineText}</span>
+                      <span style="font-size:13px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${escapeEmail(deadlineText)}</span>
                     </td>` : ""}
                     ${project ? `
                     <td style="padding-bottom:12px;">
                       <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Project</span><br/>
-                      <span style="font-size:13px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${project}</span>
+                      <span style="font-size:13px;font-weight:600;color:#0f172a;margin-top:4px;display:block;">${escapeEmail(project)}</span>
                     </td>` : ""}
                   </tr>
                 </table>
@@ -103,7 +106,7 @@ export async function POST(req: NextRequest) {
               </div>
 
               <div style="font-size:13px;color:#94a3b8;line-height:1.6;">
-                If you have any questions about this task, reach out to ${assignerName} directly through the dashboard.
+                If you have any questions about this task, reach out to ${escapeEmail(assignerName)} directly through the dashboard.
               </div>
             </td>
           </tr>
@@ -125,13 +128,14 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    await resend.emails.send({
+    const delivery = await resend.emails.send({
       from: "Prowess Digital Solutions <info@prowessdigitalsolutions.com>",
       to: [to],
       subject: `New Task Assigned: ${taskTitle}`,
       html,
     });
 
+    if (delivery.error) return NextResponse.json({ error: "Notification could not be sent." }, { status: 502 });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("notify-task error:", err);

@@ -1,3 +1,4 @@
+import { escapeEmail } from "@/lib/payments/emailEscape";
 import { resend } from "@/lib/resendClient";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
@@ -26,21 +27,21 @@ function newEventEmailHtml(params: {
       <tr>
         <td style="padding:32px 28px 8px;">
           <span style="display:inline-block;background:#e7eeee;color:#3d5f62;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:18px;">New event</span>
-          <h2 style="margin:0 0 14px;font-size:19px;font-weight:700;color:#0b1b1d;">${eventTitle}</h2>
-          <p style="margin:0 0 6px;font-size:14.5px;line-height:1.65;color:#4b6062;">${dateLabel}</p>
-          ${location ? `<p style="margin:0 0 20px;font-size:14.5px;line-height:1.65;color:#4b6062;">${location}</p>` : `<p style="margin:0 0 20px;"></p>`}
-          ${description ? `<p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#4b6062;">${description.slice(0, 280)}${description.length > 280 ? "…" : ""}</p>` : ""}
+          <h2 style="margin:0 0 14px;font-size:19px;font-weight:700;color:#0b1b1d;">${escapeEmail(eventTitle)}</h2>
+          <p style="margin:0 0 6px;font-size:14.5px;line-height:1.65;color:#4b6062;">${escapeEmail(dateLabel)}</p>
+          ${location ? `<p style="margin:0 0 20px;font-size:14.5px;line-height:1.65;color:#4b6062;">${escapeEmail(location)}</p>` : `<p style="margin:0 0 20px;"></p>`}
+          ${description ? `<p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#4b6062;">${escapeEmail(description.slice(0, 280))}${description.length > 280 ? "…" : ""}</p>` : ""}
         </td>
       </tr>
       <tr>
         <td align="center" style="padding:4px 28px 28px;">
-          <a href="${eventUrl}" style="display:inline-block;background:#507c80;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:13px 30px;border-radius:8px;">View event &amp; register</a>
+          <a href="${escapeEmail(eventUrl)}" style="display:inline-block;background:#507c80;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:13px 30px;border-radius:8px;">View event &amp; register</a>
         </td>
       </tr>
       <tr>
         <td style="padding:18px 28px;border-top:1px solid #dde6e6;text-align:center;">
           <p style="margin:0 0 6px;font-size:11.5px;color:#4b6062;">Prowess Digital Solutions &middot; prowessdigitalsolutions.com</p>
-          <p style="margin:0;font-size:11.5px;color:#9fb0ae;"><a href="${unsubscribeUrl}" style="color:#9fb0ae;">Unsubscribe from event emails</a></p>
+          <p style="margin:0;font-size:11.5px;color:#9fb0ae;"><a href="${escapeEmail(unsubscribeUrl)}" style="color:#9fb0ae;">Unsubscribe from event emails</a></p>
         </td>
       </tr>
     </table>
@@ -113,8 +114,8 @@ export async function notifyEventSubscribersOfNewEvent(eventId: string): Promise
         })
       )
     );
-    sent += results.filter((r) => r.status === "fulfilled").length;
-    failed += results.length - results.filter((r) => r.status === "fulfilled").length;
+    sent += results.filter((r) => r.status === "fulfilled" && !r.value.error).length;
+    failed += results.length - results.filter((r) => r.status === "fulfilled" && !r.value.error).length;
 
     if (i + BATCH_SIZE < subscribers.length) {
       await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
