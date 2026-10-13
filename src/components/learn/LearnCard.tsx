@@ -79,6 +79,12 @@ export function LearnCard({ item }: { item: LearnItem }) {
           </div>
 
           <h3 className="mt-4 line-clamp-2 text-base font-bold leading-snug text-foreground">{item.title}</h3>
+          {/* Curated courses are mixed in with our own, so the credit has to
+              be on the card itself - otherwise there is nothing to tell a
+              learner whose course they are about to open. */}
+          {item.creator && (
+            <p className="mt-1.5 truncate text-xs font-semibold text-muted-foreground">By {item.creator}</p>
+          )}
           {item.description && (
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{stripHtmlForMeta(item.description, 140)}</p>
           )}

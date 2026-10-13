@@ -13,7 +13,7 @@ import { LearnCard } from "@/components/learn/LearnCard";
 import { LearnProgressSummary } from "@/components/discovery/LearnProgressSummary";
 import { SkillCard, type SkillCardData } from "@/components/skills/SkillCard";
 import { getSkillGraph, getRelatedSkills } from "@/lib/careerPathGraph";
-import { courseToLearnItem, COURSE_SELECT, type LearnItem, type CourseRow } from "@/lib/learn/types";
+import { courseToLearnItem, selectCourses, type LearnItem, type CourseRow } from "@/lib/learn/types";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -94,8 +94,8 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
           .order("featured", { ascending: false }).order("published_at", { ascending: false, nullsFirst: false }).limit(CARD_LIMIT)
       : Promise.resolve({ data: [] }),
     courseIds.length
-      ? supabase.from("courses").select(COURSE_SELECT).eq("status", "published").in("id", courseIds).limit(CARD_LIMIT)
-      : Promise.resolve({ data: [] }),
+      ? selectCourses((select) => supabase.from("courses").select(select).eq("status", "published").in("id", courseIds).limit(CARD_LIMIT))
+      : Promise.resolve([]),
   ]);
 
   const jobCards: JobCardData[] = ((jobRows.data as unknown as {
@@ -131,7 +131,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sl
   }));
 
   const learningItems: LearnItem[] = [
-    ...((courseRows.data as unknown as CourseRow[]) || []).map(courseToLearnItem),
+    ...(courseRows as CourseRow[]).map(courseToLearnItem),
   ].slice(0, CARD_LIMIT);
 
   const relatedSkillStats = await statsForSkills(relatedSkills.map((s) => s.id));

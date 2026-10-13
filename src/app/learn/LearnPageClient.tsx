@@ -13,10 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { SORT_OPTIONS } from "@/lib/learn/constants";
 import { filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type LearnFilters } from "@/lib/learn/filters";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
-import {
-  courseToLearnItem, COURSE_SELECT,
-  type LearnItem, type CourseRow,
-} from "@/lib/learn/types";
+import { courseToLearnItem, selectCourses, type LearnItem } from "@/lib/learn/types";
 
 const PAGE_SIZE = 12;
 
@@ -83,9 +80,11 @@ function LearnPageContent() {
         if (!cancelled) setFeatured([]);
         return;
       }
-      const { data } = await supabase.from("courses").select(COURSE_SELECT).eq("status", "published").eq("featured", true).order("created_at", { ascending: false }).limit(6);
+      const rows = await selectCourses((select) =>
+        supabase.from("courses").select(select).eq("status", "published").eq("featured", true).order("created_at", { ascending: false }).limit(6)
+      );
       if (cancelled) return;
-      setFeatured(((data as unknown as CourseRow[]) || []).map(courseToLearnItem));
+      setFeatured(rows.map(courseToLearnItem));
     })();
     return () => { cancelled = true; };
   }, [activeFiltersPresent, filters.page]);
@@ -108,13 +107,15 @@ function LearnPageContent() {
         return;
       }
     }
-    let q = supabase.from("courses").select(COURSE_SELECT).eq("status", "published");
-    if (ids) q = q.in("id", ids);
-    if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);
-    if (filters.level) q = q.eq("level", filters.level);
-    if (filters.access) q = q.eq("access", filters.access);
-    const { data } = await q;
-    let merged = ((data as unknown as CourseRow[]) || []).map(courseToLearnItem);
+    const rows = await selectCourses((select) => {
+      let q = supabase.from("courses").select(select).eq("status", "published");
+      if (ids) q = q.in("id", ids);
+      if (filters.q.trim()) q = q.ilike("title", `%${filters.q.trim()}%`);
+      if (filters.level) q = q.eq("level", filters.level);
+      if (filters.access) q = q.eq("access", filters.access);
+      return q;
+    });
+    let merged = rows.map(courseToLearnItem);
 
     if (filters.sort === "newest") {
       merged = merged.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));

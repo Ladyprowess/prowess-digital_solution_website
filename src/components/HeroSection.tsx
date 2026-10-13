@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import React from "react";
-import { pillars } from "@/content/site";
+const audiencePaths = [
+  { key: "business", label: "Grow your business", desc: "Improve your operations, organise your finances and build better business systems.", cta: "Explore business support", href: "/services" },
+  { key: "learning", label: "Build your skills", desc: "Discover courses, practical learning resources and career development guides.", cta: "Explore learning", href: "/learn" },
+  { key: "work", label: "Find work", desc: "Explore jobs, internships and remote work opportunities.", cta: "Explore jobs", href: "/jobs" },
+  { key: "opportunities", label: "Find opportunities", desc: "Discover grants, scholarships, fellowships and relevant programmes.", cta: "Explore opportunities", href: "/opportunities" },
+];
 
 // Theme-aware: every color here is a CSS custom property (see globals.css'
 // @layer base tokens + .dark overrides), not a hardcoded hex, so this
@@ -14,6 +19,10 @@ const muted = "var(--muted-foreground)";
 const border = "var(--border)";
 
 const CSS = `
+.homepage-hero a:focus-visible, .homepage-hero input:focus-visible, .homepage-hero button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
 @keyframes fadeUp {
   from { opacity:0; transform:translateY(18px); }
   to   { opacity:1; transform:translateY(0); }
@@ -23,7 +32,7 @@ const CSS = `
   to   { opacity:1; transform:scale(1) translateY(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  .homepage-hero * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 `;
 
@@ -39,6 +48,8 @@ const quickFilters = [
 export function HeroSection() {
   return (
     <section
+      className="homepage-hero"
+      aria-labelledby="homepage-heading"
       style={{
         background: "var(--muted)",
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' fill='none' stroke='%23507c80' stroke-opacity='0.04' stroke-width='0.6'/%3E%3C/svg%3E")`,
@@ -60,16 +71,16 @@ export function HeroSection() {
           <div className="text-center lg:text-left" style={{ maxWidth: 580, margin: "0 auto", animation: "fadeUp 0.65s ease both" }}>
 
             <div style={{ fontSize: 12, fontWeight: 700, color: T, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 18, animation: "fadeUp 0.65s ease 0.05s both" }}>
-              Discover · Learn · Build · Connect
+              Prowess Digital Solutions
+              <span className="mt-2 block normal-case tracking-normal">Clarity. Structure. Growth.</span>
             </div>
 
-            <h1 style={{ fontSize: "clamp(2.3rem, 4vw, 3.5rem)", fontWeight: 700, letterSpacing: "-0.026em", lineHeight: 1.1, color: ink, marginBottom: 22, animation: "fadeUp 0.65s ease 0.1s both" }}>
-              Build what&rsquo;s{" "}
-              <span style={{ color: T, fontStyle: "italic" }}>next</span> for you.
+            <h1 id="homepage-heading" style={{ fontSize: "clamp(2.3rem, 4vw, 3.5rem)", fontWeight: 700, letterSpacing: "-0.026em", lineHeight: 1.1, color: ink, marginBottom: 22, animation: "fadeUp 0.65s ease 0.1s both" }}>
+              Find the right resources for your <span style={{ color: T }}>next step.</span>
             </h1>
 
             <p style={{ fontSize: "1.05rem", lineHeight: 1.8, color: muted, marginBottom: 30, animation: "fadeUp 0.65s ease 0.2s both" }}>
-              Explore practical resources, tools, opportunities and business support to help you learn, build and grow on Prowess Digital Solutions.
+              Explore practical resources, career opportunities, learning materials and business support to help you move forward.
             </p>
 
             {/* Search bar */}
@@ -79,11 +90,13 @@ export function HeroSection() {
               className="flex flex-col gap-3 sm:flex-row sm:items-center"
             >
               <div className="relative flex-1">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke={muted} strokeWidth={2} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }}>
+                <svg aria-hidden="true" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke={muted} strokeWidth={2} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
                 </svg>
+                <label htmlFor="homepage-search" className="sr-only">Search resources and opportunities</label>
                 <input
-                  type="text"
+                  id="homepage-search"
+                  type="search"
                   name="q"
                   placeholder="What are you looking for?"
                   style={{ width: "100%", padding: "14px 16px 14px 44px", borderRadius: 12, border: `1.5px solid ${border}`, fontSize: "0.95rem", color: ink, background: "var(--card)" }}
@@ -108,6 +121,7 @@ export function HeroSection() {
                 <Link
                   key={item.label}
                   href={item.href}
+                  className="inline-flex min-h-10 items-center"
                   style={{ fontSize: "0.82rem", fontWeight: 600, color: T, background: "color-mix(in oklch, var(--primary) 10%, transparent)", border: `1px solid color-mix(in oklch, var(--primary) 20%, transparent)`, borderRadius: 999, padding: "7px 14px", transition: "background 0.15s ease" }}
                 >
                   {item.label}
@@ -122,7 +136,7 @@ export function HeroSection() {
               {["Free to browse", "Worldwide + Remote focus", "New opportunities weekly"].map((item) => (
                 <div key={item} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: T, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="var(--primary-foreground)" strokeWidth={3.5}>
+                    <svg aria-hidden="true" width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="var(--primary-foreground)" strokeWidth={3.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -147,30 +161,31 @@ export function HeroSection() {
               }}
             >
               <p style={{ fontSize: 11, fontWeight: 700, color: muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>
-                Five ways to move forward
+                Choose your next step
               </p>
               <div className="flex flex-col gap-2.5">
-                {pillars.map((p) => (
+                {audiencePaths.map((p) => (
                   <Link
                     key={p.key}
                     href={p.href}
-                    className="group"
+                    className="group hover:bg-muted/60"
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       gap: 12,
                       borderRadius: 14,
-                      border: `1px solid ${border}`,
+                      border: `1px solid ${p.key === "business" ? T : border}`,
                       padding: "12px 14px",
                       transition: "border-color 0.15s ease, background 0.15s ease",
                     }}
                   >
                     <span>
                       <span style={{ display: "block", fontSize: "0.9rem", fontWeight: 700, color: ink }}>{p.label}</span>
-                      <span style={{ display: "block", fontSize: "0.76rem", color: muted, marginTop: 1 }}>{p.desc}</span>
+                      <span style={{ display: "block", fontSize: "0.875rem", lineHeight: 1.5, color: muted, marginTop: 4 }}>{p.desc}</span>
+                      <span className="mt-2 block text-sm font-semibold text-primary">{p.cta}</span>
                     </span>
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={T} strokeWidth={2.4} style={{ flexShrink: 0 }}>
+                    <svg aria-hidden="true" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke={T} strokeWidth={2.4} style={{ flexShrink: 0 }}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
                   </Link>

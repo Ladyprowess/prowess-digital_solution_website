@@ -27,7 +27,7 @@ import { stripHtmlForMeta } from "@/lib/stripHtml";
 import { formatMoney } from "@/lib/formatMoney";
 import {
   courseToLearnItem,
-  COURSE_SELECT,
+  selectCourses,
   type LearnItem,
   type CourseRow,
 } from "@/lib/learn/types";
@@ -306,9 +306,11 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
           .order("featured", { ascending: false }).order("published_at", { ascending: false, nullsFirst: false }).limit(CARD_LIMIT)
       : Promise.resolve({ data: [] }),
     courseIds.length
-      ? supabase.from("courses").select(COURSE_SELECT).eq("status", "published").in("id", courseIds)
-          .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
-      : Promise.resolve({ data: [] }),
+      ? selectCourses((select) =>
+          supabase.from("courses").select(select).eq("status", "published").in("id", courseIds)
+            .order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(LEARNING_LIMIT)
+        )
+      : Promise.resolve([]),
   ]);
 
   const jobs: JobCardData[] = ((jobRows.data as unknown as {
@@ -349,7 +351,7 @@ export default async function CareerPathDetailPage({ params }: { params: Promise
     new Map(oppRawRows.filter((o) => o.opportunity_types).map((o) => [o.opportunity_types!.slug, o.opportunity_types!])).values()
   );
 
-  const learningItems: LearnItem[] = ((courseRows.data as unknown as CourseRow[]) || [])
+  const learningItems: LearnItem[] = (courseRows as CourseRow[])
     .map(courseToLearnItem)
     .map((item) => ({ item, position: courseMap.get(item.id) ?? 0 }))
     .sort((a, b) => a.position - b.position)

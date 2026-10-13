@@ -9,6 +9,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 import { formatMoney } from "@/lib/formatMoney";
+import { COURSE_SOURCES, COURSE_SOURCE_HINTS, COURSE_SOURCE_LABELS, asCourseSource, isCuratedCourse, type CourseSource } from "@/lib/learn/courseSource";
 
 const PAGE_SIZE = 20;
 
@@ -56,6 +57,10 @@ function LearnAdmin() {
   const [priceNgn, setPriceNgn] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [durationLabel, setDurationLabel] = useState("");
+  const [source, setSource] = useState<CourseSource>("prowess");
+  const [externalUrl, setExternalUrl] = useState("");
+  const [creatorName, setCreatorName] = useState("");
+  const [creatorUrl, setCreatorUrl] = useState("");
   const [featured, setFeatured] = useState(false);
   const [publishNow, setPublishNow] = useState(false);
   const [editingStatus, setEditingStatus] = useState<CourseRow["status"] | null>(null);
@@ -114,6 +119,7 @@ function LearnAdmin() {
     setEditingCourseId(null);
     setTitle(""); setDescription(""); setWhatYoullLearn(""); setLevel(""); setAccess("free"); setPriceUsd(""); setPriceNgn("");
     setThumbnailUrl(""); setDurationLabel(""); setFeatured(false); setPublishNow(false); setSelectedSkillIds([]);
+    setSource("prowess"); setExternalUrl(""); setCreatorName(""); setCreatorUrl("");
     setEditingStatus(null); setManualSlug(""); setOriginalSlug(""); setMetaTitle(""); setMetaDescription("");
   };
 
@@ -122,7 +128,7 @@ function LearnAdmin() {
     setLoadingEdit(true);
     const { data, error } = await supabase
       .from("courses")
-      .select("id, slug, title, description, what_youll_learn, level, access, price_usd, price_ngn, thumbnail_url, duration_label, featured, status, meta_title, meta_description, course_skill_map(skill_id)")
+      .select("id, slug, title, description, what_youll_learn, level, access, price_usd, price_ngn, thumbnail_url, duration_label, featured, status, meta_title, meta_description, source, external_url, creator_name, creator_url, course_skill_map(skill_id)")
       .eq("id", id)
       .single();
     setLoadingEdit(false);
@@ -134,6 +140,8 @@ function LearnAdmin() {
       access: "free" | "premium"; price_usd: number | null; price_ngn: number | null;
       thumbnail_url: string | null; duration_label: string | null; featured: boolean;
       status: CourseRow["status"]; meta_title: string | null; meta_description: string | null;
+      // Optional until supabase/course_external_creators.sql has been run.
+      source?: string | null; external_url?: string | null; creator_name?: string | null; creator_url?: string | null;
       course_skill_map: { skill_id: string }[];
     };
 
@@ -147,6 +155,10 @@ function LearnAdmin() {
     setPriceNgn(course.price_ngn?.toString() || "");
     setThumbnailUrl(course.thumbnail_url || "");
     setDurationLabel(course.duration_label || "");
+    setSource(asCourseSource(course.source));
+    setExternalUrl(course.external_url || "");
+    setCreatorName(course.creator_name || "");
+    setCreatorUrl(course.creator_url || "");
     setFeatured(course.featured);
     setPublishNow(course.status === "published");
     setSelectedSkillIds(course.course_skill_map.map((m) => m.skill_id));
@@ -162,17 +174,28 @@ function LearnAdmin() {
   const submit = async () => {
     setErr(""); setMsg("");
     if (!title.trim()) return setErr("Title is required.");
+    if (isCuratedCourse(source) && !externalUrl.trim()) {
+      return setErr("A course from another creator needs the link learners should open.");
+    }
 
     setSaving(true);
     try {
+      const curated = isCuratedCourse(source);
       const basePayload = {
         title: title.trim(),
         description: description.trim() || null,
         what_youll_learn: whatYoullLearn.trim() || null,
         level: level || null,
-        access,
-        price_usd: access === "premium" && priceUsd ? Number(priceUsd) : null,
-        price_ngn: access === "premium" && priceNgn ? Number(priceNgn) : null,
+        source,
+        external_url: curated ? externalUrl.trim() : null,
+        creator_name: curated ? creatorName.trim() || null : null,
+        creator_url: curated ? creatorUrl.trim() || null : null,
+        // A curated course is always free: its lessons are on someone
+        // else's platform, so a payment here would buy nothing we can
+        // deliver. Forced server-side rather than trusted from the form.
+        access: curated ? "free" as const : access,
+        price_usd: !curated && access === "premium" && priceUsd ? Number(priceUsd) : null,
+        price_ngn: !curated && access === "premium" && priceNgn ? Number(priceNgn) : null,
         thumbnail_url: thumbnailUrl.trim() || null,
         duration_label: durationLabel.trim() || null,
         featured,
@@ -261,11 +284,50 @@ function LearnAdmin() {
               <input value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} className={inputCls} placeholder="https://..." />
             </Field>
 
-            <AccessPriceFields
-              access={access} onAccessChange={setAccess}
-              priceUsd={priceUsd} onPriceUsdChange={setPriceUsd}
-              priceNgn={priceNgn} onPriceNgnChange={setPriceNgn}
-            />
+            <div className="grid gap-4 rounded-xl border border-border/60 p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Who made this course</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Curated courses sit in Learn next to your own with the creator credited on the card.
+                </p>
+              </div>
+              <Field label="Source">
+                <select value={source} onChange={(e) => setSource(asCourseSource(e.target.value))} className={inputCls}>
+                  {COURSE_SOURCES.map((option) => (
+                    <option key={option} value={option}>{COURSE_SOURCE_LABELS[option]}</option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-xs text-muted-foreground">{COURSE_SOURCE_HINTS[source]}</p>
+              </Field>
+
+              {isCuratedCourse(source) && (
+                <>
+                  <Field label="Link to the course *">
+                    <input value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} className={inputCls} placeholder="https://youtube.com/playlist?list=..." />
+                    <p className="mt-1.5 text-xs text-muted-foreground">Where the Open the course button sends learners.</p>
+                  </Field>
+                  <Field label="Creator name">
+                    <input value={creatorName} onChange={(e) => setCreatorName(e.target.value)} className={inputCls} placeholder="e.g. freeCodeCamp" />
+                    <p className="mt-1.5 text-xs text-muted-foreground">Shown on the card and the page. Falls back to the platform name if left empty.</p>
+                  </Field>
+                  <Field label="Creator page (optional)">
+                    <input value={creatorUrl} onChange={(e) => setCreatorUrl(e.target.value)} className={inputCls} placeholder="https://youtube.com/@channel" />
+                  </Field>
+                  <p className="rounded-lg bg-muted px-3 py-2.5 text-xs leading-5 text-muted-foreground">
+                    Curated courses are always free and have no modules or lessons - the lessons live on the creator&apos;s
+                    platform. Selling one would mean charging for something we cannot deliver.
+                  </p>
+                </>
+              )}
+            </div>
+
+            {!isCuratedCourse(source) && (
+              <AccessPriceFields
+                access={access} onAccessChange={setAccess}
+                priceUsd={priceUsd} onPriceUsdChange={setPriceUsd}
+                priceNgn={priceNgn} onPriceNgnChange={setPriceNgn}
+              />
+            )}
 
             <Field label="Skills">
               <SkillPicker
