@@ -430,3 +430,10 @@ body {
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
+/* Keep iOS from zooming the viewport when focusing compact form controls.
+   Pinch zoom remains available. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]), select, textarea {
+    font-size: max(16px, 1rem) !important;
+  }
+}

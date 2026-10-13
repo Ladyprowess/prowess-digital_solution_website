@@ -1,7 +1,16 @@
 import type { BusinessSummary } from './businessSummary';
 // Render locally to an image: user inputs never leave the browser.
 export async function downloadBusinessCard(summary: BusinessSummary) {
- if(summary.image){const link=document.createElement('a');link.href=summary.image;link.download='prowess-business-result.png';link.click();return;}
+ if(summary.image){
+  const encoded=summary.image.split(',')[1];
+  const bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0));
+  const file=new File([bytes],'prowess-business-result.png',{type:'image/png'});
+  if(navigator.canShare?.({files:[file]})){
+   try{await navigator.share({files:[file],title:summary.title});return;}
+   catch(error){if(error instanceof DOMException&&error.name==='AbortError')return;throw error;}
+  }
+  saveBlob(file);return;
+ }
  const canvas=document.createElement('canvas');const width=760;canvas.width=width;
  let ctx=canvas.getContext('2d');if(!ctx)throw Error('Image export unavailable');
  const wrap=(text:string,font:string,max:number)=>{ctx!.font=font;const lines:string[]=[];let line='';for(const word of text.split(/\s+/)){if(ctx!.measureText(word).width>max){if(line){lines.push(line);line='';}let part='';for(const char of word){if(ctx!.measureText(part+char).width>max){lines.push(part);part='';}part+=char;}line=part;}else if(ctx!.measureText(line+' '+word).width>max&&line){lines.push(line);line=word;}else line+=(line?' ':'')+word;}if(line)lines.push(line);return lines;};
@@ -33,5 +42,9 @@ export async function downloadBusinessCard(summary: BusinessSummary) {
  ctx.font='18px "Courier New", monospace';ctx.fillStyle='#52615c';ctx.fillText(new Date().toLocaleDateString('en-GB',{timeZone:'Africa/Lagos'}),380,y+57);
  ctx.fillText('Based on your inputs. A planning guide,',380,y+96);ctx.fillText('not an independent audit.',380,y+123);ctx.fillText('prowessdigitalsolutions.com',380,y+164);
  const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Unable to create image')),'image/png'));
- const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='prowess-business-result.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ saveBlob(blob);
+}
+
+function saveBlob(blob:Blob){
+ const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='prowess-business-result.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 }

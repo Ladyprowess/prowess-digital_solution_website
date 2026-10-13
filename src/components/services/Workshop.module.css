@@ -22,3 +22,9 @@
 .taskEntrance{animation:taskArrive .45s ease-out both}@keyframes taskArrive{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}@media(prefers-reduced-motion:reduce){.taskEntrance{animation:none}}
 
 .documentDialog{width:min(550px,94vw)}.documentDialog .feedWindow{margin-inline:0}
+
+/* Fit the paper to the available width; 100% is the mobile-safe default. */
+.printDialog{box-sizing:border-box;max-height:calc(100dvh - 24px);overscroll-behavior:contain}
+.documentDialog .feedWindow{min-width:0;width:auto;overflow-x:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.documentDialog .feedWindow img{margin:0;flex-shrink:0}
+@media(max-width:480px){.printDialog{width:calc(100vw - 24px);max-width:calc(100vw - 24px);padding:14px}.printHeader>div{min-width:0}.printHeader p{overflow-wrap:anywhere}.documentDialog .feedWindow{margin-inline:0}.printActions{gap:6px}}
