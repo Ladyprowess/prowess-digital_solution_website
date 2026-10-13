@@ -1,3 +1,4 @@
+import { contactAdminEmail, contactCustomerEmail } from "@/lib/emails/contact";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
@@ -54,24 +55,13 @@ export async function POST(req: Request) {
     }
     
 
-    // 2) Send Resend template (same style as event)
+    const enquiry = { full_name, email, phone, business_stage, inquiry_type, message };
+    // Separate recipients: clients receive an acknowledgement, not the internal notification.
     const { error: mailError } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
-      to: [process.env.RESEND_TO!, email],
+      to: process.env.RESEND_TO!,
       replyTo: email,
-      subject: `New contact message - ${inquiry_type}`,
-      template: {
-        id: "contact", // ✅ your template slug (same style as event-sub)
-        variables: {
-          full_name,
-          email,
-          phone: phone || "",
-          business_stage: business_stage || "",
-          inquiry_type,
-          message,
-          source: "website",
-        },
-      },
+      ...contactAdminEmail(enquiry),
     });
 
     if (mailError) {
@@ -81,8 +71,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // The enquiry is already delivered. A receipt failure must not encourage duplicate submissions.
+    try {
+      const { error: receiptError } = await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL!,
+        to: email,
+        replyTo: process.env.RESEND_TO!,
+        ...contactCustomerEmail(enquiry),
+      });
+      if (receiptError) console.error("Contact acknowledgement delivery failed");
+    } catch {
+      console.error("Contact acknowledgement delivery failed");
+    }
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
+  } catch {
     return NextResponse.json(
       { ok: false, error: "Message failed. Try again." },
       { status: 500 }
