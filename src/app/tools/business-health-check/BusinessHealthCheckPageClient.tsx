@@ -301,10 +301,10 @@ export default function BusinessHealthCheckPageClient() {
           <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
             <p className="text-sm leading-relaxed text-muted-foreground">
               Found gaps? That is completely normal. The Business Structure Diagnostic gives you a
-              fixed 48 to 72 hour, honest outside look at what to fix first.
+              written report and prioritised action plan within five business days after payment confirmation and receipt of all required information.
             </p>
             <Link
-              href="/services/business-structure-diagnostic"
+              href="/contact?service=business-structure-diagnostic"
               className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
               Start the Diagnostic

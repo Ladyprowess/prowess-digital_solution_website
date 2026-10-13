@@ -23,5 +23,5 @@ export const metadata: Metadata = {
 export default async function Page({ searchParams }: { searchParams: Promise<{ service?: string }> }) {
   const { service } = await searchParams;
   const selected = services.find((item) => item.slug === service);
-  return <ContactPageClient initialInquiry={selected?.title || ""} />;
+  return <ContactPageClient key={selected?.slug || "general"} initialInquiry={selected?.title || ""} />;
 }

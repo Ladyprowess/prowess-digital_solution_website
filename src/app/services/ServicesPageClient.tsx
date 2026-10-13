@@ -113,7 +113,7 @@ export default function ServicesPageClient() {
                   the systems and track the numbers that make growth easier to manage.
                 </p>
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <PrimaryLink href="/services/business-structure-diagnostic">
+                  <PrimaryLink href="/contact?service=business-structure-diagnostic">
                     Start with a diagnostic <ArrowRight size={16} aria-hidden="true" />
                   </PrimaryLink>
                   <SecondaryLink href="/case-studies">
@@ -362,7 +362,7 @@ export default function ServicesPageClient() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                  <PrimaryLink href="/services/business-structure-diagnostic">
+                  <PrimaryLink href="/contact?service=business-structure-diagnostic">
                     Start the diagnostic <ArrowRight size={16} aria-hidden="true" />
                   </PrimaryLink>
                   <SecondaryLink href="/case-studies">

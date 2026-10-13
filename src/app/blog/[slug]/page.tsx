@@ -145,7 +145,7 @@ const date = formatDate(post.date);
 const authorName =
   // @ts-expect-error - WP API shape varies
   post.author?.name ||
-  // @ts-expect-error
+  // @ts-expect-error - WordPress may return display_name in the author object
   post.author?.display_name ||
   "Prowess Digital Solutions";
 
@@ -224,7 +224,7 @@ return (
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href="/services/business-structure-diagnostic"
+                  href="/contact?service=business-structure-diagnostic"
                   className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-95"
                 >
                   Start the Diagnostic
