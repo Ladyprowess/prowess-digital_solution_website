@@ -60,3 +60,7 @@ Added a dedicated service page at `/services/financial-tracking-dashboard`. It r
 ### Financial page visual revision
 
 Replaced the static ledger hero with a centred introduction and a working financial desk: a sales-volume slider drives the operating balance and revenue/cost bars using the same values as the lower workspace. Reworked inputs into compact rows and displayed results as dashboard metrics, while keeping receipt formatting in the export. Retained the on-page enquiry and agreed offer scope. Browser verification covered slider propagation (50 to 100 sales changes balance from $1,500 to $4,500), invalid input recovery, all three views, receipt export, and widths 390/768/1440 with no horizontal overflow or runtime errors. Lint and TypeScript passed. Local only.
+
+### Financial workspace refinement
+
+Replaced the tall joined grey panel across all three views with independent, compact input and result cards. Inputs use a two-column grid where space permits; results use a short metric breakdown and a dedicated visual. Receipt export retains the financial text and values and excludes decorative visuals. Verified calculations, invalid-input recovery, receipt export and 390/768/1440 widths without overflow; inspected the desktop workspace screenshot. TypeScript and lint passed.
