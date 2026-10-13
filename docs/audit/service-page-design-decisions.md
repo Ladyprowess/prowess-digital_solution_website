@@ -52,3 +52,11 @@ Playbook visual revision: owner rejected the original design. Replaced the route
 ### Shared receipt export correction
 
 Service result exports now use a shared narrow paper layout with full Prowess Digital Solutions branding, monospaced text, dashed dividers and a torn paper edge. The preview and PNG use this receipt rendering; Print / Save PDF uses the same HTML and styles with printable pagination, rather than shrinking a wide screenshot. The animated feed remains. Browser checks passed for financial, process, offer, health, Diagnostic report, SOP (including completion checks), and Playbook results. Playbook PDF generated locally; Diagnostic and Playbook mobile overflow checks passed. This verification covers service result exports, not every site feature or a production deployment.
+
+### Financial Tracking and Unit Economics Dashboard
+
+Added a dedicated service page at `/services/financial-tracking-dashboard`. It retains the existing $150–$260 scope range and deliverables. The workspace separates unit economics, actual cash movement and acquisition cost, with live results, invalid-input handling and shared receipt preview/download/print. The on-page enquiry reuses the existing contact handler and confirms scope, timing and fee before payment. No payment integration or customer records were changed. Removed the remaining SOP pause/resume animation control; a source search found no other animation controls with those labels. Media playback controls remain available.
+
+### Financial page visual revision
+
+Replaced the static ledger hero with a centred introduction and a working financial desk: a sales-volume slider drives the operating balance and revenue/cost bars using the same values as the lower workspace. Reworked inputs into compact rows and displayed results as dashboard metrics, while keeping receipt formatting in the export. Retained the on-page enquiry and agreed offer scope. Browser verification covered slider propagation (50 to 100 sales changes balance from $1,500 to $4,500), invalid input recovery, all three views, receipt export, and widths 390/768/1440 with no horizontal overflow or runtime errors. Lint and TypeScript passed. Local only.

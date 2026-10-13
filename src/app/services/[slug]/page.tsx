@@ -4,6 +4,7 @@ import Link from "next/link";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { services, packages, offerToPackageSlug } from "@/content/site";
+import FinancialLanding from "@/components/services/FinancialLanding";
 import PlaybookLanding from "@/components/services/PlaybookLanding";
 import SopLanding from "@/components/services/SopLanding";
 import DiagnosticLanding from "@/components/DiagnosticLanding";
@@ -58,6 +59,8 @@ export default async function ServicePage({ params }: PageProps) {
   if (!service) return notFound();
 
   if (service.slug === "business-structure-diagnostic") return <DiagnosticLanding service={service} />;
+
+  if (service.slug === "financial-tracking-dashboard") return <FinancialLanding service={service} />;
 
   if (service.slug === "sop-vault") return <SopLanding service={service} />;
 

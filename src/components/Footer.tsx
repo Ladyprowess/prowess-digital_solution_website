@@ -97,7 +97,7 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
               <li><Link href="/privacy-policy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
               <li><Link href="/terms-of-service" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
             </ul>
-            <div className="mt-4 space-y-1 text-xs text-muted-foreground">
+            <div className="mt-4 space-y-1 text-xs text-muted-foreground break-words">
               <p>{settings.contactEmail}</p>
               <p>{settings.contactPhone}</p>
             </div>
