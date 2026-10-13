@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/auth/verifyAdmin";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseAdmin = createClient(
@@ -6,6 +7,9 @@ const supabaseAdmin = createClient(
 );
 
 export async function POST(req: Request) {
+  if (!(await verifyAdmin(req))) {
+    return Response.json({ ok: false, error: "Admin access required." }, { status: 403 });
+  }
   const body = await req.json();
 
   const {

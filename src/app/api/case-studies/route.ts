@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/auth/verifyAdmin";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -7,26 +8,35 @@ function getSupabaseAdmin() {
   return createClient(url, serviceKey, { auth: { persistSession: false } });
 }
 
+function boundedInteger(value: string | null, fallback: number, max: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 1 ? Math.min(max, Math.floor(parsed)) : fallback;
+}
+
 // ✅ PAGINATED GET: /api/case-studies?published=true&page=1&pageSize=6
 export async function GET(req: Request) {
   try {
-    const supabase = getSupabaseAdmin();
     const { searchParams } = new URL(req.url);
 
     // published=true|false (default true)
     const publishedParam = searchParams.get("published");
     const onlyPublished = publishedParam !== "false";
 
+    if (!onlyPublished && !(await verifyAdmin(req))) {
+      return Response.json({ ok: false, error: "Admin access required." }, { status: 403 });
+    }
+    const supabase = getSupabaseAdmin();
+
     // page + pageSize (default 1 and 6)
-    const page = Math.max(1, Number(searchParams.get("page") || 1));
-    const pageSize = Math.max(1, Number(searchParams.get("pageSize") || 6));
+    const page = boundedInteger(searchParams.get("page"), 1, 100000);
+    const pageSize = boundedInteger(searchParams.get("pageSize"), 6, 24);
 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
     let query = supabase
       .from("case_studies")
-      .select("*", { count: "exact" })
+      .select("id,title,slug,category,business_size,challenge,solution,before_state,after_state,image_url,results,testimonial,timeline_months,is_published,created_at", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
 
@@ -52,21 +62,24 @@ export async function GET(req: Request) {
       },
       { status: 200 }
     );
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json(
-      { ok: false, error: e?.message || "Server error" },
+      { ok: false, error: e instanceof Error ? e.message : "Server error" },
       { status: 500 }
     );
   }
 }
 
 export async function POST(req: Request) {
+  if (!(await verifyAdmin(req))) {
+    return Response.json({ ok: false, error: "Admin access required." }, { status: 403 });
+  }
   try {
     const supabase = getSupabaseAdmin();
     const body = await req.json();
 
     // ✅ Parse results whether it comes as array or JSON string
-    let results: any = null;
+    let results: unknown = null;
 
     if (body.results) {
       if (Array.isArray(body.results)) {
@@ -136,9 +149,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true, item: data }, { status: 200 });
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json(
-      { ok: false, error: e?.message || "Server error" },
+      { ok: false, error: e instanceof Error ? e.message : "Server error" },
       { status: 500 }
     );
   }

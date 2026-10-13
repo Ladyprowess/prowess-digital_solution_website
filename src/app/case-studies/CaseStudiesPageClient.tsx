@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
+import { LoadError } from "@/components/LoadError";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 
@@ -36,6 +37,8 @@ export default function CaseStudiesPageClient() {
 
   const [items, setItems] = useState<CaseStudy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [requestedPage, setRequestedPage] = useState(1);
 
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -65,7 +68,9 @@ export default function CaseStudiesPageClient() {
   };
 
   const load = async (page: number) => {
+    setRequestedPage(page);
     setLoading(true);
+    setLoadError(false);
 
     try {
       const res = await fetch(
@@ -74,7 +79,7 @@ export default function CaseStudiesPageClient() {
       );
 
       const text = await res.text();
-      let json: any = null;
+      let json: { ok?: boolean; error?: string; items?: CaseStudy[]; pagination?: Pagination } | null = null;
 
       try {
         json = text ? JSON.parse(text) : null;
@@ -100,8 +105,7 @@ export default function CaseStudiesPageClient() {
       }
     } catch (e) {
       console.error(e);
-      setItems([]);
-      setPagination({ page: 1, pageSize: PAGE_SIZE, total: 0, totalPages: 1 });
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -109,7 +113,6 @@ export default function CaseStudiesPageClient() {
 
   useEffect(() => {
     load(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const categories = useMemo(() => {
@@ -274,6 +277,8 @@ export default function CaseStudiesPageClient() {
           {/* Grid + Accordion */}
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading case studies…</p>
+          ) : loadError ? (
+            <LoadError message="We couldn’t load the case studies. Please try again." onRetry={() => load(requestedPage)} />
           ) : filtered.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-10 text-center">
               <h3 className="text-xl font-semibold text-foreground">

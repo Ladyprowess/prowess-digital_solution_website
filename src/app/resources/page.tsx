@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { BookOpen, BriefcaseBusiness, Building2, GraduationCap, HeartHandshake, Library, Search } from "lucide-react";
+import { LoadError } from "@/components/LoadError";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -57,7 +58,10 @@ function audienceValues(audience: string): string[] {
 async function fetchResources(params: URLSearchParams): Promise<{ items: ResourceItem[]; total: number }> {
   const res = await fetch(`/api/resources?${params.toString()}`, { cache: "no-store" });
   const data = await res.json().catch(() => ({}));
-  return { items: data?.items || [], total: data?.total || 0 };
+  if (!res.ok || !data?.ok || !Array.isArray(data.items)) {
+    throw new Error("Resources could not be loaded.");
+  }
+  return { items: data.items, total: data.total || 0 };
 }
 
 export default function ResourcesPage() {
@@ -78,29 +82,37 @@ function ResourcesPageContent() {
   const [items, setItems] = useState<ResourceItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     // Debounced, matching /videos and /learn's 150ms search-input pattern.
     const t = setTimeout(async () => {
       setLoading(true);
-      const params = new URLSearchParams();
-      params.set("exclude_resource_type", "video");
-      params.set("audience", audienceValues(filters.audience).join(","));
-      if (filters.type) params.set("resource_type", filters.type);
-      if (filters.useCase) params.set("use_case", filters.useCase);
-      if (filters.q.trim()) params.set("q", filters.q.trim());
-      params.set("page", String(filters.page));
-      params.set("pageSize", String(PAGE_SIZE));
+      setLoadError(false);
+      try {
+        const params = new URLSearchParams();
+        params.set("exclude_resource_type", "video");
+        params.set("audience", audienceValues(filters.audience).join(","));
+        if (filters.type) params.set("resource_type", filters.type);
+        if (filters.useCase) params.set("use_case", filters.useCase);
+        if (filters.q.trim()) params.set("q", filters.q.trim());
+        params.set("page", String(filters.page));
+        params.set("pageSize", String(PAGE_SIZE));
 
-      const { items: nextItems, total: nextTotal } = await fetchResources(params);
-      if (cancelled) return;
-      setItems(nextItems);
-      setTotal(nextTotal);
-      setLoading(false);
+        const { items: nextItems, total: nextTotal } = await fetchResources(params);
+        if (cancelled) return;
+        setItems(nextItems);
+        setTotal(nextTotal);
+      } catch {
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }, 150);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [filters.audience, filters.type, filters.useCase, filters.q, filters.page]);
+  }, [filters.audience, filters.type, filters.useCase, filters.q, filters.page, retry]);
 
   function updateFilters(patch: Partial<ResourceFilters>) {
     const next: ResourceFilters = { ...filters, ...patch };
@@ -175,7 +187,7 @@ function ResourcesPageContent() {
               <div>
                 <h2 className="text-xl font-bold text-foreground">Ebooks and resources</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {loading ? "Loading books and guides..." : `${total} resource${total === 1 ? "" : "s"} found`}
+                  {loading ? "Loading books and guides..." : loadError ? "Resources are temporarily unavailable." : `${total} resource${total === 1 ? "" : "s"} found`}
                 </p>
               </div>
               {activeFiltersPresent && (
@@ -211,6 +223,8 @@ function ResourcesPageContent() {
                 </div>
               ))}
             </div>
+          ) : loadError ? (
+            <LoadError message="We couldn’t load the resources. Please try again." onRetry={() => setRetry((value) => value + 1)} />
           ) : items.length === 0 ? (
             <div className="mx-auto mt-8 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-14 text-center">
               <Library className="mx-auto text-primary" size={28} strokeWidth={1.6} aria-hidden="true" />
@@ -234,7 +248,7 @@ function ResourcesPageContent() {
             </div>
           )}
 
-          <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />
+          {!loadError && <Pagination page={filters.page} totalPages={totalPages} onPageChange={(p) => updateFilters({ page: p })} />}
         </Container>
       </section>
 

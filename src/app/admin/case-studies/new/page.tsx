@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function NewCaseStudyPage() {
   const [title, setTitle] = useState("");
@@ -46,9 +47,11 @@ export default function NewCaseStudyPage() {
     setSaving(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Please sign in as an admin to save a case study.");
       const res = await fetch("/api/case-studies", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({
           title,
           slug: slugHint,
@@ -68,7 +71,7 @@ export default function NewCaseStudyPage() {
       
       // 👇 SAFETY WRAPPER (THIS FIXES THE ERROR)
       const text = await res.text();
-      let json: any = null;
+      let json: { ok?: boolean; error?: string } | null = null;
       
       try {
         json = text ? JSON.parse(text) : null;
@@ -88,8 +91,8 @@ export default function NewCaseStudyPage() {
       
       // Optionally clear form
       // setTitle(""); setSlug(""); setImageUrl(""); setChallenge(""); setSolution("");
-    } catch (err: any) {
-      setMsg(err?.message || "Something went wrong");
+    } catch (err: unknown) {
+      setMsg(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSaving(false);
     }

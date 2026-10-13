@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, Compass, GraduationCap, Search } from "lucide-react";
+import { LoadError } from "@/components/LoadError";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
@@ -37,82 +38,94 @@ type PathWithCounts = CareerPathCardData & { category: string | null };
 export default function CareerPathsPageClient() {
   const [paths, setPaths] = useState<PathWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       setLoading(true);
+      setLoadError(false);
+      try {
 
-      const [{ data: pathRows }, { data: pathSkillRows }] = await Promise.all([
-        supabase
-          .from("career_paths")
-          .select("id, slug, title, description, level, category, featured, icon_key")
-          .eq("status", "published")
-          .order("title"),
-        supabase.from("career_path_skill_map").select("career_path_id, skill_id"),
-      ]);
-
-      const pathSkillIds = new Map<string, Set<string>>();
-      for (const row of pathSkillRows || []) {
-        if (!pathSkillIds.has(row.career_path_id)) pathSkillIds.set(row.career_path_id, new Set());
-        pathSkillIds.get(row.career_path_id)!.add(row.skill_id);
-      }
-
-      // Reverse index: which career paths does a given skill belong to?
-      // Counts below are built as per-path Sets of content ids (not
-      // incrementing counters), so a single job/course/resource tagged
-      // with two of the same path's skills only counts once.
-      const skillToPaths = new Map<string, string[]>();
-      for (const [pathId, skillSet] of pathSkillIds) {
-        for (const skillId of skillSet) {
-          if (!skillToPaths.has(skillId)) skillToPaths.set(skillId, []);
-          skillToPaths.get(skillId)!.push(pathId);
-        }
-      }
-      const allSkillIds = Array.from(skillToPaths.keys());
-
-      const [{ data: jobRows }, { data: courseMapRows }] =
-        await Promise.all([
-          allSkillIds.length === 0
-            ? Promise.resolve({ data: [] })
-            : supabase.from("job_skill_map").select("job_id, skill_id").in("skill_id", allSkillIds),
-          supabase.from("career_path_course_map").select("career_path_id, course_id"),
+        const [{ data: pathRows, error: pathError }, { data: pathSkillRows, error: skillError }] = await Promise.all([
+          supabase
+            .from("career_paths")
+            .select("id, slug, title, description, level, category, featured, icon_key")
+            .eq("status", "published")
+            .order("title"),
+          supabase.from("career_path_skill_map").select("career_path_id, skill_id"),
         ]);
 
-      const jobsByPath = new Map<string, Set<string>>();
-      for (const row of jobRows || []) {
-        for (const pathId of skillToPaths.get(row.skill_id) || []) {
-          if (!jobsByPath.has(pathId)) jobsByPath.set(pathId, new Set());
-          jobsByPath.get(pathId)!.add(row.job_id);
+        if (pathError || skillError) throw new Error("Career paths unavailable");
+        const pathSkillIds = new Map<string, Set<string>>();
+        for (const row of pathSkillRows || []) {
+          if (!pathSkillIds.has(row.career_path_id)) pathSkillIds.set(row.career_path_id, new Set());
+          pathSkillIds.get(row.career_path_id)!.add(row.skill_id);
         }
+
+        // Reverse index: which career paths does a given skill belong to?
+        // Counts below are built as per-path Sets of content ids (not
+        // incrementing counters), so a single job/course/resource tagged
+        // with two of the same path's skills only counts once.
+        const skillToPaths = new Map<string, string[]>();
+        for (const [pathId, skillSet] of pathSkillIds) {
+          for (const skillId of skillSet) {
+            if (!skillToPaths.has(skillId)) skillToPaths.set(skillId, []);
+            skillToPaths.get(skillId)!.push(pathId);
+          }
+        }
+        const allSkillIds = Array.from(skillToPaths.keys());
+
+        const [{ data: jobRows, error: jobError }, { data: courseMapRows, error: courseError }] =
+          await Promise.all([
+            allSkillIds.length === 0
+              ? Promise.resolve({ data: [], error: null })
+              : supabase.from("job_skill_map").select("job_id, skill_id").in("skill_id", allSkillIds),
+            supabase.from("career_path_course_map").select("career_path_id, course_id"),
+          ]);
+
+        if (jobError || courseError) throw new Error("Career path counts unavailable");
+        const jobsByPath = new Map<string, Set<string>>();
+        for (const row of jobRows || []) {
+          for (const pathId of skillToPaths.get(row.skill_id) || []) {
+            if (!jobsByPath.has(pathId)) jobsByPath.set(pathId, new Set());
+            jobsByPath.get(pathId)!.add(row.job_id);
+          }
+        }
+
+        const learningByPath = new Map<string, Set<string>>();
+        for (const row of courseMapRows || []) {
+          if (!learningByPath.has(row.career_path_id)) learningByPath.set(row.career_path_id, new Set());
+          learningByPath.get(row.career_path_id)!.add(`course:${row.course_id}`);
+        }
+
+        const withCounts: PathWithCounts[] = ((pathRows as PathRow[]) || []).map((p) => ({
+          id: p.id,
+          slug: p.slug,
+          title: p.title,
+          description: p.description,
+          level: p.level,
+          category: p.category,
+          featured: p.featured,
+          iconKey: p.icon_key,
+          skillsCount: pathSkillIds.get(p.id)?.size || 0,
+          learningCount: learningByPath.get(p.id)?.size || 0,
+          jobsCount: jobsByPath.get(p.id)?.size || 0,
+        }));
+
+        if (!cancelled) setPaths(withCounts);
+      } catch {
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      const learningByPath = new Map<string, Set<string>>();
-      for (const row of courseMapRows || []) {
-        if (!learningByPath.has(row.career_path_id)) learningByPath.set(row.career_path_id, new Set());
-        learningByPath.get(row.career_path_id)!.add(`course:${row.course_id}`);
-      }
-
-      const withCounts: PathWithCounts[] = ((pathRows as PathRow[]) || []).map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        title: p.title,
-        description: p.description,
-        level: p.level,
-        category: p.category,
-        featured: p.featured,
-        iconKey: p.icon_key,
-        skillsCount: pathSkillIds.get(p.id)?.size || 0,
-        learningCount: learningByPath.get(p.id)?.size || 0,
-        jobsCount: jobsByPath.get(p.id)?.size || 0,
-      }));
-
-      setPaths(withCounts);
-      setLoading(false);
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [retry]);
 
   function updateSearch(value: string) {
     setSearch(value);
@@ -212,7 +225,7 @@ export default function CareerPathsPageClient() {
                   ].map((stat) => (
                     <div key={stat.label} className="rounded-lg bg-muted p-3 text-center">
                       <stat.icon size={15} className="mx-auto mb-2 text-primary" aria-hidden="true" />
-                      <p className="text-lg font-bold text-foreground">{stat.value}</p>
+                      <p className="text-lg font-bold text-foreground">{loading || loadError ? "—" : stat.value}</p>
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">{stat.label}</p>
                     </div>
                   ))}
@@ -276,6 +289,8 @@ export default function CareerPathsPageClient() {
                 </div>
               ))}
             </div>
+          ) : loadError ? (
+            <LoadError message="We couldn’t load career paths and their counts. Please try again." onRetry={() => setRetry((value) => value + 1)} />
           ) : paths.length === 0 ? (
             <div className="mx-auto my-16 max-w-lg rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center">
               <Compass size={30} className="mx-auto text-primary" aria-hidden="true" />

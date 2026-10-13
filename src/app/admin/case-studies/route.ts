@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/auth/verifyAdmin";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -27,6 +28,9 @@ function getSupabaseAdmin() {
 
 // GET /api/case-studies?published=true|false
 export async function GET(req: Request) {
+  if (!(await verifyAdmin(req))) {
+    return Response.json({ ok: false, error: "Admin access required." }, { status: 403 });
+  }
   try {
     const supabase = getSupabaseAdmin();
 
@@ -50,9 +54,9 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json({ ok: true, items: data ?? [] }, { status: 200 });
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json(
-      { ok: false, error: e?.message || "Server error" },
+      { ok: false, error: e instanceof Error ? e.message : "Server error" },
       { status: 500 }
     );
   }
@@ -60,6 +64,9 @@ export async function GET(req: Request) {
 
 // POST /api/case-studies
 export async function POST(req: Request) {
+  if (!(await verifyAdmin(req))) {
+    return Response.json({ ok: false, error: "Admin access required." }, { status: 403 });
+  }
   try {
     const supabase = getSupabaseAdmin();
     const body = await req.json();
@@ -96,7 +103,7 @@ export async function POST(req: Request) {
     const is_published = Boolean(body?.is_published);
 
     // Results can be array or JSON string
-    let results: any = null;
+    let results: unknown = null;
     if (body?.results) {
       if (Array.isArray(body.results)) results = body.results;
       else {
@@ -121,7 +128,7 @@ export async function POST(req: Request) {
         ? null
         : Number(body.timeline_months);
 
-    const insertPayload: any = {
+    const insertPayload = {
       title,
       slug,
       category,
@@ -149,9 +156,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true, item: data }, { status: 200 });
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json(
-      { ok: false, error: e?.message || "Server error" },
+      { ok: false, error: e instanceof Error ? e.message : "Server error" },
       { status: 500 }
     );
   }

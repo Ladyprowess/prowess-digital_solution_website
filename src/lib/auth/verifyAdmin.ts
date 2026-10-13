@@ -7,13 +7,13 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 // /admin/work (Authorization: Bearer <their own Supabase access token>).
 // Mirrors verifyMember.ts's token-verification pattern, plus the role check
 // admin-gated pages already do client-side via useRequireAdmin.
-export async function verifyAdminOrCron(req: Request): Promise<{ ok: true; via: "cron" | "admin" } | { ok: false }> {
+export async function verifyAdminOrCron(req: Request, allowCron = true): Promise<{ ok: true; via: "cron" | "admin" } | { ok: false }> {
   const authHeader = req.headers.get("authorization") || "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (!token) return { ok: false };
 
   const cronSecret = process.env.CRON_IMPORT_SECRET;
-  if (cronSecret && token === cronSecret) return { ok: true, via: "cron" };
+  if (allowCron && cronSecret && token === cronSecret) return { ok: true, via: "cron" };
 
   const anon = createClient(
     process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,4 +27,14 @@ export async function verifyAdminOrCron(req: Request): Promise<{ ok: true; via: 
   if (profile?.role !== "admin") return { ok: false };
 
   return { ok: true, via: "admin" };
+}
+
+// Content management requires a real admin session, never an importer cron key.
+export async function verifyAdmin(req: Request): Promise<boolean> {
+  try {
+    const result = await verifyAdminOrCron(req, false);
+    return result.ok && result.via === "admin";
+  } catch {
+    return false;
+  }
 }
