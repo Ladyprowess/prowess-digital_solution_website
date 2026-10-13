@@ -122,3 +122,7 @@ The owner confirmed a fixed one-time fee of **₦180,000 or $120**. Deliverables
 Turnaround is five business days after both payment confirmation and receipt of all required client information. Follow-up is one email within seven calendar days after the review call to clarify the report or action plan. Exclusions are bookkeeping, tax or legal advice, implementation, financial statement audits, market research, preparation of a full business plan, additional calls and ongoing advisory support.
 
 The agreed journey is enquiry → suitability confirmation by Prowess → payment instructions. The enquiry asks for the business, current challenges and goals. These decisions supersede this draft's earlier unresolved diagnostic-price and delivery assumptions. The standalone service copy has been updated accordingly; existing recurring membership prices and obligations remain unchanged.
+
+## Listing retention decision
+
+The owner subsequently requested automatic deletion of closed jobs and opportunities, superseding the earlier recommendation to retain expired listing records. The implementation and activation status are in [listing retention](listing-retention.md). The listing functions and their index routes remain; closed records are removed. No change to event or paid-content retention is authorized by this implementation.

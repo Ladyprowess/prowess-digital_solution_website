@@ -94,7 +94,7 @@ export async function runOpportunityImportForSource(
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const sourcePublishedAt = parsePostedAt(listing.postedAt);
 
-      const { error: insertError } = await db.from("opportunities").insert({
+      const { data: createdOpportunity, error: insertError } = await db.from("opportunities").insert({
         slug: opportunitySlug,
         title: listing.title,
         type_id: typeId,
@@ -112,9 +112,10 @@ export async function runOpportunityImportForSource(
         source_published_at: sourcePublishedAt,
         published_at: source.auto_publish ? (sourcePublishedAt || now) : null,
         expires_at: expiresAt,
-      });
+      }).select("id").maybeSingle();
 
       if (insertError) { summary.errors += 1; continue; }
+      if (!createdOpportunity) { summary.skippedExisting += 1; continue; }
       summary.imported += 1;
     } catch {
       summary.errors += 1;

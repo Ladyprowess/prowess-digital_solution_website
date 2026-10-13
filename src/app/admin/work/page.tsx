@@ -292,7 +292,7 @@ function WorkAdmin() {
         apply_url: applyUrl.trim(),
         featured,
         status: publishNow ? "published" : "draft",
-        deadline_at: deadlineAt || null,
+        deadline_at: deadlineAt ? `${deadlineAt}T23:59:59.999+01:00` : null,
         meta_title: metaTitle.trim() || null,
         meta_description: metaDescription.trim() || null,
       };

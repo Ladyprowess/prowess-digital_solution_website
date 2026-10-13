@@ -298,7 +298,7 @@ function OpportunitiesAdmin() {
         apply_url: applyUrl.trim(),
         featured,
         status: publishNow ? "published" : "draft",
-        deadline_at: deadlineAt || null,
+        deadline_at: deadlineAt ? `${deadlineAt}T23:59:59.999+01:00` : null,
         application_opens_at: applicationOpensAt || null,
         program_start_at: programStartAt || null,
         program_end_at: programEndAt || null,

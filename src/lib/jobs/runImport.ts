@@ -160,9 +160,10 @@ export async function runImportForSource(
           expires_at: expiresAt,
         })
         .select("id")
-        .single();
+        .maybeSingle();
 
-      if (jobError || !createdJob) { summary.errors += 1; continue; }
+      if (jobError) { summary.errors += 1; continue; }
+      if (!createdJob) { summary.skippedExisting += 1; continue; }
 
       if (matchedSkillIds.length > 0) {
         await db.from("job_skill_map").insert(matchedSkillIds.map((skillId) => ({ job_id: createdJob.id, skill_id: skillId })));
