@@ -44,3 +44,11 @@ SOP enquiry and motion update: all SOP enquiry CTAs now target an in-page form u
 ## Go To Market and Offer Playbook
 
 Dedicated page includes an automatically cycling offer/pricing/channel hero with manual pause, an offer-statement builder, three selectable starting-channel plans, visible-result export and an in-page enquiry form using the existing contact backend. Preserve $280–$480 and confirm scope/timing/final fee before payment. Shared enquiry component retains SOP defaults while accepting the Playbook offer details. No live enquiry or deployment performed.
+
+Services business scene: replaced the central icon with an animated SVG business owner at a desk, including phone, typing, paperwork and moving task cards. Structured mode changes posture and settles tasks. Pause and reduced-motion support included. Removed remaining illustration wording from the scene and legacy toolkit.
+
+Playbook visual revision: owner rejected the original design. Replaced the route-card hero with an open-book layout and selectable Offer, Price and Route chapters. Reworked the builder into a writing area beside a live plan, with lighter service presentation. Removed animation pause/resume controls from this page. Preserved existing offer terms, exact-result export and in-page enquiry.
+
+### Shared receipt export correction
+
+Service result exports now use a shared narrow paper layout with full Prowess Digital Solutions branding, monospaced text, dashed dividers and a torn paper edge. The preview and PNG use this receipt rendering; Print / Save PDF uses the same HTML and styles with printable pagination, rather than shrinking a wide screenshot. The animated feed remains. Browser checks passed for financial, process, offer, health, Diagnostic report, SOP (including completion checks), and Playbook results. Playbook PDF generated locally; Diagnostic and Playbook mobile overflow checks passed. This verification covers service result exports, not every site feature or a production deployment.

@@ -1,6 +1,8 @@
-export type BusinessSummary = { title: string; content: string; image?: string; imageWidth?: number };
+import { receiptStyles } from "./captureBusinessResult";
+export type BusinessSummary = { title: string; content: string; image?: string; imageWidth?: number; receiptHtml?: string };
 const escape = (text: string) => text.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-export function summaryDocument({title,content,image}: BusinessSummary) {
+export function summaryDocument({title,content,image,receiptHtml}: BusinessSummary) {
+ if(receiptHtml)return `<!doctype html><html><head><meta charset="utf-8"><title>${escape(title)}</title><style>${receiptStyles}</style></head><body>${receiptHtml}</body></html>`;
  if(image?.startsWith('data:image/png;base64,'))return `<!doctype html><html><head><title>${escape(title)}</title><style>@page{margin:10mm}body{margin:0;text-align:center}img{max-width:100%;width:420px;height:auto}</style></head><body><img src="${image}" alt="${escape(title)}"></body></html>`;
  const renderSection=(section:string)=>section.split('\n').map((line,index)=>{
   const colon=line.indexOf(':');
@@ -17,8 +19,8 @@ export async function previewSummary(title: string, content: string, selector?: 
   const source=document.querySelector<HTMLElement>(selector);
   if(source){try{
    const {captureBusinessResult}=await import('./captureBusinessResult');
-   const image=await captureBusinessResult(source);
-   window.dispatchEvent(new CustomEvent<BusinessSummary>('prowess-summary',{detail:{title,content,image,imageWidth:Math.ceil(source.getBoundingClientRect().width)}}));return;
+   const captured=await captureBusinessResult(source);
+   window.dispatchEvent(new CustomEvent<BusinessSummary>('prowess-summary',{detail:{title,content,image:captured.image,imageWidth:captured.width,receiptHtml:captured.html}}));return;
   }catch{window.alert('Unable to prepare your result. Please try again.');return;}}
  }
 
