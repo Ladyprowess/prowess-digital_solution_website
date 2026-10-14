@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   const supabase = supabaseAdmin();
   const { data } = await supabase
     .from("premium_membership_subscriptions")
-    .select("subscription_status, billing_interval, currency, amount_usd, amount_ngn, created_at")
+    .select("subscription_status, billing_interval, currency, amount_usd, amount_ngn, created_at, paid_through")
     .eq("user_id", member.id)
     .order("created_at", { ascending: false })
     .limit(1)

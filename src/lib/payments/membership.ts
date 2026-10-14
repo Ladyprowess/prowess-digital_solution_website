@@ -1,5 +1,5 @@
+import { reconcileRecurring } from "@/lib/payments/recurring";
 import { escapeEmail } from "@/lib/payments/emailEscape";
-import { ensureToolGrant } from "@/lib/payments/toolGrant";
 import { matchesPayment } from "@/lib/payments/validation";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resendClient";
@@ -39,55 +39,10 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
     return { ok: false as const };
   }
 
-  if (sub.payment_status === "paid" && (sub.subscription_status === "cancelled" ||
-    (sub.lapsed_at && (!verified.created_at || new Date(verified.created_at).getTime() <= new Date(sub.lapsed_at).getTime())))) {
-    return { ok: true as const, alreadyPaid: true };
-  }
-  if (sub.payment_status === "paid") {
-    // A renewal charge on an already-paid subscription - the access code
-    // from the first charge is still valid, so don't re-send emails or
-    // re-issue a code. But DO clear a stale "lapsed" flag if a prior
-    // renewal failed and this one recovered before Flutterwave cancelled
-    // the subscription outright.
-    if (sub.subscription_status === "lapsed") {
-      const { error: renewalError } = await supabase
-        .from("membership_subscriptions")
-        .update({ subscription_status: "active", lapsed_at: null, flutterwave_reference: reference })
-        .eq("id", sub.id).eq("subscription_status", "lapsed");
-      if (renewalError) return { ok: false as const };
-    }
-    return { ok: true as const, alreadyPaid: true };
-  }
-
+  const transition = await reconcileRecurring("membership", sub.id, "paid", reference, verified.created_at, toolsForPlan(sub.plan_slug));
+  if (!transition.initial) return { ok: true as const, alreadyPaid: true };
   const unlockedTools = toolsForPlan(sub.plan_slug);
-  const accessCode = await ensureToolGrant(`membership:${sub.id}`, {
-    name: sub.full_name,
-    email: sub.email,
-    business: sub.business_name,
-    type: "1year",
-    status: "active",
-    created_at: Date.now(),
-    expires_at: Date.now() + 365 * 24 * 60 * 60 * 1000,
-    allowed_tools: unlockedTools,
-    plan_slug: sub.plan_slug,
-  });
-
-
-  const { data: updatedRows, error: updErr } = await supabase
-    .from("membership_subscriptions")
-    .update({
-      payment_status: "paid",
-      flutterwave_reference: reference,
-      subscription_status: "active",
-      lapsed_at: null,
-    })
-    .eq("id", sub.id)
-    .neq("payment_status", "paid")
-    .neq("subscription_status", "cancelled")
-    .select("id");
-
-  if (updErr) return { ok: false as const };
-  if (!updatedRows?.length) return { ok: true as const, alreadyPaid: true };
+  const accessCode = transition.code!;
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
@@ -149,12 +104,9 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
 }
 
 /**
- * A recurring renewal charge failed (Flutterwave will retry up to 3 times
- * before giving up). Flag the subscription as lapsed and let the admin know,
- * but don't touch payment_status or revoke tools access yet - that happens
- * on the subscription.cancelled webhook once Flutterwave actually gives up.
+ * Records renewal failure once while preserving purchased tool access.
  */
-export async function markMembershipRenewalFailed(subscriptionId: string) {
+export async function markMembershipRenewalFailed(subscriptionId: string, reference: string, occurredAt: string) {
   const supabase = supabaseAdmin();
 
   const { data: sub, error } = await supabase
@@ -164,14 +116,8 @@ export async function markMembershipRenewalFailed(subscriptionId: string) {
     .single();
 
   if (error || !sub) return { ok: false as const };
-  if (sub.payment_status !== "paid" || sub.subscription_status !== "active") return { ok: true as const };
-
-  const { data: changed, error: updateError } = await supabase
-    .from("membership_subscriptions")
-    .update({ subscription_status: "lapsed", lapsed_at: new Date().toISOString() })
-    .eq("id", sub.id).eq("subscription_status", "active").eq("payment_status", "paid").select("id");
-  if (updateError) return { ok: false as const };
-  if (!changed?.length) return { ok: true as const };
+  const transition = await reconcileRecurring("membership", sub.id, "failed", reference, occurredAt);
+  if (!transition.changed) return { ok: true as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
@@ -194,9 +140,7 @@ export async function markMembershipRenewalFailed(subscriptionId: string) {
 }
 
 /**
- * Flutterwave has given up on a subscription (cancelled by the customer, or
- * auto-cancelled after 3 failed renewal attempts). Revoke tools access by
- * revoking the client_codes row(s) tied to this plan, and notify both sides.
+ * Stops renewal, retaining tool access through the existing paid expiry.
  */
 export async function markMembershipCancelled(subscriptionId: string) {
   const supabase = supabaseAdmin();
@@ -208,26 +152,13 @@ export async function markMembershipCancelled(subscriptionId: string) {
     .single();
 
   if (error || !sub) return { ok: false as const };
-  if (sub.subscription_status === "cancelled") return { ok: true as const };
-
-  let revoke = supabase
-    .from("client_codes")
-    .update({ status: "revoked" })
-    .eq("email", sub.email)
-    .eq("plan_slug", sub.plan_slug);
-  const { data: scoped } = await supabase.from("client_codes").select("code").eq("payment_key", `membership:${sub.id}`).limit(1);
-  if (scoped?.length) revoke = revoke.eq("payment_key", `membership:${sub.id}`);
-  else revoke = revoke.is("payment_key", null);
-  const { error: revokeError } = await revoke;
-  if (revokeError) return { ok: false as const };
-
-  const { error: updateError } = await supabase
-    .from("membership_subscriptions")
-    .update({ subscription_status: "cancelled", lapsed_at: sub.lapsed_at || new Date().toISOString() })
-    .eq("id", sub.id);
-  if (updateError) return { ok: false as const };
-
-
+  if (sub.payment_status === "paid" && !sub.paid_through && sub.subscription_status !== "cancelled") {
+    if (!sub.flutterwave_reference) return { ok: false as const };
+    const recovered = await markMembershipPaid(sub.id, sub.flutterwave_reference);
+    if (!recovered.ok) return { ok: false as const };
+  }
+  const transition = await reconcileRecurring("membership", sub.id, "cancelled");
+  if (!transition.changed) return { ok: true as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL!;
@@ -239,7 +170,7 @@ export async function markMembershipCancelled(subscriptionId: string) {
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Your ${sub.plan_slug} membership has ended</h2>
-        <p>Your membership has ended and its tools access has been cancelled.</p>
+        <p>Renewal has been cancelled. Access already paid for remains available until its expiry date.</p>
         <p>You can restart anytime from <a href="https://prowessdigitalsolutions.com/pricing">prowessdigitalsolutions.com/pricing</a>.</p>
       </div>
     `,
@@ -254,7 +185,7 @@ export async function markMembershipCancelled(subscriptionId: string) {
         <h2>Membership cancelled</h2>
         <p><b>Name:</b> ${escapeEmail(sub.full_name)} · <b>Email:</b> ${escapeEmail(sub.email)}</p>
         <p><b>Plan:</b> ${sub.plan_slug} (${sub.billing_interval})</p>
-        <p>Tools access has been revoked.</p>
+        <p>Renewal has stopped. Existing paid access expires at the end of its paid period.</p>
       </div>
     `,
   });

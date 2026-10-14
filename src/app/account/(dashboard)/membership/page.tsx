@@ -12,6 +12,7 @@ type Subscription = {
   currency: "USD" | "NGN";
   amount_usd: number | null;
   amount_ngn: number | null;
+  paid_through?: string | null;
 };
 
 type Pricing = {
@@ -119,7 +120,9 @@ function Membership() {
     return c === "USD" ? pricing.premium_membership_annual_usd : pricing.premium_membership_annual_ngn;
   };
 
-  const isActive = subscription?.subscription_status === "active";
+  const isActive = subscription?.paid_through
+    ? Date.parse(subscription.paid_through) > Date.now()
+    : subscription?.subscription_status === "active";
   const selectedPrice = priceFor(interval, currency);
 
   return (
@@ -141,6 +144,9 @@ function Membership() {
                 {subscription.billing_interval === "monthly" ? "Billed monthly" : "Billed annually"} ·{" "}
                 {formatMoney(Number(subscription.currency === "USD" ? subscription.amount_usd : subscription.amount_ngn), subscription.currency)}
               </p>
+              {subscription.paid_through && <p>Paid access until {new Date(subscription.paid_through).toLocaleDateString('en-GB')}.</p>}
+              <p className="text-muted-foreground">To stop renewal, use the cancellation link in your Flutterwave subscription email. Paid access continues until its expiry date.</p>
+              <a href="/contact?topic=Membership" className="inline-block underline">Get help managing your subscription</a>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">You&rsquo;re not on Premium yet.</p>

@@ -45,7 +45,7 @@ test('free consultation endpoint rejects pending and paid bookings without mutat
 for (const [name,kind,fn,key] of [['content','content_purchase','markContentPurchasePaid','purchase_id'],['skillToBusiness','skill_to_business','markSkillToBusinessPaid','purchase_id'],['membership','membership','markMembershipPaid','subscription_id'],['premiumMembership','premium_membership','markPremiumMembershipPaid','subscription_id']]) {
  test(`${name}: mismatched verified metadata cannot grant access`,async()=>{
  const db=dbFor({id:'p1',amount:120,amount_usd:120,currency:'USD',email:'buyer@example.com',payment_status:'pending',flutterwave_reference:'ORDER-1'});
- const helpers=load(`src/lib/payments/${name}.ts`,{'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/validation':validation,'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/flutterwave':{verifyTransaction:async()=>({...charge,meta:{type:kind,[key]:'different-order'}})},'@/lib/resendClient':{resend:{emails:{send(){throw Error('Unexpected email');}}}},'@/lib/tools/tierAccess':{},'@/lib/payments/toolGrant':{ensureToolGrant(){throw Error('Unexpected grant');}},'@/lib/formatMoney':{},'@/lib/resources/ebookFormats':{} });
+ const helpers=load(`src/lib/payments/${name}.ts`,{'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/validation':validation,'@/lib/payments/recurring':{reconcileRecurring:async()=>({changed:false})},'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/flutterwave':{verifyTransaction:async()=>({...charge,meta:{type:kind,[key]:'different-order'}})},'@/lib/resendClient':{resend:{emails:{send(){throw Error('Unexpected email');}}}},'@/lib/tools/tierAccess':{},'@/lib/payments/toolGrant':{ensureToolGrant(){throw Error('Unexpected grant');}},'@/lib/formatMoney':{},'@/lib/resources/ebookFormats':{} });
  assert.equal((await helpers[fn]('p1','ORDER-1')).ok,false);
  assert.equal(db.writes.length,0);
  });
@@ -53,7 +53,7 @@ for (const [name,kind,fn,key] of [['content','content_purchase','markContentPurc
 test('consultation uses booked price, retries calendar fulfilment and avoids duplicate email',async()=>{
  const db=dbFor({id:'b1',email:'buyer@example.com',currency:'USD',amount_usd:120,payment_status:'paid',flutterwave_reference:'ORDER-1',google_event_id:null});
  let calendarCalls=0,emailCalls=0;
- const {markConsultationPaid}=load('src/lib/payments/consultation.ts',{'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/validation':validation,'@/lib/payments/flutterwave':{verifyTransaction:async()=>({...charge,meta:{type:'consultation',booking_id:'b1'}})},'@/lib/googleCalendar':{createGoogleEvent:async p=>{calendarCalls++;assert.equal(p.eventId,'cb1');return 'cb1';}},'@/lib/email':{sendConsultationEmail:async()=>{emailCalls++;}}});
+ const {markConsultationPaid}=load('src/lib/payments/consultation.ts',{'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/validation':validation,'@/lib/payments/recurring':{reconcileRecurring:async()=>({changed:false})},'@/lib/payments/flutterwave':{verifyTransaction:async()=>({...charge,meta:{type:'consultation',booking_id:'b1'}})},'@/lib/googleCalendar':{createGoogleEvent:async p=>{calendarCalls++;assert.equal(p.eventId,'cb1');return 'cb1';}},'@/lib/email':{sendConsultationEmail:async()=>{emailCalls++;}}});
  assert.equal((await markConsultationPaid('ORDER-1')).ok,true);
  assert.equal(calendarCalls,1);assert.equal(emailCalls,1);
  assert.ok(db.writes.some(w=>w.payload.google_event_id==='cb1'));
@@ -78,14 +78,14 @@ test('HTML payment receipts escape shipping and customer content',()=>{
 test('concurrent Skill to Business callback loser does not send another receipt',async()=>{
  const db=dbFor({id:'p1',amount_usd:120,currency:'USD',email:'buyer@example.com',payment_status:'pending',flutterwave_reference:'ORDER-1'},{lostRace:true});
  let sends=0;
- const {markSkillToBusinessPaid}=load('src/lib/payments/skillToBusiness.ts',{'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/validation':validation,'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/flutterwave':{verifyTransaction:async()=>({...charge,meta:{type:'skill_to_business',purchase_id:'p1'}})},'@/lib/resendClient':{resend:{emails:{send:async()=>{sends++;}}}},'@/lib/tools/tierAccess':{},'@/lib/payments/toolGrant':{ensureToolGrant:async()=> 'SAME-CODE'},'@/lib/formatMoney':{} });
+ const {markSkillToBusinessPaid}=load('src/lib/payments/skillToBusiness.ts',{'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/validation':validation,'@/lib/payments/recurring':{reconcileRecurring:async()=>({changed:false})},'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/flutterwave':{verifyTransaction:async()=>({...charge,meta:{type:'skill_to_business',purchase_id:'p1'}})},'@/lib/resendClient':{resend:{emails:{send:async()=>{sends++;}}}},'@/lib/tools/tierAccess':{},'@/lib/payments/toolGrant':{ensureToolGrant:async()=> 'SAME-CODE'},'@/lib/formatMoney':{} });
  assert.equal((await markSkillToBusinessPaid('p1','ORDER-1')).alreadyPaid,true);
  assert.equal(sends,0);
 });
 
 test('failed tools grant never marks an order paid',async()=>{
  const db=dbFor({id:'p1',amount_usd:120,currency:'USD',email:'buyer@example.com',payment_status:'pending',flutterwave_reference:'ORDER-1'});
- const {markSkillToBusinessPaid}=load('src/lib/payments/skillToBusiness.ts',{'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/validation':validation,'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/flutterwave':{verifyTransaction:async()=>({...charge,meta:{type:'skill_to_business',purchase_id:'p1'}})},'@/lib/resendClient':{},'@/lib/tools/tierAccess':{},'@/lib/payments/toolGrant':{ensureToolGrant:async()=>{throw Error('Unavailable');}},'@/lib/formatMoney':{} });
+ const {markSkillToBusinessPaid}=load('src/lib/payments/skillToBusiness.ts',{'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/validation':validation,'@/lib/payments/recurring':{reconcileRecurring:async()=>({changed:false})},'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/flutterwave':{verifyTransaction:async()=>({...charge,meta:{type:'skill_to_business',purchase_id:'p1'}})},'@/lib/resendClient':{},'@/lib/tools/tierAccess':{},'@/lib/payments/toolGrant':{ensureToolGrant:async()=>{throw Error('Unavailable');}},'@/lib/formatMoney':{} });
  await assert.rejects(markSkillToBusinessPaid('p1','ORDER-1'),/Unavailable/);
  assert.equal(db.writes.length,0);
 });
@@ -102,17 +102,17 @@ test('Premium pending checkout reuses saved link without changing price or order
 });
 
 test('content checkout rejects missing selected currency before creating an order',async()=>{
- const {POST}=load('src/app/api/content/checkout/route.ts',{'next/server':next,'@/lib/payments/validation':validation,'@/lib/supabase/admin':{supabaseAdmin:()=>{throw Error('Must not create order');}},'@/lib/auth/verifyMember':{verifyMember:async()=>({id:'u1',email:'buyer@example.com'})},'@/lib/payments/flutterwave':{},'@/lib/payments/content':{getItemPrice:async()=>({usd:120,ngn:null})}});
+ const {POST}=load('src/app/api/content/checkout/route.ts',{'next/server':next,'@/lib/payments/validation':validation,'@/lib/payments/recurring':{reconcileRecurring:async()=>({changed:false})},'@/lib/supabase/admin':{supabaseAdmin:()=>{throw Error('Must not create order');}},'@/lib/auth/verifyMember':{verifyMember:async()=>({id:'u1',email:'buyer@example.com'})},'@/lib/payments/flutterwave':{},'@/lib/payments/content':{getItemPrice:async()=>({usd:120,ngn:null})}});
  const response=await POST(new Request('https://example.com',{method:'POST',body:JSON.stringify({itemType:'course',itemId:'c1',currency:'NGN'})}));
  assert.equal(response.status,400);
 });
 
 for(const [name,fn] of [['membership','markMembershipRenewalFailed'],['premiumMembership','markPremiumMembershipRenewalFailed']]){
- test(`${name}: duplicate failures and cancelled subscriptions are unchanged`,async()=>{
+ test(`${name}: unchanged reconciliation does not send a failure email`,async()=>{
   for(const status of ['lapsed','cancelled','pending']){
    const db=dbFor({id:'s1',payment_status:'paid',subscription_status:status});let emails=0;
-   const imports={'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/validation':validation,'@/lib/payments/toolGrant':{},'@/lib/tools/tierAccess':{},'@/lib/payments/flutterwave':{},'@/lib/formatMoney':{},'@/lib/resendClient':{resend:{emails:{send:async()=>{emails++;}}}}};
-   const result=await load(`src/lib/payments/${name}.ts`,imports)[fn]('s1');assert.equal(result.ok,true);assert.equal(db.writes.length,0);assert.equal(emails,0);
+   const imports={'@/lib/supabase/admin':{supabaseAdmin:()=>db},'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/validation':validation,'@/lib/payments/recurring':{reconcileRecurring:async()=>({changed:false})},'@/lib/payments/toolGrant':{},'@/lib/tools/tierAccess':{},'@/lib/payments/flutterwave':{},'@/lib/formatMoney':{},'@/lib/resendClient':{resend:{emails:{send:async()=>{emails++;}}}}};
+   const result=await load(`src/lib/payments/${name}.ts`,imports)[fn]('s1','FAILED-1','2026-01-01T12:00:00Z');assert.equal(result.ok,true);assert.equal(db.writes.length,0);assert.equal(emails,0);
   }
  });
 }
@@ -124,3 +124,17 @@ test('tool data API enforces purchased tool scope for reading and writing',async
  const post=await routes.POST(new Request('https://example.com',{method:'POST',body:JSON.stringify({code:'PDS-TEST',tool:'invoice',data:{}})}));assert.equal(post.status,401);assert.equal(db.writes.length,0);
  const allowed=await routes.GET(new Request('https://example.com/api/tools-data?code=PDS-TEST&tool=calculator'));assert.equal(allowed.status,200);
 });
+
+ test('premium access follows paid expiry even after cancellation',async()=>{
+  for (const [row,expectedAccess] of [
+   [{paid_through:'2999-01-01',subscription_status:'cancelled'},true],
+   [{paid_through:'2000-01-01',subscription_status:'active'},false],
+   [{paid_through:null,subscription_status:'active'},true],
+   [{paid_through:null,subscription_status:'cancelled'},false],
+  ]) {
+   const q={select(){return q;},eq(){return q;},then(resolve){return Promise.resolve({data:[row]}).then(resolve);}};
+   const imports={'@/lib/supabase/admin':{supabaseAdmin:()=>({from:()=>q})},'@/lib/payments/recurring':{},'@/lib/payments/emailEscape':emailEscape,'@/lib/payments/validation':validation,'@/lib/resendClient':{},'@/lib/payments/flutterwave':{},'@/lib/formatMoney':{}};
+   const {hasPremiumAccess}=load('src/lib/payments/premiumMembership.ts',imports);
+   assert.equal(await hasPremiumAccess({userId:'u1'}),expectedAccess);
+  }
+ });

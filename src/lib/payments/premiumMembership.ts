@@ -1,3 +1,4 @@
+import { reconcileRecurring } from "@/lib/payments/recurring";
 import { escapeEmail } from "@/lib/payments/emailEscape";
 import { matchesPayment } from "@/lib/payments/validation";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -15,11 +16,8 @@ import { formatMoney } from "@/lib/formatMoney";
  *
  * Answers "can this member start something new premium right now" only -
  * it does NOT gate access to premium content a member already created.
- * `lapsed`/`cancelled` both return false here even though a lapsed/
- * cancelled member's existing premium-templated CVs must stay fully
- * viewable/editable/downloadable - that grandfathering is enforced by the
- * CV Builder's own save/pdf routes checking "does this row already have
- * this template" BEFORE ever calling this function, not by this function
+ * Paid access lasts through paid_through, even after cancellation. Existing
+ * CVs remain separately grandfathered by the CV routes, not this check
  * itself. Do not fold that check into this function - it would silently
  * revoke existing members' work the moment a renewal fails.
  */
@@ -29,10 +27,8 @@ export async function hasPremiumAccess(caller: { userId?: string | null; email?:
   const supabase = supabaseAdmin();
   let query = supabase
     .from("premium_membership_subscriptions")
-    .select("id")
-    .eq("subscription_status", "active")
-    .eq("payment_status", "paid")
-    .limit(1);
+    .select("id, paid_through, subscription_status")
+    .eq("payment_status", "paid");
 
   if (caller.userId && caller.email) {
     query = query.or(`user_id.eq.${caller.userId},email.eq.${JSON.stringify(caller.email)}`);
@@ -42,8 +38,8 @@ export async function hasPremiumAccess(caller: { userId?: string | null; email?:
     query = query.eq("email", caller.email);
   }
 
-  const { data } = await query.maybeSingle();
-  return Boolean(data);
+  const { data } = await query;
+  return Boolean(data?.some(row => row.paid_through ? Date.parse(row.paid_through) > Date.now() : row.subscription_status === "active"));
 }
 
 /**
@@ -51,13 +47,7 @@ export async function hasPremiumAccess(caller: { userId?: string | null; email?:
  * later renewal. Idempotent, safe to call from both the Flutterwave
  * webhook and the client-side verify route (whichever fires first wins).
  *
- * Reference-level idempotency (not just "already paid_status='paid'"):
- * each renewal reuses this same function with a brand new reference every
- * billing cycle, so the plain "already paid" guard alone would let a
- * duplicate webhook delivery of the SAME renewal event re-process (and
- * re-send a confirmation email) a second time. Checking the stored
- * flutterwave_reference against the incoming one first is what actually
- * catches that.
+ * Charge identity, ordering and paid access are reconciled atomically in the database.
  */
 export async function markPremiumMembershipPaid(subscriptionId: string, reference: string) {
   const supabase = supabaseAdmin();
@@ -87,60 +77,15 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
 
   // This exact charge was already processed (a duplicate webhook delivery,
   // or the webhook and the client verify call both fired) - no-op.
-  if (sub.payment_status === "paid" && sub.flutterwave_reference === reference) {
-    return { ok: true as const, alreadyPaid: true };
+  // Store only a subscription identity returned by verified provider data.
+  const providerId = verified.subscription_id ?? (verified.subscription as { id?: unknown } | undefined)?.id;
+  if (typeof providerId === "string" || typeof providerId === "number") {
+    const { error } = await supabase.from("premium_membership_subscriptions")
+      .update({ flutterwave_subscription_id: String(providerId) }).eq("id", sub.id);
+    if (error) throw new Error("Subscription identity could not be saved");
   }
-
-  // Flutterwave's subscription-resource id isn't confirmed against a real
-  // test-mode payload yet (see the schema file's comment on this column) -
-  // captured defensively under a couple of likely field names, and simply
-  // stays null if neither is present. Confirm the real field name against
-  // an actual webhook payload and adjust here if needed.
-  const verifiedAny = verified as Record<string, unknown> | undefined;
-  const flwSubscriptionId =
-    (verifiedAny?.subscription_id as string | number | undefined) ??
-    (verifiedAny?.subscription as { id?: string | number } | undefined)?.id ??
-    null;
-
-  if (sub.payment_status === "paid" && (sub.subscription_status === "cancelled" ||
-    (sub.lapsed_at && (!verified.created_at || new Date(verified.created_at).getTime() <= new Date(sub.lapsed_at).getTime())))) {
-    return { ok: true as const, alreadyPaid: true };
-  }
-  if (sub.payment_status === "paid") {
-    // A renewal charge on an already-paid subscription. Only touch the
-    // fields that represent "is this subscription currently in good
-    // standing" - never amount_usd/amount_ngn/currency, which represent the
-    // price at signup, not something a renewal charge should be able to
-    // drift.
-    const updates: Record<string, unknown> = { flutterwave_reference: reference };
-    if (flwSubscriptionId != null) updates.flutterwave_subscription_id = String(flwSubscriptionId);
-    if (sub.subscription_status === "lapsed") {
-      updates.subscription_status = "active";
-      updates.lapsed_at = null;
-    }
-    const { error: renewalError } = await supabase.from("premium_membership_subscriptions").update(updates).eq("id", sub.id).neq("subscription_status", "cancelled");
-    if (renewalError) return { ok: false as const };
-    return { ok: true as const, alreadyPaid: true };
-  }
-
-  const { data: updatedRows, error: updErr } = await supabase
-    .from("premium_membership_subscriptions")
-    .update({
-      payment_status: "paid",
-      subscription_status: "active",
-      flutterwave_reference: reference,
-      ...(flwSubscriptionId != null ? { flutterwave_subscription_id: String(flwSubscriptionId) } : {}),
-    })
-    .eq("id", sub.id)
-    .neq("payment_status", "paid")
-    .neq("subscription_status", "cancelled")
-    .select("id");
-
-  if (updErr) return { ok: false as const };
-  if (!updatedRows || updatedRows.length === 0) {
-    // Another concurrent call already won the race and marked it paid.
-    return { ok: true as const, alreadyPaid: true };
-  }
+  const transition = await reconcileRecurring("premium_membership", sub.id, "paid", reference, verified.created_at);
+  if (!transition.initial) return { ok: true as const, alreadyPaid: true };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const planTitle = "Premium Membership";
@@ -166,15 +111,9 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
 }
 
 /**
- * A recurring renewal charge failed (Flutterwave will retry up to 3 times
- * before giving up). Flags the subscription as lapsed and notifies the
- * admin - does not touch payment_status (the historical "has this member
- * ever paid" fact stays intact) or any amount/currency field. Access to
- * premium-created content is NOT revoked here or anywhere else while
- * lapsed - only hasPremiumAccess() flips to false, which blocks new
- * premium actions, not existing ones (see that function's own doc comment).
+ * Records renewal failure once, preserving access through the paid period.
  */
-export async function markPremiumMembershipRenewalFailed(subscriptionId: string) {
+export async function markPremiumMembershipRenewalFailed(subscriptionId: string, reference: string, occurredAt: string) {
   const supabase = supabaseAdmin();
 
   const { data: sub, error } = await supabase
@@ -184,14 +123,8 @@ export async function markPremiumMembershipRenewalFailed(subscriptionId: string)
     .single();
 
   if (error || !sub) return { ok: false as const };
-  if (sub.payment_status !== "paid" || sub.subscription_status !== "active") return { ok: true as const };
-
-  const { data: changed, error: updateError } = await supabase
-    .from("premium_membership_subscriptions")
-    .update({ subscription_status: "lapsed", lapsed_at: new Date().toISOString() })
-    .eq("id", sub.id).eq("subscription_status", "active").eq("payment_status", "paid").select("id");
-  if (updateError) return { ok: false as const };
-  if (!changed?.length) return { ok: true as const };
+  const transition = await reconcileRecurring("premium_membership", sub.id, "failed", reference, occurredAt);
+  if (!transition.changed) return { ok: true as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL;
@@ -214,13 +147,7 @@ export async function markPremiumMembershipRenewalFailed(subscriptionId: string)
 }
 
 /**
- * Flutterwave has given up on a subscription (user-cancelled, or
- * auto-cancelled after 3 failed renewal attempts). Cancellation is
- * immediate - access to NEW premium actions ends the moment this fires, not
- * deferred to the end of an already-paid period (matches the existing B2B
- * markMembershipCancelled behavior already live in this codebase). Existing
- * premium-templated CVs remain fully accessible - this function only
- * changes subscription_status, it never touches member_cvs.
+ * Stops renewal while preserving the paid period and previously created CVs.
  */
 export async function markPremiumMembershipCancelled(subscriptionId: string) {
   const supabase = supabaseAdmin();
@@ -232,13 +159,13 @@ export async function markPremiumMembershipCancelled(subscriptionId: string) {
     .single();
 
   if (error || !sub) return { ok: false as const };
-  if (sub.subscription_status === "cancelled") return { ok: true as const };
-
-  const { error: updateError } = await supabase
-    .from("premium_membership_subscriptions")
-    .update({ subscription_status: "cancelled", lapsed_at: sub.lapsed_at || new Date().toISOString() })
-    .eq("id", sub.id);
-  if (updateError) return { ok: false as const };
+  if (sub.payment_status === "paid" && !sub.paid_through && sub.subscription_status !== "cancelled") {
+    if (!sub.flutterwave_reference) return { ok: false as const };
+    const recovered = await markPremiumMembershipPaid(sub.id, sub.flutterwave_reference);
+    if (!recovered.ok) return { ok: false as const };
+  }
+  const transition = await reconcileRecurring("premium_membership", sub.id, "cancelled");
+  if (!transition.changed) return { ok: true as const };
 
   const fromEmail = process.env.RESEND_FROM_EMAIL!;
   const adminEmail = process.env.ADMIN_NOTIFY_EMAIL;
@@ -246,11 +173,11 @@ export async function markPremiumMembershipCancelled(subscriptionId: string) {
   await resend.emails.send({
     from: fromEmail,
     to: sub.email,
-    subject: "Your Premium Membership has ended",
+    subject: "Your Premium Membership renewal has stopped",
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2>Your Premium Membership has ended</h2>
-        <p>Your subscription has ended, so Premium access has been switched off. Any CVs you already built keep working exactly as they are - you just won't be able to create new premium-template CVs or save additional CVs until you resubscribe.</p>
+        <h2>Your Premium Membership renewal has stopped</h2>
+        <p>Renewal has stopped. Your Premium access remains available until the end of the paid period. Any CVs you already built keep working exactly as they are - after the paid period ends, creating new premium-template CVs or saving additional CVs requires an active membership.</p>
         <p>You can restart any time from <a href="https://prowessdigitalsolutions.com/account/membership">your account's Membership page</a>.</p>
       </div>
     `,

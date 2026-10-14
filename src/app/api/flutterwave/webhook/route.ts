@@ -45,9 +45,9 @@ export async function POST(req: Request) {
       }
       if (data?.status === "failed" && metadata?.subscription_id) {
         if (metadata?.type === "membership") {
-          requireProcessed(await markMembershipRenewalFailed(String(metadata.subscription_id)));
+          requireProcessed(await markMembershipRenewalFailed(String(metadata.subscription_id), String(data.tx_ref || ""), String(data.created_at || "")));
         } else if (metadata?.type === "premium_membership") {
-          requireProcessed(await markPremiumMembershipRenewalFailed(String(metadata.subscription_id)));
+          requireProcessed(await markPremiumMembershipRenewalFailed(String(metadata.subscription_id), String(data.tx_ref || ""), String(data.created_at || "")));
         }
       }
       return NextResponse.json({ ok: true });
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       } else if (resolved?.table === "premium_membership") {
         requireProcessed(await markPremiumMembershipCancelled(resolved.id));
       }
+      if (!resolved) throw new Error("Subscription cancellation could not be matched");
       return NextResponse.json({ ok: true });
     }
 
@@ -141,52 +142,58 @@ async function resolveSubscriptionId(
 
   if (metadata?.subscription_id) {
     const id = String(metadata.subscription_id);
-    const { data: membershipMatch } = await supabase
+    const { data: membershipMatch, error: membershipMatchError } = await supabase
       .from("membership_subscriptions")
       .select("id")
       .eq("id", id)
       .maybeSingle();
+    if (membershipMatchError) throw new Error("Subscription lookup failed");
     if (membershipMatch) return { id, table: "membership" };
 
-    const { data: premiumMatch } = await supabase
+    const { data: premiumMatch, error: premiumMatchError } = await supabase
       .from("premium_membership_subscriptions")
       .select("id")
       .eq("id", id)
       .maybeSingle();
+    if (premiumMatchError) throw new Error("Subscription lookup failed");
     if (premiumMatch) return { id, table: "premium_membership" };
   }
 
   const subscriptionResourceId = data?.id as string | number | undefined;
   if (subscriptionResourceId) {
-    const { data: byFlwSubId } = await supabase
+    const { data: byFlwSubId, error: byFlwSubIdError } = await supabase
       .from("premium_membership_subscriptions")
       .select("id")
       .eq("flutterwave_subscription_id", String(subscriptionResourceId))
-      .in("subscription_status", ["active", "lapsed"])
+      .in("subscription_status", ["active", "lapsed", "cancelled"])
       .maybeSingle();
+    if (byFlwSubIdError) throw new Error("Subscription lookup failed");
     if (byFlwSubId) return { id: byFlwSubId.id, table: "premium_membership" };
   }
 
-  const planId = (data?.plan ?? data?.payment_plan) as string | number | undefined;
+  const plan = data?.plan ?? data?.payment_plan;
+  const planId = (typeof plan === "object" && plan !== null ? (plan as { id?: unknown }).id : plan) as string | number | undefined;
   const email = (data?.customer as { email?: string } | undefined)?.email;
   if (!planId || !email) return null;
 
-  const { data: membershipSub } = await supabase
+  const { data: membershipSub, error: membershipSubError } = await supabase
     .from("membership_subscriptions")
     .select("id")
     .eq("flutterwave_plan_id", String(planId))
     .eq("email", email)
-    .in("subscription_status", ["active", "lapsed"])
+    .in("subscription_status", ["active", "lapsed", "cancelled"])
     .maybeSingle();
+  if (membershipSubError) throw new Error("Subscription lookup failed");
   if (membershipSub) return { id: membershipSub.id, table: "membership" };
 
-  const { data: premiumSub } = await supabase
+  const { data: premiumSub, error: premiumSubError } = await supabase
     .from("premium_membership_subscriptions")
     .select("id")
     .eq("flutterwave_plan_id", String(planId))
     .eq("email", email)
-    .in("subscription_status", ["active", "lapsed"])
+    .in("subscription_status", ["active", "lapsed", "cancelled"])
     .maybeSingle();
+  if (premiumSubError) throw new Error("Subscription lookup failed");
   if (premiumSub) return { id: premiumSub.id, table: "premium_membership" };
 
   return null;
