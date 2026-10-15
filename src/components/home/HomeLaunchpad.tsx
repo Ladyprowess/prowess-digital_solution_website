@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowUpRight, ArrowRight, Check, Search, BookOpen } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, Search, BookOpen } from 'lucide-react';
 import { journeys, type Ambition } from './journeys';
 import { trackEvent } from '@/lib/analytics';
 import { stripHtmlForMeta } from '@/lib/stripHtml';
@@ -12,7 +12,7 @@ import type { ResourceItem } from '@/components/resources/ResourceCard';
 import { thumbnailFor, type VideoCardData } from '@/components/videos/VideoCard';
 import s from './Launchpad.module.css';
 import { BusinessWork, BusinessNextStep } from './HomeSupport';
-import { ProductOpening, BusinessWorkspace } from './ProductOpening';
+import { ProductOpening, BusinessWorkspace, JobsWorkspace, OpportunitiesWorkspace, SkillsWorkspace } from './ProductOpening';
 import { PageMotion } from '@/components/PageMotion';
 
 type Props = {
@@ -35,14 +35,10 @@ function Cover({src,title}:{src:string|null;title:string}) {
 
 export default function HomeLaunchpad(p:Props) {
   const [ambition,setAmbition]=useState<Ambition>('business');
-  const [focus,setFocus]=useState(0);
-  const [step,setStep]=useState(0);
   const [shelf,setShelf]=useState<'courses'|'resources'|'videos'>('resources');
   const [ready,setReady]=useState(false);
   const [notice,setNotice]=useState('');
   const journey=journeys[ambition];
-  const situation=journey.focuses[focus];
-  const action=situation.actions[step];
   // Hydrate browser-only preferences after SSR; never read storage during server rendering.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(()=>{
@@ -51,22 +47,23 @@ export default function HomeLaunchpad(p:Props) {
       if(data && keys.includes(data.ambition)) {
         setAmbition(data.ambition);
         setShelf(data.ambition==='skills'?'courses':'resources');
-        if(Number.isInteger(data.focus)&&data.focus>=0&&data.focus<3) setFocus(data.focus);
       }
     } catch { /* Browser preferences are optional. */ }
     setReady(true);
   },[]);
   useEffect(()=>{
     if(!ready)return;
-    try { localStorage.setItem(storageKey,JSON.stringify({ambition,focus})); } catch { /* Browser preferences are optional. */ }
-  },[ambition,focus,ready]);
+    try { localStorage.setItem(storageKey,JSON.stringify({ambition})); } catch { /* Browser preferences are optional. */ }
+  },[ambition,ready]);
   /* eslint-enable react-hooks/set-state-in-effect */
   function choose(key:Ambition) {
-    setAmbition(key);setFocus(0);setStep(0);setShelf(key==='skills'?'courses':'resources');
+    setAmbition(key);setShelf(key==='skills'?'courses':'resources');
     setNotice(`${journeys[key].label}: your route, tools and discovery sections have changed.`);
     trackEvent('audience_select',{audience:key,location:'homepage_launchpad'});
   }
-  const listings=p.opportunities.filter(o=>o.kind===(ambition==='work'?'job':'opportunity') && (ambition!=='business' || /grant|fund|business|accelerat|incubat|pitch|entrepreneur|competition/i.test(o.eyebrow)));
+  const listings=p.opportunities.filter(o=>o.kind===(ambition==='work'?'job':'opportunity')
+    && (ambition!=='business' || /grant|fund|business|accelerat|incubat|pitch|entrepreneur|competition/i.test(o.eyebrow))
+    && (ambition!=='skills' || /scholar|fellow|intern|training|course|programme|program|competition|challenge|bootcamp/i.test(o.eyebrow)));
   const shelfItems = shelf==='courses' ? p.courses.map(c=>({id:c.id,title:c.title,description:c.description,href:`/learn/${c.slug}`,src:null,label:c.access==='free'?'Free course':c.price_usd?formatMoney(c.price_usd,'USD'):c.price_ngn?formatMoney(c.price_ngn,'NGN'):'Premium course'}))
     : shelf==='videos'?p.videos.map(v=>({id:v.id,title:v.title,description:v.description,href:`/videos/${v.slug}`,src:thumbnailFor(v),label:v.access==='premium'?'Premium video':'Video'}))
     : p.resources.map(r=>({id:r.id,title:r.title,description:r.description,href:`/resources/${r.slug}`,src:r.cover_url||r.thumbnail_url,label:`${r.access==='premium'?'Premium · ':''}${r.resource_type||'Resource'}`}));
@@ -76,19 +73,10 @@ export default function HomeLaunchpad(p:Props) {
     <ProductOpening ambition={ambition} onChoose={choose}/>
 
     <BusinessWorkspace active={ambition==='business'}/>
+    <JobsWorkspace active={ambition==='work'}/>
+    <OpportunitiesWorkspace active={ambition==='opportunities'}/>
+    <SkillsWorkspace active={ambition==='skills'}/>
     <div key={ambition} className={s.journey}>
-      {ambition!=='business'&&<section id="your-route" className={`${s.section} ${s.routeSection}`}>
-        <div className={s.sectionHeading}><div><p className={s.eyebrow}>Your starting point</p><h2>{journey.title.split('\n').map((line,i)=><span key={line}>{i>0&&<br/>}{line}</span>)}</h2></div><p>{journey.intro}</p></div>
-        <div className={s.routeWorkspace}>
-          <div className={s.focusColumn}><h3>{journey.question}</h3><div className={s.focusChoices}>{journey.focuses.map((f,i)=><button key={f.label} aria-pressed={focus===i} onClick={()=>{setFocus(i);setStep(0);}}><span>{focus===i?<Check size={16}/>:<span className={s.radio}/>}</span>{f.label}<ArrowUpRight size={16}/></button>)}</div><p className={s.insight} key={focus}>{situation.insight}</p><Link href={journey.destination} className={s.textLink}>Explore all {ambition==='skills'?'learning':ambition==='work'?'jobs':'opportunities'} <ArrowRight size={17}/></Link></div>
-          <div className={s.routeBoard}><div className={s.boardTop}><span>Your route forward</span><span>Three suggested steps</span></div>
-            <div className={s.routeStops} aria-label="Explore the steps in your route">{situation.actions.map((a,i)=><button key={a.href} aria-pressed={step===i} onClick={()=>setStep(i)}><span>{(i+1).toString().padStart(2,'0')}</span><strong>{a.title}</strong></button>)}</div>
-            <article className={s.activeStep} key={`${focus}-${step}`}><div><p className={s.eyebrow}>{step===0?'Start here':step===1?'Build on it':'Take it further'}</p><h3>{action.title}</h3><p>{action.detail}</p><div className={s.actions}><Link className={s.primary} href={action.href}>{action.label}<ArrowUpRight size={18}/></Link></div></div></article>
-            <div className={s.boardFoot}><span>Choose a step to explore it.</span></div>
-          </div>
-        </div>
-      </section>}
-
       <section className={s.toolSection}>
         <div className={s.section}><div className={s.sectionHeading}><div><p className={s.eyebrow}>TOOLS YOU CAN USE TODAY</p><h2>{ambition==='business'?'Less admin. More time for your business.':ambition==='work'?'Get ready for your next application.':ambition==='skills'?'Turn what you learn into work you can show.':'Get ready for the opportunity you want.'}</h2></div><Link href="/tools" className={s.textLink}>Explore all tools <ArrowUpRight size={18}/></Link></div>
         <div className={s.toolCards}>{journey.tools.map((t,i)=><article key={t.href}><div className={s.toolCardTop}><span>0{i+1}</span></div><h3>{t.title}</h3><p>{t.detail}</p><Link href={t.href}>{t.label}<ArrowUpRight size={19}/></Link></article>)}</div>
@@ -109,7 +97,7 @@ export default function HomeLaunchpad(p:Props) {
 
 
 
-    <section className={`${s.section} ${s.people}`}><div className={s.peopleImage}><Image src="/images/training.JPG" alt="A Prowess Digital Solutions training session" fill sizes="(max-width: 700px) 100vw, 50vw"/><span>A PDS training session</span></div><div><p className={s.eyebrow}>SUPPORT FROM PEOPLE WHO DO THE WORK</p><h2>Work on it yourself.<br/>Get help when you need it.</h2><p>Use a tool, take a course or work with our team. From writing a business plan to preparing for your next role, choose the support that fits what you need to do.</p><Link className={s.textLink} href="/about">Meet Prowess Digital Solutions <ArrowUpRight size={18}/></Link><blockquote>“Their team delivered a modern, high-quality website that perfectly reflects our company and brand.”<cite>Testers Connect · Website client</cite></blockquote><Link className={s.textLink} href="/case-studies">Explore our work <ArrowRight size={18}/></Link></div></section>
+    <section className={`${s.section} ${s.people}`}><div className={s.peopleImage}><Image src="/images/training.JPG" alt="A Prowess Digital Solutions training session" fill sizes="(max-width: 700px) 100vw, 50vw"/><span>A PDS training session</span></div>{ambition==='work'?<div><p className={s.eyebrow}>PREPARE FOR THE WORK YOU WANT</p><h2>Build the application.<br/>Practise the conversation.</h2><p>Use the career tools to make your experience easier to understand. Build your CV, prepare for interviews and bring your strongest work together.</p><Link className={s.textLink} href="/tools">Explore career tools <ArrowUpRight size={18}/></Link><blockquote>Start with the role you want. Then make every part of your application support that direction.<cite>Prowess career preparation</cite></blockquote><Link className={s.textLink} href="/jobs">Browse current jobs <ArrowRight size={18}/></Link></div>:ambition==='opportunities'?<div><p className={s.eyebrow}>PREPARE BEFORE YOU APPLY</p><h2>Check the fit.<br/>Build the evidence.</h2><p>Use each listing to understand the provider’s requirements, deadline and selection process. Then prepare an application that answers what they are actually asking.</p><Link className={s.textLink} href="/opportunities">Explore opportunities <ArrowUpRight size={18}/></Link><blockquote>A strong application begins with eligibility. Confirm the rules, then connect your evidence to the selection criteria.<cite>Prowess application preparation</cite></blockquote><Link className={s.textLink} href="/events">Explore upcoming events <ArrowRight size={18}/></Link></div>:ambition==='skills'?<div><p className={s.eyebrow}>PUT LEARNING TO WORK</p><h2>Understand it.<br/>Practise it. Show it.</h2><p>Choose learning that supports a clear goal. Use courses and resources to build understanding, then practise through work you can explain and share.</p><Link className={s.textLink} href="/learn">Explore learning <ArrowUpRight size={18}/></Link><blockquote>Course completion records what you finished. Practice and projects show what you can now do.<cite>Prowess learning guidance</cite></blockquote><Link className={s.textLink} href="/career-paths">Explore career paths <ArrowRight size={18}/></Link></div>:<div><p className={s.eyebrow}>SUPPORT FROM PEOPLE WHO DO THE WORK</p><h2>Work on it yourself.<br/>Get help when you need it.</h2><p>Use a tool, take a course or work with our team. From writing a business plan to preparing for your next role, choose the support that fits what you need to do.</p><Link className={s.textLink} href="/about">Meet Prowess Digital Solutions <ArrowUpRight size={18}/></Link><blockquote>“Their team delivered a modern, high-quality website that perfectly reflects our company and brand.”<cite>Testers Connect · Website client</cite></blockquote><Link className={s.textLink} href="/case-studies">Explore our work <ArrowRight size={18}/></Link></div>}</section>
 
     {ambition==='business'&&<BusinessNextStep/>}
     <section id="launch" className={`${s.section} ${s.newsletter}`}><p className={s.eyebrow}>CHOOSE WHAT REACHES YOUR INBOX</p><h2>Useful updates. Chosen by you.</h2><p>Choose business resources, learning, jobs or opportunities. We’ll send the updates you select.</p>{p.newsletter}</section>

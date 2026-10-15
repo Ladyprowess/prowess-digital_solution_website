@@ -1,0 +1,54 @@
+import puppeteer from '../node_modules/puppeteer/lib/esm/puppeteer/puppeteer.js';
+import assert from 'node:assert/strict';
+
+const browser=await puppeteer.launch({headless:true});
+try {
+  const page=await browser.newPage();
+  const errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.setRequestInterception(true);
+  page.on('request',request=>/googletagmanager|googlesyndication|google-analytics/.test(request.url())?request.abort():request.continue());
+  await page.setViewport({width:1280,height:900});
+  await page.goto('http://localhost:3000',{waitUntil:'networkidle2',timeout:90000});
+  await page.evaluate(()=>[...document.querySelectorAll('header button')].find(button=>button.querySelector('strong')?.textContent==='Jobs')?.click());
+  await page.waitForFunction(()=>document.querySelector('#your-route')?.textContent?.includes('Prepare to be chosen.'));
+  assert.equal(await page.$$eval('#your-route .routeWorkspace',nodes=>nodes.length),0);
+  assert.equal(await page.$eval('#your-route button:disabled',button=>button.textContent?.trim()),'View my action plan');
+  await page.type('#target-role','Product designer');
+  await page.type('#career-notes','Apply before Friday.');
+  for(let index=0;index<4;index++) {
+    await page.evaluate(index=>{
+      const buttons=[...document.querySelectorAll('#your-route button[aria-pressed]')];
+      buttons[index]?.click();
+    },index);
+    await page.click('#your-route input[type="checkbox"]');
+    await page.evaluate(()=>[...document.querySelectorAll('#your-route button')].find(button=>button.textContent?.includes('View my action plan'))?.click());
+    await page.waitForSelector('dialog[open]');
+    await page.waitForFunction(()=>document.querySelector('dialog')?.textContent?.includes('Your result is ready'));
+    const text=await page.$eval('dialog',element=>element.textContent||'');
+    assert.ok(text.includes('What may be happening:'));
+    assert.ok(text.includes('What to check:'));
+    assert.ok(text.includes('Next action:'));
+    if(index===0) assert.ok(text.includes('Apply before Friday.'));
+    else assert.ok(!text.includes('Apply before Friday.'));
+    await page.keyboard.press('Escape');
+  }
+  await page.evaluate(()=>[...document.querySelectorAll('#your-route button[aria-pressed]')][0]?.click());
+  assert.equal(await page.$eval('#career-notes',element=>element.value),'Apply before Friday.');
+  assert.equal(await page.$eval('#target-role',element=>element.value),'Product designer');
+  assert.equal(await page.$$eval('#your-route input:checked',inputs=>inputs.length),1);
+  const careerSupport=await page.evaluate(()=>[...document.querySelectorAll('section')].find(element=>element.textContent?.includes('PREPARE FOR THE WORK YOU WANT'))?.textContent||'');
+  assert.ok(careerSupport.includes('Build the application.'));
+  assert.ok(!careerSupport.includes('Website client'));
+  await page.screenshot({path:'/tmp/prowess-jobs-home.png',fullPage:true});
+  for(const width of [375,768,1280]) {
+    await page.setViewport({width,height:900});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`overflow at ${width}px`);
+  }
+  await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
+  await page.evaluate(()=>document.documentElement.classList.add('dark'));
+  assert.deepEqual(errors,[]);
+  console.log('PASS: dedicated Jobs workspace, four career plans, retained input, printer preview, correct lower content, responsive widths, dark mode and reduced motion');
+} finally {
+  await browser.close();
+}
