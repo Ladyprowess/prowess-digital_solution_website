@@ -22,7 +22,8 @@ const HIGHLIGHT=/score|after costs|total|balance|profit/i;
 export function textReceiptBody(content:string){
  const sections=content.split(/\n\s*\n/).map(section=>section.trim()).filter(Boolean);
  return `<div class="receipt-text">${sections.map(section=>{
-  const lines=section.split('\n').map(line=>line.trim()).filter(Boolean);
+  // Printouts never show web addresses; drop a line left as a bare "label:".
+  const lines=section.split('\n').map(line=>{const clean=line.replace(/(?:https?:\/\/|www\.)\S+/gi,'').trim();return clean!==line.trim()&&/:$/.test(clean)?'':clean;}).filter(Boolean);
   return `<div class="receipt-section">${lines.map((line,index)=>{
    const colon=line.indexOf(':');
    const label=colon>0?line.slice(0,colon).trim():'';const value=colon>0?line.slice(colon+1).trim():'';

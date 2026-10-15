@@ -90,7 +90,9 @@ function printInvoice(inv:Invoice){
   .notes-section{font-size:12px;color:#555;line-height:1.8;padding:12px 16px;background:#fffbf0;border-radius:10px;border-left:4px solid #f0c060;margin-bottom:18px;}
   .footer{text-align:center;margin-top:36px;padding-top:20px;border-top:1px solid #e0e8e8;font-size:12px;color:#507c80;font-weight:700;letter-spacing:.5px;}
   @media print{body{padding:24px;} @page{margin:1cm;}}
+.print-controls{padding:16px;text-align:center;font:16px/1.5 Arial,sans-serif}.print-controls button{min-height:48px;padding:12px 22px;border:0;border-radius:8px;background:#507c80;color:#fff;font:600 16px Arial,sans-serif;cursor:pointer;touch-action:manipulation}@media print{.print-controls{display:none}}
 </style></head><body>
+<div class="print-controls"><button type="button" onclick="window.print()">Print / Save PDF</button></div>
 <div class="wrap">
   <div class="header">
     <div>

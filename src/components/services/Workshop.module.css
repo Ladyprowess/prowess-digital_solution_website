@@ -60,3 +60,14 @@
 @media(max-width:900px){.serviceGroup{grid-template-columns:1fr}.groupServices{border-left:0;border-top:1px solid #d4dad6}.addOnGrid{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.groupHeading{padding:24px}.groupServices{grid-template-columns:1fr}.catalogueService{min-height:auto}.catalogueService:nth-child(odd){border-right:0}.catalogueService:nth-last-child(2){border-bottom:1px solid #d4dad6}.addOnGrid{grid-template-columns:1fr}.addOnCard{min-height:230px}}
 @media(prefers-reduced-motion:reduce){.catalogueService{transition:none}}
+
+/* Every printout feeds like the financial summary: the paper space is fixed,
+   the printer stays still and the sheet drops down out of the slot. A
+   growing window made the centred dialog push the printer upward. */
+.printDialog .feedWindow,.printDialog.documentDialog .feedWindow{animation:none;height:auto;max-height:none}
+/* The whole receipt shows as one strip; the dialog scrolls and the actions
+   stay pinned at the bottom so they remain reachable on long results. */
+.printDialog .printFooter{position:sticky;bottom:-22px;margin-bottom:-22px;padding-bottom:22px;background:#f2f3f0;z-index:3;box-shadow:0 -10px 14px -8px #00000014}
+@media(max-width:480px){.printDialog .printFooter{bottom:-14px;margin-bottom:-14px;padding-bottom:14px}}
+.printDialog .feedWindow>*{animation:printOut 1.4s cubic-bezier(.2,.65,.3,1) both}
+@media(prefers-reduced-motion:reduce){.printDialog .feedWindow>*{animation:none}}

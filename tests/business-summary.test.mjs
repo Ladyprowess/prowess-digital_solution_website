@@ -16,3 +16,24 @@ test('every business result goes through the receipt renderer before previewing'
  assert.ok(source.includes('textReceipt(title,content)'));assert.ok(source.includes('captureBusinessResult(source,title)'));
  assert.ok(fs.readFileSync('src/app/services/ServicesPageClient.tsx','utf8').includes('id="financial-result" data-receipt-complete'));
 });
+test('every printout drops out of the slot like the financial summary, without moving the printer',()=>{
+ const css=fs.readFileSync('src/components/services/Workshop.module.css','utf8');
+ assert.ok(css.includes('.printDialog .feedWindow,.printDialog.documentDialog .feedWindow{animation:none;height:auto;max-height:none}'));assert.ok(css.includes('.printDialog .printFooter{position:sticky'));
+ assert.ok(css.includes('.printDialog .feedWindow>*{animation:printOut'));
+ assert.ok(/\.receipt\{[^}]*animation:printOut/.test(css));
+});
+test('printouts never show web addresses',()=>{
+ const body=receiptModule.exports.textReceiptBody('Next step: book a review\nContinue here: https://www.example.com/services\nRead more at www.example.com today');
+ assert.ok(!/https?:\/\/|www\./.test(body));assert.ok(!body.includes('Continue here'));assert.ok(body.includes('book a review'));
+ for(const file of ['src/lib/businessProblemReview.ts','src/lib/jobSearchPlan.ts','src/lib/opportunityPlan.ts','src/lib/learningPlan.ts','src/components/resources/BusinessStructureTemplate.tsx','src/lib/downloadBusinessCard.ts'])
+  assert.ok(!fs.readFileSync(file,'utf8').includes('prowessdigitalsolutions.com'),file);
+});
+test('print tab buttons work without the opener, as in an installed app',()=>{
+ const html=module.exports.summaryDocument({title:'Plan',content:'A: B',receiptHtml:'<main class="receipt"></main>'},{controls:true});
+ assert.ok(html.includes('<button type="button" onclick="window.print()">Print / Save PDF</button>'));
+ assert.ok(html.includes('@media print{.print-controls{display:none}}'));
+ assert.ok(!module.exports.summaryDocument({title:'Plan',content:'A: B'}).includes('print-controls'));
+ const preview=fs.readFileSync('src/components/services/SummaryPreview.tsx','utf8');
+ assert.ok(preview.includes('summaryDocument(summary,{controls:true})'));assert.ok(!preview.includes("querySelector('button')!.addEventListener"));
+ assert.ok(fs.readFileSync('src/app/tools/invoice/InvoicePageClient.tsx','utf8').includes('onclick="window.print()"'));
+});

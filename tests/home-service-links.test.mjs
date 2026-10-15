@@ -20,11 +20,11 @@ test('homepage business services open the form on their own service page',()=>{
   assert.ok(fs.readFileSync('src/components/services/ServiceCheckout.tsx','utf8').includes('id="service-checkout"'));
 });
 
-test('printed next steps point to the matching service form, not Contact Us',()=>{
+test('printed next steps name the matching service without printing web addresses',()=>{
   businessReviews.forEach((service,i)=>{
     const report=businessReviewReport(i,[0]);
-    assert.ok(report.includes(`https://www.prowessdigitalsolutions.com${service.href}`));
-    assert.ok(!report.includes('/contact'));
+    assert.ok(report.includes(`Start with ${service.page} on our Business Services page.`));
+    assert.ok(!/https?:\/\/|www\.|\/contact/.test(report));
   });
 });
 

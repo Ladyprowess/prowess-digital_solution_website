@@ -155,7 +155,7 @@ export default function BusinessStructureTemplate() {
 
     text += `\n${"=".repeat(50)}\n`;
     text += `Generated using the Business Structure Template\n`;
-    text += `by Prowess Digital Solutions | prowessdigitalsolutions.com\n`;
+    text += `by Prowess Digital Solutions\n`;
 
     return text;
   }

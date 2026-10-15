@@ -88,6 +88,5 @@ export function opportunityPlanReport(pathIndex:number,selected:number[],opportu
       '',
     ]),
     ...(notes.trim()?['Your notes',notes.trim(),'']:[]),
-    `Continue here: https://www.prowessdigitalsolutions.com${path.href}`,
   ].join('\n');
 }

@@ -20,7 +20,7 @@ export async function downloadBusinessCard(summary: BusinessSummary) {
  const title=wrap(summary.title.toUpperCase(),titleFont,596);
  const sections=summary.content.split(/\n\s*\n/).filter(Boolean).map(section=>section.split('\n').map((text,index)=>({heading:index===0,lines:wrap(text,index===0?bold:regular,596)})));
  const bodyHeight=sections.reduce((n,section)=>n+section.reduce((sum,row)=>sum+row.lines.length*31+8,0)+28,0);
- canvas.height=300+title.length*43+bodyHeight+220;
+ canvas.height=300+title.length*43+bodyHeight+180;
  ctx=canvas.getContext('2d')!;
  ctx.fillStyle='#efeeea';ctx.fillRect(0,0,width,canvas.height);
  // A continuous paper strip with torn edges, rather than a bordered report card.
@@ -40,7 +40,7 @@ export async function downloadBusinessCard(summary: BusinessSummary) {
  }
  ctx.textAlign='center';ctx.fillStyle='#507c80';ctx.font=bold;ctx.fillText('*** YOUR RESULT ***',380,y+23);
  ctx.font='18px "Courier New", monospace';ctx.fillStyle='#52615c';ctx.fillText(new Date().toLocaleDateString('en-GB',{timeZone:'Africa/Lagos'}),380,y+57);
- ctx.fillText('Prepared from your entries.',380,y+96);ctx.fillText('Keep a copy for your next steps.',380,y+123);ctx.fillText('prowessdigitalsolutions.com',380,y+164);
+ ctx.fillText('Prepared from your entries.',380,y+96);ctx.fillText('Keep a copy for your next steps.',380,y+123);
  const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Unable to create image')),'image/png'));
  saveBlob(blob);
 }
