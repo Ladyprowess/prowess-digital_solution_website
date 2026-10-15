@@ -1,13 +1,17 @@
 "use client";
-import { useRef, useState, type FormEvent } from 'react';
-import { trackEvent } from '@/lib/analytics';
-import s from './Sop.module.css';
-export default function SopEnquiry({title='SOP Vault',slug='sop-vault',formId='sop-enquiry',heading='Which processes need a clearer way?',requestLabel='Which workflows do you want documented?',requestPlaceholder='Client onboarding, stock tracking, billing…'}:{title?:string;slug?:string;formId?:string;heading?:string;requestLabel?:string;requestPlaceholder?:string}={}){
- const busy=useRef(false);const [pending,setPending]=useState(false);const [sent,setSent]=useState(false);const [error,setError]=useState('');
- async function submit(event:FormEvent<HTMLFormElement>){
-  event.preventDefault();if(busy.current||sent)return;
-  const data=new FormData(event.currentTarget);busy.current=true;setPending(true);setError('');
-  try{const response=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:data.get('full_name'),email:data.get('email'),phone:data.get('phone'),company_site:data.get('company_site'),business_stage:data.get('business_stage'),inquiry_type:title,source:'website',message:`${title} enquiry\n\nBusiness: ${data.get('business')}\n\nSupport requested: ${data.get('workflows')}\n\nCurrent challenges: ${data.get('challenges')}`})});const body=await response.json().catch(()=>null);if(!response.ok||body?.ok!==true)throw Error('Your enquiry could not be confirmed. Your details are still here. Please try again.');setSent(true);if(!data.get('company_site'))trackEvent('generate_lead',{source:slug.replaceAll('-','_'),offer:slug});}catch(failure){setError(failure instanceof Error?failure.message:'Unable to send. Please try again.');}finally{busy.current=false;setPending(false);}
- }
- return <section id={formId} className={s.enquiry}><div><p className={s.enquiryEyebrow}>Prowess Digital Solutions / {title}</p><h2>{heading}</h2><p>Tell us about your business and the support you need. We’ll review your needs and confirm the scope, timeline and final fee before payment.</p><p>No payment is taken with this enquiry.</p></div>{sent?<div role="status" className={s.confirmation}><h3>Your {title} enquiry has been received.</h3><p>We’ll reply by email to discuss your needs and agree the next steps.</p></div>:<form onSubmit={submit} aria-busy={pending}><input name="company_site" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true"/><fieldset disabled={pending}><div className={s.formPair}><label>Full name<input name="full_name" autoComplete="name" maxLength={200} required/></label><label>Email<input name="email" type="email" autoComplete="email" maxLength={254} required/></label></div><div className={s.formPair}><label>Phone (optional)<input name="phone" type="tel" autoComplete="tel" maxLength={50}/></label><label>Business stage<select name="business_stage" defaultValue="" required><option value="" disabled>Select your stage</option><option>Planning</option><option>Starting</option><option>Growing</option><option>Established</option></select></label></div><label>What does your business do?<textarea name="business" rows={2} maxLength={2000} required/></label><label>{requestLabel}<textarea name="workflows" rows={2} maxLength={2000} required placeholder={requestPlaceholder}/></label><label>Where does the work get stuck?<textarea name="challenges" rows={3} maxLength={3000} required/></label></fieldset>{error&&<p role="alert">{error}</p>}<button type="submit" className={s.primary} disabled={pending}>{pending?'Sending enquiry…':`Send ${title} enquiry`}</button></form>}</section>;
+import RestoredServiceCommerce from './RestoredServiceCommerce';
+
+const commerceSlugs:Record<string,string>={
+  'sop-vault':'sops',
+  'financial-tracking-dashboard':'financial-review',
+  'go-to-market-offer-playbook':'pricing-offer-review',
+};
+const commerceTitles:Record<string,string>={
+  'sop-vault':'SOPs',
+  'financial-tracking-dashboard':'Financial Review',
+  'go-to-market-offer-playbook':'Pricing and Offer Review',
+};
+
+export default function SopEnquiry({title='SOPs',slug='sop-vault',formId='sop-enquiry'}:{title?:string;slug?:string;formId?:string;heading?:string;requestLabel?:string;requestPlaceholder?:string}={}){
+  return <RestoredServiceCommerce slug={commerceSlugs[slug]||slug} title={commerceTitles[slug]||title} id={formId}/>;
 }

@@ -1,0 +1,2 @@
+import { Suspense } from 'react';import PaymentSuccessClient from './PaymentSuccessClient';
+export const dynamic='force-dynamic';export default function Page(){return <Suspense fallback={<main className="mx-auto min-h-[60vh] max-w-3xl px-6 py-24"><h1 className="text-3xl font-semibold">Confirming your payment</h1><p className="mt-4 text-muted-foreground">Please keep this page open.</p></main>}><PaymentSuccessClient/></Suspense>}

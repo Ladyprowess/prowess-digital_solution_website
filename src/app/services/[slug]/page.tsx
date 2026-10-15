@@ -21,6 +21,17 @@ function getService(slug: string) {
   return services.find((s) => s.slug === slug) || null;
 }
 
+const restoredServiceSlugs: Record<string, string> = {
+  "business-structure-diagnostic": "business-structure-diagnostic",
+  "business-diagnostic": "business-structure-diagnostic",
+  "financial-review": "financial-tracking-dashboard",
+  "financial-tracking-dashboard": "financial-tracking-dashboard",
+  "sops": "sop-vault",
+  "sop-vault": "sop-vault",
+  "pricing-offer-review": "go-to-market-offer-playbook",
+  "go-to-market-offer-playbook": "go-to-market-offer-playbook",
+};
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await params; // ✅ params is Promise in your Next build
   const slug = resolved?.slug;
@@ -59,6 +70,14 @@ export default async function ServicePage({ params }: PageProps) {
   const slug = resolved?.slug;
 
   if (!slug) return notFound();
+
+  const restoredSlug = restoredServiceSlugs[slug];
+  const restoredService = restoredSlug ? getService(restoredSlug) : null;
+
+  if (restoredService?.slug === "business-structure-diagnostic") return <DiagnosticLanding service={{...restoredService,price:"₦145,000 / $90"}} />;
+  if (restoredService?.slug === "financial-tracking-dashboard") return <FinancialLanding service={{...restoredService,price:"₦320,000 / $200"}} />;
+  if (restoredService?.slug === "sop-vault") return <SopLanding service={{...restoredService,price:"₦640,000 / $400"}} />;
+  if (restoredService?.slug === "go-to-market-offer-playbook") return <PlaybookLanding service={{...restoredService,price:"₦480,000 / $300"}} />;
 
   const catalogueService = servicePageBySlug(slug);
   if (catalogueService) return <ServiceOfferPage service={catalogueService} />;

@@ -6,6 +6,7 @@ import { markSkillToBusinessPaid } from "@/lib/payments/skillToBusiness";
 import { markContentPurchasePaid } from "@/lib/payments/content";
 import { markPremiumMembershipPaid, markPremiumMembershipRenewalFailed, markPremiumMembershipCancelled } from "@/lib/payments/premiumMembership";
 import { markEventPaid } from "@/lib/payments/event";
+import { markBusinessServicePaid } from "@/lib/payments/businessService";
 import { timingSafeEqual } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -110,6 +111,13 @@ async function handleSuccessfulCharge(data: Record<string, unknown>, metadata: R
     const purchaseId = metadata?.purchase_id as string | undefined;
     if (!purchaseId) throw new Error("Missing purchase metadata");
     requireProcessed(await markContentPurchasePaid(purchaseId, reference));
+    return NextResponse.json({ ok: true });
+  }
+
+  if (metadata?.type === "business_service") {
+    const orderId = metadata?.order_id as string | undefined;
+    if (!orderId) throw new Error("Missing service order metadata");
+    requireProcessed(await markBusinessServicePaid(orderId, reference));
     return NextResponse.json({ ok: true });
   }
 

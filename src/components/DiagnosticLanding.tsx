@@ -8,6 +8,7 @@ import { trackEvent } from "@/lib/analytics";
 import BusinessHealthExperience from "@/components/BusinessHealthExperience";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import { DiagnosticBoard, DiagnosticReportPreview } from "./services/DiagnosticExplorer";
+import RestoredServiceCommerce from "./services/RestoredServiceCommerce";
 import s from "./services/Diagnostic.module.css";
 const focus = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 const button = `inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60 ${focus}`;
@@ -60,7 +61,7 @@ export default function DiagnosticLanding({ service }: { service: Service }) {
       <section id="health-check" className={s.section} aria-labelledby="health-heading"><div className={s.sectionHeading}><div><p className={s.eyebrow}>01 / Start with your own view</p><h2 id="health-heading">Where does your business stand?</h2></div><p>Get a named result and practical starting points based on your answers. The paid diagnostic takes a closer look at your actual business.</p></div><BusinessHealthExperience source="business_diagnostic" offerHref="#diagnostic-offer"/></section>
       <section id="diagnostic-offer" className={s.section} aria-labelledby="offer-heading"><div className={s.sectionHeading}><div><p className={s.eyebrow}>02 / Turn the findings into a plan</p><h2 id="offer-heading">Clarity you can work with.</h2></div><p>{service.short}</p></div><div className={s.offerGrid}><div>{service.details.whatYouGet.map((item,i)=><details className={s.deliverable} key={item} open={i===0?true:undefined}><summary><span>{String(i+1).padStart(2,"0")}</span>{["Business review","Your diagnostic report","Your 30-day action plan","Tools and recommendations","A 45-minute review call"][i]}</summary><p>{item}</p></details>)}</div><aside className={s.offerCard}><p className={s.eyebrow}>One engagement. A clear scope.</p><h3>{service.price}</h3><p>Fixed one-time fee. No recurring membership required.</p><hr/><p>Start with an enquiry. Prowess Digital Solutions confirms suitability before providing payment instructions.</p><a href="#diagnostic-enquiry" className={button}>Enquire about the diagnostic <ArrowRight size={17}/></a><span className={s.caption}>No payment is taken when you enquire.</span></aside></div><details className={s.scope}><summary>Delivery, follow-up and what is not included</summary><ul>{service.details.notes?.map(item=><li key={item}>{item}</li>)}</ul></details></section>
       <section className={s.section}><div className={s.sectionHeading}><div><p className={s.eyebrow}>From enquiry to action</p><h2>A clear next step at every stage.</h2></div></div><div className={s.timeline}>{[["Tell us about your business","Share your business, challenges and goals in the form below."],["Confirm the fit","We review suitability, then send payment instructions and explain the information required."],["Receive your findings","The five-business-day delivery period begins once payment is confirmed and all required information is received."],["Review and move forward","Discuss your report in a 45-minute call, with one follow-up email within seven calendar days after the call."]].map(([title,body],i)=><article key={title}><span>0{i+1}</span><h3>{title}</h3><p>{body}</p></article>)}</div></section>
-      <section id="diagnostic-enquiry" className="scroll-mt-28 rounded-2xl border border-border bg-card p-6 sm:p-8" aria-labelledby="enquiry-heading">
+      <section id="diagnostic-enquiry-legacy" hidden className="scroll-mt-28 rounded-2xl border border-border bg-card p-6 sm:p-8" aria-labelledby="enquiry-heading">
         <p className="text-sm font-semibold text-primary">03 / Tell us about your business</p>
         <h2 id="enquiry-heading" className="mt-3 text-3xl font-semibold">Start with an enquiry</h2>
         <p className="mt-4 text-muted-foreground">Prowess Digital Solutions reviews your business, challenges and goals to confirm suitability before providing payment instructions. Submitting this form takes no payment.</p>
@@ -82,6 +83,7 @@ export default function DiagnosticLanding({ service }: { service: Service }) {
           <button type="submit" className={button} disabled={pending}>{pending ? "Submitting enquiry…" : "Submit Diagnostic Enquiry"}</button>
         </form>}
       </section>
+      <RestoredServiceCommerce slug="business-structure-diagnostic" title="Business Diagnostic" id="diagnostic-enquiry"/>
     </div></Container>
   </div>;
 }

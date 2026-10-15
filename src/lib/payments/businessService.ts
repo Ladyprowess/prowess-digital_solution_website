@@ -1,0 +1,30 @@
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { verifyTransaction } from './flutterwave';
+import { matchesPayment } from './validation';
+import { resend } from '@/lib/resendClient';
+import { emailFields,emailFrame } from '@/lib/emails/layout';
+import { escapeEmail } from './emailEscape';
+import { formatMoney } from '@/lib/formatMoney';
+
+function confirmationEmail(input:{name:string;title:string;amount:string;business:string;phone:string;brief:string;reference:string}){
+  const {name,title,amount,business,phone,brief,reference}=input;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#edf3f3;color:#0b1b1d;font-family:Arial,Helvetica,sans-serif"><div style="display:none;max-height:0;overflow:hidden">Your ${escapeEmail(title)} request and payment are confirmed.</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border:1px solid #d7e3e3"><tr><td style="padding:26px 32px;background:#0b1b1d;color:#ffffff"><table role="presentation" width="100%"><tr><td><p style="margin:0;font-size:13px;font-weight:800;letter-spacing:1.3px">PROWESS</p><p style="margin:4px 0 0;font-size:10px;letter-spacing:1.1px;color:#a9c3c5">DIGITAL SOLUTIONS</p></td><td align="right"><span style="display:inline-block;padding:8px 12px;border:1px solid #507c80;color:#a9c3c5;font-size:10px;font-weight:700;letter-spacing:1px">PAYMENT CONFIRMED</span></td></tr></table></td></tr><tr><td style="padding:42px 32px 28px"><p style="margin:0 0 12px;color:#507c80;font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase">Your project starts here</p><h1 style="margin:0;font-size:34px;line-height:1.15;letter-spacing:-1px;color:#0b1b1d">We have received your ${escapeEmail(title)} request.</h1><p style="margin:20px 0 0;font-size:16px;line-height:1.75;color:#40595b">Hello ${escapeEmail(name)}, your payment is verified and your brief is now with our business team. We will review it and reply with the information we need and the delivery schedule.</p></td></tr><tr><td style="padding:0 32px 32px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#edf3f3;border-left:5px solid #507c80"><tr><td style="padding:24px"><p style="margin:0 0 7px;font-size:10px;font-weight:800;letter-spacing:1.2px;color:#507c80;text-transform:uppercase">Service</p><p style="margin:0;font-size:20px;font-weight:700;color:#0b1b1d">${escapeEmail(title)}</p><p style="margin:8px 0 0;font-size:15px;color:#40595b">${escapeEmail(amount)}</p></td></tr></table></td></tr><tr><td style="padding:0 32px 32px"><h2 style="margin:0 0 16px;font-size:18px;color:#0b1b1d">Your request</h2>${emailFields([['Business',business],['Phone',phone],['Project brief',brief],['Payment reference',reference]])}</td></tr><tr><td style="padding:28px 32px;background:#0b1b1d;color:#ffffff"><p style="margin:0;font-size:13px;font-weight:700">What happens next</p><p style="margin:8px 0 0;font-size:13px;line-height:1.7;color:#b9cbcc">We review your brief, confirm the working requirements and send the delivery schedule to this email address.</p><p style="margin:20px 0 0;font-size:11px;color:#829b9d">Prowess Digital Solutions · prowessdigitalsolutions.com</p></td></tr></table></td></tr></table></body></html>`;
+}
+
+export async function markBusinessServicePaid(orderId:string,reference:string){
+  const db=supabaseAdmin();
+  const {data:order,error}=await db.from('business_service_orders').select('id,service_slug,full_name,email,phone,business_name,brief,currency,amount_usd,amount_ngn,payment_status,flutterwave_reference,confirmation_sent_at').eq('id',orderId).maybeSingle();
+  if(error||!order)return {ok:false as const,error:'Order not found.'};
+  const charge=await verifyTransaction(reference);const amount=order.currency==='NGN'?order.amount_ngn:order.amount_usd;
+  if(!matchesPayment(charge,{reference,type:'business_service',idKey:'order_id',id:order.id,amount,currency:order.currency,email:order.email,storedReference:order.flutterwave_reference}))return {ok:false as const,error:'Payment details do not match this order.'};
+  if(order.payment_status==='paid'&&order.confirmation_sent_at)return {ok:true as const,alreadyPaid:true};
+  if(order.payment_status!=='paid'){const {error:updateError}=await db.from('business_service_orders').update({payment_status:'paid',paid_at:new Date().toISOString()}).eq('id',order.id).eq('payment_status','pending');if(updateError)return {ok:false as const,error:'Could not confirm payment.'};}
+  const {data:service}=await db.from('business_service_offerings').select('title').eq('slug',order.service_slug).single();const title=service?.title||order.service_slug;const amountLabel=formatMoney(Number(amount),order.currency as 'USD'|'NGN');
+  const fields:[string,string][]=[['Service',title],['Payment',amountLabel],['Business',order.business_name||'Not provided'],['Phone',order.phone||'Not provided'],['Project brief',order.brief],['Reference',reference]];
+  const from=process.env.RESEND_FROM||process.env.RESEND_FROM_EMAIL||'Prowess Digital Solutions <onboarding@resend.dev>';
+  await resend.emails.send({from,to:[order.email],subject:`Payment confirmed for ${title}`,html:confirmationEmail({name:order.full_name,title,amount:amountLabel,business:order.business_name||'Not provided',phone:order.phone||'Not provided',brief:order.brief,reference})});
+  const adminEmail=process.env.CONTACT_EMAIL||process.env.NEXT_PUBLIC_CONTACT_EMAIL||process.env.RESEND_TO;
+  if(adminEmail)await resend.emails.send({from,to:[adminEmail],subject:`Paid service order: ${title}`,html:emailFrame('New paid business service order',emailFields([['Customer',order.full_name],['Email',order.email],...fields]))});
+  await db.from('business_service_orders').update({confirmation_sent_at:new Date().toISOString()}).eq('id',order.id);
+  return {ok:true as const,alreadyPaid:false,serviceSlug:order.service_slug};
+}

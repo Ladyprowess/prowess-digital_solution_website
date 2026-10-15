@@ -57,6 +57,7 @@ const NAV_GROUPS = [
   {
     label: "Business Site",
     items: [
+      { label: "Business Settings", href: "/admin/business", icon: "building" },
       { label: "Case Studies", href: "/admin/case-studies/new", icon: "star" },
       { label: "Careers", href: "/admin/careers", icon: "id" },
       { label: "Consultations", href: "/admin/consultations", icon: "clock" },

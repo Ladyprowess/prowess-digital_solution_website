@@ -1,0 +1,123 @@
+.commerce {
+  --service-accent: var(--primary);
+  --service-soft: var(--muted);
+  position: relative;
+  left: 50%;
+  width: 100dvw;
+  max-width: none;
+  margin-top: 88px;
+  margin-left: 0;
+  transform: translateX(-50%);
+  overflow: hidden;
+}
+
+.inner {
+  width: min(1320px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.reviews {
+  padding: 96px 0;
+  background: var(--background);
+  border-top: 1px solid var(--border);
+}
+
+.reviews section {
+  padding: 0;
+}
+
+.reviews article {
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-left: 7px solid var(--primary);
+  border-radius: 0;
+  box-shadow: 10px 10px 0 color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.reviews blockquote {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(20px, 2vw, 27px);
+  line-height: 1.45;
+}
+
+.payment {
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  scroll-margin-top: 110px;
+  padding: 100px 0;
+  background: var(--foreground);
+  color: var(--background);
+  border-top: 7px solid var(--primary);
+  box-shadow: 0 0 0 100vmax var(--foreground);
+  clip-path: inset(0 -100vmax);
+}
+
+.payment > section {
+  width: min(1320px, calc(100% - 48px));
+  margin: 0 auto;
+  grid-template-columns: minmax(280px, .55fr) minmax(0, 1.45fr);
+  gap: 64px;
+}
+
+.payment [data-checkout-intro] {
+  display: block;
+}
+
+.payment [data-checkout-intro] > h2 {
+  max-width: 520px;
+  font-size: clamp(34px, 3.6vw, 52px);
+  line-height: 1.04;
+}
+
+.payment [data-checkout-intro] > p:nth-of-type(2) { max-width: 470px; }
+
+.payment [data-checkout-form] {
+  width: 100%;
+  padding: 40px;
+}
+
+.payment form {
+  border: 0;
+  border-top: 6px solid var(--primary);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.payment form button[type="submit"] {
+  background: var(--primary);
+  color: white;
+}
+
+.payment form input,
+.payment form textarea,
+.payment form select {
+  border-radius: 0;
+}
+
+@media (max-width: 900px) {
+  .payment > section {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+
+}
+
+@media (max-width: 650px) {
+  .commerce {
+    margin-top: 64px;
+  }
+
+  .inner,
+  .payment > section {
+    width: min(100% - 28px, 1120px);
+  }
+
+  .reviews,
+  .payment {
+    padding: 70px 0;
+  }
+
+  .payment [data-checkout-form] { padding: 24px; }
+}
