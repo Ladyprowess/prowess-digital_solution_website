@@ -45,10 +45,10 @@ export default function PrivacyPolicyPage() {
                 and businesses who want to learn, build and grow. Our website
                 address is{" "}
                 <a
-                  href="https://prowessdigitalsolutions.com"
+                  href="https://www.prowessdigitalsolutions.com"
                   className="text-primary underline"
                 >
-                  https://prowessdigitalsolutions.com
+                  https://www.prowessdigitalsolutions.com
                 </a>
                 . We are based in Lagos, Nigeria, and operate remotely.
               </p>

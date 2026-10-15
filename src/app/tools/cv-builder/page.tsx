@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import CvBuilderPageClient from "./CvBuilderPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "CV Builder - Create a Professional CV",

@@ -5,7 +5,7 @@ import { verifyMember } from "@/lib/auth/verifyMember";
 import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
 import { getItemPrice } from "@/lib/payments/content";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 
 const VALID_ITEM_TYPES = ["resource", "course", "career_path"];
 

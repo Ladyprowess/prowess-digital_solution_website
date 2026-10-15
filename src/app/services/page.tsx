@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import ServicesPageClient from "./ServicesPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Business Services",

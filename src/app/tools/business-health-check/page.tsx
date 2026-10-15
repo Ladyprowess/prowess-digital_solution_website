@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import BusinessHealthCheckPageClient from "./BusinessHealthCheckPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Business Health Check - Free Operational Self-Audit",

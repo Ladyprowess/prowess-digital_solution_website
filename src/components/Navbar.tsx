@@ -46,8 +46,8 @@ const menuGroups = [
   {
     title: "Business",
     items: [
-      { href: "/services", label: "All business services", description: "Explore our full range of business support", icon: BriefcaseBusiness },
-      { href: "/about", label: "About us", description: "The people behind Prowess", icon: BriefcaseBusiness },
+      { href: "/services", label: "Business Services", description: "Plans, websites, systems and business support", icon: BriefcaseBusiness },
+      { href: "/about", label: "About us", description: "The people behind Prowess Digital Solutions", icon: BriefcaseBusiness },
       { href: "/contact", label: "Contact", description: "Questions and service enquiries", icon: Mail },
       { href: "/case-studies", label: "Case Studies", description: "Client problems and results", icon: Search },
     ],

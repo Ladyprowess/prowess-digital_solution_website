@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import InventoryPageClient from "./InventoryPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Inventory Manager - Track Stock & Margins",

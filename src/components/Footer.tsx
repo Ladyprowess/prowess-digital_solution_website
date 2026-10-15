@@ -42,10 +42,11 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={s.name}
+                  aria-label={`${brand.name} on ${s.name} (opens in a new tab)`}
+                  title={s.name}
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary hover:text-primary"
                 >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
                     <path d={s.path} />
                   </svg>
                 </a>
@@ -59,12 +60,12 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
               For Individuals
             </p>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><Link href="/jobs" className="text-muted-foreground hover:text-foreground">Work</Link></li>
+              <li><Link href="/jobs" className="text-muted-foreground hover:text-foreground">Jobs</Link></li>
               <li><Link href="/opportunities" className="text-muted-foreground hover:text-foreground">Opportunities</Link></li>
               <li><Link href="/career-paths" className="text-muted-foreground hover:text-foreground">Career Paths</Link></li>
-              <li><Link href="/learn" className="text-muted-foreground hover:text-foreground">Learn</Link></li>
-              <li><Link href="/resources" className="text-muted-foreground hover:text-foreground">Resources</Link></li>
-              <li><Link href="/tools" className="text-muted-foreground hover:text-foreground">Tools</Link></li>
+              <li><Link href="/learn" className="text-muted-foreground hover:text-foreground">Learning</Link></li>
+              <li><Link href="/resources" className="text-muted-foreground hover:text-foreground">Library</Link></li>
+              <li><Link href="/tools" className="text-muted-foreground hover:text-foreground">Career Tools</Link></li>
               <li><Link href="/events" className="text-muted-foreground hover:text-foreground">Events</Link></li>
             </ul>
           </div>
@@ -75,10 +76,10 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
               For Businesses
             </p>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><Link href="/tools" className="text-muted-foreground hover:text-foreground">Business Tools</Link></li>
-              <li><Link href="/resources" className="text-muted-foreground hover:text-foreground">Business Resources</Link></li>
-              <li><Link href="/services" className="text-muted-foreground hover:text-foreground">Services</Link></li>
-              <li><Link href="/services" className="text-muted-foreground hover:text-foreground">Business Structure Diagnostic</Link></li>
+              <li><Link href="/services" className="text-muted-foreground hover:text-foreground">Business Services</Link></li>
+              <li><Link href="/services/business-structure-diagnostic" className="text-muted-foreground hover:text-foreground">Business Structure Diagnostic</Link></li>
+              <li><Link href="/tools?category=business" className="text-muted-foreground hover:text-foreground">Business Tools</Link></li>
+              <li><Link href="/resources?audience=business" className="text-muted-foreground hover:text-foreground">Business Resources</Link></li>
               <li><Link href="/case-studies" className="text-muted-foreground hover:text-foreground">Case Studies</Link></li>
               <li><Link href="/consultation" className="text-muted-foreground hover:text-foreground">Consultation</Link></li>
               <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link></li>

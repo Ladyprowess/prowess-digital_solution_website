@@ -8,7 +8,7 @@ import { Reveal } from "@/components/Reveal";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 const WP_SITE = "prowessdigitalsolutions.wordpress.com";
 
 type WPPost = {

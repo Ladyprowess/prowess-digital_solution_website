@@ -147,7 +147,7 @@ export async function POST(req: Request) {
         from: process.env.RESEND_FROM_EMAIL!,
         to: email,
         subject: copy.subject,
-        html: `<p>${copy.body}</p>${extra}<p>Manage your updates:</p><ul>${newlyAddedPreferences.map(preference => `<li><a href="https://prowessdigitalsolutions.com/api/subscribe/unsubscribe?email=${encodeURIComponent(email)}&amp;preference=${preference}">Unsubscribe from ${preference.replace(/_/g, ' ')}</a></li>`).join('')}</ul>`,
+        html: `<p>${copy.body}</p>${extra}<p>Manage your updates:</p><ul>${newlyAddedPreferences.map(preference => `<li><a href="https://www.prowessdigitalsolutions.com/api/subscribe/unsubscribe?email=${encodeURIComponent(email)}&amp;preference=${preference}">Unsubscribe from ${preference.replace(/_/g, ' ')}</a></li>`).join('')}</ul>`,
       });
       return NextResponse.json({ ok: true, confirmationSent: !delivery.error });
     }

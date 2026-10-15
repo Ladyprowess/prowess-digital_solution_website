@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import InterviewPrepPageClient from "./InterviewPrepPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Interview Prep - Practice for Every Stage",

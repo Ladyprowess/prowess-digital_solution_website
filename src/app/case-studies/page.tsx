@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import CaseStudiesPageClient from "./CaseStudiesPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Case Studies - Client Success Stories",

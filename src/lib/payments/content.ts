@@ -23,7 +23,7 @@ const ITEM_URL_PATHS: Record<string, string> = {
   career_path: "career-paths",
 };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 
 // Every email client that matters here (Gmail, Outlook, Apple Mail) has
 // wildly inconsistent CSS support - no flexbox/grid, no CSS custom

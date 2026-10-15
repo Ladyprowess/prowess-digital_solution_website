@@ -17,7 +17,7 @@ type RemoteOkApiItem = {
 
 export async function fetchRemoteOkListings(feedUrl: string): Promise<NormalizedListing[]> {
   const res = await fetch(feedUrl, {
-    headers: { "User-Agent": "ProwessDigitalSolutionsJobsBot/1.0 (+https://prowessdigitalsolutions.com)" },
+    headers: { "User-Agent": "ProwessDigitalSolutionsJobsBot/1.0 (+https://www.prowessdigitalsolutions.com)" },
   });
   if (!res.ok) throw new Error(`Remote OK request failed: ${res.status}`);
 

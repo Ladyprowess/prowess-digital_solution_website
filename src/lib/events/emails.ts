@@ -1,7 +1,7 @@
 import { escapeEmail } from "@/lib/payments/emailEscape";
 import { resend } from "@/lib/resendClient";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 
 // Same table-based, inline-styled layout as content.ts's order confirmation
 // email - Gmail/Outlook/Apple Mail don't reliably support flexbox/grid or

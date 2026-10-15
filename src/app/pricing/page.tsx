@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import PricingPageClient from "./PricingPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Pricing - Plans & Membership Tiers",

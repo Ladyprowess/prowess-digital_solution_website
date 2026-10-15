@@ -88,6 +88,6 @@ export function learningPlanReport(pathIndex:number,selected:number[],skillName=
       '',
     ]),
     ...(notes.trim()?['Your notes',notes.trim(),'']:[]),
-    `Continue here: https://prowessdigitalsolutions.com${path.href}`,
+    `Continue here: https://www.prowessdigitalsolutions.com${path.href}`,
   ].join('\n');
 }

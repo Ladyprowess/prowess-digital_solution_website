@@ -6,7 +6,7 @@ export const alt = "Prowess Digital Solutions video";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/jpeg";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 const BRAND = { r: 61, g: 95, b: 98 };
 
 // Why this file exists:

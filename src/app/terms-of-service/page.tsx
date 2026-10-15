@@ -49,7 +49,7 @@ export default function TermsOfServicePage() {
                 Service apply to all services we provide and to your use of our
                 website at{" "}
                 <a
-                  href="https://prowessdigitalsolutions.com"
+                  href="https://www.prowessdigitalsolutions.com"
                   className="text-primary underline"
                 >
                   prowessdigitalsolutions.com

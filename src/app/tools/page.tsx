@@ -191,6 +191,14 @@ export default function ToolsPage() {
   const [tools, setTools] = useState<ToolRow[]>([]);
   const [loadingTools, setLoadingTools] = useState(true);
 
+  // /tools?category=business opens straight on the business tab (linked
+  // from the footer's "Business Tools"). Read after mount so the page can
+  // still prerender without a search-params Suspense boundary.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (new URLSearchParams(window.location.search).get("category") === "business") setCategory("business");
+  }, []);
+
   useEffect(() => {
     async function loadTools() {
       const { data: toolData } = await supabase

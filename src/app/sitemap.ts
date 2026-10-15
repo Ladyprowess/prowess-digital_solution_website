@@ -2,7 +2,7 @@ import { publicContentSitemap } from "@/lib/publicSitemap";
 import { MetadataRoute } from "next";
 import { services } from "@/content/site";
 
-const baseUrl = "https://prowessdigitalsolutions.com";
+const baseUrl = "https://www.prowessdigitalsolutions.com";
 const WP_SITE = "prowessdigitalsolutions.wordpress.com";
 
 type WPPostLite = {

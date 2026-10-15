@@ -1,7 +1,7 @@
 import type { NormalizedListing } from "./types";
 import { htmlToText } from "@/lib/htmlToText";
 
-const USER_AGENT = "ProwessDigitalSolutionsJobsBot/1.0 (+https://prowessdigitalsolutions.com)";
+const USER_AGENT = "ProwessDigitalSolutionsJobsBot/1.0 (+https://www.prowessdigitalsolutions.com)";
 
 // CryptoJobsList's own jobs.rss exists and returns 200, but every fetch of
 // it - confirmed repeatedly, from this server and with a browser user agent

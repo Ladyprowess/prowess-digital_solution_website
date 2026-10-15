@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import LearnPageClient from "./LearnPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Learn - Courses & Learning Resources",

@@ -37,6 +37,6 @@ export function businessReviewReport(serviceIndex: number, selected: number[], n
     ...problems.flatMap((problem, index) => [`${index + 1}. ${problem.label}`, `Possible causes: ${problem.causes}`, `What to check: ${problem.check}`, `Next step: ${problem.action}`, '']),
     ...(notes.trim() ? ['Your additional notes', notes.trim(), ''] : []),
     'Start with one issue. Gather the information above, take the suggested step and review what changes.',
-    'Need help working through this? https://prowessdigitalsolutions.com/contact',
+    'Need help working through this? https://www.prowessdigitalsolutions.com/contact',
   ].join('\n');
 }

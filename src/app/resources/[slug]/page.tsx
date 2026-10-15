@@ -255,7 +255,7 @@ function priceLabel(usd: number | null, ngn: number | null) {
   return [usd ? formatMoney(usd, "USD") : null, ngn ? formatMoney(ngn, "NGN") : null].filter(Boolean).join(" / ");
 }
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

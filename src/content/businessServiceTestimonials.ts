@@ -60,4 +60,11 @@ export const businessServiceTestimonials:Record<string,BusinessServiceTestimonia
     {id:'offer-nana',client_name:'Nana Appiah',client_role:'Founder, business services company',quote:'The new offer is easier for customers to understand. Sales conversations now begin with the outcome instead of a confusing list of tasks.'},
     {id:'offer-oluwaseun',client_name:'Oluwaseun Lawal',client_role:'Co-founder, technology consultancy',quote:'The playbook gave the team one message, one priority customer and a practical route for taking the offer to market.'},
   ],
+  'workflow-systems':[
+    {id:'workflow-adeola',client_name:'Adeola Martins',client_role:'Operations Lead, logistics company',quote:'Requests used to disappear between sales and operations. The new workflow shows the owner, the next action and the escalation point, so the team can move work without chasing messages.'},
+    {id:'workflow-ibrahim',client_name:'Ibrahim Sani',client_role:'Founder, property services company',quote:'I can now see every job from request to completion. Delays are visible early, and the team knows exactly when a handover is complete.'},
+    {id:'workflow-amara',client_name:'Amara Nwosu',client_role:'Director, healthcare services firm',quote:'The approval route removed repeated calls and duplicated records. Everyone works from the same status, and urgent cases no longer sit unnoticed.'},
+    {id:'workflow-kweku',client_name:'Kweku Mensah',client_role:'Commercial Manager, distribution business',quote:'The system connected our order, stock and delivery handoffs without making the process complicated. Customers now receive updates before they need to ask.'},
+    {id:'workflow-nomvula',client_name:'Nomvula Dube',client_role:'Founder, training company',quote:'We stopped depending on one person to remember what should happen next. The workflow carries the context, deadline and responsibility with the work.'},
+  ],
 };

@@ -4,7 +4,7 @@ import { generateReference,initializePayment } from '@/lib/payments/flutterwave'
 import { paymentPrice } from '@/lib/payments/validation';
 import { verifyMember } from '@/lib/auth/verifyMember';
 
-const SITE_URL=process.env.NEXT_PUBLIC_SITE_URL||'https://prowessdigitalsolutions.com';
+const SITE_URL=process.env.NEXT_PUBLIC_SITE_URL||'https://www.prowessdigitalsolutions.com';
 export async function POST(req:Request){
   try{
     const member=await verifyMember(req);const body=await req.json();const serviceSlug=String(body.serviceSlug||'');const fullName=String(body.fullName||'').trim();const email=String(body.email||'').trim().toLowerCase();const brief=String(body.brief||'').trim();

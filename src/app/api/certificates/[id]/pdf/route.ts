@@ -8,7 +8,7 @@ import { verifyMember } from "@/lib/auth/verifyMember";
 
 export const runtime = "nodejs";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 const BRAND = "#507c80";
 const el = React.createElement;
 

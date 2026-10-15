@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   // those here, just not repeating it in this new file).
   title: "Videos",
   description: "Practical videos to help you learn, build useful skills, make clearer decisions and keep growing.",
-  alternates: { canonical: "https://prowessdigitalsolutions.com/videos" },
+  alternates: { canonical: "https://www.prowessdigitalsolutions.com/videos" },
 };
 
 export default function VideosLayout({ children }: { children: React.ReactNode }) {

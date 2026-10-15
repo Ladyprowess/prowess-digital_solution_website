@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import SkillsPageClient, { type SkillWithCounts } from "./SkillsPageClient";
 import { supabase } from "@/lib/supabase";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 async function getInitialSkills(): Promise<SkillWithCounts[]> {
   const [{ data: skillRows }, { data: jobRows }, { data: oppRows }, { data: courseRows }] = await Promise.all([

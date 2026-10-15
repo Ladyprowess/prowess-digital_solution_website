@@ -77,6 +77,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: opp.title,
     description: (opp.description ? stripHtmlForMeta(opp.description) : "") || `${opp.title} - apply on Prowess Digital Solutions.`,
+    alternates: { canonical: `https://www.prowessdigitalsolutions.com/opportunities/${slug}` },
   };
 }
 

@@ -9,7 +9,7 @@ export async function fetchRssItems<CustomItem extends Record<string, unknown> =
   customItemFields: [string, string][] = []
 ): Promise<(Parser.Item & CustomItem)[]> {
   const parser = new Parser<Record<string, never>, CustomItem>({
-    headers: { "User-Agent": "ProwessDigitalSolutionsJobsBot/1.0 (+https://prowessdigitalsolutions.com)" },
+    headers: { "User-Agent": "ProwessDigitalSolutionsJobsBot/1.0 (+https://www.prowessdigitalsolutions.com)" },
     customFields: { item: customItemFields },
   });
   const feed = await parser.parseURL(feedUrl);

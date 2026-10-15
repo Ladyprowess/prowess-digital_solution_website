@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import InvoicePageClient from "./InvoicePageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Invoice Generator - Create & Track Invoices",

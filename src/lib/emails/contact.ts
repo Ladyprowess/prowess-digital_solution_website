@@ -25,7 +25,7 @@ function frame(preheader: string, title: string, intro: string, content: string)
   <tr><td class="body" style="padding:32px 28px;">
   <h1 class="ink" style="margin:0 0 14px;font-size:27px;line-height:1.25;letter-spacing:-0.5px;color:#0b1b1d;">${escape(title)}</h1>
   <p class="muted" style="margin:0 0 26px;font-size:15px;line-height:1.7;color:#465e60;">${intro}</p>${content}
-  </td></tr><tr><td class="rule" style="padding:20px 28px;border-top:1px solid #dce6e6;"><p class="muted" style="margin:0;font-size:12px;line-height:1.7;color:#465e60;">Prowess Digital Solutions<br><a href="https://prowessdigitalsolutions.com" class="muted" style="color:#365d61;text-decoration:underline;">prowessdigitalsolutions.com</a></p></td></tr>
+  </td></tr><tr><td class="rule" style="padding:20px 28px;border-top:1px solid #dce6e6;"><p class="muted" style="margin:0;font-size:12px;line-height:1.7;color:#465e60;">Prowess Digital Solutions<br><a href="https://www.prowessdigitalsolutions.com" class="muted" style="color:#365d61;text-decoration:underline;">prowessdigitalsolutions.com</a></p></td></tr>
   </table></td></tr></table></body></html>`;
 }
 

@@ -88,6 +88,6 @@ export function jobSearchPlanReport(pathIndex: number, selected: number[], targe
       '',
     ]),
     ...(notes.trim() ? ['Your notes', notes.trim(), ''] : []),
-    `Continue here: https://prowessdigitalsolutions.com${path.href}`,
+    `Continue here: https://www.prowessdigitalsolutions.com${path.href}`,
   ].join('\n');
 }

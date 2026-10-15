@@ -11,7 +11,7 @@ import { brand } from "@/content/site";
 import { getSiteSettings } from "@/lib/siteSettings";
 import Script from "next/script";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();

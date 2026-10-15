@@ -38,6 +38,11 @@ const serviceCopy: Record<string, { heading: string; question: string; placehold
     question: "Describe your offer, current price and where customers hesitate.",
     placeholder: "Tell us what you sell, who buys it, what you charge and the objections or sales problems you encounter.",
   },
+  "workflow-systems": {
+    heading: "Tell us where work keeps getting stuck.",
+    question: "Which workflow causes the most delay, confusion or repeated follow-up?",
+    placeholder: "Describe how the work starts, who handles it, the tools you use, where it waits or breaks, and the effect on customers or the team.",
+  },
 };
 
 export default function ServiceCheckout({ slug, title }: { slug: string; title: string }) {

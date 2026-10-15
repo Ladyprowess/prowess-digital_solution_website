@@ -11,7 +11,7 @@ try {
   await page.setViewport({width:1280,height:900});
   await page.goto('http://localhost:3000',{waitUntil:'networkidle2',timeout:90000});
   await page.evaluate(()=>[...document.querySelectorAll('header button')].find(button=>button.querySelector('strong')?.textContent==='Jobs')?.click());
-  await page.waitForFunction(()=>document.querySelector('#your-route')?.textContent?.includes('Prepare to be chosen.'));
+  await page.waitForFunction(()=>document.querySelector('#your-route')?.textContent?.includes('your next job.'));
   assert.equal(await page.$$eval('#your-route .routeWorkspace',nodes=>nodes.length),0);
   assert.equal(await page.$eval('#your-route button:disabled',button=>button.textContent?.trim()),'View my action plan');
   await page.type('#target-role','Product designer');

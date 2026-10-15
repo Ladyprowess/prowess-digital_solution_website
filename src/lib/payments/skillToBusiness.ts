@@ -86,7 +86,7 @@ export async function markSkillToBusinessPaid(purchaseId: string, reference: str
         <p style="font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 1px;">${accessCode}</p>
         <p>This code unlocks:</p>
         <ul>${toolsList}</ul>
-        <p>Enter it at <a href="https://prowessdigitalsolutions.com/tools">prowessdigitalsolutions.com/tools</a> to get started.</p>
+        <p>Enter it at <a href="https://www.prowessdigitalsolutions.com/tools">prowessdigitalsolutions.com/tools</a> to get started.</p>
         <p>Payment reference: ${reference}</p>
       </div>
     `,

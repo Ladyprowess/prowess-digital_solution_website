@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Resources",
   description:
     "Guides, templates, checklists, books and practical resources to help you learn, plan, build and grow.",
-  alternates: { canonical: "https://prowessdigitalsolutions.com/resources" },
+  alternates: { canonical: "https://www.prowessdigitalsolutions.com/resources" },
 };
 
 export default function ResourcesLayout({ children }: { children: React.ReactNode }) {

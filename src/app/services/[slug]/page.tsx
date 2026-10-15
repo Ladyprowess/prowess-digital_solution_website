@@ -11,7 +11,7 @@ import DiagnosticLanding from "@/components/DiagnosticLanding";
 import ServiceOfferPage from "@/components/services/ServiceOfferPage";
 import { servicePageBySlug } from "@/content/servicePages";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 type PageProps = {
   params?: Promise<{ slug: string }>;

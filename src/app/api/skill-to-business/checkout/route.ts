@@ -4,7 +4,7 @@ import { verifyMember } from "@/lib/auth/verifyMember";
 import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
 import { SKILL_TO_BUSINESS_PRICE_USD as PRICE_USD, SKILL_TO_BUSINESS_PRICE_NGN as PRICE_NGN } from "@/lib/skillToBusinessPricing";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 
 export async function POST(req: Request) {
   try {

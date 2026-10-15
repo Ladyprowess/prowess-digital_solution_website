@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
@@ -12,72 +12,54 @@ import { ActiveFilterChips } from "@/components/opportunities/ActiveFilterChips"
 import { OpportunitiesEmptyState } from "@/components/opportunities/OpportunitiesEmptyState";
 import { OpportunityAlertsSection } from "@/components/opportunities/OpportunityAlertsSection";
 import { supabase } from "@/lib/supabase";
-import { SORT_OPTIONS, CLOSING_SOON_DAYS } from "@/lib/opportunities/constants";
+import { SORT_OPTIONS } from "@/lib/opportunities/constants";
 import { DEFAULT_FILTERS, filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type OpportunityFilters } from "@/lib/opportunities/filters";
+import {
+  OPPORTUNITIES_PAGE_SIZE, fetchOpportunitiesPage, fetchOpportunityHighlights, fetchOpportunityLookups,
+  type OpportunitiesPage, type OpportunityHighlights, type OpportunityLookups,
+} from "@/lib/opportunities/search";
 
-const PAGE_SIZE = 12;
-
-type Lookup = { id: string; slug: string; name: string };
-type SkillLookup = { id: string; slug: string; name: string };
-
-type OpportunityQueryRow = {
-  id: string; slug: string; title: string;
-  organisation_name: string | null; organisation_logo_url: string | null;
-  location_type: "remote" | "hybrid" | "on_site" | "any";
-  country: string | null; city: string | null;
-  eligibility_summary: string | null; eligible_locations: string[] | null; benefit_tags: string[] | null;
-  deadline_at: string | null; published_at: string | null; featured: boolean;
-  opportunity_types: { name: string } | null;
-  opportunity_skill_map: { skills: { slug: string; name: string } | null }[];
+export type OpportunitiesInitialData = {
+  lookups: OpportunityLookups;
+  results: OpportunitiesPage;
+  highlights: OpportunityHighlights;
+  queryKey: string;
 };
 
-function toCardData(o: OpportunityQueryRow): OpportunityCardData {
-  return {
-    id: o.id, slug: o.slug, title: o.title,
-    organisation_name: o.organisation_name, organisation_logo_url: o.organisation_logo_url,
-    type: o.opportunity_types?.name || null,
-    location_type: o.location_type, country: o.country, city: o.city,
-    eligibility_summary: o.eligibility_summary, eligible_locations: o.eligible_locations, benefit_tags: o.benefit_tags,
-    skills: o.opportunity_skill_map.map((m) => m.skills).filter((s): s is { slug: string; name: string } => Boolean(s)),
-    deadline_at: o.deadline_at, featured: o.featured,
-  };
-}
-
-const BASE_SELECT = "id, slug, title, organisation_name, organisation_logo_url, location_type, country, city, eligibility_summary, eligible_locations, benefit_tags, deadline_at, published_at, featured, opportunity_types(name), opportunity_skill_map(skills(slug, name))";
-
-export default function OpportunitiesPageClient() {
+export default function OpportunitiesPageClient({ initial }: { initial?: OpportunitiesInitialData }) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
-      <OpportunitiesPageContent />
+      <OpportunitiesPageContent initial={initial} />
     </Suspense>
   );
 }
 
-function OpportunitiesPageContent() {
+function OpportunitiesPageContent({ initial }: { initial?: OpportunitiesInitialData }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
+  const queryKey = searchParamsFromFilters(filters).toString();
 
-  const [types, setTypes] = useState<Lookup[]>([]);
-  const [skills, setSkills] = useState<SkillLookup[]>([]);
-  const [opportunities, setOpportunities] = useState<OpportunityCardData[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [lookups, setLookups] = useState<OpportunityLookups>(initial?.lookups || { types: [], skills: [] });
+  const { types, skills } = lookups;
+  const [opportunities, setOpportunities] = useState<OpportunityCardData[]>(initial?.results.opportunities || []);
+  const [total, setTotal] = useState(initial?.results.total || 0);
+  const [loading, setLoading] = useState(!initial);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [featured, setFeatured] = useState<OpportunityCardData[]>([]);
-  const [closingSoon, setClosingSoon] = useState<OpportunityCardData[]>([]);
+  const [featured, setFeatured] = useState<OpportunityCardData[]>(initial?.highlights.featured || []);
+  const [closingSoon, setClosingSoon] = useState<OpportunityCardData[]>(initial?.highlights.closingSoon || []);
+  // The server already rendered this exact query - skip the first client
+  // fetches so the page doesn't flash back to "Loading…".
+  const serverRenderedKey = useRef(initial?.queryKey ?? null);
+  const serverRenderedHighlights = useRef(Boolean(initial));
 
+  const hasServerLookups = Boolean(initial && (initial.lookups.types.length || initial.lookups.skills.length));
   useEffect(() => {
-    Promise.all([
-      supabase.from("opportunity_types").select("id, slug, name").order("name"),
-      supabase.from("skills").select("id, slug, name").order("name"),
-    ]).then(([typeRows, skillRows]) => {
-      setTypes(typeRows.data || []);
-      setSkills(skillRows.data || []);
-    });
-  }, []);
+    if (hasServerLookups) return;
+    fetchOpportunityLookups(supabase).then(setLookups);
+  }, [hasServerLookups]);
 
   function updateFilters(patch: Partial<OpportunityFilters>) {
     const next: OpportunityFilters = { ...filters, ...patch };
@@ -91,101 +73,46 @@ function OpportunitiesPageContent() {
   }
 
   const activeFiltersPresent = hasActiveFilters(filters);
+  const showHighlights = !activeFiltersPresent && filters.page === 1;
 
   // Featured and Closing Soon strips only make sense on the default,
   // unfiltered view - once someone is actually searching, these would just
   // duplicate or confuse the main results list.
   useEffect(() => {
+    if (serverRenderedHighlights.current) {
+      serverRenderedHighlights.current = false;
+      return;
+    }
     let cancelled = false;
     (async () => {
-      if (activeFiltersPresent || filters.page > 1) {
+      if (!showHighlights) {
         if (!cancelled) { setFeatured([]); setClosingSoon([]); }
         return;
       }
-      const nowIso = new Date().toISOString();
-      const soonIso = new Date(Date.now() + CLOSING_SOON_DAYS * 86_400_000).toISOString();
-      const [f, c] = await Promise.all([
-        supabase.from("opportunities").select(BASE_SELECT).eq("status", "published").eq("featured", true)
-          .or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(6),
-        supabase.from("opportunities").select(BASE_SELECT).eq("status", "published")
-          .gte("deadline_at", nowIso).lte("deadline_at", soonIso)
-          .or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("deadline_at", { ascending: true }).limit(6),
-      ]);
+      const highlights = await fetchOpportunityHighlights(supabase);
       if (cancelled) return;
-      setFeatured(((f.data as unknown as OpportunityQueryRow[]) || []).map(toCardData));
-      setClosingSoon(((c.data as unknown as OpportunityQueryRow[]) || []).map(toCardData));
+      setFeatured(highlights.featured);
+      setClosingSoon(highlights.closingSoon);
     })();
     return () => { cancelled = true; };
-  }, [activeFiltersPresent, filters.page]);
-
-  const loadOpportunities = useCallback(async () => {
-    setLoading(true);
-
-    let skillOppIds: string[] | null = null;
-    if (filters.skills.length > 0) {
-      const skillIds = skills.filter((s) => filters.skills.includes(s.slug)).map((s) => s.id);
-      if (skillIds.length === 0) {
-        setOpportunities([]); setTotal(0); setLoading(false);
-        return;
-      }
-      const { data: mapRows } = await supabase.from("opportunity_skill_map").select("opportunity_id").in("skill_id", skillIds);
-      skillOppIds = Array.from(new Set((mapRows || []).map((r) => r.opportunity_id)));
-      if (skillOppIds.length === 0) {
-        setOpportunities([]); setTotal(0); setLoading(false);
-        return;
-      }
-    }
-
-    let query = supabase
-      .from("opportunities")
-      .select(BASE_SELECT, { count: "exact" })
-      .eq("status", "published")
-      .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`);
-
-    if (skillOppIds) query = query.in("id", skillOppIds);
-    if (filters.q.trim()) query = query.ilike("title", `%${filters.q.trim()}%`);
-    if (filters.type) {
-      const t = types.find((x) => x.slug === filters.type);
-      if (t) query = query.eq("type_id", t.id);
-    }
-    if (filters.locationType) query = query.eq("location_type", filters.locationType);
-    if (filters.eligibleLocation.trim()) query = query.contains("eligible_locations", [filters.eligibleLocation.trim()]);
-    if (filters.fundingType) query = query.eq("funding_type", filters.fundingType);
-    if (filters.applicationCost) query = query.eq("application_cost", filters.applicationCost);
-
-    if (filters.deadlineWindow === "no_deadline") {
-      query = query.is("deadline_at", null);
-    } else if (filters.deadlineWindow) {
-      const now = new Date();
-      const days = filters.deadlineWindow === "today" ? 1 : filters.deadlineWindow === "week" ? 7 : 30;
-      const until = new Date(now.getTime() + days * 86_400_000);
-      query = query.gte("deadline_at", now.toISOString()).lte("deadline_at", until.toISOString());
-    }
-
-    if (filters.sort === "newest") {
-      query = query.order("published_at", { ascending: false, nullsFirst: false });
-    } else if (filters.sort === "deadline") {
-      query = query.order("deadline_at", { ascending: true, nullsFirst: false });
-    } else if (filters.sort === "featured") {
-      query = query.order("featured", { ascending: false }).order("deadline_at", { ascending: true, nullsFirst: false });
-    } else {
-      query = query.order("featured", { ascending: false }).order("created_at", { ascending: false });
-    }
-
-    const from = (filters.page - 1) * PAGE_SIZE;
-    const { data, count } = await query.range(from, from + PAGE_SIZE - 1);
-
-    setOpportunities(((data as unknown as OpportunityQueryRow[]) || []).map(toCardData));
-    setTotal(count || 0);
-    setLoading(false);
-  }, [filters, types, skills]);
+  }, [showHighlights]);
 
   useEffect(() => {
-    const t = setTimeout(loadOpportunities, 150);
-    return () => clearTimeout(t);
-  }, [loadOpportunities]);
+    if (serverRenderedKey.current === queryKey) return;
+    serverRenderedKey.current = null;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      const page = await fetchOpportunitiesPage(supabase, filters, lookups);
+      if (cancelled) return;
+      setOpportunities(page.opportunities);
+      setTotal(page.total);
+      setLoading(false);
+    }, 150);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [filters, queryKey, lookups]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / OPPORTUNITIES_PAGE_SIZE));
   const typeLabel = filters.type ? types.find((t) => t.slug === filters.type)?.name || null : null;
 
   const quickFilters: { label: string; patch: Partial<OpportunityFilters> }[] = [

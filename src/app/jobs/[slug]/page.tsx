@@ -10,6 +10,9 @@ import { RelatedSection } from "@/components/RelatedSection";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { stripHtmlForMeta } from "@/lib/stripHtml";
 import { getSkillGraph } from "@/lib/careerPathGraph";
+import { jobPostingJsonLd, serializeJsonLd } from "@/lib/jobs/structuredData";
+
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -36,6 +39,7 @@ type JobDetail = {
   salary_period: string | null;
   experience_level: string | null;
   deadline_at: string | null;
+  published_at: string | null;
   status: "draft" | "published" | "closed" | "expired";
   expires_at: string | null;
   company_id: string;
@@ -57,7 +61,7 @@ async function getJob(slug: string) {
   const { data } = await supabase
     .from("jobs")
     .select(
-      "id, slug, title, description, requirements, responsibilities, benefits, nice_to_have, apply_url, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, salary_period, experience_level, deadline_at, status, expires_at, company_id, companies(name, website, description, logo_url, verified, industry, company_size), job_categories(slug, name), job_types(name), job_skill_map(skills(id, name, slug)), job_sources(name, source_type)"
+      "id, slug, title, description, requirements, responsibilities, benefits, nice_to_have, apply_url, location_type, country, city, remote_regions, salary_min, salary_max, salary_currency, salary_period, experience_level, deadline_at, published_at, status, expires_at, company_id, companies(name, website, description, logo_url, verified, industry, company_size), job_categories(slug, name), job_types(name), job_skill_map(skills(id, name, slug)), job_sources(name, source_type)"
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -72,6 +76,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${job.title} at ${company}`,
     description: (job.description ? stripHtmlForMeta(job.description) : "") || `${job.title} - apply on Prowess Digital Solutions.`,
+    alternates: { canonical: `${SITE_URL}/jobs/${job.slug}` },
   };
 }
 
@@ -165,6 +170,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
 
   return (
     <div className="min-h-screen bg-background py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jobPostingJsonLd(job, SITE_URL)) }} />
       <div className="mx-auto max-w-3xl px-4">
         <Reveal>
           <Breadcrumb

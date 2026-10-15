@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import ContactPageClient from "./ContactPageClient";
 import { businessServiceTitleFromParam } from "@/content/businessServices";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Contact Us",

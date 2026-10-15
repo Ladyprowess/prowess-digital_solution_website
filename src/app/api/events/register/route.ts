@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     const { currency: resolvedCurrency, amount } = selected;
 
     const reference = generateReference("EVT");
-    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com"}/events/payment-success`;
+    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com"}/events/payment-success`;
 
     const { link } = await initializePayment({
       email: String(email).trim(),

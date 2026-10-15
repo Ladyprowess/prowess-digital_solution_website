@@ -175,7 +175,7 @@ await sendConsultationEmail({
     }
     // ✅ PAID => Flutterwave initialise
     const safeRef = String(booking.flutterwave_reference); // guaranteed for paid
-    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com"}/consultation/success?reference=${encodeURIComponent(
+    const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com"}/consultation/success?reference=${encodeURIComponent(
       safeRef
     )}`;
 

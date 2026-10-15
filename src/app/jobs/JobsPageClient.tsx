@@ -1,85 +1,53 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { Pagination } from "@/components/Pagination";
-import { JobCard, type JobCardData } from "@/components/jobs/JobCard";
+import { JobCard } from "@/components/jobs/JobCard";
 import { JobFiltersSidebar } from "@/components/jobs/JobFiltersSidebar";
 import { ActiveFilterChips } from "@/components/jobs/ActiveFilterChips";
 import { JobsEmptyState } from "@/components/jobs/JobsEmptyState";
 import { JobAlertsSection } from "@/components/jobs/JobAlertsSection";
 import { supabase } from "@/lib/supabase";
-import { SORT_OPTIONS, CLOSING_SOON_DAYS } from "@/lib/jobs/constants";
+import { SORT_OPTIONS } from "@/lib/jobs/constants";
 import { DEFAULT_FILTERS, filtersFromSearchParams, searchParamsFromFilters, hasActiveFilters, type JobFilters } from "@/lib/jobs/filters";
+import { JOBS_PAGE_SIZE, fetchJobLookups, fetchJobsPage, type JobLookups, type JobsPage } from "@/lib/jobs/search";
 
-const PAGE_SIZE = 12;
+export type JobsInitialData = { lookups: JobLookups; results: JobsPage; queryKey: string };
 
-type Lookup = { id: string; slug: string; name: string };
-type SkillLookup = { id: string; slug: string; name: string };
-
-type JobQueryRow = {
-  id: string; slug: string; title: string;
-  location_type: "remote" | "hybrid" | "on_site";
-  country: string | null; city: string | null;
-  salary_min: number | null; salary_max: number | null; salary_currency: string | null; salary_period: string | null;
-  experience_level: string | null;
-  deadline_at: string | null; published_at: string | null; featured: boolean;
-  companies: { name: string; logo_url: string | null; verified: boolean } | null;
-  job_categories: { name: string } | null;
-  job_types: { name: string } | null;
-  job_skill_map: { skills: { slug: string; name: string } | null }[];
-};
-
-function toCardData(j: JobQueryRow): JobCardData {
-  return {
-    id: j.id, slug: j.slug, title: j.title,
-    company: j.companies,
-    category: j.job_categories?.name || null,
-    location_type: j.location_type, country: j.country, city: j.city,
-    job_type: j.job_types?.name || null,
-    experience_level: j.experience_level,
-    salary_min: j.salary_min, salary_max: j.salary_max, salary_currency: j.salary_currency, salary_period: j.salary_period,
-    skills: j.job_skill_map.map((m) => m.skills).filter((s): s is { slug: string; name: string } => Boolean(s)),
-    published_at: j.published_at, deadline_at: j.deadline_at, featured: j.featured,
-  };
-}
-
-export default function JobsPageClient() {
+export default function JobsPageClient({ initial }: { initial?: JobsInitialData }) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
-      <JobsPageContent />
+      <JobsPageContent initial={initial} />
     </Suspense>
   );
 }
 
-function JobsPageContent() {
+function JobsPageContent({ initial }: { initial?: JobsInitialData }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
+  const queryKey = searchParamsFromFilters(filters).toString();
 
-  const [categories, setCategories] = useState<Lookup[]>([]);
-  const [types, setTypes] = useState<Lookup[]>([]);
-  const [skills, setSkills] = useState<SkillLookup[]>([]);
-  const [jobs, setJobs] = useState<JobCardData[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [lookups, setLookups] = useState<JobLookups>(initial?.lookups || { categories: [], types: [], skills: [] });
+  const { categories, types, skills } = lookups;
+  const [jobs, setJobs] = useState(initial?.results.jobs || []);
+  const [total, setTotal] = useState(initial?.results.total || 0);
+  const [loading, setLoading] = useState(!initial);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  // The server already rendered results for this exact query - skip the
+  // first client fetch so the list doesn't flash back to "Loading…".
+  const serverRenderedKey = useRef(initial?.queryKey ?? null);
 
+  const hasServerLookups = Boolean(initial && (initial.lookups.categories.length || initial.lookups.types.length || initial.lookups.skills.length));
   useEffect(() => {
-    Promise.all([
-      supabase.from("job_categories").select("id, slug, name").order("name"),
-      supabase.from("job_types").select("id, slug, name").order("name"),
-      supabase.from("skills").select("id, slug, name").order("name"),
-    ]).then(([cats, jobTypes, skillRows]) => {
-      setCategories(cats.data || []);
-      setTypes(jobTypes.data || []);
-      setSkills(skillRows.data || []);
-    });
-  }, []);
+    if (hasServerLookups) return;
+    fetchJobLookups(supabase).then(setLookups);
+  }, [hasServerLookups]);
 
   function updateFilters(patch: Partial<JobFilters>) {
     const next: JobFilters = { ...filters, ...patch };
@@ -94,89 +62,22 @@ function JobsPageContent() {
     router.replace(pathname, { scroll: false });
   }
 
-  const loadJobs = useCallback(async () => {
-    setLoading(true);
-
-    // Skill filtering is resolved as a separate id lookup rather than an
-    // inner join on job_skill_map, so a job matching 2 of 3 selected
-    // skills doesn't come back as 2 duplicate rows that would then need
-    // deduping before pagination/count means anything.
-    let skillJobIds: string[] | null = null;
-    if (filters.skills.length > 0) {
-      const skillIds = skills.filter((s) => filters.skills.includes(s.slug)).map((s) => s.id);
-      if (skillIds.length === 0) {
-        setJobs([]); setTotal(0); setLoading(false);
-        return;
-      }
-      const { data: mapRows } = await supabase.from("job_skill_map").select("job_id").in("skill_id", skillIds);
-      skillJobIds = Array.from(new Set((mapRows || []).map((r) => r.job_id)));
-      if (skillJobIds.length === 0) {
-        setJobs([]); setTotal(0); setLoading(false);
-        return;
-      }
-    }
-
-    let query = supabase
-      .from("jobs")
-      .select(
-        "id, slug, title, location_type, country, city, salary_min, salary_max, salary_currency, salary_period, experience_level, deadline_at, published_at, featured, companies!inner(name, logo_url, verified), job_categories(name), job_types(name), job_skill_map(skills(slug, name))",
-        { count: "exact" }
-      )
-      .eq("status", "published")
-      .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`);
-
-    if (skillJobIds) query = query.in("id", skillJobIds);
-    if (filters.q.trim()) query = query.ilike("title", `%${filters.q.trim()}%`);
-    if (filters.category) {
-      const cat = categories.find((c) => c.slug === filters.category);
-      if (cat) query = query.eq("category_id", cat.id);
-    }
-    if (filters.type) {
-      const t = types.find((x) => x.slug === filters.type);
-      if (t) query = query.eq("type_id", t.id);
-    }
-    if (filters.locationType) query = query.eq("location_type", filters.locationType);
-    if (filters.country.trim()) query = query.ilike("country", `%${filters.country.trim()}%`);
-    if (filters.experience) query = query.eq("experience_level", filters.experience);
-    if (filters.salaryMin) query = query.gte("salary_max", Number(filters.salaryMin));
-    if (filters.salaryMax) query = query.lte("salary_min", Number(filters.salaryMax));
-    if (filters.currency.trim()) query = query.eq("salary_currency", filters.currency.trim().toUpperCase());
-    if (filters.datePosted) {
-      const since = new Date(Date.now() - Number(filters.datePosted) * 86_400_000).toISOString();
-      query = query.gte("published_at", since);
-    }
-    if (filters.closingSoon) {
-      const soon = new Date(Date.now() + CLOSING_SOON_DAYS * 86_400_000).toISOString();
-      query = query.gte("deadline_at", new Date().toISOString()).lte("deadline_at", soon);
-    }
-    if (filters.company.trim()) query = query.ilike("companies.name", `%${filters.company.trim()}%`);
-
-    if (filters.sort === "newest") {
-      query = query.order("published_at", { ascending: false, nullsFirst: false });
-    } else if (filters.sort === "deadline") {
-      query = query.order("deadline_at", { ascending: true, nullsFirst: false });
-    } else if (filters.sort === "salary_high") {
-      query = query.order("salary_max", { ascending: false, nullsFirst: false });
-    } else if (filters.sort === "salary_low") {
-      query = query.order("salary_min", { ascending: true, nullsFirst: false });
-    } else {
-      query = query.order("featured", { ascending: false }).order("created_at", { ascending: false });
-    }
-
-    const from = (filters.page - 1) * PAGE_SIZE;
-    const { data, count } = await query.range(from, from + PAGE_SIZE - 1);
-
-    setJobs(((data as unknown as JobQueryRow[]) || []).map(toCardData));
-    setTotal(count || 0);
-    setLoading(false);
-  }, [filters, categories, types, skills]);
-
   useEffect(() => {
-    const t = setTimeout(loadJobs, 150);
-    return () => clearTimeout(t);
-  }, [loadJobs]);
+    if (serverRenderedKey.current === queryKey) return;
+    serverRenderedKey.current = null;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      const page = await fetchJobsPage(supabase, filters, lookups);
+      if (cancelled) return;
+      setJobs(page.jobs);
+      setTotal(page.total);
+      setLoading(false);
+    }, 150);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [filters, queryKey, lookups]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / JOBS_PAGE_SIZE));
   const activeFiltersPresent = hasActiveFilters(filters);
   const categoryLabel = filters.category ? categories.find((c) => c.slug === filters.category)?.name || null : null;
 

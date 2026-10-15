@@ -94,7 +94,7 @@ async function getMoreVideos(video: VideoDetail): Promise<VideoCardData[]> {
   return Array.from(new Map(merged.map((v) => [v.id, v])).values()).slice(0, 6);
 }
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

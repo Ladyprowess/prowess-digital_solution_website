@@ -4,7 +4,7 @@ import { verifyMember } from "@/lib/auth/verifyMember";
 import { getOrCreatePaymentPlan, initializePayment, generateReference } from "@/lib/payments/flutterwave";
 import { packages, annualTotalPrice } from "@/content/site";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 
 export async function POST(req: Request) {
   try {

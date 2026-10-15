@@ -72,7 +72,7 @@ export async function markMembershipPaid(subscriptionId: string, reference: stri
         <p style="font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 1px;">${accessCode}</p>
         <p>This code unlocks:</p>
         <ul>${toolsList}</ul>
-        <p>Enter it at <a href="https://prowessdigitalsolutions.com/tools">prowessdigitalsolutions.com/tools</a> to get started.</p>
+        <p>Enter it at <a href="https://www.prowessdigitalsolutions.com/tools">prowessdigitalsolutions.com/tools</a> to get started.</p>
         <p>Payment reference: ${reference}</p>
       </div>
     `,
@@ -171,7 +171,7 @@ export async function markMembershipCancelled(subscriptionId: string) {
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Your ${sub.plan_slug} membership has ended</h2>
         <p>Renewal has been cancelled. Access already paid for remains available until its expiry date.</p>
-        <p>You can restart anytime from <a href="https://prowessdigitalsolutions.com/pricing">prowessdigitalsolutions.com/pricing</a>.</p>
+        <p>You can restart anytime from <a href="https://www.prowessdigitalsolutions.com/pricing">prowessdigitalsolutions.com/pricing</a>.</p>
       </div>
     `,
   });

@@ -2,7 +2,7 @@ import { escapeEmail } from "@/lib/payments/emailEscape";
 import { resend } from "@/lib/resendClient";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 
 // Same table-based, inline-styled layout as sendEventRegistrationEmails'
 // templates (src/lib/events/emails.ts) - email clients don't reliably

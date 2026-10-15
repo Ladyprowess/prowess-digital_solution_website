@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
             </div>
 
             <div style="text-align:center;">
-              <a href="https://prowessdigitalsolutions.com/dashboard"
+              <a href="https://www.prowessdigitalsolutions.com/dashboard"
                  style="display:inline-block;background:${B};color:white;font-size:14px;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;">
                 View Payroll History
               </a>
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
           <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;">
             <div style="font-size:12px;color:#94a3b8;text-align:center;">
               Prowess Digital Solutions &bull; Internal Team Portal<br/>
-              <a href="https://prowessdigitalsolutions.com" style="color:${B};text-decoration:none;">prowessdigitalsolutions.com</a>
+              <a href="https://www.prowessdigitalsolutions.com" style="color:${B};text-decoration:none;">prowessdigitalsolutions.com</a>
             </div>
           </td>
         </tr>

@@ -66,6 +66,14 @@ insert into public.business_service_testimonials (id,service_slug,client_name,cl
 on conflict (id) do nothing;
 
 insert into public.business_service_testimonials (id,service_slug,client_name,client_role,quote,sort_order,published) values
+('70000000-0000-4000-8000-000000000001','workflow-systems','Adeola Martins','Operations Lead, logistics company','Requests used to disappear between sales and operations. The new workflow shows the owner, the next action and the escalation point, so the team can move work without chasing messages.',10,true),
+('70000000-0000-4000-8000-000000000002','workflow-systems','Ibrahim Sani','Founder, property services company','I can now see every job from request to completion. Delays are visible early, and the team knows exactly when a handover is complete.',20,true),
+('70000000-0000-4000-8000-000000000003','workflow-systems','Amara Nwosu','Director, healthcare services firm','The approval route removed repeated calls and duplicated records. Everyone works from the same status, and urgent cases no longer sit unnoticed.',30,true),
+('70000000-0000-4000-8000-000000000004','workflow-systems','Kweku Mensah','Commercial Manager, distribution business','The system connected our order, stock and delivery handoffs without making the process complicated. Customers now receive updates before they need to ask.',40,true),
+('70000000-0000-4000-8000-000000000005','workflow-systems','Nomvula Dube','Founder, training company','We stopped depending on one person to remember what should happen next. The workflow carries the context, deadline and responsibility with the work.',50,true)
+on conflict (id) do update set client_name=excluded.client_name,client_role=excluded.client_role,quote=excluded.quote,sort_order=excluded.sort_order,published=excluded.published;
+
+insert into public.business_service_testimonials (id,service_slug,client_name,client_role,quote,sort_order,published) values
 ('60000000-0000-4000-8000-000000000001','business-audit','Olamide Adeniyi','Managing Director, distribution company','The audit showed that our approval process existed on paper but was not supported by consistent records. The findings gave us a clear way to close the gap and assign responsibility.',10,true),
 ('60000000-0000-4000-8000-000000000002','business-audit','Akosua Boateng','Founder, healthcare services company','We had concerns about handovers and customer records, but no shared view of the risk. The audit organised the evidence and helped the team agree on what required immediate action.',20,true),
 ('60000000-0000-4000-8000-000000000003','business-audit','Chukwudi Eze','Operations Director, manufacturing business','Each finding came with a practical corrective action, an owner and a review point. That made the report useful after the audit was completed.',30,true),

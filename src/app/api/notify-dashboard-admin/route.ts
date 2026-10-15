@@ -33,7 +33,7 @@ function wrapEmail(title: string, body: string) {
           <tr>
             <td style="background:#f8fafc;padding:18px 36px;border-top:1px solid #e2e8f0;">
               <div style="font-size:12px;color:#94a3b8;text-align:center;">
-                <a href="https://prowessdigitalsolutions.com/dashboard" style="color:${BRAND};text-decoration:none;">Open dashboard</a>
+                <a href="https://www.prowessdigitalsolutions.com/dashboard" style="color:${BRAND};text-decoration:none;">Open dashboard</a>
               </div>
             </td>
           </tr>

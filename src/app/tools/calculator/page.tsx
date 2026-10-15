@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import CalculatorPageClient from "./CalculatorPageClient";
 
-const SITE_URL = "https://prowessdigitalsolutions.com";
+const SITE_URL = "https://www.prowessdigitalsolutions.com";
 
 export const metadata: Metadata = {
   title: "Startup Cost Calculator",

@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 
 const inputCls = "w-full rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 const AUTOSAVE_DELAY = 1800;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 // Must match MAX_PROJECTS in src/app/api/portfolio-builder/save/route.ts -
 // otherwise "Add project" lets someone build past the cap the server will
 // silently reject on the next autosave.

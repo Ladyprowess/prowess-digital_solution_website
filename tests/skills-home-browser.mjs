@@ -10,8 +10,8 @@ try {
   page.on('request',request=>/googletagmanager|googlesyndication|google-analytics/.test(request.url())?request.abort():request.continue());
   await page.setViewport({width:1280,height:900});
   await page.goto('http://localhost:3000',{waitUntil:'networkidle2',timeout:90000});
-  await page.evaluate(()=>[...document.querySelectorAll('header button')].find(button=>button.querySelector('strong')?.textContent==='Skills')?.click());
-  await page.waitForFunction(()=>document.querySelector('#your-route')?.textContent?.includes('Practise until it is useful.'));
+  await page.evaluate(()=>[...document.querySelectorAll('header button')].find(button=>button.querySelector('strong')?.textContent==='Learning')?.click());
+  await page.waitForFunction(()=>document.querySelector('#your-route')?.textContent?.includes('you can actually use.'));
   assert.equal(await page.$$eval('#your-route .routeWorkspace',nodes=>nodes.length),0);
   assert.equal(await page.$eval('#your-route button:disabled',button=>button.textContent?.trim()),'View my learning plan');
   await page.type('#skill-name','Data analysis');

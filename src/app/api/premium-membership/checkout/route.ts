@@ -4,7 +4,7 @@ import { verifyMember } from "@/lib/auth/verifyMember";
 import { getOrCreatePaymentPlan, initializePayment, generateReference } from "@/lib/payments/flutterwave";
 import { getPremiumMembershipPricing } from "@/lib/payments/premiumMembershipPricing";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://prowessdigitalsolutions.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.prowessdigitalsolutions.com";
 
 // The set of subscription_status values the Phase 0 partial unique index
 // (premium_membership_subscriptions_one_open_per_user) also protects - kept

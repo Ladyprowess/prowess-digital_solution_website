@@ -100,7 +100,7 @@ export async function markPremiumMembershipPaid(subscriptionId: string, referenc
         <h2>You're in${sub.full_name ? `, ${escapeEmail(sub.full_name)}` : ""}.</h2>
         <p>Your <b>${planTitle}</b> payment has been received (billed ${sub.billing_interval}, ${amountLabel}).</p>
         <p>Every premium CV template and unlimited saved CVs are unlocked on your account now - head to
-           <a href="https://prowessdigitalsolutions.com/tools/cv-builder">prowessdigitalsolutions.com/tools/cv-builder</a> to use them.</p>
+           <a href="https://www.prowessdigitalsolutions.com/tools/cv-builder">prowessdigitalsolutions.com/tools/cv-builder</a> to use them.</p>
         <p>You can manage your membership any time from your account's Membership page.</p>
         <p>Payment reference: ${reference}</p>
       </div>
@@ -178,7 +178,7 @@ export async function markPremiumMembershipCancelled(subscriptionId: string) {
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Your Premium Membership renewal has stopped</h2>
         <p>Renewal has stopped. Your Premium access remains available until the end of the paid period. Any CVs you already built keep working exactly as they are - after the paid period ends, creating new premium-template CVs or saving additional CVs requires an active membership.</p>
-        <p>You can restart any time from <a href="https://prowessdigitalsolutions.com/account/membership">your account's Membership page</a>.</p>
+        <p>You can restart any time from <a href="https://www.prowessdigitalsolutions.com/account/membership">your account's Membership page</a>.</p>
       </div>
     `,
   }).catch(() => {});
