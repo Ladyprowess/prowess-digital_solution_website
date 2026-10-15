@@ -2,6 +2,7 @@ import { JourneyTracking } from "@/components/JourneyTracking";
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
+import SummaryPreview from "@/components/services/SummaryPreview";
 import SiteShell from "@/components/SiteShell";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -163,6 +164,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <SiteShell footer={<Footer settings={settings} />}>{children}</SiteShell>
           </Suspense>
         </ThemeProvider>
+        <SummaryPreview />
         <JourneyTracking />
         <ServiceWorkerRegister />
       </body>

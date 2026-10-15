@@ -225,7 +225,7 @@ export default function CareerPathsPageClient() {
                   ].map((stat) => (
                     <div key={stat.label} className="rounded-lg bg-muted p-3 text-center">
                       <stat.icon size={15} className="mx-auto mb-2 text-primary" aria-hidden="true" />
-                      <p className="text-lg font-bold text-foreground">{loading || loadError ? "—" : stat.value}</p>
+                      <p className="text-lg font-bold text-foreground">{loading || loadError ? "-" : stat.value}</p>
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">{stat.label}</p>
                     </div>
                   ))}

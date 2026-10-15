@@ -1,4 +1,4 @@
-# Local payment review — 14 October 2026
+# Local payment review - 14 October 2026
 
 No live charges, subscription changes or outbound emails were performed.
 

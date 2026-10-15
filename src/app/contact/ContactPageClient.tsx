@@ -29,6 +29,9 @@ type FormState = {
 const BUSINESS_STAGES = ["Starting Out", "Growing", "Scaling"];
 const INQUIRY_TYPES = [
   ...services.map((service) => service.title),
+  "Business plan",
+  "Business case study",
+  "Build my website",
   "Membership pricing",
   "General Enquiry",
   "Business Clarity Session",

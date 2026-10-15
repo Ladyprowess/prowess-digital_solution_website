@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, EmptyState } from "@/components/account/AccountUI";
 import { ITEM_LABEL, attachTitles, hrefFor } from "@/lib/account/itemLinks";
+import SavedShortcuts from "@/components/account/SavedShortcuts";
 import { supabase } from "@/lib/supabase";
 
 type SavedItem = { id: string; item_type: string; item_id: string; title?: string; slug?: string };
@@ -31,6 +32,7 @@ export default function SavedPage() {
       <h1 className="text-2xl font-bold text-foreground">Saved</h1>
       <p className="mt-1 text-sm text-muted-foreground">Jobs, opportunities, and resources you&rsquo;ve bookmarked for later.</p>
 
+      <SavedShortcuts />
       <div className="mt-6">
         <Card title="Saved items">
           {loading ? (

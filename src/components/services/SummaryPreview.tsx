@@ -17,17 +17,17 @@ export default function SummaryPreview(){
  const dialog=useRef<HTMLDialogElement>(null);
 
  useEffect(()=>{const handler=(event:Event)=>{setZoom(1);setDone(false);setError('');setRun(0);setSummary((event as CustomEvent<BusinessSummary>).detail);};window.addEventListener('prowess-summary',handler);return()=>window.removeEventListener('prowess-summary',handler);},[]);
- useEffect(()=>{if(!summary)return;dialog.current?.showModal();const old=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=old;};},[summary]);
+ useEffect(()=>{if(!summary)return;const trigger=document.activeElement instanceof HTMLElement?document.activeElement:null;dialog.current?.showModal();const old=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=old;trigger?.focus();};},[summary]);
  useEffect(()=>{if(!summary)return;const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;const timer=setTimeout(()=>setDone(true),reduced?0:3400);return()=>clearTimeout(timer);},[summary,run]);
- if(!summary)return null;
- return createPortal(<dialog ref={dialog} onCancel={()=>setSummary(null)} aria-label="Your business result" className={`${s.printDialog} ${summary.image?s.documentDialog:''}`}>
+ if(!summary)return <span hidden data-pds-preview-host/>;
+ return <><span hidden data-pds-preview-host/>{createPortal(<dialog ref={dialog} onCancel={()=>setSummary(null)} aria-label="Your business result" className={`${s.printDialog} ${summary.image?s.documentDialog:''}`}>
   <header className={s.printHeader}><div><p>PROWESS DIGITAL SOLUTIONS</p><span role="status">{done?'Your result is ready':'Preparing your result…'}</span></div><button onClick={()=>setSummary(null)} aria-label="Close result"><X size={20}/></button></header>
   <div className={s.compactMachine}><div className={s.machineLabel}><Printer size={18}/><span>BUSINESS REVIEW</span><i className={!done?s.pulsing:''}/></div><div className={s.machineSlot}/></div>
   <div key={run} className={`${s.feedWindow} ${done?s.feedComplete:''}`} onAnimationEnd={e=>{if(e.target===e.currentTarget)setDone(true);}}>
    {summary.image?<img src={summary.image} alt={summary.title} style={{display:'block',width:`${zoom*100}%`,maxWidth:'none',height:'auto'}}/>:<article className={s.resultSlip} aria-busy={!done}>
     <p className={s.slipBrand}>PROWESS DIGITAL SOLUTIONS</p><p className={s.slipLabel}>YOUR BUSINESS RESULT</p><h2>{summary.title}</h2>
     {summary.content.split(/\n\s*\n/).filter(Boolean).map((paragraph,i)=><div className={s.slipSection} key={i}>{paragraph.split('\n').map((line,j)=>j===0?<strong key={j}>{line}</strong>:<span key={j}>{line}</span>)}</div>)}
-    <div className={s.resultSeal}>REVIEW COMPLETE</div><small>Based on your inputs. A planning guide, not an independent audit.</small>
+    <div className={s.resultSeal}>YOUR RESULT</div><small>Prepared from your entries. Keep a copy for your next steps.</small>
    </article>}
   </div>
   <footer className={s.printFooter}>
@@ -35,5 +35,5 @@ export default function SummaryPreview(){
    {error&&<p role="alert">{error}</p>}
   </footer>
 
- </dialog>,document.body);
+ </dialog>,document.body)}</>;
 }

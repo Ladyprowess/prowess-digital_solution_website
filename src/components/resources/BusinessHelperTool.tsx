@@ -1,5 +1,6 @@
 "use client";
 
+import { previewSummary } from "@/lib/businessSummary";
 import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -199,31 +200,12 @@ export default function BusinessHelperTool() {
     setError(null);
 
     try {
-      const res = await fetch("/api/business-helper/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessType, problem, details, result }),
-      });
-
-      if (!res.ok) {
-        const msg = await res.text().catch(() => "");
-        throw new Error(msg || "Failed to generate PDF.");
-      }
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "Prowess_Digital_Solutions_Business_Diagnostic_Report.pdf";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      window.URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error(e);
-      setError("PDF download failed. Please try again.");
+      await previewSummary(result.reportTitle, [
+        `Business: ${businessType}\nPriority: ${problem}\nDetails: ${details}`,
+        `Health score: ${result.healthScore}\n${result.healthLabel}\n${result.scoreNote}`,
+        ...result.sections.map(section => [section.heading, ...section.paragraphs].join('\n')),
+        result.disclaimer,
+      ].join('\n\n'));
     } finally {
       setDownloading(false);
     }
@@ -385,7 +367,7 @@ export default function BusinessHelperTool() {
                   disabled={downloading}
                   className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {downloading ? "Preparing..." : "Download full report (PDF)"}
+                  {downloading ? "Preparing..." : "Preview / Print full report"}
                 </button>
 
                 <a

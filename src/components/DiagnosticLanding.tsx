@@ -6,7 +6,6 @@ import Link from "next/link";
 import Container from "@/components/Container";
 import { trackEvent } from "@/lib/analytics";
 import BusinessHealthExperience from "@/components/BusinessHealthExperience";
-import SummaryPreview from "@/components/services/SummaryPreview";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import { DiagnosticBoard, DiagnosticReportPreview } from "./services/DiagnosticExplorer";
 import s from "./services/Diagnostic.module.css";
@@ -83,6 +82,6 @@ export default function DiagnosticLanding({ service }: { service: Service }) {
           <button type="submit" className={button} disabled={pending}>{pending ? "Submitting enquiry…" : "Submit Diagnostic Enquiry"}</button>
         </form>}
       </section>
-    </div></Container><SummaryPreview/>
+    </div></Container>
   </div>;
 }

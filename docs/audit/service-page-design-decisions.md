@@ -65,7 +65,7 @@ Replaced the static ledger hero with a centred introduction and a working financ
 
 Replaced the tall joined grey panel across all three views with independent, compact input and result cards. Inputs use a two-column grid where space permits; results use a short metric breakdown and a dedicated visual. Receipt export retains the financial text and values and excludes decorative visuals. Verified calculations, invalid-input recovery, receipt export and 390/768/1440 widths without overflow; inspected the desktop workspace screenshot. TypeScript and lint passed.
 
-## Consolidated service review — 13 October 2026
+## Consolidated service review - 13 October 2026
 
 Scope: `/services` and the Diagnostic, SOP Vault, Offer Playbook and Financial Dashboard pages. This is a local service-journey review, not a whole-platform payment or production audit.
 
@@ -80,7 +80,7 @@ Corrections: retained removal of the extra SOP-only enquiry link from the servic
 
 No blocking issue found in the exercised local service journeys. Release checks still outstanding: a full build using the project's Node.js 24 requirement, deployed route/receipt checks, and real enquiry delivery with designated recipients. Browser checks used Chromium; Safari/iOS rendering and physical printer output were not verified. No deployment was performed during this review.
 
-## Interactive homepage opening — 13 October 2026
+## Interactive homepage opening - 13 October 2026
 
 Replaced the static hero navigation with four audience paths, twelve selectable situations and practical three-action plans linked to existing destinations. Progress is stored only in this browser, with a visible fallback when storage is unavailable. No email or account is required. Removed the duplicate goal-card section; retained search, content feeds and other homepage destinations. Added the missing newsletter anchor used by the empty listing state. Analytics use controlled audience/destination labels, not entered text or checklist contents. Verified all twelve plans, progress restoration, 390/768/1440 layouts, TypeScript and scoped lint. The opening was visually inspected in Chromium. Local changes only.
 

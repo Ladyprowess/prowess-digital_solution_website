@@ -23,5 +23,11 @@ export const metadata: Metadata = {
 export default async function Page({ searchParams }: { searchParams: Promise<{ service?: string }> }) {
   const { service } = await searchParams;
   const selected = services.find((item) => item.slug === service);
-  return <ContactPageClient key={selected?.slug || "general"} initialInquiry={selected?.title || ""} />;
+  const projectTypes: Record<string,string> = {
+    'business-plan': 'Business plan',
+    'business-case-study': 'Business case study',
+    'website-build': 'Build my website',
+  };
+  const inquiry = selected?.title || (typeof service === 'string' ? projectTypes[service] : '') || '';
+  return <ContactPageClient key={inquiry || "general"} initialInquiry={inquiry} />;
 }

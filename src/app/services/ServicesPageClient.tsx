@@ -7,7 +7,6 @@ import { services } from "@/content/site";
 import { businessScenario } from "@/lib/businessScenario";
 import BusinessHealthExperience from "@/components/BusinessHealthExperience";
 import ProcessBuilder from "@/components/services/ProcessBuilder";
-import SummaryPreview from "@/components/services/SummaryPreview";
 import { previewSummary } from "@/lib/businessSummary";
 import BusinessScene from "@/components/services/BusinessScene";
 import s from "@/components/services/Workshop.module.css";
@@ -33,7 +32,7 @@ export default function ServicesPageClient(){
  const [sample,setSample]=useState<number|null>(null);
  function updateNumber(index:number,value:string){setNumbers(old=>old.map((v,i)=>i===index?value:v));}
  const receiptText=receipt?`PROWESS DIGITAL SOLUTIONS · FINANCIAL SUMMARY\nCurrency: ${receipt.currency}\nPrice per sale: ${receipt.values[0]}\nVariable cost: ${receipt.values[1]}\nMonthly sales: ${receipt.values[2]}\nFixed costs: ${receipt.values[3]}\nRevenue: ${format(receipt.result.revenue)}\nAfter costs: ${format(receipt.result.profit)}\nBreak-even sales: ${receipt.result.breakEven??"Not achievable at this price"}\nSCENARIO ANALYSIS COMPLETE\nExcludes tax, financing and timing of payments.`:"";
- return <div className={s.page}><SummaryPreview/>
+ return <div className={s.page}>
   <section className={s.hero}><div className={`${s.wrap} ${s.heroGrid}`}>
    <div><p className={s.eyebrow}>Prowess Digital Solutions / Business support</p><h1>Build a business<br/>with clarity,<br/><em>structure and control.</em></h1><p className={s.intro}>Strengthen your operations, clarify your offer and understand your numbers. Practical services and tools built around the way your business works.</p><div className={s.actions}><a href="#business-scene" className={s.primary}>Explore business solutions <ArrowDown size={17}/></a><a href="#our-services" className={s.secondary}>Explore our services <ArrowRight size={17}/></a></div><p className={s.note}>Four practical business tools. Free to use. No account required.</p></div>
    <div className={s.desk}><div className={s.deskPaper}><p className={s.eyebrow}>Make informed decisions.</p><h3>Clear priorities.<br/>Practical next steps.</h3>{[["Know your numbers","Financial planning"],["Document your operations","Process builder"],["Explain your value","Offer development"],["Find your starting point","Health check"]].map(([label,value],i)=><a href="#workshop" onClick={()=>setStation(i)} className={s.deskRow} key={label}><span>{label}</span><ArrowRight size={16} aria-label={value}/></a>)}<p className={s.note}>Assess your business and develop a practical next step.</p></div><div className={s.deskTag}>Clarity. Structure.<br/>Sustainable growth.</div></div>

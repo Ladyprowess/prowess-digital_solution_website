@@ -1,5 +1,6 @@
 "use client";
 
+import { previewSummary } from "@/lib/businessSummary";
 import { useState, useRef } from "react";
 
 /* ------------------------------------------------------------------ */
@@ -169,13 +170,7 @@ export default function BusinessStructureTemplate() {
 
   function handleDownload() {
     const text = generateExportText();
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${data.businessName || "business"}-structure.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    void previewSummary(`${data.businessName || 'My business'}: business structure`, text);
   }
 
   function handleReset() {
@@ -514,7 +509,7 @@ export default function BusinessStructureTemplate() {
             </h3>
             <p className="mt-1 text-sm text-slate-500">
               Here is a summary of your business structure. You can copy it,
-              download it as a text file, or use it as a starting point for a
+              print it or save it as a PDF, and use it as a starting point for a
               more detailed structure document.
             </p>
 
@@ -537,7 +532,7 @@ export default function BusinessStructureTemplate() {
                 onClick={handleDownload}
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Download as Text File
+                Preview / Print structure
               </button>
 
               <button

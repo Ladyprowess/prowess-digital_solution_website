@@ -38,9 +38,9 @@ export async function downloadBusinessCard(summary: BusinessSummary) {
   for(const row of section){ctx.font=row.heading?bold:regular;ctx.fillStyle='#263331';for(const line of row.lines){ctx.fillText(line,82,y);y+=31;}y+=8;}
   rule(y+2);y+=28;
  }
- ctx.textAlign='center';ctx.fillStyle='#507c80';ctx.font=bold;ctx.fillText('*** REVIEW COMPLETE ***',380,y+23);
+ ctx.textAlign='center';ctx.fillStyle='#507c80';ctx.font=bold;ctx.fillText('*** YOUR RESULT ***',380,y+23);
  ctx.font='18px "Courier New", monospace';ctx.fillStyle='#52615c';ctx.fillText(new Date().toLocaleDateString('en-GB',{timeZone:'Africa/Lagos'}),380,y+57);
- ctx.fillText('Based on your inputs. A planning guide,',380,y+96);ctx.fillText('not an independent audit.',380,y+123);ctx.fillText('prowessdigitalsolutions.com',380,y+164);
+ ctx.fillText('Prepared from your entries.',380,y+96);ctx.fillText('Keep a copy for your next steps.',380,y+123);ctx.fillText('prowessdigitalsolutions.com',380,y+164);
  const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Unable to create image')),'image/png'));
  saveBlob(blob);
 }
