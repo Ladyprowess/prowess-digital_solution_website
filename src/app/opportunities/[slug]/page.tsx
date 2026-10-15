@@ -182,7 +182,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <ApplyButton opportunityTitle={opp.title} organisationName={opp.organisation_name} applyUrl={opp.apply_url} />
+            <ApplyButton opportunityId={opp.id} opportunityTitle={opp.title} organisationName={opp.organisation_name} applyUrl={opp.apply_url} />
             <SaveButton itemType="opportunity" itemId={opp.id} />
           </div>
         </Reveal>

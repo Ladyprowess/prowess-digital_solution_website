@@ -5,11 +5,13 @@ import { ApplyModal } from "@/components/jobs/ApplyModal";
 
 export function ApplyButton({
   jobTitle,
+  jobId,
   companyName,
   applyUrl,
   className = "",
 }: {
   jobTitle: string;
+  jobId: string;
   companyName: string | null;
   applyUrl: string;
   className?: string;
@@ -25,7 +27,7 @@ export function ApplyButton({
       >
         Apply now →
       </button>
-      <ApplyModal open={open} onClose={() => setOpen(false)} jobTitle={jobTitle} companyName={companyName} applyUrl={applyUrl} />
+      <ApplyModal open={open} onClose={() => setOpen(false)} jobId={jobId} jobTitle={jobTitle} companyName={companyName} applyUrl={applyUrl} />
     </>
   );
 }

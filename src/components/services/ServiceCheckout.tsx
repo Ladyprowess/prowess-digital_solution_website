@@ -4,9 +4,15 @@ import { useEffect, useState } from "react";
 import { ArrowRight, LockKeyhole } from "lucide-react";
 import { defaultServicePrices } from "@/content/servicePages";
 import { formatMoney } from "@/lib/formatMoney";
+import { supabase } from "@/lib/supabase";
 import s from "./ServiceOfferPage.module.css";
 
 const serviceCopy: Record<string, { heading: string; question: string; placeholder: string }> = {
+  "business-audit": {
+    heading: "Tell us what needs an independent review.",
+    question: "Which controls, records or business activities concern you most?",
+    placeholder: "Describe the area to review, the problem you have noticed, the records available and any deadline or decision connected to the audit.",
+  },
   "business-model": {
     heading: "Tell us where the business logic is still unclear.",
     question: "Which part of the model needs the most work?",
@@ -59,9 +65,10 @@ export default function ServiceCheckout({ slug, title }: { slug: string; title: 
     setLoading(true);
     const data = new FormData(event.currentTarget);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch("/api/business-services/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
         body: JSON.stringify({ serviceSlug: slug, currency, fullName: data.get("fullName"), email: data.get("email"), phone: data.get("phone"), businessName: data.get("businessName"), brief: data.get("brief") }),
       });
       const result = await response.json();

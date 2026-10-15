@@ -9,6 +9,7 @@ import {
   BadgeCheck,
   BookOpen,
   Bookmark,
+  BriefcaseBusiness,
   CreditCard,
   FileText,
   Grid2X2,
@@ -38,6 +39,7 @@ const NAV_GROUPS: {
     label: "Workspace",
     items: [
       { label: "Purchases", href: "/account/purchases", icon: CreditCard },
+      { label: "Applications", href: "/account/applications", icon: BriefcaseBusiness },
       { label: "CVs", href: "/account/cvs", icon: FileText },
       { label: "Saved", href: "/account/saved", icon: Bookmark },
       { label: "Learning", href: "/account/learning", icon: BookOpen },

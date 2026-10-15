@@ -33,8 +33,9 @@ export async function POST(req: Request) {
     const { data: row, error: insertErr } = await supabase
       .from("skill_to_business_purchases")
       .insert({
+        user_id: member.id,
         full_name: fullName,
-        email,
+        email: String(email).trim().toLowerCase(),
         phone: phone || null,
         skill_or_business: skillOrBusiness,
         amount_usd: resolvedCurrency === "USD" ? amount : null,

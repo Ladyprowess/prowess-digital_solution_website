@@ -201,7 +201,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <ApplyButton jobTitle={job.title} companyName={job.companies?.name || null} applyUrl={job.apply_url} />
+            <ApplyButton jobId={job.id} jobTitle={job.title} companyName={job.companies?.name || null} applyUrl={job.apply_url} />
             <SaveButton itemType="job" itemId={job.id} />
           </div>
         </Reveal>

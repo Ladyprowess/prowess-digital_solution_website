@@ -7,3 +7,4 @@
 .page{--service-accent:var(--primary);--service-soft:var(--muted)}
 .testimonialShell article,.testimonialShell article blockquote,.testimonialShell article>p{color:var(--foreground)}
 .checkoutShell{width:min(1320px,calc(100% - 48px));max-width:none}.checkoutShell>section{grid-template-columns:minmax(300px,.6fr) minmax(0,1.4fr);gap:72px}@media(max-width:900px){.checkoutShell{width:min(100% - 40px,1320px)}.checkoutShell>section{grid-template-columns:1fr;gap:45px}}
+@media(max-width:650px){.coverBack{inset:24px 0 30px 28px}}

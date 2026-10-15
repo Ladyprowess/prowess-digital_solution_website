@@ -24,7 +24,9 @@ export async function markEventPaid(reference: string) {
   if (existing) return { ok: true, already_registered: true };
   const { error } = await supabase.from("event_registrations").insert({
     event_id: meta.event_id, full_name: String(meta.full_name).trim(), email: String(email).trim(),
+    user_id: meta.user_id ? String(meta.user_id) : null,
     phone: meta.phone ? String(meta.phone).trim() : null, payment_status: "paid", flutterwave_reference: reference,
+    amount_paid: amount, currency,
   });
   if (error) {
     if (error.code === "23505") {

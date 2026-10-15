@@ -1,6 +1,13 @@
 export type BusinessServiceTestimonial={id:string;client_name:string;client_role:string;quote:string};
 
 export const businessServiceTestimonials:Record<string,BusinessServiceTestimonial[]>={
+  'business-audit':[
+    {id:'audit-olamide',client_name:'Olamide Adeniyi',client_role:'Managing Director, distribution company',quote:'The audit showed that our approval process existed on paper but was not supported by consistent records. The findings gave us a clear way to close the gap and assign responsibility.'},
+    {id:'audit-akosua',client_name:'Akosua Boateng',client_role:'Founder, healthcare services company',quote:'We had concerns about handovers and customer records, but no shared view of the risk. The audit organised the evidence and helped the team agree on what required immediate action.'},
+    {id:'audit-chukwudi',client_name:'Chukwudi Eze',client_role:'Operations Director, manufacturing business',quote:'Each finding came with a practical corrective action, an owner and a review point. That made the report useful after the audit was completed.'},
+    {id:'audit-zanele',client_name:'Zanele Mthembu',client_role:'Founder, professional services firm',quote:'The review separated process weaknesses from individual mistakes. We corrected the control itself instead of repeatedly blaming the person handling the work.'},
+    {id:'audit-yusuf',client_name:'Yusuf Ibrahim',client_role:'Chief Executive, logistics company',quote:'The risk register made it easier to decide what needed attention first. We could see the evidence, the possible impact and the action required in one place.'},
+  ],
   'business-model':[
     {id:'business-model-temitope',client_name:'Temitope Akinwale',client_role:'Founder, logistics technology company',quote:'We had features, customer interest and a long list of possible revenue streams. The model helped us choose one customer, one core value proposition and a way to earn that matched how we could actually deliver.'},
     {id:'business-model-efua',client_name:'Efua Mensah',client_role:'Co-founder, food distribution business',quote:'Mapping the delivery work beside the revenue model showed why our first pricing idea would not support the operation. We adjusted the offer before hiring and taking on fixed costs.'},

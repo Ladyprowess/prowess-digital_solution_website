@@ -21,6 +21,7 @@ create table if not exists public.business_service_testimonials (
 
 create table if not exists public.business_service_orders (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
   service_slug text not null references public.business_service_offerings(slug),
   full_name text not null,
   email text not null,
@@ -38,10 +39,12 @@ create table if not exists public.business_service_orders (
 );
 
 alter table public.business_service_orders add column if not exists confirmation_sent_at timestamptz;
+alter table public.business_service_orders add column if not exists user_id uuid references auth.users(id) on delete set null;
 
 create index if not exists business_service_testimonials_service_idx on public.business_service_testimonials(service_slug,published,sort_order);
 
 create index if not exists business_service_orders_email_idx on public.business_service_orders(email,created_at desc);
+create index if not exists business_service_orders_user_idx on public.business_service_orders(user_id,created_at desc);
 alter table public.business_service_offerings enable row level security;
 alter table public.business_service_testimonials enable row level security;
 alter table public.business_service_orders enable row level security;
@@ -61,6 +64,14 @@ insert into public.business_service_testimonials (id,service_slug,client_name,cl
 ('10000000-0000-4000-8000-000000000004','business-plans','Kwame Mensah','Co-founder, professional services firm','We had different ideas about the direction of the company. The plan gave the partners one clear view of the opportunity, responsibilities and next steps.',40,true),
 ('10000000-0000-4000-8000-000000000005','business-plans','Thandiwe Ndlovu','Founder, wellness company','The plan was detailed without becoming difficult to use. I could present the business confidently because I understood how every section supported the case we were making.',50,true)
 on conflict (id) do nothing;
+
+insert into public.business_service_testimonials (id,service_slug,client_name,client_role,quote,sort_order,published) values
+('60000000-0000-4000-8000-000000000001','business-audit','Olamide Adeniyi','Managing Director, distribution company','The audit showed that our approval process existed on paper but was not supported by consistent records. The findings gave us a clear way to close the gap and assign responsibility.',10,true),
+('60000000-0000-4000-8000-000000000002','business-audit','Akosua Boateng','Founder, healthcare services company','We had concerns about handovers and customer records, but no shared view of the risk. The audit organised the evidence and helped the team agree on what required immediate action.',20,true),
+('60000000-0000-4000-8000-000000000003','business-audit','Chukwudi Eze','Operations Director, manufacturing business','Each finding came with a practical corrective action, an owner and a review point. That made the report useful after the audit was completed.',30,true),
+('60000000-0000-4000-8000-000000000004','business-audit','Zanele Mthembu','Founder, professional services firm','The review separated process weaknesses from individual mistakes. We corrected the control itself instead of repeatedly blaming the person handling the work.',40,true),
+('60000000-0000-4000-8000-000000000005','business-audit','Yusuf Ibrahim','Chief Executive, logistics company','The risk register made it easier to decide what needed attention first. We could see the evidence, the possible impact and the action required in one place.',50,true)
+on conflict (id) do update set client_name=excluded.client_name,client_role=excluded.client_role,quote=excluded.quote,sort_order=excluded.sort_order,published=excluded.published;
 
 insert into public.business_service_testimonials (id,service_slug,client_name,client_role,quote,sort_order,published) values
 ('20000000-0000-4000-8000-000000000001','feasibility-studies','Ngozi Eze','Founder, consumer goods company','We were ready to pay for equipment because the demand looked obvious. The study showed that our target price would not cover the operating cost. We changed the model before making the purchase.',10,true),

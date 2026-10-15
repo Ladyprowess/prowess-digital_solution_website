@@ -3,11 +3,13 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { initializePayment, generateReference } from "@/lib/payments/flutterwave";
 import { sendEventRegistrationEmails } from "@/lib/events/emails";
+import { verifyMember } from "@/lib/auth/verifyMember";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
+    const member = await verifyMember(req);
     const body = await req.json();
     const { event_id, full_name, email, phone, currency } = body || {};
 
@@ -39,6 +41,7 @@ export async function POST(req: Request) {
       const { error: regError } = await supabase.from("event_registrations").insert([
         {
           event_id,
+          user_id: member?.id || null,
           full_name: String(full_name).trim(),
           email: String(email).trim(),
           phone: phone ? String(phone).trim() : null,
@@ -86,6 +89,7 @@ export async function POST(req: Request) {
         full_name: String(full_name).trim(),
         email: String(email).trim(),
         phone: phone ? String(phone).trim() : "",
+        user_id: member?.id || "",
       },
     });
 

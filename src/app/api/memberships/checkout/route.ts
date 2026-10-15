@@ -54,13 +54,14 @@ export async function POST(req: Request) {
     const { data: row, error: insertErr } = await supabase
       .from("membership_subscriptions")
       .insert({
+        user_id: member.id,
         plan_slug: planSlug,
         billing_interval: interval,
         amount_usd: resolvedCurrency === "USD" ? amount : null,
         amount_ngn: resolvedCurrency === "NGN" ? amount : null,
         currency: resolvedCurrency,
         full_name: fullName,
-        email,
+        email: String(email).trim().toLowerCase(),
         phone: phone || null,
         business_name: businessName,
         website: website || null,

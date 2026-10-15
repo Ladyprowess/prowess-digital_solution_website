@@ -33,7 +33,7 @@ export default function AccountOverviewPage() {
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [counts, setCounts] = useState({ saved: 0, learningInProgress: 0, purchases: 0, interests: 0 });
+  const [counts, setCounts] = useState({ saved: 0, applications: 0, learningInProgress: 0, purchases: 0, interests: 0 });
 
   useEffect(() => {
     (async () => {
@@ -42,8 +42,9 @@ export default function AccountOverviewPage() {
       const token = session?.access_token;
       const userId = session?.user?.id;
 
-      const [savedCount, learningRows, interestCount, purchasesRes, staffRow] = await Promise.all([
+      const [savedCount, applicationCount, learningRows, interestCount, purchasesRes, staffRow] = await Promise.all([
         supabase.from("saved_items").select("id", { count: "exact", head: true }),
+        supabase.from("applications").select("id", { count: "exact", head: true }),
         supabase.from("learning_progress").select("status"),
         supabase.from("user_career_interests").select("career_path_id", { count: "exact", head: true }),
         token
@@ -58,6 +59,7 @@ export default function AccountOverviewPage() {
       const learningInProgress = (learningRows.data || []).filter((r) => r.status !== "completed").length;
       setCounts({
         saved: savedCount.count || 0,
+        applications: applicationCount.count || 0,
         learningInProgress,
         purchases: purchasesRes?.ok ? purchasesRes.items.length : 0,
         interests: interestCount.count || 0,
@@ -123,8 +125,9 @@ export default function AccountOverviewPage() {
       )}
 
       {/* Stats */}
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         <StatCard label="Saved" value={loading ? 0 : counts.saved} href="/account/saved" icon={Bookmark} />
+        <StatCard label="Applications" value={loading ? 0 : counts.applications} href="/account/applications" icon={BriefcaseBusiness} />
         <StatCard label="My library" value={loading ? 0 : counts.learningInProgress} href="/account/learning" icon={Library} />
         <StatCard label="Purchases" value={loading ? 0 : counts.purchases} href="/account/purchases" icon={ReceiptText} />
         <StatCard label="Career interests" value={loading ? 0 : counts.interests} href="/account/interests" icon={Route} />

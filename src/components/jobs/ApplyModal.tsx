@@ -1,23 +1,27 @@
 "use client";
 
 import Modal from "@/components/Modal";
+import { supabase } from "@/lib/supabase";
 
 export function ApplyModal({
   open,
   onClose,
   jobTitle,
+  jobId,
   companyName,
   applyUrl,
 }: {
   open: boolean;
   onClose: () => void;
   jobTitle: string;
+  jobId: string;
   companyName: string | null;
   applyUrl: string;
 }) {
   function proceed() {
     window.open(applyUrl, "_blank", "noopener,noreferrer");
     onClose();
+    void supabase.auth.getSession().then(({ data: { session } }) => session ? fetch("/api/account/applications", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ itemType: "job", itemId: jobId, title: jobTitle, organisationName: companyName, applyUrl }) }).catch(() => null) : null);
   }
 
   return (

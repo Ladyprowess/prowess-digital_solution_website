@@ -8,6 +8,7 @@ import Container from "@/components/Container";
 import { Reveal } from "@/components/Reveal";
 import { formatMoney } from "@/lib/formatMoney";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import { supabase } from "@/lib/supabase";
 
 type EventRow = {
   id: string;
@@ -181,10 +182,11 @@ export default function EventRegistrationPage() {
     }
 
     setSubmitting(true);
+    const { data: { session } } = await supabase.auth.getSession();
 
     const res = await fetch("/api/events/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
       body: JSON.stringify({
         event_id: event.id,
         full_name: fullName.trim(),

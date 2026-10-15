@@ -11,6 +11,7 @@ type EbookFormat = "read" | "download" | "hardcopy";
 type Purchase = {
   id: string; item_type: string; item_id: string; amount: number; currency: string;
   title: string; slug: string | null; created_at: string;
+  href?: string | null; description?: string | null;
   formats: EbookFormat[]; download_url: string | null;
 };
 
@@ -83,7 +84,7 @@ export default function PurchasesPage() {
           ) : (
             <ul className="space-y-2">
               {purchases.map((p) => {
-                const href = hrefFor(p.item_type, p.slug);
+                const href = p.href || hrefFor(p.item_type, p.slug);
                 const hasFormats = p.formats && p.formats.length > 0;
                 return (
                   <li key={p.id} className="rounded-xl border border-border/60 px-4 py-3 text-sm">
@@ -95,6 +96,7 @@ export default function PurchasesPage() {
                       )}
                       <span className="flex-shrink-0 text-xs text-muted-foreground">{formatMoney(Number(p.amount), (p.currency || "NGN").toUpperCase() === "USD" ? "USD" : "NGN")}</span>
                     </div>
+                    {p.description && <p className="mt-1 text-xs capitalize text-muted-foreground">{p.description}</p>}
 
                     {hasFormats && (
                       <div className="mt-2 flex flex-wrap items-center gap-2">

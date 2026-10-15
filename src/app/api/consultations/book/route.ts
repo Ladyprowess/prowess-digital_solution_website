@@ -1,5 +1,6 @@
 import { consultationPrice } from "@/lib/payments/consultationPrice";
 import { NextResponse } from "next/server";
+import { verifyMember } from "@/lib/auth/verifyMember";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createGoogleEvent } from "@/lib/googleCalendar";
 import { sendConsultationEmail } from "@/lib/email";
@@ -13,6 +14,7 @@ function buildStartISO(scheduled_date: string, scheduled_time: string) {
 }
 
 export async function POST(req: Request) {
+  const member = await verifyMember(req);
   try {
     const body = await req.json().catch(() => null);
 
@@ -76,6 +78,7 @@ export async function POST(req: Request) {
       .from("consultation_bookings")
       .insert([
         {
+          user_id: member?.id || null,
           service_id,
           full_name,
           email,

@@ -153,6 +153,22 @@
 html,
 body {
   height: 100%;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
+
+/* Prevent wide children and long unbroken content from widening the iOS
+   layout viewport. Purpose-built horizontal scrollers still scroll inside
+   their own overflow containers. */
+body > *, main, header, footer, section, article, aside, nav, form, fieldset {
+  min-width: 0;
+}
+
+img, video, canvas {
+  max-width: 100%;
+  height: auto;
 }
 
 body {
@@ -435,5 +451,14 @@ body {
 @media (hover: none) and (pointer: coarse) {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]), select, textarea {
     font-size: max(16px, 1rem) !important;
+  }
+}
+
+/* Safari zooms the whole page when a focused form control computes below
+   16px. This feature query covers Safari in browser and installed PWA mode,
+   including iPads using a trackpad where the coarse-pointer query may fail. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]), select, textarea {
+    font-size: 16px !important;
   }
 }

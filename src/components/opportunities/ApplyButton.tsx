@@ -5,11 +5,13 @@ import { ApplyModal } from "@/components/opportunities/ApplyModal";
 
 export function ApplyButton({
   opportunityTitle,
+  opportunityId,
   organisationName,
   applyUrl,
   className = "",
 }: {
   opportunityTitle: string;
+  opportunityId: string;
   organisationName: string | null;
   applyUrl: string;
   className?: string;
@@ -25,7 +27,7 @@ export function ApplyButton({
       >
         Apply now →
       </button>
-      <ApplyModal open={open} onClose={() => setOpen(false)} opportunityTitle={opportunityTitle} organisationName={organisationName} applyUrl={applyUrl} />
+      <ApplyModal open={open} onClose={() => setOpen(false)} opportunityId={opportunityId} opportunityTitle={opportunityTitle} organisationName={organisationName} applyUrl={applyUrl} />
     </>
   );
 }
