@@ -75,8 +75,8 @@ export function learningPlanReport(pathIndex:number,selected:number[],skillName=
   const challenges=path.challenges.filter((_,index)=>selected.includes(index));
   if(!challenges.length) return null;
   return [
-    skillName.trim()||'My next skill',
-    `${path.title}: learning plan`,
+    `Skill: ${skillName.trim()||'My next skill'}`,
+    `Focus: ${path.title}`,
     '',
     'This plan is based on the learning challenges you selected. Adjust the pace and activities to your current responsibilities and starting level.',
     '',

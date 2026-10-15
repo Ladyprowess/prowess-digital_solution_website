@@ -33,7 +33,7 @@ test('all sixteen learning challenges provide checks and practical actions',()=>
 
 test('the learning plan preserves the skill and user notes without claiming assessment',()=>{
   const result=learningPlanReport(2,[0,2],'Data analysis','Practise on Saturdays');
-  assert.ok(result.startsWith('Data analysis'));
+  assert.ok(result.startsWith('Skill: Data analysis'));
   assert.ok(result.includes('Your notes\nPractise on Saturdays'));
   assert.ok(result.includes('challenges you selected'));
   assert.ok(!result.includes(learningPaths[2].challenges[1].label));

@@ -80,7 +80,7 @@ export default function HomeLaunchpad(p:Props) {
     <div key={ambition} className={s.journey}>
       <section className={s.toolSection}>
         <div className={s.section}><div className={s.sectionHeading}><div><p className={s.eyebrow}>TOOLS YOU CAN USE TODAY</p><h2>{ambition==='business'?'Check your business, track your money and send invoices.':ambition==='work'?'Get ready for your next application.':ambition==='skills'?'Turn what you learn into work you can show.':'Get ready for the opportunity you want.'}</h2></div><Link href="/tools" className={s.textLink}>Explore all tools <ArrowUpRight size={18}/></Link></div>
-        <div className={s.toolCards}>{journey.tools.map((t,i)=><article key={t.href}><div className={s.toolCardTop}><span>0{i+1}</span></div><h3>{t.title}</h3><p>{t.detail}</p><Link href={t.href}>{t.label}<ArrowUpRight size={19}/></Link></article>)}</div>
+        <div className={s.toolCards}>{journey.tools.map((t)=><article key={t.href}><h3>{t.title}</h3><p>{t.detail}</p><Link href={t.href}>{t.label}<ArrowUpRight size={19}/></Link></article>)}</div>
         <div className={s.toolsFoot}><span>Check each tool for free and paid access.</span></div></div>
       </section>
       {ambition==='business'&&<BusinessWork/>}

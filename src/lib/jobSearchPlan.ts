@@ -75,8 +75,8 @@ export function jobSearchPlanReport(pathIndex: number, selected: number[], targe
   const problems = path.problems.filter((_, index) => selected.includes(index));
   if (!problems.length) return null;
   return [
-    targetRole.trim() || 'My next role',
-    `${path.title}: action plan`,
+    `Role: ${targetRole.trim() || 'My next role'}`,
+    `Focus: ${path.title}`,
     '',
     'This plan is based on the challenges you selected. Use the checks to confirm what applies before taking action.',
     '',

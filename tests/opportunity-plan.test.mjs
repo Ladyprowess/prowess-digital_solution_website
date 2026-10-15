@@ -33,7 +33,7 @@ test('all sixteen opportunity challenges provide checks and practical actions',(
 
 test('the plan preserves user details and tells users to verify official terms',()=>{
   const result=opportunityPlanReport(0,[0,2],'Growth Fund','Deadline is 30 June');
-  assert.ok(result.startsWith('Growth Fund'));
+  assert.ok(result.startsWith('Opportunity: Growth Fund'));
   assert.ok(result.includes('Your notes\nDeadline is 30 June'));
   assert.ok(result.includes('official page'));
   assert.ok(!result.includes(opportunityPaths[0].challenges[1].label));

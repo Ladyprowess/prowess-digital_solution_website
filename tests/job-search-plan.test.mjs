@@ -35,7 +35,7 @@ test('all career challenges provide a reason, a check and a next action', () => 
 
 test('the plan keeps the target role and user notes without inventing findings', () => {
   const result=jobSearchPlanReport(1,[0,2],'Product designer','Apply before Friday');
-  assert.ok(result.startsWith('Product designer'));
+  assert.ok(result.startsWith('Role: Product designer'));
   assert.ok(result.includes('Your notes\nApply before Friday'));
   assert.ok(result.includes('challenges you selected'));
   assert.ok(!result.includes(careerPaths[1].problems[1].label));

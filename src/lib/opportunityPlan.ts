@@ -75,8 +75,8 @@ export function opportunityPlanReport(pathIndex:number,selected:number[],opportu
   const challenges=path.challenges.filter((_,index)=>selected.includes(index));
   if(!challenges.length) return null;
   return [
-    opportunityName.trim()||'My opportunity',
-    `${path.title}: application plan`,
+    `Opportunity: ${opportunityName.trim()||'My opportunity'}`,
+    `Focus: ${path.title}`,
     '',
     'This plan is based on the challenges you selected. Confirm eligibility, deadlines and terms on the organisation’s official page.',
     '',
