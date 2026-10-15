@@ -21,7 +21,7 @@ export const pillars = [
 // other site. Removing the duplicate also gives the five real pillars more
 // breathing room in the nav bar.
 export const navPrimary = [
-  { href: "/services", label: "Business support" },
+  { href: "/services", label: "Business Services" },
   { href: "/learn", label: "Learning" },
   { href: "/jobs", label: "Jobs" },
   { href: "/opportunities", label: "Opportunities" },

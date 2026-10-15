@@ -28,3 +28,35 @@
 .documentDialog .feedWindow{min-width:0;width:auto;overflow-x:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .documentDialog .feedWindow img{margin:0;flex-shrink:0}
 @media(max-width:480px){.printDialog{width:calc(100vw - 24px);max-width:calc(100vw - 24px);padding:14px}.printHeader>div{min-width:0}.printHeader p{overflow-wrap:anywhere}.documentDialog .feedWindow{margin-inline:0}.printActions{gap:6px}}
+
+/* The full business offer, grouped around the decision the client is making. */
+.catalogue{background:#edf1ef;border-block:1px solid var(--line)}
+.serviceGroups{display:grid;gap:20px}
+.serviceGroup{display:grid;grid-template-columns:minmax(240px,.72fr) minmax(0,1.65fr);background:#fff;border:1px solid #d4dad6}
+.groupHeading{display:flex;gap:20px;padding:32px}
+.groupHeading>span{font-family:monospace;font-size:12px;color:#507c80;padding-top:4px}
+.groupHeading p{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#507c80}
+.groupHeading h3{font-size:26px;line-height:1.2;letter-spacing:-.03em;margin:10px 0 12px}
+.groupHeading small{display:block;color:#596967;font-size:13px;line-height:1.7}
+.groupServices{display:grid;grid-template-columns:1fr 1fr;border-left:1px solid #d4dad6}
+.catalogueService{display:flex;justify-content:space-between;gap:20px;min-height:190px;padding:25px;border-bottom:1px solid #d4dad6;transition:background-color .2s,color .2s}
+.catalogueService:nth-last-child(-n+2){border-bottom:0}
+.catalogueService:nth-child(odd){border-right:1px solid #d4dad6}
+.catalogueService:hover{background:#213d40;color:#fff}
+.catalogueService h4{font-size:19px;line-height:1.3;font-weight:700}
+.catalogueService p{font-size:13px;line-height:1.7;color:#596967;margin:10px 0 24px}
+.catalogueService:hover p{color:#d5dfdf}
+.catalogueService span{font-size:12px;font-weight:800;color:#507c80}
+.catalogueService:hover span{color:#bcd3d4}
+.catalogueService>svg{flex:0 0 auto;margin-top:3px}
+.addOns{background:#f8f8f6}
+.addOnGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:#cfd7d3;border:1px solid #cfd7d3}
+.addOnCard{display:flex;flex-direction:column;min-height:290px;padding:28px;background:#fff}
+.addOnCard>span{font-family:monospace;font-size:11px;color:#507c80}
+.addOnCard h3{font-size:21px;line-height:1.25;letter-spacing:-.02em;margin:26px 0 12px}
+.addOnCard p{font-size:13px;line-height:1.75;color:#596967;flex:1}
+.addOnCard a{display:inline-flex;align-items:center;gap:9px;min-height:44px;margin-top:22px;font-size:12px;font-weight:800;color:#456f72}
+.addOnCard a:hover{text-decoration:underline}
+@media(max-width:900px){.serviceGroup{grid-template-columns:1fr}.groupServices{border-left:0;border-top:1px solid #d4dad6}.addOnGrid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.groupHeading{padding:24px}.groupServices{grid-template-columns:1fr}.catalogueService{min-height:auto}.catalogueService:nth-child(odd){border-right:0}.catalogueService:nth-last-child(2){border-bottom:1px solid #d4dad6}.addOnGrid{grid-template-columns:1fr}.addOnCard{min-height:230px}}
+@media(prefers-reduced-motion:reduce){.catalogueService{transition:none}}

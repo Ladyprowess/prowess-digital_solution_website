@@ -6,6 +6,7 @@ import Link from "next/link";
 import AgencyPageHeader from "@/components/AgencyPageHeader";
 import { Reveal } from "@/components/Reveal";
 import { packages, addOns, annualMonthlyPrice, annualTotalPrice } from "@/content/site";
+import { serviceAddOns } from "@/content/businessServices";
 import MembershipIntakeModal from "@/components/MembershipIntakeModal";
 import type { BillingInterval } from "@/lib/payments/flutterwave";
 import { formatMoney } from "@/lib/formatMoney";
@@ -410,7 +411,7 @@ export default function PricingPageClient() {
                   <div className="mt-4 font-bold text-foreground">{item.title}</div>
                   <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
                   <Link
-                    href="/contact"
+                    href={serviceAddOns[i].href}
                     className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:opacity-80"
                   >
                     Ask about this →

@@ -1,6 +1,7 @@
 import { services } from "@/content/site";
 import type { Metadata } from "next";
 import ContactPageClient from "./ContactPageClient";
+import { businessServiceTitleFromParam } from "@/content/businessServices";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
@@ -28,6 +29,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
     'business-case-study': 'Business case study',
     'website-build': 'Build my website',
   };
-  const inquiry = selected?.title || (typeof service === 'string' ? projectTypes[service] : '') || '';
+  const inquiry = selected?.title || (typeof service === 'string' ? projectTypes[service] || businessServiceTitleFromParam(service) : '') || '';
   return <ContactPageClient key={inquiry || "general"} initialInquiry={inquiry} />;
 }

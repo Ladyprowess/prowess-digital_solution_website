@@ -2,6 +2,7 @@
 
 import { trackEvent } from "@/lib/analytics";
 import { services } from "@/content/site";
+import { businessServiceInquiryTitles } from "@/content/businessServices";
 import { useMemo, useState } from "react";
 import Container from "@/components/Container";
 import Button from "@/components/Button";
@@ -27,8 +28,9 @@ type FormState = {
 };
 
 const BUSINESS_STAGES = ["Starting Out", "Growing", "Scaling"];
-const INQUIRY_TYPES = [
+const INQUIRY_TYPES = [...new Set([
   ...services.map((service) => service.title),
+  ...businessServiceInquiryTitles,
   "Business plan",
   "Business case study",
   "Build my website",
@@ -40,7 +42,7 @@ const INQUIRY_TYPES = [
   "Training & Mentorship",
   "Partnership",
   "Support",
-];
+])];
 
 export default function ContactPageClient({ initialInquiry = "" }: { initialInquiry?: string }) {
   const [form, setForm] = useState<FormState>({
@@ -194,7 +196,7 @@ export default function ContactPageClient({ initialInquiry = "" }: { initialInqu
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-foreground">
+                    <label htmlFor="inquiry_type" className="text-sm font-medium text-foreground">
                       Email Address <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -219,8 +221,10 @@ export default function ContactPageClient({ initialInquiry = "" }: { initialInqu
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-foreground">Business Stage</label>
+                    <label htmlFor="business_stage" className="text-sm font-medium text-foreground">Business Stage</label>
                     <select
+                      id="business_stage"
+                      name="business_stage"
                       className="h-12 w-full rounded-xl border border-border bg-card px-4 text-foreground outline-none focus:border-primary"
                       value={form.business_stage}
                       onChange={(e) => set("business_stage", e.target.value)}
@@ -235,10 +239,12 @@ export default function ContactPageClient({ initialInquiry = "" }: { initialInqu
                   </div>
 
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-foreground">
+                    <label htmlFor="inquiry_type" className="text-sm font-medium text-foreground">
                       Inquiry Type <span className="text-red-500">*</span>
                     </label>
                     <select
+                      id="inquiry_type"
+                      name="inquiry_type"
                       className="h-12 w-full rounded-xl border border-border bg-card px-4 text-foreground outline-none focus:border-primary"
                       value={form.inquiry_type}
                       onChange={(e) => set("inquiry_type", e.target.value)}

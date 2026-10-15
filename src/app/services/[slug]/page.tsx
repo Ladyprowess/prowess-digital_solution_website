@@ -8,6 +8,8 @@ import FinancialLanding from "@/components/services/FinancialLanding";
 import PlaybookLanding from "@/components/services/PlaybookLanding";
 import SopLanding from "@/components/services/SopLanding";
 import DiagnosticLanding from "@/components/DiagnosticLanding";
+import ServiceOfferPage from "@/components/services/ServiceOfferPage";
+import { servicePageBySlug } from "@/content/servicePages";
 
 const SITE_URL = "https://prowessdigitalsolutions.com";
 
@@ -25,25 +27,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!slug) return {};
 
+  const catalogueService = servicePageBySlug(slug);
   const service = getService(slug);
-  if (!service) return {};
+  if (!service && !catalogueService) return {};
 
-  const url = `${SITE_URL}/services/${service.slug}`;
+  const url = `${SITE_URL}/services/${catalogueService?.slug || service?.slug}`;
+  const title = catalogueService?.title || service!.title;
+  const description = catalogueService?.description || service!.short;
 
   return {
-    title: service.title,
-    description: service.short,
+    title,
+    description,
     alternates: { canonical: url },
     openGraph: {
-      title: `${service.title} | Prowess Digital Solutions`,
-      description: service.short,
+      title: `${title} | Prowess Digital Solutions`,
+      description,
       url,
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${service.title} | Prowess Digital Solutions`,
-      description: service.short,
+      title: `${title} | Prowess Digital Solutions`,
+      description,
       images: ["/og-image.png"],
     },
   };
@@ -54,6 +59,9 @@ export default async function ServicePage({ params }: PageProps) {
   const slug = resolved?.slug;
 
   if (!slug) return notFound();
+
+  const catalogueService = servicePageBySlug(slug);
+  if (catalogueService) return <ServiceOfferPage service={catalogueService} />;
 
   const service = getService(slug);
   if (!service) return notFound();
