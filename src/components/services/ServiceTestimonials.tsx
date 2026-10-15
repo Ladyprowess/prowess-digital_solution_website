@@ -2,6 +2,7 @@
 import { useEffect,useState } from 'react';import { ArrowLeft,ArrowRight } from 'lucide-react';import { businessServiceTestimonials } from '@/content/businessServiceTestimonials';import s from './ServiceOfferPage.module.css';
 type Testimonial={id:string;client_name:string;client_role:string|null;quote:string};
 const testimonialHeadings:Record<string,{eyebrow:string;title:string}>={
+  'business-model':{eyebrow:'From business model clients',title:'What became clearer when the business logic was mapped.'},
   'business-plans':{eyebrow:'From business plan clients',title:'What changed after the plan was completed.'},
   'feasibility-studies':{eyebrow:'From feasibility study clients',title:'What the study clarified before they committed.'},
   'market-research':{eyebrow:'From market research clients',title:'What became clearer when the assumptions were tested.'},

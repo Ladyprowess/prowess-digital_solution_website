@@ -7,6 +7,11 @@ import { formatMoney } from "@/lib/formatMoney";
 import s from "./ServiceOfferPage.module.css";
 
 const serviceCopy: Record<string, { heading: string; question: string; placeholder: string }> = {
+  "business-model": {
+    heading: "Tell us where the business logic is still unclear.",
+    question: "Which part of the model needs the most work?",
+    placeholder: "Describe the customer, offer, delivery approach and how you expect the business to earn. Include the assumptions you are least certain about.",
+  },
   "business-structure-diagnostic": {
     heading: "Tell us what keeps going wrong in the business.",
     question: "What problems keep returning, and what have you already tried?",

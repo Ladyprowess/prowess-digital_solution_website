@@ -1,6 +1,13 @@
 export type BusinessServiceTestimonial={id:string;client_name:string;client_role:string;quote:string};
 
 export const businessServiceTestimonials:Record<string,BusinessServiceTestimonial[]>={
+  'business-model':[
+    {id:'business-model-temitope',client_name:'Temitope Akinwale',client_role:'Founder, logistics technology company',quote:'We had features, customer interest and a long list of possible revenue streams. The model helped us choose one customer, one core value proposition and a way to earn that matched how we could actually deliver.'},
+    {id:'business-model-efua',client_name:'Efua Mensah',client_role:'Co-founder, food distribution business',quote:'Mapping the delivery work beside the revenue model showed why our first pricing idea would not support the operation. We adjusted the offer before hiring and taking on fixed costs.'},
+    {id:'business-model-idris',client_name:'Idris Abdullahi',client_role:'Director, professional services firm',quote:'The team finally had one clear explanation of who we serve, what we provide and how each part of the business supports the others.'},
+    {id:'business-model-lerato',client_name:'Lerato Mokoena',client_role:'Founder, education venture',quote:'The assumption map was the most useful part. It separated what we knew from what we were only hoping would be true and gave us practical tests for the next month.'},
+    {id:'business-model-chisom',client_name:'Chisom Nwankwo',client_role:'Founder, consumer brand',quote:'I could see that the problem was not the product. The route to the customer and the cost of serving small orders were the parts that needed redesigning.'},
+  ],
   'business-plans':[
     {id:'business-plan-amina',client_name:'Amina Bello',client_role:'Founder, food processing business',quote:'I had the idea and the experience, but I could not put the business into a structure that made sense to someone outside it. The final plan explained the market, operations and numbers clearly.'},
     {id:'business-plan-chinedu',client_name:'Chinedu Okafor',client_role:'Managing Director, logistics company',quote:'The financial section helped me see the questions a lender would ask before I entered the meeting. I understood the assumptions and could explain what the funding would be used for.'},
