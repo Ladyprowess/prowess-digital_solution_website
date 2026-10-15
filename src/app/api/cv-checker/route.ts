@@ -8,6 +8,13 @@ import { hasPremiumAccess } from "@/lib/payments/premiumMembership";
 export const runtime = "nodejs";
 
 const MAX_BYTES = 5 * 1024 * 1024;
+
+export async function GET(req: Request) {
+  const member = await verifyMember(req);
+  if (!member) return NextResponse.json({ ok: false }, { status: 401 });
+  const hasAccess = await hasPremiumAccess({ userId: member.id, email: member.email });
+  return NextResponse.json({ ok: true, hasAccess });
+}
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",

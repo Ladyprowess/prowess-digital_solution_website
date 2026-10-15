@@ -138,3 +138,29 @@ test('tool data API enforces purchased tool scope for reading and writing',async
    assert.equal(await hasPremiumAccess({userId:'u1'}),expectedAccess);
   }
  });
+
+test('Premium checkout returns the provider payment page for both billing periods and currencies', async () => {
+ for (const interval of ['monthly','annually']) for (const currency of ['USD','NGN']) {
+  const amount = currency === 'USD' ? 20 : 30000;
+  const db = dbFor({id:'p1',billing_interval:interval,currency,amount_usd:20,amount_ngn:30000,subscription_status:'pending',checkout_url:null,flutterwave_reference:null});
+  let payment;
+  const {POST} = load('src/app/api/premium-membership/checkout/route.ts', {
+   'next/server':next,
+   '@/lib/supabase/admin':{supabaseAdmin:()=>db},
+   '@/lib/auth/verifyMember':{verifyMember:async()=>({id:'u1',email:'buyer@example.com'})},
+   '@/lib/payments/premiumMembershipPricing':{getPremiumMembershipPricing:async()=>({monthlyUsd:20,annualUsd:20,monthlyNgn:30000,annualNgn:30000})},
+   '@/lib/payments/flutterwave':{
+    getOrCreatePaymentPlan:async params=>{assert.equal(params.interval,interval);assert.equal(params.currency,currency);return 'plan-1';},
+    generateReference:()=> 'PREM-TEST',
+    initializePayment:async params=>{payment=params;return {link:'https://checkout.example.com/premium'};},
+   },
+  });
+  const response = await POST(new Request('https://example.com',{method:'POST',body:JSON.stringify({interval,currency})}));
+  assert.equal(response.status,200);
+  assert.equal((await response.json()).authorizationUrl,'https://checkout.example.com/premium');
+  assert.equal(payment.amount,amount);
+  assert.equal(payment.currency,currency);
+  assert.equal(new URL(payment.callbackUrl).pathname,'/account/membership');
+  assert.equal(payment.metadata.subscription_id,'p1');
+ }
+});

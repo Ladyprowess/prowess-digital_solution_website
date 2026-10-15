@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Container from "@/components/Container";
 import { supabase } from "@/lib/supabase";
+import { memberRedirect } from "@/lib/auth/memberRedirect";
 
 export default function AccountLoginPage() {
   return (
@@ -17,7 +18,7 @@ export default function AccountLoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/account";
+  const redirect = memberRedirect(searchParams.get("redirect"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

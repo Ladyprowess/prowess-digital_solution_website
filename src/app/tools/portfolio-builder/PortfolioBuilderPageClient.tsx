@@ -148,7 +148,8 @@ function PortfolioBuilder() {
 
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
-  const [portfolioId, setPortfolioId] = useState<string | null>(searchParams.get("id"));
+  // A query parameter is a request, never proof of ownership or paid access.
+  const [portfolioId, setPortfolioId] = useState<string | null>(null);
   const [slug, setSlug] = useState("");
   const [fullName, setFullName] = useState("");
   const [headline, setHeadline] = useState("");

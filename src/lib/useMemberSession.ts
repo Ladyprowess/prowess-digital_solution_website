@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { memberLoginUrl } from "@/lib/auth/memberRedirect";
 
 export type MemberProfile = {
   id: string;
@@ -33,7 +34,7 @@ export function useMemberSession() {
     const user = session?.user;
     if (!user) {
       setStatus("signed-out");
-      router.push("/account/login");
+      router.replace(memberLoginUrl(window.location.pathname + window.location.search));
       return;
     }
     setEmail(user.email ?? null);

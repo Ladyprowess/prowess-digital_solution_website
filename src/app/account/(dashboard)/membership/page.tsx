@@ -128,7 +128,7 @@ function Membership() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground">Membership</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Premium unlocks every CV template, unlimited saved CVs and future premium tools.</p>
+      <p className="mt-1 text-sm text-muted-foreground">Premium includes every CV template, unlimited saved CVs, CV Checker, Interview Prep and Portfolio Builder. Choose monthly or annual billing below, then continue to payment.</p>
 
       <div className="mt-6 max-w-xl space-y-6">
         {verifying && <p className="text-sm text-muted-foreground">Confirming your payment…</p>}
@@ -187,7 +187,7 @@ function Membership() {
               disabled={upgrading || !selectedPrice}
               className="mt-4 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
-              {upgrading ? "Starting checkout…" : !selectedPrice ? "Not priced yet" : "Upgrade"}
+              {upgrading ? "Starting checkout…" : !selectedPrice ? "Not priced yet" : "Continue to payment"}
             </button>
           </Card>
         )}

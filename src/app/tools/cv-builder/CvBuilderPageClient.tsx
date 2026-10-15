@@ -119,7 +119,7 @@ function CvTemplateGallery() {
                   </div>
                   {locked ? (
                     <Link
-                      href="/tools"
+                      href="/account/membership"
                       className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-card px-4 text-sm font-semibold text-primary transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       Unlock this template

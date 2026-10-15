@@ -307,7 +307,7 @@ function PracticeView({
 export default function InterviewPrepPageClient() {
   const { status } = useMemberSession();
   const [loading, setLoading] = useState(true);
-  const [locked, setLocked] = useState(false);
+  const [locked, setLocked] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [category, setCategory] = useState<string>("");
   const [view, setView] = useState<"guide" | "practice">("guide");
@@ -329,6 +329,7 @@ export default function InterviewPrepPageClient() {
         setLoading(false);
         return;
       }
+      setLocked(false);
       setQuestions(res.questions || []);
       setLoading(false);
     })();

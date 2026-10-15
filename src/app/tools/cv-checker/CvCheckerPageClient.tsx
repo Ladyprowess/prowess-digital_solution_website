@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, ClipboardCheck, FileUp, Loader2, ShieldCheck } from "lucide-react";
 import Container from "@/components/Container";
@@ -16,6 +16,21 @@ export default function CvCheckerPageClient() {
   const formRef = useRef<HTMLFormElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [access, setAccess] = useState<"loading" | "allowed" | "locked" | "error">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { if (!cancelled) setAccess("locked"); return; }
+        const response = await fetch("/api/cv-checker", { headers: { Authorization: `Bearer ${session.access_token}` } });
+        const result = await response.json();
+        if (!cancelled) setAccess(response.status === 401 ? "locked" : !response.ok ? "error" : result.hasAccess === true ? "allowed" : "locked");
+      } catch { if (!cancelled) setAccess("error"); }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -78,7 +93,12 @@ export default function CvCheckerPageClient() {
       <section className="py-12 sm:py-14">
         <Container>
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(300px,0.28fr)]">
-            <form ref={formRef} onSubmit={submit} className="rounded-lg border border-border bg-card p-6 sm:p-8" aria-busy={status === "submitting"}>
+            {access !== "allowed" ? (
+              <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+                <p>{access === "loading" ? "Checking your Premium access…" : access === "error" ? "We couldn't check your access. Please reload and try again." : "Activate Premium to submit your CV for review."}</p>
+                {access === "locked" && <Link href="/account/membership" className="mt-4 inline-block font-semibold text-primary underline">View membership plans</Link>}
+              </div>
+            ) : <form ref={formRef} onSubmit={submit} className="rounded-lg border border-border bg-card p-6 sm:p-8" aria-busy={status === "submitting"}>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label htmlFor="full_name" className={labelCls}>Full name *</label>
@@ -135,7 +155,7 @@ export default function CvCheckerPageClient() {
                 {status === "submitting" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
                 {status === "submitting" ? "Submitting" : "Submit CV"}
               </button>
-            </form>
+            </form>}
 
             <aside className="space-y-4">
               <div className="rounded-lg border border-border bg-card p-5">

@@ -499,6 +499,11 @@ function CvBuilderEditor() {
             </SectionCard>
 
             {saveError && <p className="text-sm font-medium text-destructive">{saveError}</p>}
+            {saveError.startsWith("Upgrade to Premium") && (
+              <Link href="/account/membership" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-primary underline">
+                View Premium plans (opens in a new tab to keep your CV open)
+              </Link>
+            )}
 
             <div className="flex flex-wrap gap-3">
               <button
