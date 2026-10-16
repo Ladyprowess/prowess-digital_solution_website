@@ -1,7 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import ts from 'typescript';
 const receiptModule={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/captureBusinessResult.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module:receiptModule,exports:receiptModule.exports});
 const module={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/businessSummary.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{module,exports:module.exports,require:()=>receiptModule.exports});
-test('print document escapes user content and supports multi-section print layouts',()=>{const html=module.exports.summaryDocument({title:'<img src=x>',content:'<script>bad()</script>\n\nCustomer: A & B\nReview: tomorrow'});assert.ok(!html.includes('<script>'));assert.ok(!html.includes('<img'));assert.ok(html.includes('&lt;script&gt;'));assert.ok(html.includes('A &amp; B'));assert.ok(html.includes('@page{size:A4'));assert.equal((html.match(/class="section"/g)||[]).length,2);});
 test('text results are laid out as the same receipt as the financial summary',()=>{
  const body=receiptModule.exports.textReceiptBody('Business: <b>Acme</b>\nFocus: Business plan\n\n1. Sales fell\nPossible causes: Prices may not cover the full cost of each sale, overheads may be too high.\n\nAfter costs: 1,500');
  assert.ok(!body.includes('<b>Acme</b>'));assert.ok(body.includes('&lt;b&gt;Acme&lt;/b&gt;'));
@@ -28,12 +27,13 @@ test('printouts never show web addresses',()=>{
  for(const file of ['src/lib/businessProblemReview.ts','src/lib/jobSearchPlan.ts','src/lib/opportunityPlan.ts','src/lib/learningPlan.ts','src/components/resources/BusinessStructureTemplate.tsx','src/lib/downloadBusinessCard.ts'])
   assert.ok(!fs.readFileSync(file,'utf8').includes('prowessdigitalsolutions.com'),file);
 });
-test('print tab buttons work without the opener, as in an installed app',()=>{
- const html=module.exports.summaryDocument({title:'Plan',content:'A: B',receiptHtml:'<main class="receipt"></main>'},{controls:true});
- assert.ok(html.includes('<button type="button" onclick="window.print()">Print / Save PDF</button>'));
- assert.ok(html.includes('@media print{.print-controls{display:none}}'));
- assert.ok(!module.exports.summaryDocument({title:'Plan',content:'A: B'}).includes('print-controls'));
+
+test('results offer download only, with no print or save-as-PDF option',()=>{
  const preview=fs.readFileSync('src/components/services/SummaryPreview.tsx','utf8');
- assert.ok(preview.includes('summaryDocument(summary,{controls:true})'));assert.ok(!preview.includes("querySelector('button')!.addEventListener"));
- assert.ok(fs.readFileSync('src/app/tools/invoice/InvoicePageClient.tsx','utf8').includes('onclick="window.print()"'));
+ assert.ok(preview.includes('Download result'));assert.ok(!/Print \/ Save PDF|window\.open|summaryDocument/.test(preview));
+ assert.ok(!('summaryDocument' in module.exports));
+ for(const file of ['src/app/services/ServicesPageClient.tsx','src/components/services/BusinessAuditOffer.tsx','src/components/services/WorkflowSystemsOffer.tsx','src/components/services/SopLanding.tsx','src/app/tools/business-health-check/BusinessHealthCheckPageClient.tsx'])
+  assert.ok(!/Preview \/ Print|Preview or print|print or save/i.test(fs.readFileSync(file,'utf8')),file);
+ const css=fs.readFileSync('src/lib/captureBusinessResult.ts','utf8');
+ assert.ok(css.includes('body{padding:18px}'));assert.ok(css.includes('.receipt-row:last-child'));
 });

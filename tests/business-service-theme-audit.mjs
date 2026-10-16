@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const routes=[
   'business-plans','feasibility-studies','market-research','business-model','business-audit',
-  'business-structure-diagnostic','financial-review','sops','pricing-offer-review','workflow-systems'
+  'business-structure-diagnostic','financial-review','sops','pricing-offer-review','workflow-systems','operations-documentation'
 ];
 
 const browser=await puppeteer.launch({headless:true});
@@ -23,5 +23,5 @@ try{
       assert.equal(await page.$$eval('#service-checkout button[type="submit"]',nodes=>nodes.length),1,`${slug}/${theme}: payment button`);
     }
   }
-  console.log('PASS: ten completed service pages audited in light and dark mode');
+  console.log('PASS: eleven completed service pages audited in light and dark mode');
 }finally{await browser.close();}

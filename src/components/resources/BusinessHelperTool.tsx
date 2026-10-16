@@ -367,7 +367,7 @@ export default function BusinessHelperTool() {
                   disabled={downloading}
                   className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[var(--steel-teal)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {downloading ? "Preparing..." : "Preview / Print full report"}
+                  {downloading ? "Preparing..." : "Preview my full report"}
                 </button>
 
                 <a

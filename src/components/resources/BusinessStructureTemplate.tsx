@@ -508,8 +508,7 @@ export default function BusinessStructureTemplate() {
               Review & Export
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              Here is a summary of your business structure. You can copy it,
-              print it or save it as a PDF, and use it as a starting point for a
+              Here is a summary of your business structure. You can copy it, download it and use it as a starting point for a
               more detailed structure document.
             </p>
 
@@ -532,7 +531,7 @@ export default function BusinessStructureTemplate() {
                 onClick={handleDownload}
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Preview / Print structure
+                Preview my structure
               </button>
 
               <button

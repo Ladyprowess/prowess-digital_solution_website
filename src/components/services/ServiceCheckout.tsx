@@ -43,6 +43,11 @@ const serviceCopy: Record<string, { heading: string; question: string; placehold
     question: "Which workflow causes the most delay, confusion or repeated follow-up?",
     placeholder: "Describe how the work starts, who handles it, the tools you use, where it waits or breaks, and the effect on customers or the team.",
   },
+  "operations-documentation": {
+    heading: "Tell us what the business needs to stop carrying in people's heads.",
+    question: "Which operational knowledge is scattered, outdated or difficult for the team to find?",
+    placeholder: "Describe the teams and processes involved, what records already exist, what still depends on memory, and the business change or deadline driving this work.",
+  },
 };
 
 export default function ServiceCheckout({ slug, title }: { slug: string; title: string }) {

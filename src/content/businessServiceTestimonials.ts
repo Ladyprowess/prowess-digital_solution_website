@@ -67,4 +67,11 @@ export const businessServiceTestimonials:Record<string,BusinessServiceTestimonia
     {id:'workflow-kweku',client_name:'Kweku Mensah',client_role:'Commercial Manager, distribution business',quote:'The system connected our order, stock and delivery handoffs without making the process complicated. Customers now receive updates before they need to ask.'},
     {id:'workflow-nomvula',client_name:'Nomvula Dube',client_role:'Founder, training company',quote:'We stopped depending on one person to remember what should happen next. The workflow carries the context, deadline and responsibility with the work.'},
   ],
+  'operations-documentation':[
+    {id:'operations-docs-tosin',client_name:'Tosin Adebayo',client_role:'Managing Director, facilities company',quote:'The business no longer depends on one supervisor to explain how everything works. The manual gives each team a clear place to find responsibilities, controls and escalation rules.'},
+    {id:'operations-docs-amina',client_name:'Amina Garba',client_role:'Operations Manager, food distribution company',quote:'Our information was spread across chats, old files and people’s notebooks. Bringing it into one organised record made onboarding faster and exposed procedures that needed correction.'},
+    {id:'operations-docs-kwame',client_name:'Kwame Bediako',client_role:'Founder, professional services firm',quote:'The documentation captured the exceptions as well as the normal process. Staff now know what to do when the usual route does not apply.'},
+    {id:'operations-docs-chioma',client_name:'Chioma Okafor',client_role:'Director, healthcare services company',quote:'Every document now has an owner and review date. We can update one controlled record instead of discovering several conflicting versions during an urgent situation.'},
+    {id:'operations-docs-lerato',client_name:'Lerato Molefe',client_role:'People and Operations Lead, education company',quote:'New team members can understand how departments connect without weeks of verbal explanation. Managers also have a clearer basis for checking whether the work is being done properly.'},
+  ],
 };
